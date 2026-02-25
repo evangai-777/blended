@@ -3373,6 +3373,12 @@ class WM_MT_splash_quick_setup(Menu):
         if bpy.app.build_options.international:
             col.prop(prefs.view, "language")
 
+        # Blended UI Tier.
+        sub = col.column(heading="Interface Tier")
+        sub.prop(prefs.view, "ui_tier", text="")
+
+        col.separator()
+
         # Themes.
         sub = col.column(heading="Theme")
         label = bpy.types.USERPREF_MT_interface_theme_presets.bl_label
@@ -3506,7 +3512,7 @@ class WM_MT_splash_about(Menu):
         del _ghost_backend, ghost_backend
 
         col.separator(factor=2.0)
-        col.label(text="Blender is free software")
+        col.label(text="Blended is free software")
         col.label(text="Licensed under the GNU General Public License")
 
         col = split.column(align=True)
@@ -3518,6 +3524,8 @@ class WM_MT_splash_about(Menu):
         col.operator("wm.url_open", text="License", icon='URL').url = "https://www.blender.org/about/license/"
         col.operator("wm.url_open", text="Blender Store", icon='URL').url = "https://store.blender.org"
         col.operator("wm.url_open_preset", text="Blender Website", icon='URL').type = 'BLENDER'
+        col.separator(factor=1.0)
+        col.label(text="Blender, simplified")
 
 
 class WM_MT_region_toggle_pie(Menu):

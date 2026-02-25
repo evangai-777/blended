@@ -228,6 +228,14 @@ class USERPREF_PT_interface_display(InterfacePanel, CenterAlignMixIn, Panel):
 
         col = layout.column()
 
+        # Blended UI tier selector.
+        box = col.box()
+        box.label(text="Blended Interface Tier", icon='PREFERENCES')
+        box.prop(view, "ui_tier", text="")
+        box.label(text="Controls how much of the interface is visible. You can change this anytime.")
+
+        col.separator()
+
         col.prop(view, "ui_scale", text="Resolution Scale")
         col.prop(view, "ui_line_width", text="Line Width")
         col.prop(view, "show_splash", text="Splash Screen")
@@ -816,6 +824,33 @@ class USERPREF_PT_system_network(SystemPanel, CenterAlignMixIn, Panel):
 
         layout.row().prop(system, "network_timeout", text="Time Out")
         layout.row().prop(system, "network_connection_limit", text="Connection Limit")
+
+
+class USERPREF_PT_system_blended_updates(SystemPanel, CenterAlignMixIn, Panel):
+    bl_label = "Blended Updates"
+
+    def draw_centered(self, context, layout):
+        try:
+            from blended_update_check import get_update_info
+            info = get_update_info()
+        except ImportError:
+            layout.label(text="Update checker not available")
+            return
+
+        col = layout.column()
+
+        if info["available"]:
+            box = col.box()
+            box.alert = True
+            box.label(text=f"New version available: {info['latest_version']}", icon='INFO')
+            box.operator("blended.open_download", text="Download Update", icon='IMPORT')
+        elif info["checked"]:
+            col.label(text="Blended is up to date", icon='CHECKMARK')
+        else:
+            col.label(text="Checking for updates...", icon='TIME')
+
+        col.separator()
+        col.operator("blended.open_download", text="Check Now", icon='FILE_REFRESH')
 
 
 class USERPREF_PT_system_memory(SystemPanel, CenterAlignMixIn, Panel):
@@ -3150,6 +3185,7 @@ classes = (
     USERPREF_PT_system_display_graphics,
     USERPREF_PT_system_os_settings,
     USERPREF_PT_system_network,
+    USERPREF_PT_system_blended_updates,
     USERPREF_PT_system_memory,
     USERPREF_PT_system_video_sequencer,
     USERPREF_PT_system_sound,

@@ -17,6 +17,7 @@
 #include "rna_internal.hh"
 
 #include "DNA_screen_types.h"
+#include "DNA_userdef_types.h"
 
 #include "UI_interface_c.hh"
 
@@ -216,6 +217,39 @@ static const EnumPropertyItem *rna_Area_ui_type_itemf(bContext *C,
     if (ELEM(item_from->value, SPACE_TOPBAR, SPACE_STATUSBAR)) {
       continue;
     }
+
+    /* Blended: Filter editor types based on UI tier. */
+    if (U.ui_tier == USER_UI_TIER_SIMPLE) {
+      /* Simple tier: only essential editors. */
+      if (!ELEM(item_from->value,
+                SPACE_VIEW3D,
+                SPACE_PROPERTIES,
+                SPACE_OUTLINER,
+                SPACE_FILE,
+                SPACE_IMAGE,
+                SPACE_USERPREF,
+                0 /* heading items */))
+      {
+        /* Allow headings (identifier[0] == '\0') to pass through. */
+        if (item_from->identifier[0] != '\0') {
+          continue;
+        }
+      }
+    }
+    else if (U.ui_tier == USER_UI_TIER_STANDARD) {
+      /* Standard tier: common editors, hide niche ones. */
+      if (ELEM(item_from->value,
+               SPACE_SEQ,
+               SPACE_CLIP,
+               SPACE_TEXT,
+               SPACE_CONSOLE,
+               SPACE_INFO,
+               SPACE_SPREADSHEET))
+      {
+        continue;
+      }
+    }
+    /* Advanced tier: show all editors. */
 
     SpaceType *st = item_from->identifier[0] ? BKE_spacetype_from_id(item_from->value) : nullptr;
     int totitem_prev = totitem;

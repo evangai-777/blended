@@ -5042,6 +5042,36 @@ static void rna_def_userdef_view(BlenderRNA *brna)
       prop, "Developer Extras", "Display advanced settings and tools for developers");
   RNA_def_property_update(prop, 0, "rna_userdef_update");
 
+  {
+    static const EnumPropertyItem ui_tier_items[] = {
+        {USER_UI_TIER_SIMPLE,
+         "SIMPLE",
+         0,
+         "Simple",
+         "Beginner-friendly interface with guided workflows"},
+        {USER_UI_TIER_STANDARD,
+         "STANDARD",
+         0,
+         "Standard",
+         "Balanced interface with most features accessible"},
+        {USER_UI_TIER_ADVANCED,
+         "ADVANCED",
+         0,
+         "Advanced",
+         "Full interface with all features visible"},
+        {0, nullptr, 0, nullptr, nullptr},
+    };
+    prop = RNA_def_property(srna, "ui_tier", PROP_ENUM, PROP_NONE);
+    RNA_def_property_enum_sdna(prop, nullptr, "ui_tier");
+    RNA_def_property_enum_items(prop, ui_tier_items);
+    RNA_def_property_ui_text(
+        prop,
+        "Interface Tier",
+        "Controls how much of the interface is visible "
+        "(Simple for beginners, Standard for everyday use, Advanced for full power)");
+    RNA_def_property_update(prop, 0, "rna_userdef_update");
+  }
+
   prop = RNA_def_property(srna, "show_area_handle", PROP_BOOLEAN, PROP_NONE);
   RNA_def_property_boolean_sdna(prop, nullptr, "uiflag", USER_AREA_CORNER_HANDLE);
   RNA_def_property_ui_text(prop, "Corner Handles", "Show visible area maintenance corner handles");
