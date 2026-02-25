@@ -3360,7 +3360,8 @@ class WM_MT_splash_quick_setup(Menu):
         if can_import:
             layout.label(text="Create New Preferences")
         else:
-            layout.label(text="Quick Setup")
+            layout.label(text="Welcome to Blended")
+            layout.label(text="Blender, simplified. Choose your experience level below.")
 
         split = layout.split(factor=0.20)  # Left margin.
         split.label()
