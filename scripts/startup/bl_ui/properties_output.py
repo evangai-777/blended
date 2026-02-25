@@ -45,8 +45,15 @@ class RenderOutputButtonsPanel:
     bl_context = "output"
     # COMPAT_ENGINES must be defined in each subclass, external engines can add themselves here
 
+    # Blended: Minimum tier to show this panel. Override in subclasses.
+    blended_min_tier = 0
+
     @classmethod
     def poll(cls, context):
+        if cls.blended_min_tier > 0:
+            from blended_utils import tier_at_least
+            if not tier_at_least(context, cls.blended_min_tier):
+                return False
         return (context.engine in cls.COMPAT_ENGINES)
 
 
@@ -155,6 +162,7 @@ class RENDER_PT_frame_range(RenderOutputButtonsPanel, Panel):
 
 class RENDER_PT_time_stretching(RenderOutputButtonsPanel, Panel):
     bl_label = "Time Stretching"
+    blended_min_tier = 1
     bl_parent_id = "RENDER_PT_frame_range"
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {
@@ -177,6 +185,7 @@ class RENDER_PT_time_stretching(RenderOutputButtonsPanel, Panel):
 
 class RENDER_PT_post_processing(RenderOutputButtonsPanel, Panel):
     bl_label = "Post Processing"
+    blended_min_tier = 1
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {
         'BLENDER_RENDER',
@@ -199,6 +208,7 @@ class RENDER_PT_post_processing(RenderOutputButtonsPanel, Panel):
 
 class RENDER_PT_stamp(RenderOutputButtonsPanel, Panel):
     bl_label = "Metadata"
+    blended_min_tier = 1
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {
         'BLENDER_RENDER',
@@ -236,6 +246,7 @@ class RENDER_PT_stamp(RenderOutputButtonsPanel, Panel):
 
 class RENDER_PT_stamp_note(RenderOutputButtonsPanel, Panel):
     bl_label = "Note"
+    blended_min_tier = 1
     bl_parent_id = "RENDER_PT_stamp"
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {
@@ -260,6 +271,7 @@ class RENDER_PT_stamp_note(RenderOutputButtonsPanel, Panel):
 
 class RENDER_PT_stamp_burn(RenderOutputButtonsPanel, Panel):
     bl_label = "Burn Into Image"
+    blended_min_tier = 1
     bl_parent_id = "RENDER_PT_stamp"
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {
@@ -327,6 +339,7 @@ class RENDER_PT_output(RenderOutputButtonsPanel, Panel):
 
 class RENDER_PT_output_views(RenderOutputButtonsPanel, Panel):
     bl_label = "Views"
+    blended_min_tier = 1
     bl_parent_id = "RENDER_PT_output"
     COMPAT_ENGINES = {
         'BLENDER_RENDER',
@@ -350,6 +363,7 @@ class RENDER_PT_output_views(RenderOutputButtonsPanel, Panel):
 
 class RENDER_PT_output_color_management(RenderOutputButtonsPanel, Panel):
     bl_label = "Color Management"
+    blended_min_tier = 1
     bl_options = {'DEFAULT_CLOSED'}
     bl_parent_id = "RENDER_PT_output"
     COMPAT_ENGINES = {
@@ -391,6 +405,7 @@ class RENDER_PT_output_color_management(RenderOutputButtonsPanel, Panel):
 
 class RENDER_PT_output_pixel_density(RenderOutputButtonsPanel, Panel):
     bl_label = "Pixel Density"
+    blended_min_tier = 1
     bl_options = {'DEFAULT_CLOSED'}
     bl_parent_id = "RENDER_PT_output"
 
@@ -498,6 +513,7 @@ class RENDER_PT_encoding(RenderOutputButtonsPanel, Panel):
 
 class RENDER_PT_encoding_video(RenderOutputButtonsPanel, Panel):
     bl_label = "Video"
+    blended_min_tier = 1
     bl_parent_id = "RENDER_PT_encoding"
     COMPAT_ENGINES = {
         'BLENDER_RENDER',
@@ -628,6 +644,7 @@ class RENDER_PT_encoding_video(RenderOutputButtonsPanel, Panel):
 
 class RENDER_PT_encoding_audio(RenderOutputButtonsPanel, Panel):
     bl_label = "Audio"
+    blended_min_tier = 1
     bl_parent_id = "RENDER_PT_encoding"
     COMPAT_ENGINES = {
         'BLENDER_RENDER',
@@ -671,6 +688,7 @@ class RENDER_UL_renderviews(UIList):
 
 class RENDER_PT_stereoscopy(RenderOutputButtonsPanel, Panel):
     bl_label = "Stereoscopy"
+    blended_min_tier = 1
     COMPAT_ENGINES = {
         'BLENDER_RENDER',
         'BLENDER_EEVEE',

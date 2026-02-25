@@ -33,6 +33,17 @@ class SceneButtonsPanel:
     bl_region_type = 'WINDOW'
     bl_context = "scene"
 
+    # Blended: Minimum tier to show this panel. Override in subclasses.
+    blended_min_tier = 0
+
+    @classmethod
+    def poll(cls, context):
+        if cls.blended_min_tier > 0:
+            from blended_utils import tier_at_least
+            if not tier_at_least(context, cls.blended_min_tier):
+                return False
+        return True
+
 
 class SCENE_PT_context_scene(SceneButtonsPanel, Panel):
     bl_label = ""
@@ -143,6 +154,7 @@ class SceneKeyingSetsPanel:
 
 class SCENE_PT_keying_sets(SceneButtonsPanel, SceneKeyingSetsPanel, Panel):
     bl_label = "Keying Sets"
+    blended_min_tier = 1
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
@@ -176,6 +188,7 @@ class SCENE_PT_keying_sets(SceneButtonsPanel, SceneKeyingSetsPanel, Panel):
 
 class SCENE_PT_keyframing_settings(SceneButtonsPanel, SceneKeyingSetsPanel, Panel):
     bl_label = "Keyframing Settings"
+    blended_min_tier = 1
     bl_parent_id = "SCENE_PT_keying_sets"
 
     @classmethod
@@ -212,6 +225,7 @@ class SCENE_PT_keyframing_settings(SceneButtonsPanel, SceneKeyingSetsPanel, Pane
 
 class SCENE_PT_keying_set_paths(SceneButtonsPanel, SceneKeyingSetsPanel, Panel):
     bl_label = "Active Keying Set"
+    blended_min_tier = 1
     bl_parent_id = "SCENE_PT_keying_sets"
 
     @classmethod
@@ -274,6 +288,7 @@ class SCENE_PT_keying_set_paths(SceneButtonsPanel, SceneKeyingSetsPanel, Panel):
 
 class SCENE_PT_audio(SceneButtonsPanel, Panel):
     bl_label = "Audio"
+    blended_min_tier = 1
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
@@ -301,6 +316,7 @@ class SCENE_PT_audio(SceneButtonsPanel, Panel):
 
 class SCENE_PT_physics(SceneButtonsPanel, Panel):
     bl_label = "Gravity"
+    blended_min_tier = 1
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw_header(self, context):
@@ -319,6 +335,7 @@ class SCENE_PT_physics(SceneButtonsPanel, Panel):
 
 class SCENE_PT_simulation(SceneButtonsPanel, Panel):
     bl_label = "Simulation"
+    blended_min_tier = 1
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
@@ -337,6 +354,7 @@ class SCENE_PT_simulation(SceneButtonsPanel, Panel):
 
 class SCENE_PT_rigid_body_world(SceneButtonsPanel, Panel):
     bl_label = "Rigid Body World"
+    blended_min_tier = 1
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw_header(self, context):
@@ -369,6 +387,7 @@ class RigidBodySubPanel(SceneButtonsPanel):
 
 class SCENE_PT_rigid_body_world_settings(RigidBodySubPanel, Panel):
     bl_label = "Settings"
+    blended_min_tier = 1
 
     def draw(self, context):
         layout = self.layout
@@ -401,6 +420,7 @@ class SCENE_PT_rigid_body_world_settings(RigidBodySubPanel, Panel):
 
 class SCENE_PT_rigid_body_cache(RigidBodySubPanel, Panel):
     bl_label = "Cache"
+    blended_min_tier = 1
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
@@ -412,6 +432,7 @@ class SCENE_PT_rigid_body_cache(RigidBodySubPanel, Panel):
 
 class SCENE_PT_rigid_body_field_weights(RigidBodySubPanel, Panel):
     bl_label = "Field Weights"
+    blended_min_tier = 1
     bl_parent_id = "SCENE_PT_rigid_body_world"
     bl_options = {'DEFAULT_CLOSED'}
 
@@ -424,6 +445,7 @@ class SCENE_PT_rigid_body_field_weights(RigidBodySubPanel, Panel):
 
 class SCENE_PT_eevee_light_probes(SceneButtonsPanel, Panel):
     bl_label = "Light Probes"
+    blended_min_tier = 1
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
 
