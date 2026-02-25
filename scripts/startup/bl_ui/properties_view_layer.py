@@ -37,8 +37,15 @@ class ViewLayerButtonsPanel:
     bl_context = "view_layer"
     # COMPAT_ENGINES must be defined in each subclass, external engines can add themselves here
 
+    # Blended: Minimum tier to show this panel. Override in subclasses.
+    blended_min_tier = 0
+
     @classmethod
     def poll(cls, context):
+        if cls.blended_min_tier > 0:
+            from blended_utils import tier_at_least
+            if not tier_at_least(context, cls.blended_min_tier):
+                return False
         return (context.engine in cls.COMPAT_ENGINES)
 
 
@@ -93,6 +100,7 @@ class VIEWLAYER_PT_layer(ViewLayerButtonsPanel, Panel):
 
 class VIEWLAYER_PT_layer_passes(ViewLayerButtonsPanel, Panel):
     bl_label = "Passes"
+    blended_min_tier = 1
     COMPAT_ENGINES = {
         'BLENDER_EEVEE',
         'BLENDER_WORKBENCH',
@@ -104,6 +112,7 @@ class VIEWLAYER_PT_layer_passes(ViewLayerButtonsPanel, Panel):
 
 class VIEWLAYER_PT_eevee_layer_passes_data(ViewLayerButtonsPanel, Panel):
     bl_label = "Data"
+    blended_min_tier = 1
     bl_parent_id = "VIEWLAYER_PT_layer_passes"
 
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
@@ -130,6 +139,7 @@ class VIEWLAYER_PT_eevee_layer_passes_data(ViewLayerButtonsPanel, Panel):
 
 class VIEWLAYER_PT_workbench_layer_passes_data(ViewLayerButtonsPanel, Panel):
     bl_label = "Data"
+    blended_min_tier = 1
     bl_parent_id = "VIEWLAYER_PT_layer_passes"
 
     COMPAT_ENGINES = {'BLENDER_WORKBENCH'}
@@ -149,6 +159,7 @@ class VIEWLAYER_PT_workbench_layer_passes_data(ViewLayerButtonsPanel, Panel):
 
 class VIEWLAYER_PT_eevee_layer_passes_light(ViewLayerButtonsPanel, Panel):
     bl_label = "Light"
+    blended_min_tier = 1
     bl_translation_context = i18n_contexts.render_layer
     bl_parent_id = "VIEWLAYER_PT_layer_passes"
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
@@ -287,6 +298,7 @@ class VIEWLAYER_PT_layer_passes_lightgroups(ViewLayerLightgroupsPanelHelper, Pan
 
 class VIEWLAYER_PT_filter(ViewLayerButtonsPanel, Panel):
     bl_label = "Filter"
+    blended_min_tier = 1
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
 
@@ -313,6 +325,7 @@ class VIEWLAYER_PT_filter(ViewLayerButtonsPanel, Panel):
 
 class VIEWLAYER_PT_override(ViewLayerButtonsPanel, Panel):
     bl_label = "Override"
+    blended_min_tier = 1
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {
         'BLENDER_EEVEE',

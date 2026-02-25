@@ -20,8 +20,16 @@ class RenderButtonsPanel:
     bl_context = "render"
     # COMPAT_ENGINES must be defined in each subclass, external engines can add themselves here
 
+    # Blended: Minimum tier required to show this panel.
+    # Override in subclasses: 0=Simple, 1=Standard, 2=Advanced.
+    blended_min_tier = 0
+
     @classmethod
     def poll(cls, context):
+        if cls.blended_min_tier > 0:
+            from blended_utils import tier_at_least
+            if not tier_at_least(context, cls.blended_min_tier):
+                return False
         return (context.engine in cls.COMPAT_ENGINES)
 
 
@@ -89,6 +97,7 @@ class RENDER_PT_color_management(RenderButtonsPanel, Panel):
 
 class RENDER_PT_color_management_working_space(RenderButtonsPanel, Panel):
     bl_label = "Working Space"
+    blended_min_tier = 1
     bl_parent_id = "RENDER_PT_color_management"
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {
@@ -125,6 +134,7 @@ class RENDER_PT_color_management_working_space(RenderButtonsPanel, Panel):
 
 class RENDER_PT_color_management_advanced(RenderButtonsPanel, Panel):
     bl_label = "Advanced"
+    blended_min_tier = 1
     bl_parent_id = "RENDER_PT_color_management"
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {
@@ -147,6 +157,7 @@ class RENDER_PT_color_management_advanced(RenderButtonsPanel, Panel):
 
 class RENDER_PT_color_management_curves(RenderButtonsPanel, Panel):
     bl_label = "Curves"
+    blended_min_tier = 1
     bl_parent_id = "RENDER_PT_color_management"
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {
@@ -185,6 +196,7 @@ class RENDER_PT_color_management_white_balance_presets(PresetPanel, Panel):
 
 class RENDER_PT_color_management_white_balance(RenderButtonsPanel, Panel):
     bl_label = "White Balance"
+    blended_min_tier = 1
     bl_parent_id = "RENDER_PT_color_management"
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {
@@ -256,6 +268,7 @@ class RENDER_PT_eevee_motion_blur(RenderButtonsPanel, Panel):
 
 class RENDER_PT_eevee_motion_blur_curve(RenderButtonsPanel, Panel):
     bl_label = "Shutter Curve"
+    blended_min_tier = 1
     bl_parent_id = "RENDER_PT_eevee_motion_blur"
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
@@ -341,6 +354,7 @@ class RENDER_PT_eevee_volumes(RenderButtonsPanel, Panel):
 
 class RENDER_PT_eevee_volumes_range(RenderButtonsPanel, Panel):
     bl_label = "Custom Range"
+    blended_min_tier = 1
     bl_options = {'DEFAULT_CLOSED'}
     bl_parent_id = "RENDER_PT_eevee_volumes"
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
@@ -410,6 +424,7 @@ class RENDER_PT_eevee_raytracing(RenderButtonsPanel, Panel):
 
 class RENDER_PT_eevee_screen_trace(RenderButtonsPanel, Panel):
     bl_label = "Screen Tracing"
+    blended_min_tier = 1
     bl_options = {'DEFAULT_CLOSED'}
     bl_parent_id = "RENDER_PT_eevee_raytracing"
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
@@ -437,6 +452,7 @@ class RENDER_PT_eevee_screen_trace(RenderButtonsPanel, Panel):
 
 class RENDER_PT_eevee_gi_approximation(RenderButtonsPanel, Panel):
     bl_label = "Fast GI Approximation"
+    blended_min_tier = 1
     bl_options = {'DEFAULT_CLOSED'}
     bl_parent_id = "RENDER_PT_eevee_raytracing"
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
@@ -485,6 +501,7 @@ class RENDER_PT_eevee_gi_approximation(RenderButtonsPanel, Panel):
 
 class RENDER_PT_eevee_denoise(RenderButtonsPanel, Panel):
     bl_label = "Denoising"
+    blended_min_tier = 1
     bl_options = {'DEFAULT_CLOSED'}
     bl_parent_id = "RENDER_PT_eevee_raytracing"
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
@@ -523,6 +540,7 @@ class RENDER_PT_eevee_denoise(RenderButtonsPanel, Panel):
 
 class RENDER_PT_eevee_light_paths(RenderButtonsPanel, Panel):
     bl_label = "Light Paths"
+    blended_min_tier = 1
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
 
@@ -536,6 +554,7 @@ class RENDER_PT_eevee_light_paths(RenderButtonsPanel, Panel):
 
 class RENDER_PT_eevee_clamping(RenderButtonsPanel, Panel):
     bl_label = "Clamping"
+    blended_min_tier = 1
     bl_parent_id = "RENDER_PT_eevee_light_paths"
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
 
@@ -549,6 +568,7 @@ class RENDER_PT_eevee_clamping(RenderButtonsPanel, Panel):
 
 class RENDER_PT_eevee_clamping_surface(RenderButtonsPanel, Panel):
     bl_label = "Surface"
+    blended_min_tier = 1
     bl_parent_id = "RENDER_PT_eevee_clamping"
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
 
@@ -570,6 +590,7 @@ class RENDER_PT_eevee_clamping_surface(RenderButtonsPanel, Panel):
 
 class RENDER_PT_eevee_clamping_volume(RenderButtonsPanel, Panel):
     bl_label = "Volume"
+    blended_min_tier = 1
     bl_parent_id = "RENDER_PT_eevee_clamping"
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
 
@@ -591,6 +612,7 @@ class RENDER_PT_eevee_clamping_volume(RenderButtonsPanel, Panel):
 
 class RENDER_PT_eevee_light_paths_intensity(RenderButtonsPanel, Panel):
     bl_label = "Intensity"
+    blended_min_tier = 1
     bl_parent_id = "RENDER_PT_eevee_light_paths"
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
 
@@ -612,6 +634,7 @@ class RENDER_PT_eevee_light_paths_intensity(RenderButtonsPanel, Panel):
 
 class RENDER_PT_eevee_sampling_shadows(RenderButtonsPanel, Panel):
     bl_label = "Shadows"
+    blended_min_tier = 1
     bl_parent_id = "RENDER_PT_eevee_sampling"
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
@@ -712,6 +735,7 @@ class RENDER_PT_eevee_sampling_render(RenderButtonsPanel, Panel):
 
 class RENDER_PT_eevee_sampling_advanced(RenderButtonsPanel, Panel):
     bl_label = "Advanced"
+    blended_min_tier = 1
     bl_parent_id = "RENDER_PT_eevee_sampling"
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
@@ -776,6 +800,7 @@ def draw_curves_settings(self, context):
 
 class RENDER_PT_eevee_hair(RenderButtonsPanel, Panel):
     bl_label = "Curves"
+    blended_min_tier = 1
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {'BLENDER_EEVEE', 'BLENDER_WORKBENCH'}
 
@@ -789,6 +814,7 @@ class RENDER_PT_eevee_hair(RenderButtonsPanel, Panel):
 
 class RENDER_PT_eevee_performance(RenderButtonsPanel, Panel):
     bl_label = "Performance"
+    blended_min_tier = 1
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {
         'BLENDER_EEVEE',
@@ -848,6 +874,7 @@ class CompositorDenoisePerformanceButtonsPanel:
 
 class RENDER_PT_eevee_performance_compositor(RenderButtonsPanel, CompositorPerformanceButtonsPanel, Panel):
     bl_options = {'DEFAULT_CLOSED'}
+    blended_min_tier = 1
     bl_parent_id = "RENDER_PT_eevee_performance"
     COMPAT_ENGINES = {
         'BLENDER_EEVEE',
@@ -868,6 +895,7 @@ class RENDER_PT_eevee_performance_compositor_denoise_settings(
 
 class RENDER_PT_eevee_performance_memory(RenderButtonsPanel, Panel):
     bl_label = "Memory"
+    blended_min_tier = 1
     bl_parent_id = "RENDER_PT_eevee_performance"
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
@@ -890,6 +918,7 @@ class RENDER_PT_eevee_performance_memory(RenderButtonsPanel, Panel):
 
 class RENDER_PT_eevee_performance_viewport(RenderButtonsPanel, Panel):
     bl_label = "Viewport"
+    blended_min_tier = 1
     bl_parent_id = "RENDER_PT_eevee_performance"
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
