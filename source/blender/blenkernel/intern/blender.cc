@@ -130,7 +130,7 @@ static void blender_version_init()
   const char *version_suffix = BKE_blender_version_is_lts() ? " LTS" : "";
 
   SNPRINTF_UTF8(blender_version_string,
-                "%d.%01d.%d%s%s",
+                BLENDED_VERSION_STRING " %d.%01d.%d%s%s",
                 BLENDER_VERSION / 100,
                 BLENDER_VERSION % 100,
                 BLENDER_VERSION_PATCH,
@@ -138,7 +138,7 @@ static void blender_version_init()
                 version_cycle);
 
   SNPRINTF_UTF8(blender_version_string_compact,
-                "%d.%01d.%d%s",
+                BLENDED_VERSION_STRING " %d.%01d.%d%s",
                 BLENDER_VERSION / 100,
                 BLENDER_VERSION % 100,
                 BLENDER_VERSION_PATCH,

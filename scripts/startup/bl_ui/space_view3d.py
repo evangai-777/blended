@@ -2665,7 +2665,34 @@ class VIEW3D_MT_add(Menu):
     bl_translation_context = i18n_contexts.operator_default
     bl_options = {'SEARCH_ON_KEY_PRESS'}
 
+    def _draw_simple(self, context):
+        """Simplified Add menu for Blended Simple tier."""
+        layout = self.layout
+        layout.operator_context = 'EXEC_REGION_WIN'
+
+        # Meshes - the most common objects.
+        layout.menu("VIEW3D_MT_mesh_add", icon='OUTLINER_OB_MESH')
+
+        layout.separator()
+
+        # Essentials.
+        layout.menu("VIEW3D_MT_light_add", icon='OUTLINER_OB_LIGHT')
+        if VIEW3D_MT_camera_add.is_extended():
+            layout.menu("VIEW3D_MT_camera_add", icon='OUTLINER_OB_CAMERA')
+        else:
+            VIEW3D_MT_camera_add.draw(self, context)
+
+        layout.separator()
+
+        layout.menu("VIEW3D_MT_empty_add", icon='OUTLINER_OB_EMPTY')
+        layout.operator("object.text_add", text="Text", icon='OUTLINER_OB_FONT')
+
     def draw(self, context):
+        from blended_utils import is_simple
+        if is_simple(context):
+            self._draw_simple(context)
+            return
+
         layout = self.layout
 
         if layout.operator_context == 'EXEC_REGION_WIN':

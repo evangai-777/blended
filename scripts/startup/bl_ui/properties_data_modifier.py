@@ -70,7 +70,51 @@ class OBJECT_MT_modifier_add(ModifierAddMenu, Menu):
     bl_label = "Add Modifier"
     bl_options = {'SEARCH_ON_KEY_PRESS'}
 
+    def _draw_simple(self, context):
+        """Simplified modifier menu for Blended Simple tier."""
+        layout = self.layout
+        ob = context.object
+        if not ob:
+            return
+        ob_type = ob.type
+
+        layout.operator_context = 'INVOKE_REGION_WIN'
+
+        layout.label(text="Common Modifiers", icon='MODIFIER')
+        layout.separator()
+
+        # Generate essentials.
+        if ob_type in {'MESH', 'CURVE', 'FONT', 'SURFACE'}:
+            self.operator_modifier_add(layout, 'ARRAY')
+        if ob_type == 'MESH':
+            self.operator_modifier_add(layout, 'BOOLEAN')
+        if ob_type in {'MESH', 'CURVE', 'FONT', 'SURFACE'}:
+            self.operator_modifier_add(layout, 'MIRROR')
+            self.operator_modifier_add(layout, 'SOLIDIFY')
+            self.operator_modifier_add(layout, 'SUBSURF')
+            self.operator_modifier_add(layout, 'DECIMATE')
+
+        layout.separator()
+
+        # Deform essentials.
+        if ob_type in {'MESH', 'CURVE', 'FONT', 'SURFACE', 'LATTICE'}:
+            self.operator_modifier_add(layout, 'SIMPLE_DEFORM')
+            self.operator_modifier_add(layout, 'SHRINKWRAP')
+        if ob_type in {'MESH', 'CURVE', 'FONT', 'SURFACE'}:
+            self.operator_modifier_add(layout, 'SMOOTH')
+
+        layout.separator()
+
+        # Normals.
+        if ob_type == 'MESH':
+            self.operator_modifier_add(layout, 'WEIGHTED_NORMAL')
+
     def draw(self, context):
+        from blended_utils import is_simple
+        if is_simple(context):
+            self._draw_simple(context)
+            return
+
         layout = self.layout
         ob = context.object
         if not ob:

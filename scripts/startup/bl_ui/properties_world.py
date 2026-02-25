@@ -18,6 +18,9 @@ class WorldButtonsPanel:
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least, TIER_STANDARD
+        if not tier_at_least(context, TIER_STANDARD):
+            return False
         return (context.world and context.engine in cls.COMPAT_ENGINES)
 
 

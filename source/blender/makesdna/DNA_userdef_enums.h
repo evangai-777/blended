@@ -54,4 +54,11 @@ enum eDupli_ID_Flags {
 };
 ENUM_OPERATORS(eDupli_ID_Flags)
 
+/** #UserDef.ui_tier - Blended UI complexity level. */
+enum eUserPref_UITier {
+  USER_UI_TIER_SIMPLE = 0,
+  USER_UI_TIER_STANDARD = 1,
+  USER_UI_TIER_ADVANCED = 2,
+};
+
 }  // namespace blender

@@ -10,6 +10,11 @@ class ShaderFxButtonsPanel:
     bl_region_type = 'WINDOW'
     bl_context = "shaderfx"
 
+    @classmethod
+    def poll(cls, context):
+        from blended_utils import tier_at_least, TIER_STANDARD
+        return tier_at_least(context, TIER_STANDARD)
+
 
 class DATA_PT_shader_fx(ShaderFxButtonsPanel, Panel):
     bl_label = "Effects"

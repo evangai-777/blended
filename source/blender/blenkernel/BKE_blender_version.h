@@ -28,6 +28,10 @@ namespace blender {
 /** Blender release type suffix. LTS or blank. */
 #define BLENDER_VERSION_SUFFIX
 
+/* Blended branding. */
+#define BLENDED_VERSION_STRING "Blended"
+#define BLENDED_TAGLINE "Blender, simplified"
+
 /* Blender file format version. */
 #define BLENDER_FILE_VERSION BLENDER_VERSION
 #define BLENDER_FILE_SUBVERSION 5
