@@ -17,6 +17,17 @@ class ObjectButtonsPanel:
     bl_region_type = 'WINDOW'
     bl_context = "object"
 
+    # Blended: Minimum tier to show this panel. Override in subclasses.
+    blended_min_tier = 0
+
+    @classmethod
+    def poll(cls, context):
+        if cls.blended_min_tier > 0:
+            from blended_utils import tier_at_least
+            if not tier_at_least(context, cls.blended_min_tier):
+                return False
+        return context.object is not None
+
 
 class OBJECT_PT_context_object(ObjectButtonsPanel, Panel):
     bl_label = ""
@@ -85,6 +96,7 @@ class OBJECT_PT_transform(ObjectButtonsPanel, Panel):
 
 class OBJECT_PT_delta_transform(ObjectButtonsPanel, Panel):
     bl_label = "Delta Transform"
+    blended_min_tier = 1
     bl_parent_id = "OBJECT_PT_transform"
     bl_options = {'DEFAULT_CLOSED'}
 
@@ -110,6 +122,7 @@ class OBJECT_PT_delta_transform(ObjectButtonsPanel, Panel):
 
 class OBJECT_PT_parent_inverse_transform(ObjectButtonsPanel, Panel):
     bl_label = "Parent Inverse Transform"
+    blended_min_tier = 1
     bl_parent_id = "OBJECT_PT_transform"
     bl_options = {'DEFAULT_CLOSED'}
 
@@ -269,6 +282,7 @@ class OBJECT_PT_display(ObjectButtonsPanel, Panel):
 
 class OBJECT_PT_instancing(ObjectButtonsPanel, Panel):
     bl_label = "Instancing"
+    blended_min_tier = 1
     bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
@@ -302,6 +316,7 @@ class OBJECT_PT_instancing(ObjectButtonsPanel, Panel):
 
 class OBJECT_PT_instancing_size(ObjectButtonsPanel, Panel):
     bl_label = "Scale by Face Size"
+    blended_min_tier = 1
     bl_parent_id = "OBJECT_PT_instancing"
 
     @classmethod
@@ -325,6 +340,7 @@ class OBJECT_PT_instancing_size(ObjectButtonsPanel, Panel):
 
 class OBJECT_PT_lineart(ObjectButtonsPanel, Panel):
     bl_label = "Line Art"
+    blended_min_tier = 1
     bl_options = {'DEFAULT_CLOSED'}
     bl_order = 10
 
@@ -473,6 +489,7 @@ def has_geometry_visibility(ob):
 
 class OBJECT_PT_shading(ObjectButtonsPanel, Panel):
     bl_label = "Shading"
+    blended_min_tier = 1
     bl_context = "object"
     bl_options = {'DEFAULT_CLOSED'}
 
@@ -503,6 +520,7 @@ class OBJECT_MT_light_linking_context_menu(Menu):
 
 class OBJECT_PT_light_linking(ObjectButtonsPanel, Panel):
     bl_label = "Light Linking"
+    blended_min_tier = 1
     bl_parent_id = "OBJECT_PT_shading"
     bl_options = {'DEFAULT_CLOSED'}
 
@@ -548,6 +566,7 @@ class OBJECT_MT_shadow_linking_context_menu(Menu):
 
 class OBJECT_PT_shadow_linking(ObjectButtonsPanel, Panel):
     bl_label = "Shadow Linking"
+    blended_min_tier = 1
     bl_parent_id = "OBJECT_PT_shading"
     bl_context = "object"
     bl_options = {'DEFAULT_CLOSED'}
@@ -585,6 +604,7 @@ class OBJECT_PT_shadow_linking(ObjectButtonsPanel, Panel):
 
 class OBJECT_PT_shadow_terminator(ObjectButtonsPanel, Panel):
     bl_label = "Shadow Terminator"
+    blended_min_tier = 1
     bl_parent_id = "OBJECT_PT_shading"
     bl_context = "object"
     COMPAT_ENGINES = {
