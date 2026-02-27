@@ -76,6 +76,11 @@ jobs:
       run: |
         set -e
 
+        # .gitmodules sets "update = none" for all library submodules so
+        # that Blender's make_update.py can manage them manually. Override
+        # this for CI so git submodule update actually clones the repo.
+        git config submodule."$LIB_DIR".update checkout
+
         # Stage 1: clone submodule metadata (skip LFS smudge to avoid
         # downloading binaries during clone — they are pulled separately).
         GIT_LFS_SKIP_SMUDGE=1 git submodule update --init --progress $LIB_DIR
