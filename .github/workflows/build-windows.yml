@@ -60,6 +60,23 @@ jobs:
         git lfs install
         git lfs version
 
+    - name: Pull source LFS files
+      shell: bash
+      working-directory: ${{ env.SRC_DIR }}
+      run: |
+        set -e
+
+        # The checkout used lfs:false for speed. Pull LFS files now so
+        # that assets like startup.blend are real files, not pointers.
+        # Add projects.blender.org as a fallback in case the GitHub fork
+        # doesn't host the LFS objects.
+        git config lfs.remote.searchall true
+        if ! git remote get-url lfs-fallback >/dev/null 2>&1; then
+          git remote add lfs-fallback "https://projects.blender.org/blender/blender.git"
+          git config "remote.lfs-fallback.pushurl" "no_push"
+        fi
+        git lfs pull
+
     - name: Restore library cache
       id: cache-libs
       uses: actions/cache@v4
