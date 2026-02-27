@@ -71,16 +71,30 @@ jobs:
 
     - name: Fetch precompiled libraries
       if: steps.cache-libs.outputs.cache-hit != 'true'
-      shell: cmd
+      shell: bash
       working-directory: ${{ env.SRC_DIR }}
       run: |
-        set GIT_LFS_SKIP_SMUDGE=1
-        git submodule update --init --depth=1 %LIB_DIR%
-        if errorlevel 1 exit /b 1
-        set GIT_LFS_SKIP_SMUDGE=
-        cd %LIB_DIR%
+        set -e
+
+        # Stage 1: clone submodule metadata (skip LFS smudge to avoid
+        # downloading binaries during clone — they are pulled separately).
+        GIT_LFS_SKIP_SMUDGE=1 git submodule update --init --progress $LIB_DIR
+
+        cd "$LIB_DIR"
+
+        # Configure LFS to search all remotes. When cloned from a fork
+        # or mirror the default remote may not host the LFS objects.
+        git config lfs.remote.searchall true
+
+        # Add projects.blender.org as an LFS fallback remote so that
+        # binary objects can be fetched even if the origin doesn't serve them.
+        if ! git remote get-url lfs-fallback >/dev/null 2>&1; then
+          git remote add lfs-fallback "https://projects.blender.org/blender/lib-windows_x64.git"
+          git config "remote.lfs-fallback.pushurl" "no_push"
+        fi
+
+        # Stage 2: pull the actual LFS binary files.
         git lfs pull
-        if errorlevel 1 exit /b 1
 
     # ── Toolchain ─────────────────────────────────────────────
     - name: Setup MSVC 2022
