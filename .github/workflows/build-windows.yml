@@ -42,6 +42,11 @@ jobs:
         lfs: false
         submodules: false
 
+    - name: Compute submodule hash
+      id: submod-hash
+      shell: bash
+      run: echo "hash=$(sha256sum src/.gitmodules | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
     - name: Move source to short path
       shell: cmd
       run: move src %SRC_DIR%
@@ -56,7 +61,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ${{ env.SRC_DIR }}/lib/windows_x64
-        key: blender-libs-win-x64-${{ hashFiles('src/.gitmodules') }}
+        key: blender-libs-win-x64-${{ steps.submod-hash.outputs.hash }}
         restore-keys: blender-libs-win-x64-
       continue-on-error: true
 
