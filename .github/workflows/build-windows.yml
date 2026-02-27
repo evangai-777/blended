@@ -8,6 +8,8 @@ on:
   push:
     branches: [main, master]
     tags: ['v*']
+  pull_request:
+    branches: [main, master]
   workflow_dispatch:
     inputs:
       build_type:
@@ -54,7 +56,9 @@ jobs:
     # ── Precompiled libraries ─────────────────────────────────
     - name: Setup Git LFS
       shell: cmd
-      run: git lfs install
+      run: |
+        git lfs install
+        git lfs version
 
     - name: Restore library cache
       id: cache-libs
@@ -72,15 +76,20 @@ jobs:
       run: |
         set GIT_LFS_SKIP_SMUDGE=1
         git submodule update --init --depth=1 %LIB_DIR%
+        if errorlevel 1 exit /b 1
         set GIT_LFS_SKIP_SMUDGE=
         cd %LIB_DIR%
         git lfs pull
+        if errorlevel 1 exit /b 1
 
     # ── Toolchain ─────────────────────────────────────────────
     - name: Setup MSVC 2022
       uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: x64
+
+    - name: Install Ninja
+      uses: seanmiddleditch/gha-setup-ninja@v5
 
     # ── Configure ─────────────────────────────────────────────
     - name: CMake configure
@@ -103,18 +112,37 @@ jobs:
       id: package
       shell: pwsh
       run: |
+        $ErrorActionPreference = 'Stop'
+
         # Read version from source header
         $header = Get-Content "$env:SRC_DIR/source/blender/blenkernel/BKE_blender_version.h" -Raw
-        $ver    = [regex]::Match($header, '#define BLENDER_VERSION (\d+)').Groups[1].Value
-        $patch  = [regex]::Match($header, '#define BLENDER_VERSION_PATCH (\d+)').Groups[1].Value
-        $major  = [math]::Floor([int]$ver / 100)
-        $minor  = [int]$ver % 100
+        $verMatch   = [regex]::Match($header, '#define BLENDER_VERSION (\d+)')
+        $patchMatch = [regex]::Match($header, '#define BLENDER_VERSION_PATCH (\d+)')
+
+        if (-not $verMatch.Success) {
+          Write-Error "Failed to parse BLENDER_VERSION from version header"
+          exit 1
+        }
+
+        $ver   = $verMatch.Groups[1].Value
+        $patch = if ($patchMatch.Success) { $patchMatch.Groups[1].Value } else { "0" }
+        $major = [math]::Floor([int]$ver / 100)
+        $minor = [int]$ver % 100
 
         $name = "Blended-$major.$minor.$patch-windows-x64"
         $zip  = "$name.zip"
 
+        Write-Host "Version: $major.$minor.$patch"
+
+        # Verify install directory exists
+        $installDir = "$env:BUILD_DIR\bin"
+        if (-not (Test-Path $installDir)) {
+          Write-Error "Install directory not found: $installDir"
+          exit 1
+        }
+
         # Rename install dir and zip it
-        Rename-Item "$env:BUILD_DIR\bin" $name
+        Rename-Item $installDir $name
         Compress-Archive -Path "$env:BUILD_DIR\$name" -DestinationPath "$env:BUILD_DIR\$zip"
 
         # Export for later steps
