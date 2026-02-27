@@ -25,6 +25,9 @@ def apply_tier_defaults(scene=None):
     eevee = scene.eevee
     render = scene.render
 
+    prefs = bpy.context.preferences
+    view = prefs.view
+
     if tier == TIER_SIMPLE:
         # EEVEE is already the default engine - ensure it stays.
         if render.engine not in {'BLENDER_EEVEE', 'BLENDER_EEVEE_NEXT'}:
@@ -37,11 +40,16 @@ def apply_tier_defaults(scene=None):
         # Enable common quality settings.
         eevee.use_gtao = True
 
-    elif tier == TIER_STANDARD:
-        # Standard tier: balanced defaults, no forced overrides.
-        pass
+        # Simple: hide Python tooltips to reduce clutter.
+        view.show_tooltips_python = False
 
-    # Advanced tier: no overrides, full user control.
+    elif tier == TIER_STANDARD:
+        # Standard: Python tooltips off by default (less noise).
+        view.show_tooltips_python = False
+
+    else:
+        # Advanced: enable Python tooltips for scripting users.
+        view.show_tooltips_python = True
 
 
 @bpy.app.handlers.persistent
