@@ -68,14 +68,12 @@ jobs:
 
         # The checkout used lfs:false for speed. Pull LFS files now so
         # that assets like startup.blend are real files, not pointers.
-        # Add projects.blender.org as a fallback in case the GitHub fork
-        # doesn't host the LFS objects.
-        git config lfs.remote.searchall true
-        if ! git remote get-url lfs-fallback >/dev/null 2>&1; then
-          git remote add lfs-fallback "https://projects.blender.org/blender/blender.git"
-          git config "remote.lfs-fallback.pushurl" "no_push"
-        fi
-        git lfs pull
+        # The GitHub fork doesn't host LFS objects — they live on
+        # projects.blender.org. Fetch directly from upstream.
+        git remote add lfs-fallback "https://projects.blender.org/blender/blender.git"
+        git config "remote.lfs-fallback.pushurl" "no_push"
+        git lfs fetch lfs-fallback
+        git lfs checkout
 
     - name: Restore library cache
       id: cache-libs
@@ -104,19 +102,10 @@ jobs:
 
         cd "$LIB_DIR"
 
-        # Configure LFS to search all remotes. When cloned from a fork
-        # or mirror the default remote may not host the LFS objects.
-        git config lfs.remote.searchall true
-
-        # Add projects.blender.org as an LFS fallback remote so that
-        # binary objects can be fetched even if the origin doesn't serve them.
-        if ! git remote get-url lfs-fallback >/dev/null 2>&1; then
-          git remote add lfs-fallback "https://projects.blender.org/blender/lib-windows_x64.git"
-          git config "remote.lfs-fallback.pushurl" "no_push"
-        fi
-
         # Stage 2: pull the actual LFS binary files.
-        git lfs pull
+        # Origin already points to projects.blender.org (from .gitmodules)
+        # so LFS objects are served from there directly.
+        git lfs pull origin
 
     # ── Toolchain ─────────────────────────────────────────────
     - name: Setup MSVC 2022
