@@ -220,32 +220,25 @@ static const EnumPropertyItem *rna_Area_ui_type_itemf(bContext *C,
 
     /* Blended: Filter editor types based on UI tier. */
     if (U.ui_tier == USER_UI_TIER_SIMPLE) {
-      /* Simple tier: only essential editors. */
-      if (!ELEM(item_from->value,
-                SPACE_VIEW3D,
-                SPACE_PROPERTIES,
-                SPACE_OUTLINER,
-                SPACE_FILE,
-                SPACE_IMAGE,
-                SPACE_USERPREF,
-                0 /* heading items */))
+      /* Simple tier: hide niche editors via blocklist. */
+      if (ELEM(item_from->value,
+               SPACE_SEQ,         /* Video Sequencer */
+               SPACE_CONSOLE,     /* Python Console */
+               SPACE_SPREADSHEET, /* Spreadsheet */
+               SPACE_TEXT,        /* Text Editor */
+               SPACE_INFO,        /* Info */
+               SPACE_CLIP,        /* Movie Clip Editor */
+               SPACE_NLA,         /* NLA Editor */
+               SPACE_GRAPH))      /* Graph Editor */
       {
-        /* Allow headings (identifier[0] == '\0') to pass through. */
         if (item_from->identifier[0] != '\0') {
           continue;
         }
       }
     }
     else if (U.ui_tier == USER_UI_TIER_STANDARD) {
-      /* Standard tier: common editors, hide niche ones. */
-      if (ELEM(item_from->value,
-               SPACE_SEQ,
-               SPACE_CLIP,
-               SPACE_TEXT,
-               SPACE_CONSOLE,
-               SPACE_INFO,
-               SPACE_SPREADSHEET))
-      {
+      /* Standard tier: hide Video Sequencer only. */
+      if (ELEM(item_from->value, SPACE_SEQ)) {
         continue;
       }
     }
@@ -256,6 +249,20 @@ static const EnumPropertyItem *rna_Area_ui_type_itemf(bContext *C,
     if (C && st && st->space_subtype_item_extend != nullptr) {
       st->space_subtype_item_extend(C, &item, &totitem);
       while (totitem_prev < totitem) {
+        /* Blended: Filter node editor subtypes by tier. */
+        if (item_from->value == SPACE_NODE && U.ui_tier == USER_UI_TIER_SIMPLE) {
+          const char *subtype_id = item[totitem_prev].identifier;
+          /* Simple tier: only Shader Editor, hide Compositor and Geometry Nodes. */
+          if (STREQ(subtype_id, "CompositorNodeTree") ||
+              STREQ(subtype_id, "GeometryNodeTree"))
+          {
+            totitem--;
+            for (int i = totitem_prev; i < totitem; i++) {
+              item[i] = item[i + 1];
+            }
+            continue;
+          }
+        }
         item[totitem_prev++].value |= item_from->value << 16;
       }
     }

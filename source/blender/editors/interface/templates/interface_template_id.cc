@@ -1499,6 +1499,14 @@ static void template_ID_tabs(const bContext *C,
   const uiStyle *style = style_get_dpi();
 
   for (ID *id : BKE_id_ordered_list(template_id.idlb)) {
+    /* Blended: Filter workspace tabs by UI tier. */
+    if (template_id.idcode == ID_WS) {
+      WorkSpace *ws = reinterpret_cast<WorkSpace *>(id);
+      if (ws->blended_min_tier > U.ui_tier) {
+        continue;
+      }
+    }
+
     const int name_width = fontstyle_string_width(&style->widget, id->name + 2);
     const int but_width = name_width + UI_UNIT_X;
 

@@ -179,6 +179,10 @@ struct WorkSpace {
   /** Number for workspace tab reordering in the UI. */
   int order = 0;
 
+  /** Blended: Minimum UI tier required to show this workspace tab.
+   *  0 = Simple (always visible), 1 = Standard, 2 = Advanced. */
+  int blended_min_tier = 0;
+
   /** Info text from modal operators (runtime). */
   bke::WorkSpaceRuntime *runtime = nullptr;
 

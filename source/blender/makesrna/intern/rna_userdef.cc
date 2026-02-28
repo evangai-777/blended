@@ -302,6 +302,14 @@ static void rna_userdef_update(Main * /*bmain*/, Scene * /*scene*/, PointerRNA *
   USERDEF_TAG_DIRTY;
 }
 
+/* Blended: Dedicated update callback for UI tier changes. */
+static void rna_userdef_ui_tier_update(Main * /*bmain*/, Scene * /*scene*/, PointerRNA * /*ptr*/)
+{
+  WM_main_add_notifier(NC_WINDOW, nullptr);
+  WM_main_add_notifier(NC_SCREEN | NA_EDITED, nullptr);
+  USERDEF_TAG_DIRTY;
+}
+
 static void rna_userdef_theme_update(Main *bmain, Scene *scene, PointerRNA *ptr)
 {
   /* Recreate gizmos when changing themes. */
@@ -5069,7 +5077,7 @@ static void rna_def_userdef_view(BlenderRNA *brna)
         "Interface Tier",
         "Controls how much of the interface is visible "
         "(Simple for beginners, Standard for everyday use, Advanced for full power)");
-    RNA_def_property_update(prop, 0, "rna_userdef_update");
+    RNA_def_property_update(prop, 0, "rna_userdef_ui_tier_update");
   }
 
   prop = RNA_def_property(srna, "show_area_handle", PROP_BOOLEAN, PROP_NONE);
