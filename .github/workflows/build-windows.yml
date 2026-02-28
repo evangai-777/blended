@@ -6,10 +6,7 @@ name: Build Blended (Windows)
 
 on:
   push:
-    branches: [main, master]
     tags: ['v*']
-  pull_request:
-    branches: [main, master]
   workflow_dispatch:
     inputs:
       build_type:
