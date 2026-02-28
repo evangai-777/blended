@@ -510,6 +510,17 @@ static void rna_def_workspace(BlenderRNA *brna)
   RNA_def_property_flag(prop, PROP_CONTEXT_UPDATE);
   RNA_def_property_update(prop, NC_WINDOW, "rna_workspace_sync_scene_time_update");
 
+  /* Blended: Minimum tier for workspace visibility. */
+  prop = RNA_def_property(srna, "blended_min_tier", PROP_INT, PROP_NONE);
+  RNA_def_property_int_sdna(prop, nullptr, "blended_min_tier");
+  RNA_def_property_range(prop, 0, 2);
+  RNA_def_property_ui_text(
+      prop,
+      "Minimum Tier",
+      "Minimum Blended UI tier required to show this workspace tab "
+      "(0=Simple, 1=Standard, 2=Advanced)");
+  RNA_def_property_update(prop, NC_WORKSPACE, nullptr);
+
   RNA_api_workspace(srna);
 }
 
