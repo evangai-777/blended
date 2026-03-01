@@ -183,6 +183,8 @@ struct WorkSpace {
    *  0 = Simple (always visible), 1 = Standard, 2 = Advanced. */
   int blended_min_tier = 0;
 
+  char _pad1[4] = {};
+
   /** Info text from modal operators (runtime). */
   bke::WorkSpaceRuntime *runtime = nullptr;
 
