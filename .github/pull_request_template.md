@@ -1,4 +1,15 @@
-This repository is only used as a mirror. Blender development happens on projects.blender.org.
+## Description
 
-To get started with contributing code, please see:
-https://developer.blender.org/docs/handbook/contributing/
+<!-- What does this PR do? Why is it needed? -->
+
+## Related Issue
+
+<!-- Link to the GitHub issue this addresses, e.g. Fixes #123 -->
+
+## Testing
+
+<!-- How was this tested? What should reviewers verify? -->
+
+- [ ] Builds without errors
+- [ ] Tested in Blended UI
+- [ ] No regressions in existing functionality

@@ -65,7 +65,7 @@ def _write_cache(data):
 
 
 def _parse_version(version_string):
-    """Parse a version string like 'v5.2.0' or '5.2.0' into a tuple."""
+    """Parse a version string like 'v1.0.0' or '1.0.0' into a tuple."""
     version_string = version_string.lstrip("v").strip()
     parts = []
     for part in version_string.split("."):

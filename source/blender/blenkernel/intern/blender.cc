@@ -98,7 +98,7 @@ void BKE_blender_free()
 /** \name Blender Version Access
  * \{ */
 
-static char blender_version_string[48] = "";
+static char blender_version_string[96] = "";
 
 /* Only includes patch if non-zero. */
 static char blender_version_string_compact[48] = "";
@@ -107,41 +107,39 @@ static void blender_version_init()
 {
   const char *version_cycle = "";
   const char *version_cycle_compact = "";
-  if (STREQ(STRINGIFY(BLENDER_VERSION_CYCLE), "alpha")) {
+  if (STREQ(STRINGIFY(BLENDED_VERSION_CYCLE), "alpha")) {
     version_cycle = " Alpha";
     version_cycle_compact = " a";
   }
-  else if (STREQ(STRINGIFY(BLENDER_VERSION_CYCLE), "beta")) {
+  else if (STREQ(STRINGIFY(BLENDED_VERSION_CYCLE), "beta")) {
     version_cycle = " Beta";
     version_cycle_compact = " b";
   }
-  else if (STREQ(STRINGIFY(BLENDER_VERSION_CYCLE), "rc")) {
+  else if (STREQ(STRINGIFY(BLENDED_VERSION_CYCLE), "rc")) {
     version_cycle = " Release Candidate";
     version_cycle_compact = " RC";
   }
-  else if (STREQ(STRINGIFY(BLENDER_VERSION_CYCLE), "release")) {
+  else if (STREQ(STRINGIFY(BLENDED_VERSION_CYCLE), "release")) {
     version_cycle = "";
     version_cycle_compact = "";
   }
   else {
-    BLI_assert_msg(0, "Invalid Blender version cycle");
+    BLI_assert_msg(0, "Invalid Blended version cycle");
   }
 
-  const char *version_suffix = BKE_blender_version_is_lts() ? " LTS" : "";
-
   SNPRINTF_UTF8(blender_version_string,
-                BLENDED_VERSION_STRING " %d.%01d.%d%s%s",
-                BLENDER_VERSION / 100,
-                BLENDER_VERSION % 100,
-                BLENDER_VERSION_PATCH,
-                version_suffix,
-                version_cycle);
+                BLENDED_VERSION_STRING " %d.%d.%d%s \xe2\x80\x94 Based on Blender %s",
+                BLENDED_VERSION_MAJOR,
+                BLENDED_VERSION_MINOR,
+                BLENDED_VERSION_PATCH,
+                version_cycle,
+                BLENDED_BASED_ON_BLENDER);
 
   SNPRINTF_UTF8(blender_version_string_compact,
-                BLENDED_VERSION_STRING " %d.%01d.%d%s",
-                BLENDER_VERSION / 100,
-                BLENDER_VERSION % 100,
-                BLENDER_VERSION_PATCH,
+                BLENDED_VERSION_STRING " %d.%d.%d%s",
+                BLENDED_VERSION_MAJOR,
+                BLENDED_VERSION_MINOR,
+                BLENDED_VERSION_PATCH,
                 version_cycle_compact);
 }
 

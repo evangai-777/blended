@@ -11,7 +11,7 @@ Blended
 
 Blended is a fork of [Blender](https://www.blender.org) that adds a tiered UI complexity system, smart defaults, and built-in update notifications. The full power of Blender is still there — Blended just makes it easier to approach by letting users choose how much of it they see.
 
-Based on Blender 5.2 (alpha).
+Blended 1.0.0 — Based on Blender 5.2.
 
 What's Different from Blender
 -----------------------------
@@ -57,6 +57,11 @@ Building from Source
 Blended builds the same way as Blender. Follow the standard Blender build instructions:
 
 - [Build Instructions](https://developer.blender.org/docs/handbook/building_blender/)
+
+Syncing Upstream Changes
+------------------------
+
+See [UPSTREAM_SYNC.md](../UPSTREAM_SYNC.md) for how to merge new Blender releases into Blended.
 
 Upstream Blender Resources
 --------------------------

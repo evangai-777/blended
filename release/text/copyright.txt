@@ -1,6 +1,9 @@
 
-  This version of Blender has been originally released at www.blender.org.
-  It is subject to the GNU GPL license, which is part of this download.
+  Blended is a derivative work of Blender.
+  Source code: https://github.com/EvangAI-777/Blended
+
+  The original Blender was released at www.blender.org.
+  This software is subject to the GNU GPL license, which is part of this download.
 
     Blender, the free and open source 3D creation suite
     Copyright (C) 2023  Blender Foundation

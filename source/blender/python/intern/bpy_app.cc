@@ -84,7 +84,7 @@ static PyTypeObject BlenderAppType;
 
 static PyStructSequence_Field app_info_fields[] = {
     {"version",
-     "The Blender version as a tuple of 3 numbers (major, minor, micro). eg. (4, 3, 1)\n"
+     "The Blended version as a tuple of 3 numbers (major, minor, patch). eg. (1, 0, 0)\n"
      "\n"
      ":type: tuple[int, int, int]\n"},
     {"version_file",
@@ -220,12 +220,12 @@ static PyObject *make_app_info()
 #define SetObjItem(obj) PyStructSequence_SET_ITEM(app_info, pos++, obj)
 
   SetObjItem(
-      PyC_Tuple_Pack_I32({BLENDER_VERSION / 100, BLENDER_VERSION % 100, BLENDER_VERSION_PATCH}));
+      PyC_Tuple_Pack_I32({BLENDED_VERSION_MAJOR, BLENDED_VERSION_MINOR, BLENDED_VERSION_PATCH}));
   SetObjItem(PyC_Tuple_Pack_I32(
       {BLENDER_FILE_VERSION / 100, BLENDER_FILE_VERSION % 100, BLENDER_FILE_SUBVERSION}));
   SetStrItem(BKE_blender_version_string());
 
-  SetStrItem(STRINGIFY(BLENDER_VERSION_CYCLE));
+  SetStrItem(STRINGIFY(BLENDED_VERSION_CYCLE));
   SetObjItem(PyBool_FromLong(G.background));
 #ifdef WITH_PYTHON_MODULE
   SetObjItem(Py_NewRef(Py_True));
