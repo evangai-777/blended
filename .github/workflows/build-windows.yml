@@ -137,20 +137,20 @@ jobs:
       run: |
         $ErrorActionPreference = 'Stop'
 
-        # Read version from source header
+        # Read Blended version from source header
         $header = Get-Content "$env:SRC_DIR/source/blender/blenkernel/BKE_blender_version.h" -Raw
-        $verMatch   = [regex]::Match($header, '#define BLENDER_VERSION (\d+)')
-        $patchMatch = [regex]::Match($header, '#define BLENDER_VERSION_PATCH (\d+)')
+        $majorMatch = [regex]::Match($header, '#define BLENDED_VERSION_MAJOR (\d+)')
+        $minorMatch = [regex]::Match($header, '#define BLENDED_VERSION_MINOR (\d+)')
+        $patchMatch = [regex]::Match($header, '#define BLENDED_VERSION_PATCH (\d+)')
 
-        if (-not $verMatch.Success) {
-          Write-Error "Failed to parse BLENDER_VERSION from version header"
+        if (-not $majorMatch.Success) {
+          Write-Error "Failed to parse BLENDED_VERSION_MAJOR from version header"
           exit 1
         }
 
-        $ver   = $verMatch.Groups[1].Value
+        $major = $majorMatch.Groups[1].Value
+        $minor = if ($minorMatch.Success) { $minorMatch.Groups[1].Value } else { "0" }
         $patch = if ($patchMatch.Success) { $patchMatch.Groups[1].Value } else { "0" }
-        $major = [math]::Floor([int]$ver / 100)
-        $minor = [int]$ver % 100
 
         $name = "Blended-$major.$minor.$patch-windows-x64"
         $zip  = "$name.zip"

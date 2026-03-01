@@ -32,6 +32,13 @@ namespace blender {
 #define BLENDED_VERSION_STRING "Blended"
 #define BLENDED_TAGLINE "Blender, simplified"
 
+/* Blended own version (independent of Blender file format). */
+#define BLENDED_VERSION_MAJOR 1
+#define BLENDED_VERSION_MINOR 0
+#define BLENDED_VERSION_PATCH 0
+#define BLENDED_VERSION_CYCLE release
+#define BLENDED_BASED_ON_BLENDER "5.2"
+
 /* Blender file format version. */
 #define BLENDER_FILE_VERSION BLENDER_VERSION
 #define BLENDER_FILE_SUBVERSION 5

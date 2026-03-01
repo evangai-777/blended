@@ -1099,15 +1099,15 @@ class WM_OT_url_open_preset(Operator):
         return url_from_blender()
 
     def _url_from_release_notes(self, _context):
-        return "https://www.blender.org/download/releases/{:d}-{:d}/".format(*bpy.app.version[:2])
+        return "https://www.blender.org/download/releases/{:d}-{:d}/".format(*bpy.app.version_file[:2])
 
     def _url_from_manual(self, _context):
         return "https://docs.blender.org/manual/{:s}/{:d}.{:d}/".format(
-            bpy.utils.manual_language_code(), *bpy.app.version[:2],
+            bpy.utils.manual_language_code(), *bpy.app.version_file[:2],
         )
 
     def _url_from_api(self, _context):
-        return "https://docs.blender.org/api/{:d}.{:d}/".format(*bpy.app.version[:2])
+        return "https://docs.blender.org/api/{:d}.{:d}/".format(*bpy.app.version_file[:2])
 
     # This list is: (enum_item, url) pairs.
     # Allow dynamically extending.
@@ -1356,7 +1356,7 @@ class WM_OT_doc_view(Operator):
     bl_label = "View Documentation"
 
     doc_id: doc_id
-    _prefix = "https://docs.blender.org/api/{:d}.{:d}".format(*bpy.app.version[:2])
+    _prefix = "https://docs.blender.org/api/{:d}.{:d}".format(*bpy.app.version_file[:2])
 
     def execute(self, _context):
         url = _wm_doc_get_id(self.doc_id, do_url=True, url_prefix=self._prefix, report=self.report)
