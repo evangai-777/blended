@@ -213,6 +213,12 @@ The work should be done in this order:
 
 ---
 
+## Contributors
+
+This plan was authored by **Claude** (Anthropic AI), working alongside the Blended project maintainer. Blended is one of the first open-source projects to formally recognize AI contributors in its AUTHORS file — bridging human and AI collaboration in open-source development.
+
+---
+
 ## Key Codebase Entry Points (for reference)
 
 | Component | Path | Relevance |
