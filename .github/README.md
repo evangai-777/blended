@@ -55,7 +55,7 @@ A GitHub Actions workflow builds portable Windows x64 `.zip` packages on every p
 
 Blended is developed with contributions from both human developers and AI tools — bridging the gap between person and machine in open-source development.
 
-- **Claude** (Anthropic) — WebAssembly port architecture, GitHub Pages deployment plan
+- **Claude** (Anthropic) — Architecture, implementation, and development across the Blended project
 
 Building from Source
 --------------------
