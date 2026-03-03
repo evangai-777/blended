@@ -1060,7 +1060,7 @@ function(data_to_c
 
   add_custom_command(
     OUTPUT ${file_to}
-    COMMAND "$<TARGET_FILE:datatoc>" ${file_from} ${file_to}
+    COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} "$<TARGET_FILE:datatoc>" ${file_from} ${file_to}
     DEPENDS ${file_from} datatoc)
 
   set_source_files_properties(${file_to} PROPERTIES GENERATED TRUE)
@@ -1086,7 +1086,7 @@ function(data_to_c_simple
 
   add_custom_command(
     OUTPUT  ${_file_to}
-    COMMAND "$<TARGET_FILE:datatoc>" ${_file_from} ${_file_to}
+    COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} "$<TARGET_FILE:datatoc>" ${_file_from} ${_file_to}
     DEPENDS ${_file_from} datatoc)
 
   set_source_files_properties(${_file_to} PROPERTIES GENERATED TRUE)
@@ -1123,8 +1123,8 @@ function(glsl_to_c
 
   add_custom_command(
     OUTPUT  ${_file_to} ${_file_meta} ${_file_info}
-    COMMAND "$<TARGET_FILE:shader_tool>" ${_file_from} ${_file_tmp} ${_file_meta} ${_file_info} ${_inc_list}
-    COMMAND "$<TARGET_FILE:datatoc>" ${_file_tmp} ${_file_to}
+    COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} "$<TARGET_FILE:shader_tool>" ${_file_from} ${_file_tmp} ${_file_meta} ${_file_info} ${_inc_list}
+    COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} "$<TARGET_FILE:datatoc>" ${_file_tmp} ${_file_to}
     DEPENDS ${_file_from} datatoc shader_tool)
 
   set_source_files_properties(${_file_tmp} PROPERTIES GENERATED TRUE)
