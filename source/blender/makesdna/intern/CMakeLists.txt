@@ -101,6 +101,7 @@ add_custom_command(
     ${CMAKE_CURRENT_BINARY_DIR}/dna_verify.cc
   COMMAND
     ${CMAKE_COMMAND} -E env ${PLATFORM_ENV_BUILD}
+    ${CMAKE_CROSSCOMPILING_EMULATOR}
     "$<TARGET_FILE:makesdna>"
     ${CMAKE_CURRENT_BINARY_DIR}/dna.cc
     ${CMAKE_CURRENT_BINARY_DIR}/dna_type_offsets.h
