@@ -491,7 +491,11 @@ endif()
 #
 
 if(TARGET fmt::fmt)
-  add_library(bf::dependencies::fmt ALIAS fmt::fmt)
+  # fmt::fmt may itself be an ALIAS (e.g. from FetchContent), so we cannot
+  # create an alias-of-alias. Use an INTERFACE library that links to it.
+  add_library(bf_deps_fmt INTERFACE)
+  target_link_libraries(bf_deps_fmt INTERFACE fmt::fmt)
+  add_library(bf::dependencies::fmt ALIAS bf_deps_fmt)
 else()
   # Emscripten / minimal builds: fmt not available from precompiled libs.
   # Blender bundles fmt in extern/ — it will be built from source.
