@@ -91,6 +91,8 @@ set(WITH_X11_XFIXES     OFF CACHE BOOL "" FORCE)
 set(WITH_GHOST_DEBUG    OFF CACHE BOOL "" FORCE)
 
 # Emscripten's only windowing option is SDL2 — enforce it.
+# WITH_SDL must also be ON (CMakeLists.txt gates GHOST_SDL behind it).
+set(WITH_SDL            ON  CACHE BOOL "" FORCE)
 set(WITH_GHOST_SDL      ON  CACHE BOOL "" FORCE)
 
 # ── Disable subsystems that don't cross-compile to Emscripten ────
