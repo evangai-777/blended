@@ -79,7 +79,16 @@ endif()
 
 add_library(bf_deps_eigen INTERFACE)
 add_library(bf::dependencies::eigen ALIAS bf_deps_eigen)
-target_link_libraries(bf_deps_eigen INTERFACE Eigen3::Eigen)
+
+if(TARGET Eigen3::Eigen)
+  target_link_libraries(bf_deps_eigen INTERFACE Eigen3::Eigen)
+else()
+  # Emscripten / minimal builds: Eigen3 not available from precompiled libs.
+  # Eigen headers may be provided by the system or emscripten-ports.
+  if(DEFINED EIGEN3_INCLUDE_DIRS)
+    target_include_directories(bf_deps_eigen SYSTEM INTERFACE ${EIGEN3_INCLUDE_DIRS})
+  endif()
+endif()
 
 if(WITH_TBB)
   target_compile_definitions(bf_deps_eigen INTERFACE EIGEN_HAS_TBB)
