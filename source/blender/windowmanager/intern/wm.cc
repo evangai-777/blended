@@ -15,6 +15,10 @@
 
 #include <cstring>
 
+#ifdef __EMSCRIPTEN__
+#  include <emscripten.h>
+#endif
+
 #include "DNA_ID_enums.h"
 #include "DNA_layer_types.h"
 #include "DNA_windowmanager_types.h"
@@ -593,12 +597,41 @@ void wm_close_and_free(bContext *C, wmWindowManager *wm)
   MEM_delete(wm->runtime);
 }
 
+#ifdef __EMSCRIPTEN__
+/**
+ * Single iteration of the main loop, called by emscripten_set_main_loop_arg().
+ * This replaces the blocking while(true) loop for browser execution.
+ */
+static void wm_main_loop_iteration(void *arg)
+{
+  bContext *C = static_cast<bContext *>(arg);
+
+  /* Get events from ghost, handle window events, add to window queues. */
+  wm_window_events_process(C);
+
+  /* Per window, all events to the window, screen, area and region handlers. */
+  wm_event_do_handlers(C);
+
+  /* Events have left notes about changes, we handle and cache it. */
+  wm_event_do_notifiers(C);
+
+  /* Execute cached changes draw. */
+  wm_draw_update(C);
+}
+#endif
+
 void WM_main(bContext *C)
 {
   /* Single refresh before handling events.
    * This ensures we don't run operators before the depsgraph has been evaluated. */
   wm_event_do_refresh_wm_and_depsgraph(C);
 
+#ifdef __EMSCRIPTEN__
+  /* Emscripten requires a non-blocking callback-driven main loop.
+   * 0 = use requestAnimationFrame (typically 60 fps, vsync'd).
+   * true = simulate infinite loop (keeps the call stack alive). */
+  emscripten_set_main_loop_arg(wm_main_loop_iteration, C, 0, true);
+#else
   while (true) {
 
     /* Get events from ghost, handle window events, add to window queues. */
@@ -613,6 +646,7 @@ void WM_main(bContext *C)
     /* Execute cached changes draw. */
     wm_draw_update(C);
   }
+#endif
 }
 
 }  // namespace blender

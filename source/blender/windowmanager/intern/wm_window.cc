@@ -2214,10 +2214,13 @@ void wm_window_events_process(const bContext *C)
   GPU_render_end();
 
   /* Skip sleeping when simulating events so tests don't idle unnecessarily as simulated
-   * events are typically generated from a timer that runs in the main loop. */
+   * events are typically generated from a timer that runs in the main loop.
+   * Also skip on Emscripten — the browser manages frame timing via requestAnimationFrame. */
+#ifndef __EMSCRIPTEN__
   if ((has_event == false) && (sleep_us != 0) && !(G.f & G_FLAG_EVENT_SIMULATE)) {
     BLI_time_sleep_precise_us(sleep_us);
   }
+#endif
 }
 
 /** \} */

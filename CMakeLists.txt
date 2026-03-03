@@ -1574,11 +1574,14 @@ endif()
 # ----------------------------------------------------------------------------
 # Main Platform Checks
 #
+# - EMSCRIPTEN (WebAssembly — must be checked first, as EMSCRIPTEN also sets UNIX)
 # - UNIX
 # - WIN32
 # - APPLE
 
-if(UNIX AND NOT APPLE)
+if(EMSCRIPTEN)
+  include(platform_emscripten)
+elseif(UNIX AND NOT APPLE)
   include(platform_unix)
 elseif(WIN32)
   include(platform_win32)

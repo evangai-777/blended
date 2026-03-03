@@ -9,6 +9,11 @@
 #include <cassert>
 #include <stdexcept>
 
+#ifdef __EMSCRIPTEN__
+#  include <emscripten.h>
+#  include <emscripten/html5.h>
+#endif
+
 #include "GHOST_ContextSDL.hh"
 #include "GHOST_SystemSDL.hh"
 #include "GHOST_WindowSDL.hh"
@@ -708,6 +713,27 @@ bool GHOST_SystemSDL::processEvents(bool waitForEvent)
 
   bool anyProcessed = false;
 
+#ifdef __EMSCRIPTEN__
+  /* Emscripten cannot use blocking waits — the browser event loop must stay
+   * responsive.  Always use non-blocking poll regardless of waitForEvent. */
+  (void)waitForEvent;
+
+  GHOST_TimerManager *timerMgr = getTimerManager();
+
+  if (timerMgr->fireTimers(getMilliSeconds())) {
+    anyProcessed = true;
+  }
+
+  SDL_Event sdl_event;
+  while (SDL_PollEvent(&sdl_event)) {
+    processEvent(&sdl_event);
+    anyProcessed = true;
+  }
+
+  if (generateWindowExposeEvents()) {
+    anyProcessed = true;
+  }
+#else
   do {
     GHOST_TimerManager *timerMgr = getTimerManager();
 
@@ -742,6 +768,7 @@ bool GHOST_SystemSDL::processEvents(bool waitForEvent)
       anyProcessed = true;
     }
   } while (waitForEvent && !anyProcessed);
+#endif
 
   return anyProcessed;
 }
