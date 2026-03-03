@@ -47,7 +47,7 @@ set(WITH_COREAUDIO           OFF CACHE BOOL "" FORCE)
 set(WITH_JACK                OFF CACHE BOOL "" FORCE)
 set(WITH_OPENAL              OFF CACHE BOOL "" FORCE)
 set(WITH_PULSEAUDIO          OFF CACHE BOOL "" FORCE)
-set(WITH_SDL                 OFF CACHE BOOL "" FORCE)  # SDL *audio* — not GHOST_SDL
+set(WITH_SDL                 ON  CACHE BOOL "" FORCE)  # Required by WITH_GHOST_SDL
 set(WITH_WASAPI              OFF CACHE BOOL "" FORCE)
 set(WITH_RUBBERBAND          OFF CACHE BOOL "" FORCE)
 
