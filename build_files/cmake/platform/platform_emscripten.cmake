@@ -92,6 +92,7 @@ FetchContent_Declare(
   fmt
   URL https://github.com/fmtlib/fmt/archive/refs/tags/12.1.0.tar.gz
   URL_HASH SHA256=ea7de4299689e12b6dddd392f9896f08fb0777ac7168897a244a6d6085043fea
+  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 set(FMT_INSTALL OFF CACHE BOOL "" FORCE)
 set(FMT_TEST OFF CACHE BOOL "" FORCE)
@@ -99,22 +100,24 @@ set(FMT_DOC OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(fmt)
 
 # Eigen 3.4.0 — header-only linear algebra library.
+# We only download + create the target manually (DO NOT run Eigen's
+# CMakeLists.txt — it pulls in BLAS/LAPACK and a Fortran compiler).
 FetchContent_Declare(
   eigen
   URL https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND ""
+  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
-set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
-set(EIGEN_BUILD_DOC OFF CACHE BOOL "" FORCE)
-set(EIGEN_BUILD_TESTING OFF CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(eigen)
+FetchContent_Populate(eigen)
+add_library(Eigen3_HeaderOnly INTERFACE)
+target_include_directories(Eigen3_HeaderOnly SYSTEM INTERFACE "${eigen_SOURCE_DIR}")
+add_library(Eigen3::Eigen ALIAS Eigen3_HeaderOnly)
 
 # Zstd 1.5.6 — compression library used for .blend file I/O.
 FetchContent_Declare(
   zstd
   URL https://github.com/facebook/zstd/releases/download/v1.5.6/zstd-1.5.6.tar.gz
   SOURCE_SUBDIR build/cmake
+  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 set(ZSTD_BUILD_PROGRAMS OFF CACHE BOOL "" FORCE)
 set(ZSTD_BUILD_TESTS OFF CACHE BOOL "" FORCE)
