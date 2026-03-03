@@ -51,14 +51,15 @@ jobs:
         submodules: false
 
     - name: Pull source LFS files
+      continue-on-error: true
       run: |
         set -e
         git lfs install
         # LFS objects live on projects.blender.org, not on GitHub.
         git remote add lfs-fallback "https://projects.blender.org/blender/blender.git" || true
         git config "remote.lfs-fallback.pushurl" "no_push"
-        git lfs fetch lfs-fallback
-        git lfs checkout
+        git lfs fetch lfs-fallback || echo "::warning::LFS fetch failed — non-critical for WASM build"
+        git lfs checkout || echo "::warning::LFS checkout failed — non-critical for WASM build"
 
     # ── Emscripten SDK ────────────────────────────────────────
     - name: Setup Emscripten SDK
@@ -66,6 +67,7 @@ jobs:
       with:
         version: ${{ env.EMSDK_VERSION }}
         actions-cache-folder: emsdk-cache
+        no-cache: true
 
     - name: Verify Emscripten
       run: |
@@ -84,6 +86,7 @@ jobs:
     # ── Cache build artifacts ─────────────────────────────────
     - name: Cache CMake build
       uses: actions/cache@v4
+      continue-on-error: true
       with:
         path: ${{ env.BUILD_DIR }}
         key: wasm-build-${{ env.EMSDK_VERSION }}-${{ hashFiles('CMakeLists.txt', 'build_files/cmake/config/blended_wasm.cmake') }}
@@ -122,16 +125,25 @@ jobs:
         cp build_files/web/coi-serviceworker.min.js deploy/
 
         # Copy WASM build output (if the build produced it).
-        if [ -f "$BUILD_DIR/bin/blended.wasm" ]; then
-          cp "$BUILD_DIR/bin/blended.wasm" deploy/
-          cp "$BUILD_DIR/bin/blended.js"   deploy/blended-module.js
-          echo "WASM binary copied to deploy directory."
-        elif [ -f "$BUILD_DIR/bin/blended.html" ]; then
-          # Emscripten sometimes outputs .html — we use our own shell.
-          cp "$BUILD_DIR/bin/blended.wasm" deploy/ 2>/dev/null || true
-          cp "$BUILD_DIR/bin/blended.js"   deploy/blended-module.js 2>/dev/null || true
-          echo "Build output found (html variant)."
-        else
+        # Search common Emscripten output locations.
+        WASM_FOUND=false
+        for dir in "$BUILD_DIR/bin" "$BUILD_DIR" "$BUILD_DIR/source/creator"; do
+          if [ -f "$dir/blended.wasm" ] || [ -f "$dir/blender.wasm" ]; then
+            wasm_file=$(find "$dir" -maxdepth 1 -name "*.wasm" | head -1)
+            js_file=$(find "$dir" -maxdepth 1 -name "*.js" ! -name "*.worker.js" | head -1)
+            if [ -n "$wasm_file" ]; then
+              cp "$wasm_file" deploy/blended.wasm
+              WASM_FOUND=true
+            fi
+            if [ -n "$js_file" ]; then
+              cp "$js_file" deploy/blended-module.js
+            fi
+            echo "WASM build output found in $dir"
+            break
+          fi
+        done
+
+        if [ "$WASM_FOUND" = false ]; then
           echo "::warning::No WASM binary found. Deploying web shell as placeholder."
           # Create a placeholder so the site still loads with a helpful message.
           echo "// Placeholder: WASM build not yet complete." > deploy/blended-module.js
