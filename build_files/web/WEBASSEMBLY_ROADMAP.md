@@ -1,12 +1,12 @@
 # Blended WebAssembly Roadmap
 
-This document tracks the staged approach to bringing Blended's features to the browser via WebAssembly.
+This document tracks the staged approach to bringing Blended's features to the browser via WebAssembly. Updated with findings from codebase analysis of the Blender 5.2 draw system, GPU backend, and subsystem dependencies.
 
 ---
 
 ## Stage 1: Core Editor (Current)
 
-**Status:** In progress
+**Status:** In progress — build infrastructure complete, compilation fixes ongoing
 
 The initial WASM port includes the essential 3D editing experience:
 
@@ -27,9 +27,113 @@ Python scripting, Cycles renderer, FFMPEG/audio, physics simulations (fluid, clo
 **Why this works for Blended:**
 Blended's tiered UI system means the "Simple" tier works perfectly with Stage 1 alone — users get a clean, focused 3D editor without needing Python or advanced features.
 
+### Critical Technical Challenges
+
+#### GPU Backend: GL 4.3 Version Gate
+
+`source/blender/gpu/opengl/gl_backend.cc:223` hard-requires `epoxy_gl_version() >= 43` (OpenGL 4.3). WebGL2 is based on OpenGL ES 3.0 (roughly equivalent to GL 3.3). **The GPU backend will refuse to initialize on WebGL2 without modification.**
+
+#### Compute Shaders in Core Draw System
+
+Blender 5.x's draw module uses `GPU_compute_dispatch` in **core rendering paths** — not just Eevee, but the draw infrastructure itself. WebGL2 does not support compute shaders. This affects ALL rendering:
+
+| File | Usage |
+|------|-------|
+| `source/blender/draw/intern/draw_view.cc:251,299` | Visibility culling (core) |
+| `source/blender/draw/intern/draw_command.cc:266,270,277,841` | Indirect draw command generation (core) |
+| `source/blender/draw/intern/draw_manager.cc:140` | Resource management (core) |
+| `source/blender/draw/intern/draw_cache_impl_subdivision.cc:978` | Mesh subdivision |
+| `source/blender/draw/engines/eevee/eevee_shadow.cc:1269` | Eevee shadow visibility |
+| `source/blender/draw/engines/workbench/workbench_shadow.cc:265` | Workbench shadow visibility |
+
+**Neither Eevee NOR Workbench can render without compute shaders under the current draw architecture.**
+
+#### Missing WebGL2 Features
+
+- **SSBOs** — `gl_storage_buffer.cc` has 19 references to `GL_SHADER_STORAGE_BUFFER` (not in WebGL2)
+- **Texture views** — `glTextureView()` (GL 4.3, not in WebGL2)
+- **Image load/store** — used in the storage buffer system
+- **`glCopyImageSubData()`** — efficient texture copies (GL 4.3)
+
+#### System Call Incompatibilities (4 files, low risk)
+
+- `source/blender/blenlib/intern/BLI_subprocess.cc` — `fork()`/`execv()` must be stubbed
+- `source/blender/blenlib/intern/BLI_mmap.cc` — limited `mmap()` support in Emscripten
+- `source/blender/blenlib/intern/fileops_c.cc` — file ops work via Emscripten virtual FS
+- `source/blender/gpu/tests/shader_preprocess_test.cc` — test only, not built for WASM
+
+### Resolution Paths
+
+**Path A: Target WebGPU instead of WebGL2**
+- WebGPU supports compute shaders, SSBOs, and modern GPU features
+- Chrome 113+ (stable since April 2023), Firefox Nightly, Safari 18+
+- Blender already has a Vulkan backend; WebGPU's API is Vulkan-like
+- Requires a Vulkan-to-WebGPU adaptation layer or new backend
+- **Pros:** Full feature support, future-proof, no CPU fallbacks needed
+- **Cons:** Narrower browser support, significant backend work
+
+**Path B: CPU fallback paths for WebGL2**
+- Add `#ifdef __EMSCRIPTEN__` CPU implementations for the 6 compute dispatch sites
+- Replace SSBOs with UBO or texture-based fallbacks
+- Bypass GL 4.3 version check for Emscripten
+- **Pros:** Works on WebGL2, widest browser support
+- **Cons:** Performance hit, ~6+ refactoring sites in core draw code, SSBO→UBO migration
+
+**Estimated effort:** 2-4 months for a compilable, renderable Stage 1
+
 ---
 
-## Stage 2: Python Scripting
+## Stage 2: Audio Support
+
+**Status:** Planned (moved up — easiest win after Stage 1)
+
+Add audio playback and editing via the Web Audio API.
+
+**What this unlocks:**
+- Audio scrubbing in the timeline
+- Sound strip support in the Video Sequence Editor
+- Audio-reactive workflows
+
+**Technical details:**
+- Audaspace library lives in `extern/audaspace/` with a clean device abstraction layer
+- Has `NULLDevice` fallback, `SoftwareDevice`, `MixingThreadDevice`
+- Blender integration gated by `WITH_AUDASPACE` in `source/blender/blenkernel/intern/sound.cc`
+- Emscripten provides SDL_audio mapped to Web Audio API automatically
+- `SDL_OpenAudioDevice()` works in Emscripten out of the box
+
+**Estimated effort:** 2-4 weeks — enable `WITH_AUDASPACE=ON`, ensure SDL audio works via Emscripten's Web Audio bridge
+
+---
+
+## Stage 3: Frame & Video Export
+
+**Status:** Planned
+
+### Stage 3a: Frame Export
+
+Export rendered frames as PNG/JPEG sequences via the browser virtual filesystem and download API.
+
+**Estimated effort:** ~1 week
+
+### Stage 3b: Video Encoding via ffmpeg.wasm
+
+Add full video codec support via [ffmpeg.wasm](https://ffmpegwasm.netlify.app/) or the browser's MediaRecorder API.
+
+**What this unlocks:**
+- Video rendering output (MP4, WebM)
+- Video Sequence Editor with video playback
+- Image sequence rendering
+
+**Technical approaches:**
+- **ffmpeg.wasm** — Full FFMPEG in WASM (~25MB additional), provides encode/decode
+- **MediaRecorder API** — Native browser encoding (WebM/VP8/VP9), no extra WASM, format limited
+- FFMPEG integration is contained in `source/blender/imbuf/movie/`
+
+**Estimated effort:** 2-3 months for full ffmpeg.wasm integration
+
+---
+
+## Stage 4: Python Scripting
 
 **Status:** Planned
 
@@ -40,65 +144,59 @@ Restore Python scripting via [Pyodide](https://pyodide.org/) (CPython compiled t
 - Scripted workflows and automation
 - Property panels that depend on Python registration
 - The "Standard" tier becomes fully functional
+- Blended's tier-aware smart defaults (`blended_defaults.py`)
+- Update notifications (`blended_update_check.py`)
 
-**Technical approach:**
-- Pyodide provides a near-complete CPython 3.11+ in WASM
-- Blender's Python API (bpy) would need to be compiled against Pyodide's Python
-- Alternative: [MicroPython](https://micropython.org/) for a lighter-weight option with limited compatibility
+**Integration depth from codebase analysis:**
+- 123 `WITH_PYTHON` conditional compilation guards across 43 C++ files
+- Key files: `bpy_interface.cc` (10 guards), `context.cc` (10), `scene_edit.cc` (6), `fcurve_driver.cc` (6), `wm_init_exit.cc` (5)
+- Most subsystems are well-guarded with `#ifdef WITH_PYTHON` and work without it
+- The C++ tier infrastructure (DNA/RNA `ui_tier` field) works without Python — only the smart defaults and update check scripts are affected
+
+**Technical approach — Pyodide integration:**
+- Pyodide compiles CPython 3.11+ to WASM (~15-25MB additional payload)
+- Blender's `bpy` C extension module needs WASM compilation against Pyodide's Python headers
+- Pyodide includes NumPy and has its own pure-Python package manager
+- Emscripten's `-s USE_PTHREADS` is compatible with Pyodide
+- Challenge: Blender's Python API uses C extension modules that all need WASM compilation
+
+**Estimated effort:** 3-6 months — complex integration requiring Pyodide-to-bpy bridge
 
 ---
 
-## Stage 3: Cycles via WebGPU
+## Stage 5: Cycles Rendering
 
 **Status:** Future
+
+### Stage 5a: CPU Cycles in WASM
+
+Enable Cycles with CPU-only rendering compiled to WASM.
+
+- Cycles already has a CPU device in `intern/cycles/device/cpu/`
+- Can compile to WASM directly with the existing CPU path tracing kernels
+- Performance will be slow (path tracing in WASM) but functional
+- Good for previews and proof of concept
+
+**Estimated effort:** 1-2 months
+
+### Stage 5b: WebGPU Cycles
 
 Bring Cycles rendering to the browser using WebGPU compute shaders.
 
 **What this unlocks:**
-- Path-traced rendering in the browser
-- Full material preview
+- GPU-accelerated path-traced rendering in the browser
+- Full material preview at interactive speeds
 - Production-quality output
 
-**Technical approach:**
-- WebGPU is maturing in Chrome/Firefox/Safari
-- Cycles would need a WebGPU compute backend (similar to its Metal/HIP backends)
-- Could start with CPU-only Cycles in WASM as an intermediate step
+**Cycles device architecture** (`intern/cycles/device/`):
+- Clean device abstraction with existing backends: CPU, CUDA, HIP, Metal, OneAPI, OptiX
+- Would need new `intern/cycles/device/webgpu/` directory
+- Implement `DeviceWebGPU` class following the existing device interface pattern
+- Port Cycles kernel shaders to WGSL (WebGPU Shading Language)
+- WebGPU compute dispatch for path tracing kernels
+- Memory management via WebGPU buffer API
 
----
-
-## Stage 4: Audio Support
-
-**Status:** Future
-
-Add audio playback and editing via the Web Audio API.
-
-**What this unlocks:**
-- Audio scrubbing in the timeline
-- Sound strip support in the Video Sequence Editor
-- Audio-reactive workflows
-
-**Technical approach:**
-- Emscripten has a Web Audio backend for SDL_audio
-- Enable `WITH_AUDASPACE` with the Emscripten audio driver
-- Relatively straightforward compared to other stages
-
----
-
-## Stage 5: Video/FFMPEG
-
-**Status:** Future
-
-Add video codec support via [ffmpeg.wasm](https://ffmpegwasm.netlify.app/) or the browser's MediaRecorder API.
-
-**What this unlocks:**
-- Video rendering output (MP4, WebM)
-- Video Sequence Editor with video playback
-- Image sequence rendering
-
-**Technical approach:**
-- ffmpeg.wasm provides a full FFMPEG build in WebAssembly
-- Alternatively, use MediaRecorder API for WebM output directly
-- Could also support frame-by-frame PNG/JPEG export as a simpler first step
+**Estimated effort:** 6-12 months — requires WebGPU maturity and kernel shader porting
 
 ---
 
@@ -106,17 +204,61 @@ Add video codec support via [ffmpeg.wasm](https://ffmpegwasm.netlify.app/) or th
 
 **Status:** Future / Experimental
 
-Real-time multi-user editing via WebRTC or WebSocket.
+Real-time multi-user editing via WebRTC or WebSocket. This is essentially a new product feature, not a port of existing functionality.
 
 **What this unlocks:**
 - Multiple users editing the same scene simultaneously
 - Shared viewport / shared edit mode
 - Real-time collaboration without file exchange
 
-**Technical approach:**
-- Operational transforms or CRDT-based sync for scene data
-- WebRTC for peer-to-peer, WebSocket for server-mediated
-- Blender's undo system provides a foundation for change tracking
+**Existing infrastructure:**
+- Blender has NO existing networking or collaboration code
+- Undo system (`source/blender/blenkernel/intern/undo_system.cc`) tracks state changes — could serve as a change-tracking foundation
+- Depsgraph tracks data dependencies and knows what changed per evaluation
+
+**What this requires (new subsystem):**
+1. State synchronization protocol (operational transforms or CRDT for scene graph)
+2. Network transport layer (WebRTC for peer-to-peer, WebSocket for server-mediated)
+3. Conflict resolution for concurrent mesh/scene edits
+4. Cursor/selection awareness (showing other users' selections in viewport)
+5. Server infrastructure (signaling server for WebRTC, relay for WebSocket)
+
+**Estimated effort:** 6-12+ months — this is effectively building a new collaborative product on top of the web editor
+
+---
+
+## Recommended Implementation Order
+
+Based on codebase analysis, the optimal order prioritizes quick wins and unlocks:
+
+| Priority | Stage | Description | Effort |
+|----------|-------|-------------|--------|
+| 1st | **Stage 1** | Core Editor (GPU backend work) | 2-4 months |
+| 2nd | **Stage 2** | Audio (Emscripten SDL audio) | 2-4 weeks |
+| 3rd | **Stage 3a** | Frame Export (PNG/JPEG download) | ~1 week |
+| 4th | **Stage 4** | Python/Pyodide | 3-6 months |
+| 5th | **Stage 5a** | CPU Cycles | 1-2 months |
+| 6th | **Stage 3b** | Video/ffmpeg.wasm | 2-3 months |
+| 7th | **Stage 5b** | WebGPU Cycles | 6-12 months |
+| 8th | **Stage 6** | Collaborative Editing | 6-12+ months |
+
+---
+
+## Critical Files Reference
+
+| Area | File | Issue |
+|------|------|-------|
+| GL version gate | `source/blender/gpu/opengl/gl_backend.cc:223` | Requires GL 4.3; WebGL2 is GL ES 3.0 |
+| Compute dispatch | `source/blender/gpu/opengl/gl_compute.cc:25` | `glDispatchCompute` not in WebGL2 |
+| SSBOs | `source/blender/gpu/opengl/gl_storage_buffer.cc` | `GL_SHADER_STORAGE_BUFFER` not in WebGL2 |
+| Texture views | `source/blender/gpu/opengl/gl_texture.cc` | `glTextureView` not in WebGL2 |
+| Subprocess fork | `source/blender/blenlib/intern/BLI_subprocess.cc` | `fork()`/`execv()` not in WASM |
+| Draw culling | `source/blender/draw/intern/draw_view.cc:251,299` | Uses compute dispatch |
+| Draw commands | `source/blender/draw/intern/draw_command.cc:266,270,841` | Uses compute dispatch |
+| Draw manager | `source/blender/draw/intern/draw_manager.cc:140` | Uses compute dispatch |
+| Subdivision | `source/blender/draw/intern/draw_cache_impl_subdivision.cc:978` | Uses compute dispatch |
+| Eevee shadows | `source/blender/draw/engines/eevee/eevee_shadow.cc:1269` | Uses compute dispatch |
+| Workbench shadows | `source/blender/draw/engines/workbench/workbench_shadow.cc:265` | Uses compute dispatch |
 
 ---
 
@@ -124,10 +266,10 @@ Real-time multi-user editing via WebRTC or WebSocket.
 
 Blended's tiered UI is uniquely well-suited for progressive web deployment:
 
-| Tier | Stage Required | Features |
-|------|---------------|----------|
+| Tier | Stages Required | Features |
+|------|----------------|----------|
 | **Simple** | Stage 1 | Basic 3D modeling, sculpting, Eevee rendering |
-| **Standard** | Stage 1 + 2 | Full panels, add-ons, Python scripting |
+| **Standard** | Stages 1 + 4 | Full panels, add-ons, Python scripting, tier smart defaults |
 | **Advanced** | Stages 1-5 | Everything: Cycles, video, audio, full pipeline |
 
 The "Simple" tier audience gets a fully functional web editor from day one.
@@ -148,13 +290,14 @@ The "Simple" tier audience gets a fully functional web editor from day one.
 
 ## Browser Compatibility
 
-| Browser | WebGL2 | SharedArrayBuffer | WASM | Status |
-|---------|--------|-------------------|------|--------|
-| Chrome 91+ | Yes | Yes | Yes | Full support |
-| Firefox 89+ | Yes | Yes | Yes | Full support |
-| Edge 91+ | Yes | Yes | Yes | Full support |
-| Safari 16.4+ | Yes | Yes | Yes | Full support |
-| Mobile Chrome | Yes | Yes | Yes | Works (performance limited) |
-| Mobile Safari | Yes | Partial | Yes | May work with limitations |
+| Browser | WebGL2 | SharedArrayBuffer | WASM | WebGPU | Status |
+|---------|--------|-------------------|------|--------|--------|
+| Chrome 113+ | Yes | Yes | Yes | Yes | Full support (WebGPU path) |
+| Firefox 89+ | Yes | Yes | Yes | Nightly | WebGL2 path; WebGPU in nightly |
+| Edge 113+ | Yes | Yes | Yes | Yes | Full support (WebGPU path) |
+| Safari 18+ | Yes | Yes | Yes | Yes | Full support |
+| Safari 16.4-17 | Yes | Yes | Yes | No | WebGL2 path only |
+| Mobile Chrome | Yes | Yes | Yes | Partial | Works (performance limited) |
+| Mobile Safari | Yes | Partial | Yes | No | May work with limitations |
 
 SharedArrayBuffer requires COOP/COEP headers, handled by `coi-serviceworker.min.js` on GitHub Pages.
