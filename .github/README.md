@@ -47,9 +47,20 @@ Existing `.blend` files are never modified — defaults only apply to new scenes
 
 Blended checks [GitHub Releases](https://github.com/EvangAI-777/Blended/releases) for new versions on startup (in a background thread, non-blocking). Results are cached for 24 hours. When an update is available, a notification appears in the top bar with a one-click download button.
 
+### Web Editor (WebAssembly)
+
+Blended is being ported to run **directly in the browser** via WebAssembly — no install required. The Emscripten-compiled build includes the core 3D editor: viewport, mesh editing, sculpting, Eevee rendering, modifiers, UV editing, and basic mesh I/O (OBJ/STL/PLY). Heavy subsystems (Python, Cycles, FFMPEG, physics) are disabled initially and will be restored in future stages.
+
+The web shell includes a loading screen, drag-and-drop `.blend` file support, and `coi-serviceworker` for SharedArrayBuffer threading on GitHub Pages.
+
+See [`build_files/web/WEBASSEMBLY_ROADMAP.md`](../build_files/web/WEBASSEMBLY_ROADMAP.md) for the full 6-stage roadmap.
+
 ### CI / Prebuilt Binaries
 
-A GitHub Actions workflow builds portable Windows x64 `.zip` packages on every push to `main`/`master`. Tagged releases (`v*`) automatically create GitHub Releases with the build attached.
+Two GitHub Actions workflows:
+
+- **Windows x64** (`build-windows.yml`) — Builds portable `.zip` packages. Tagged releases (`v*`) automatically create GitHub Releases with the build attached.
+- **WebAssembly** (`build-wasm.yml`) — Builds the WASM web editor via Emscripten and deploys to GitHub Pages. Triggers on pushes to `main` or manual dispatch.
 
 ### AI Contributors
 
@@ -63,6 +74,17 @@ Building from Source
 Blended builds the same way as Blender. Follow the standard Blender build instructions:
 
 - [Build Instructions](https://developer.blender.org/docs/handbook/building_blender/)
+
+### Building for WebAssembly
+
+Requires the [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html):
+
+```sh
+emcmake cmake -S . -B build-wasm -C build_files/cmake/config/blended_wasm.cmake
+emmake cmake --build build-wasm
+```
+
+See [`build_files/web/WEBASSEMBLY_ROADMAP.md`](../build_files/web/WEBASSEMBLY_ROADMAP.md) for details and known blockers.
 
 Syncing Upstream Changes
 ------------------------
