@@ -147,8 +147,13 @@ target_link_libraries(bf_deps_png INTERFACE ${PNG_LIBRARIES})
 # -----------------------------------------------------------------------------
 # Configure OpenImageIO
 
-add_library(bf::dependencies::openimageio ALIAS OpenImageIO::OpenImageIO)
-get_target_property(OPENIMAGEIO_TOOL OpenImageIO::oiiotool LOCATION)
+if(TARGET OpenImageIO::OpenImageIO)
+  add_library(bf::dependencies::openimageio ALIAS OpenImageIO::OpenImageIO)
+  get_target_property(OPENIMAGEIO_TOOL OpenImageIO::oiiotool LOCATION)
+else()
+  add_library(bf_deps_openimageio INTERFACE)
+  add_library(bf::dependencies::openimageio ALIAS bf_deps_openimageio)
+endif()
 
 # -----------------------------------------------------------------------------
 # Configure USD
@@ -476,7 +481,14 @@ endif()
 # Configure libfmt
 #
 
-add_library(bf::dependencies::fmt ALIAS fmt::fmt)
+if(TARGET fmt::fmt)
+  add_library(bf::dependencies::fmt ALIAS fmt::fmt)
+else()
+  # Emscripten / minimal builds: fmt not available from precompiled libs.
+  # Blender bundles fmt in extern/ — it will be built from source.
+  add_library(bf_deps_fmt INTERFACE)
+  add_library(bf::dependencies::fmt ALIAS bf_deps_fmt)
+endif()
 
 # -----------------------------------------------------------------------------
 # Configure OSL
