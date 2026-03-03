@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blended — 3D Editor in Your Browser</title>
+  <meta name="description" content="Blended: Blender, simplified. A full 3D editor running in your browser via WebAssembly.">
+
+  <!-- COOP/COEP: required for SharedArrayBuffer (threading).
+       GitHub Pages doesn't support custom HTTP headers, so
+       coi-serviceworker injects them client-side. -->
+  <script src="coi-serviceworker.min.js"></script>
+
+  <link rel="stylesheet" href="blended.css">
+</head>
+<body>
+  <!-- Loading overlay — visible until the WASM module is ready -->
+  <div id="loading-overlay">
+    <div class="loading-content">
+      <h1 class="loading-title">Blended</h1>
+      <p class="loading-subtitle">Blender, simplified</p>
+
+      <div class="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+      <p class="progress-text" id="progress-text">Initializing...</p>
+
+      <!-- Feature checks -->
+      <div class="feature-checks" id="feature-checks"></div>
+
+      <!-- Error display (hidden by default) -->
+      <div class="error-message" id="error-message" style="display: none;"></div>
+    </div>
+  </div>
+
+  <!-- The canvas where Blended renders -->
+  <canvas id="canvas"
+          oncontextmenu="event.preventDefault()"
+          tabindex="-1"></canvas>
+
+  <!-- Drop zone overlay for .blend file drag-and-drop -->
+  <div id="drop-overlay" style="display: none;">
+    <div class="drop-message">Drop .blend file to open</div>
+  </div>
+
+  <script src="blended.js"></script>
+</body>
+</html>

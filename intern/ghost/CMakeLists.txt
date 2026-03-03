@@ -147,9 +147,14 @@ elseif(WITH_GHOST_SDL)
   )
   add_definitions(-DWITH_GHOST_SDL)
 
-  list(APPEND LIB
-    bf::dependencies::optional::sdl
-  )
+  if(EMSCRIPTEN)
+    # Emscripten provides SDL2 via -s USE_SDL=2 (already in CMAKE_C/CXX_FLAGS).
+    # No external library target needed.
+  else()
+    list(APPEND LIB
+      bf::dependencies::optional::sdl
+    )
+  endif()
 elseif(APPLE AND NOT WITH_GHOST_X11)
   list(APPEND SRC
     intern/GHOST_SystemCocoa.mm
