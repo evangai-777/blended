@@ -96,6 +96,8 @@ jobs:
     # ── Configure ─────────────────────────────────────────────
     - name: CMake configure (Emscripten)
       run: |
+        # Remove stale CMake cache if toolchain path changed between runs.
+        rm -rf $BUILD_DIR/CMakeCache.txt $BUILD_DIR/CMakeFiles
         emcmake cmake \
           -S . \
           -B $BUILD_DIR \
