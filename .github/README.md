@@ -51,6 +51,12 @@ Blended checks [GitHub Releases](https://github.com/EvangAI-777/Blended/releases
 
 A GitHub Actions workflow builds portable Windows x64 `.zip` packages on every push to `main`/`master`. Tagged releases (`v*`) automatically create GitHub Releases with the build attached.
 
+### AI Contributors
+
+Blended is developed with contributions from both human developers and AI tools — bridging the gap between person and machine in open-source development.
+
+- **Claude** (Anthropic) — Architecture, implementation, and development across the Blended project
+
 Building from Source
 --------------------
 
