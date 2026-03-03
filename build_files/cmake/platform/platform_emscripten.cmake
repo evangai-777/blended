@@ -90,6 +90,19 @@ set(WITH_X11_XINPUT     OFF CACHE BOOL "" FORCE)
 set(WITH_X11_XFIXES     OFF CACHE BOOL "" FORCE)
 set(WITH_GHOST_DEBUG    OFF CACHE BOOL "" FORCE)
 
+# Emscripten's only windowing option is SDL2 — enforce it.
+set(WITH_GHOST_SDL      ON  CACHE BOOL "" FORCE)
+
+# ── Disable subsystems that don't cross-compile to Emscripten ────
+# These may not be set by the user's config file, so enforce them here
+# as a safety net (blended_wasm.cmake also sets these, but this ensures
+# correctness even if someone invokes emcmake without the config).
+
+set(WITH_GHOST_CSD      OFF CACHE BOOL "" FORCE)  # No client-side decorations in browser
+set(WITH_OPENGL_BACKEND  ON CACHE BOOL "" FORCE)   # WebGL2 is the only option
+set(WITH_VULKAN_BACKEND OFF CACHE BOOL "" FORCE)
+set(WITH_METAL_BACKEND  OFF CACHE BOOL "" FORCE)
+
 # ── SDL2: Emscripten built-in, skip pkg-config detection ─────────
 # The normal FindSDL2 path won't work — Emscripten's -s USE_SDL=2
 # flag tells emcc to download and build SDL2 from emscripten-ports.
