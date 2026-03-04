@@ -425,10 +425,16 @@ if(EMSCRIPTEN)
   # shared-memory access patterns. Without matching runtime support, WASM
   # memory growth replaces the ArrayBuffer and stale references cause
   # string/data corruption (e.g. garbled RNA property identifiers).
+  #
+  # STACK_SIZE: makesrna is much larger than makesdna and the Emscripten
+  # linear-memory stack sits right after the data segment. Overflow writes
+  # directly into string constants, causing deterministic corruption (e.g.
+  # "studiolight_rotate_z" becomes garbled). 32 MB is generous headroom.
   target_compile_options(makesrna PRIVATE -sUSE_PTHREADS=0)
   target_link_options(makesrna PRIVATE
     -sNODERAWFS=1 -sMODULARIZE=0 -sENVIRONMENT=node -sSINGLE_FILE=1
     -sUSE_PTHREADS=0 -sSHARED_MEMORY=0
+    -sSTACK_SIZE=33554432 -sSTACK_OVERFLOW_CHECK=2
   )
 endif()
 
