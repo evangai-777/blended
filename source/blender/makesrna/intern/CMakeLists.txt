@@ -416,6 +416,16 @@ target_link_libraries(makesrna PRIVATE bf::dependencies::optional::tbb)
 target_link_libraries(makesrna PRIVATE bf::dependencies::pthreads)
 target_link_libraries(makesrna PRIVATE bf::dependencies::fmt)
 
+if(EMSCRIPTEN)
+  # Build tools run under Node.js during the build. They need direct
+  # filesystem access (NODERAWFS) and must not be modularized.
+  # SINGLE_FILE embeds .wasm in the .js to avoid path resolution issues.
+  target_link_options(makesrna PRIVATE
+    -sNODERAWFS=1 -sMODULARIZE=0 -sENVIRONMENT=node -sSINGLE_FILE=1
+    -sUSE_PTHREADS=0 -sSHARED_MEMORY=0
+  )
+endif()
+
 # Output `rna_*_gen.cc`.
 # NOTE: (Linux only): with crashes try add this after COMMAND:
 # `valgrind --leak-check=full --track-origins=yes`
@@ -423,6 +433,7 @@ add_custom_command(
   OUTPUT ${GENSRC}
   COMMAND
     ${CMAKE_COMMAND} -E env ${PLATFORM_ENV_BUILD}
+    ${CMAKE_CROSSCOMPILING_EMULATOR}
     "$<TARGET_FILE:makesrna>" ${CMAKE_CURRENT_BINARY_DIR}/ ${CMAKE_CURRENT_BINARY_DIR}/../
   DEPENDS makesrna
 )
