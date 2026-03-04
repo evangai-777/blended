@@ -420,6 +420,12 @@ if(EMSCRIPTEN)
   # Build tools run under Node.js during the build. They need direct
   # filesystem access (NODERAWFS) and must not be modularized.
   # SINGLE_FILE embeds .wasm in the .js to avoid path resolution issues.
+  # IMPORTANT: -sUSE_PTHREADS=0 must be set for BOTH compile and link.
+  # Global CMAKE_CXX_FLAGS includes -pthread which makes the compiler emit
+  # shared-memory access patterns. Without matching runtime support, WASM
+  # memory growth replaces the ArrayBuffer and stale references cause
+  # string/data corruption (e.g. garbled RNA property identifiers).
+  target_compile_options(makesrna PRIVATE -sUSE_PTHREADS=0)
   target_link_options(makesrna PRIVATE
     -sNODERAWFS=1 -sMODULARIZE=0 -sENVIRONMENT=node -sSINGLE_FILE=1
     -sUSE_PTHREADS=0 -sSHARED_MEMORY=0
