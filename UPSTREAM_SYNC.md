@@ -89,6 +89,9 @@ For each, keep the Blended additions and integrate new upstream changes around t
 | `CMakeLists.txt` | `project(Blended)` |
 | `build_files/cmake/macros.cmake` | `BLENDED_VERSION_*` extraction |
 | `build_files/cmake/config/blended_release.cmake` | Custom build config |
+| `release/windows/icons/winblender.rc` | Blended branding strings (CompanyName, ProductName, etc.) |
+| `release/freedesktop/blender.desktop` | Blended Name, Exec, Icon, StartupWMClass |
+| `CHANGELOG.md` | Blended-only file (does not exist upstream) |
 | `.github/` | Workflows, README, PR template |
 
 ## After Syncing: Version Bump Checklist
