@@ -12,3 +12,9 @@ set(SRC
 # `SRC_DNA_INC` is defined in the parent directory.
 add_executable(datatoc ${SRC})
 optimize_debug_target(datatoc)
+
+if(EMSCRIPTEN)
+  target_link_options(datatoc PRIVATE
+    -sNODERAWFS=1 -sMODULARIZE=0 -sENVIRONMENT=node
+  )
+endif()

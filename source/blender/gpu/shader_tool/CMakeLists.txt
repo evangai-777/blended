@@ -37,3 +37,9 @@ endif()
 # `SRC_DNA_INC` is defined in the parent directory.
 add_executable(shader_tool ${SRC})
 optimize_debug_target(shader_tool)
+
+if(EMSCRIPTEN)
+  target_link_options(shader_tool PRIVATE
+    -sNODERAWFS=1 -sMODULARIZE=0 -sENVIRONMENT=node
+  )
+endif()
