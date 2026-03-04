@@ -15,6 +15,6 @@ optimize_debug_target(datatoc)
 
 if(EMSCRIPTEN)
   target_link_options(datatoc PRIVATE
-    -sNODERAWFS=1 -sMODULARIZE=0 -sENVIRONMENT=node
+    -sNODERAWFS=1 -sMODULARIZE=0 -sENVIRONMENT=node -sSINGLE_FILE=1
   )
 endif()

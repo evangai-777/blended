@@ -94,8 +94,9 @@ target_link_libraries(makesdna PRIVATE bf::dependencies::pthreads)
 if(EMSCRIPTEN)
   # Build tools run under Node.js during the build. They need direct
   # filesystem access (NODERAWFS) and must not be modularized.
+  # SINGLE_FILE embeds .wasm in the .js to avoid path resolution issues.
   target_link_options(makesdna PRIVATE
-    -sNODERAWFS=1 -sMODULARIZE=0 -sENVIRONMENT=node
+    -sNODERAWFS=1 -sMODULARIZE=0 -sENVIRONMENT=node -sSINGLE_FILE=1
   )
 endif()
 
