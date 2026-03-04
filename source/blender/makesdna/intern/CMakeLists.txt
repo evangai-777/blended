@@ -97,6 +97,7 @@ if(EMSCRIPTEN)
   # SINGLE_FILE embeds .wasm in the .js to avoid path resolution issues.
   target_link_options(makesdna PRIVATE
     -sNODERAWFS=1 -sMODULARIZE=0 -sENVIRONMENT=node -sSINGLE_FILE=1
+    -sUSE_PTHREADS=0 -sSHARED_MEMORY=0
   )
 endif()
 
