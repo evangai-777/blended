@@ -130,7 +130,6 @@ set(SRC
   dna_utils.cc
   ${CMAKE_CURRENT_BINARY_DIR}/dna.cc
   ${CMAKE_CURRENT_BINARY_DIR}/dna_struct_ids.cc
-  ${CMAKE_CURRENT_BINARY_DIR}/dna_verify.cc
   ${SRC_DNA_INC}
 
   ${CMAKE_CURRENT_BINARY_DIR}/dna_type_offsets.h
@@ -138,13 +137,25 @@ set(SRC
   dna_utils.h
 )
 
-set_source_files_properties(
+# On Emscripten (wasm32), makesdna computes struct offsets by flat-summing field
+# sizes without alignment padding. DNA structs are designed for 64-bit where
+# 8-byte pointers naturally provide 8-byte alignment, but on wasm32 (4-byte
+# pointers) fields like uint64_t can land at non-8-byte-aligned offsets. The
+# compiler inserts padding that makesdna doesn't account for, causing
+# dna_verify.cc static assertions to fail. Skip verification on Emscripten.
+if(NOT EMSCRIPTEN)
+  list(APPEND SRC ${CMAKE_CURRENT_BINARY_DIR}/dna_verify.cc)
+endif()
+
+set(_DNA_GENERATED_FILES
   ${CMAKE_CURRENT_BINARY_DIR}/dna.cc
   ${CMAKE_CURRENT_BINARY_DIR}/dna_struct_ids.cc
   ${CMAKE_CURRENT_BINARY_DIR}/dna_type_offsets.h
-  ${CMAKE_CURRENT_BINARY_DIR}/dna_verify.cc
-  PROPERTIES GENERATED TRUE
 )
+if(NOT EMSCRIPTEN)
+  list(APPEND _DNA_GENERATED_FILES ${CMAKE_CURRENT_BINARY_DIR}/dna_verify.cc)
+endif()
+set_source_files_properties(${_DNA_GENERATED_FILES} PROPERTIES GENERATED TRUE)
 
 # makesdna generates negative values in unsigned char arrays (e.g. -112 for 0x90).
 # Clang treats this as an error via -Wc++11-narrowing. Suppress for generated files.

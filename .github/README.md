@@ -42,6 +42,8 @@ Existing `.blend` files are never modified — defaults only apply to new scenes
 
 - Window titles, splash screen, and about dialog show "Blended" with the tagline "Blender, simplified".
 - Includes a custom Blended.xml theme preset with softer dark colors and a blue accent.
+- Windows `.rc` metadata and Linux `.desktop` entry branded as Blended.
+- **Planned:** Custom Blended app icon, file association icon, and splash screen artwork (contributions welcome).
 
 ### Update Notifications
 
@@ -85,6 +87,21 @@ emmake cmake --build build-wasm
 ```
 
 See [`build_files/web/WEBASSEMBLY_ROADMAP.md`](../build_files/web/WEBASSEMBLY_ROADMAP.md) for details and known blockers.
+
+Changelog
+---------
+
+### 1.0.0 — Based on Blender 5.2
+
+Initial release of Blended:
+- **Tiered UI** — Simple, Standard, Advanced complexity tiers with panel/editor/menu filtering
+- **Smart Defaults** — Tier-aware settings applied on new file creation
+- **Branding** — "Blended" window titles, splash, theme preset, `.rc`/`.desktop` metadata
+- **Update Notifications** — Background GitHub Release checks with top-bar notification
+- **CI** — Windows x64 portable `.zip` builds; WebAssembly browser build (in progress)
+- **Web Editor** — Emscripten cross-compilation, GitHub Pages deployment, web shell
+
+See [`CHANGELOG.md`](../CHANGELOG.md) for full details.
 
 Syncing Upstream Changes
 ------------------------
