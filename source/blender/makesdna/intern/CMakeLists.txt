@@ -91,6 +91,14 @@ blender_target_include_dirs_sys(makesdna ${INC_SYS})
 target_link_libraries(makesdna ${LIB})
 target_link_libraries(makesdna PRIVATE bf::dependencies::pthreads)
 
+if(EMSCRIPTEN)
+  # Build tools run under Node.js during the build. They need direct
+  # filesystem access (NODERAWFS) and must not be modularized.
+  target_link_options(makesdna PRIVATE
+    -sNODERAWFS=1 -sMODULARIZE=0 -sENVIRONMENT=node
+  )
+endif()
+
 # Output dna.cc
 add_custom_command(
   OUTPUT
