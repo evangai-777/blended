@@ -35,9 +35,11 @@ string(APPEND _EMSCRIPTEN_LINK_FLAGS " -s FULL_ES3=1")
 string(APPEND _EMSCRIPTEN_LINK_FLAGS " -s MIN_WEBGL_VERSION=2")
 string(APPEND _EMSCRIPTEN_LINK_FLAGS " -s MAX_WEBGL_VERSION=2")
 
-# Threading.
-string(APPEND _EMSCRIPTEN_LINK_FLAGS " -pthread")
-string(APPEND _EMSCRIPTEN_LINK_FLAGS " -s PTHREAD_POOL_SIZE=4")
+# NOTE: Threading flags (-pthread, PTHREAD_POOL_SIZE) are intentionally
+# NOT in the global linker flags. Emscripten's driver processes -pthread
+# AFTER -s settings, so it would override -sUSE_PTHREADS=0 on build tools
+# (makesdna, makesrna) that must run single-threaded under Node.js.
+# Threading link flags are applied per-target in source/creator/CMakeLists.txt.
 
 # Memory configuration.
 # Start at 512 MB, allow growth up to 4 GB.

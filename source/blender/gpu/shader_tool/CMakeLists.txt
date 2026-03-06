@@ -39,8 +39,11 @@ add_executable(shader_tool ${SRC})
 optimize_debug_target(shader_tool)
 
 if(EMSCRIPTEN)
+  target_compile_options(shader_tool PRIVATE -sUSE_PTHREADS=0)
   target_link_options(shader_tool PRIVATE
     -sNODERAWFS=1 -sMODULARIZE=0 -sENVIRONMENT=node -sSINGLE_FILE=1
     -sUSE_PTHREADS=0 -sSHARED_MEMORY=0
+    -sSTACK_SIZE=33554432 -sSTACK_OVERFLOW_CHECK=2
+    -sEXIT_RUNTIME=1
   )
 endif()

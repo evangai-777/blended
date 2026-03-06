@@ -417,24 +417,17 @@ target_link_libraries(makesrna PRIVATE bf::dependencies::pthreads)
 target_link_libraries(makesrna PRIVATE bf::dependencies::fmt)
 
 if(EMSCRIPTEN)
-  # Build tools run under Node.js during the build. They need direct
-  # filesystem access (NODERAWFS) and must not be modularized.
-  # SINGLE_FILE embeds .wasm in the .js to avoid path resolution issues.
-  # IMPORTANT: -sUSE_PTHREADS=0 must be set for BOTH compile and link.
-  # Global CMAKE_CXX_FLAGS includes -pthread which makes the compiler emit
-  # shared-memory access patterns. Without matching runtime support, WASM
-  # memory growth replaces the ArrayBuffer and stale references cause
-  # string/data corruption (e.g. garbled RNA property identifiers).
-  #
-  # STACK_SIZE: makesrna is much larger than makesdna and the Emscripten
-  # linear-memory stack sits right after the data segment. Overflow writes
-  # directly into string constants, causing deterministic corruption (e.g.
-  # "studiolight_rotate_z" becomes garbled). 32 MB is generous headroom.
+  # Build tools run under Node.js — they need NODERAWFS for direct filesystem
+  # access, MODULARIZE=0 to auto-run, SINGLE_FILE to embed .wasm in .js,
+  # and must NOT use pthreads (no SharedArrayBuffer in build-time Node.js).
+  # Global CMAKE_CXX_FLAGS still includes -pthread for compile-time macros;
+  # -sUSE_PTHREADS=0 at compile time neutralises shared-memory codegen.
   target_compile_options(makesrna PRIVATE -sUSE_PTHREADS=0)
   target_link_options(makesrna PRIVATE
     -sNODERAWFS=1 -sMODULARIZE=0 -sENVIRONMENT=node -sSINGLE_FILE=1
     -sUSE_PTHREADS=0 -sSHARED_MEMORY=0
     -sSTACK_SIZE=33554432 -sSTACK_OVERFLOW_CHECK=2
+    -sEXIT_RUNTIME=1
   )
 endif()
 
