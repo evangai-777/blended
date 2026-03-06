@@ -1929,6 +1929,14 @@ unset(LIB)
 setup_platform_linker_flags(blender)
 setup_platform_linker_libs(blender)
 
+# Emscripten threading link flags — applied here (not globally) so that
+# build tools (makesdna, makesrna) can link without -pthread.
+# Emscripten's driver processes -pthread AFTER -s settings, making it
+# impossible to override with -sUSE_PTHREADS=0 on the same link command.
+if(EMSCRIPTEN)
+  target_link_options(blender PRIVATE -pthread -sPTHREAD_POOL_SIZE=4)
+endif()
+
 if(DEFINED PLATFORM_SYMBOLS_MAP)
   set_target_properties(blender PROPERTIES LINK_DEPENDS ${PLATFORM_SYMBOLS_MAP})
 endif()
