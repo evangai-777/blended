@@ -164,15 +164,6 @@ if(NOT EMSCRIPTEN)
 endif()
 set_source_files_properties(${_DNA_GENERATED_FILES} PROPERTIES GENERATED TRUE)
 
-# makesdna generates negative values in unsigned char arrays (e.g. -112 for 0x90).
-# Clang treats this as an error via -Wc++11-narrowing. Suppress for generated files.
-if(EMSCRIPTEN)
-  set_source_files_properties(
-    ${CMAKE_CURRENT_BINARY_DIR}/dna.cc
-    PROPERTIES COMPILE_OPTIONS "-Wno-c++11-narrowing"
-  )
-endif()
-
 blender_add_lib(bf_dna "${SRC}" "${INC}" "${INC_SYS}" "${LIB}")
 add_library(bf::dna ALIAS bf_dna)
 
