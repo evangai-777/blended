@@ -47,6 +47,7 @@ set(WITH_COREAUDIO           OFF CACHE BOOL "" FORCE)
 set(WITH_JACK                OFF CACHE BOOL "" FORCE)
 set(WITH_OPENAL              OFF CACHE BOOL "" FORCE)
 set(WITH_PULSEAUDIO          OFF CACHE BOOL "" FORCE)
+set(WITH_PIPEWIRE            OFF CACHE BOOL "" FORCE)
 set(WITH_SDL                 ON  CACHE BOOL "" FORCE)  # Required by WITH_GHOST_SDL
 set(WITH_WASAPI              OFF CACHE BOOL "" FORCE)
 set(WITH_RUBBERBAND          OFF CACHE BOOL "" FORCE)
@@ -74,6 +75,7 @@ set(WITH_HARU                OFF CACHE BOOL "" FORCE)
 set(WITH_POTRACE             OFF CACHE BOOL "" FORCE)
 set(WITH_QUADRIFLOW          OFF CACHE BOOL "" FORCE)
 set(WITH_TBB                 OFF CACHE BOOL "" FORCE)
+set(WITH_TBB_MALLOC_PROXY    OFF CACHE BOOL "" FORCE)
 
 # ---- Disable features that don't apply in a browser ----
 
@@ -84,6 +86,9 @@ set(WITH_DRACO               OFF CACHE BOOL "" FORCE)
 set(WITH_FREESTYLE           OFF CACHE BOOL "" FORCE)
 set(WITH_IK_ITASC            OFF CACHE BOOL "" FORCE)
 set(WITH_BLENDER_THUMBNAILER OFF CACHE BOOL "" FORCE)
+set(WITH_DOC_MANPAGE         OFF CACHE BOOL "" FORCE)
+set(WITH_GHOST_X11           OFF CACHE BOOL "" FORCE)
+set(WITH_GHOST_WAYLAND       OFF CACHE BOOL "" FORCE)
 
 # ---- Image formats: keep lightweight ones ----
 
@@ -113,6 +118,10 @@ set(WITH_BUILDINFO           ON  CACHE BOOL "" FORCE)
 set(WITH_INSTALL_PORTABLE    ON  CACHE BOOL "" FORCE)
 set(WITH_COMPILER_SIMD       OFF CACHE BOOL "" FORCE)  # WASM SIMD needs separate flags
 set(WITH_ASSERT_ABORT        OFF CACHE BOOL "" FORCE)
+
+# Emscripten has its own linker (wasm-ld); don't try lld/mold.
+set(WITH_LINKER_LLD          OFF CACHE BOOL "" FORCE)
+set(WITH_LINKER_MOLD         OFF CACHE BOOL "" FORCE)
 
 # ---- Disable precompiled libraries (Emscripten provides its own) ----
 
