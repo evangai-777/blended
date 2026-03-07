@@ -14,6 +14,17 @@ endif()
 
 message(STATUS "Configuring for Emscripten/WebAssembly")
 
+# ── Python executable (needed by build-time scripts) ──────────────
+# platform_unix.cmake normally finds this, but we skip that file on
+# Emscripten, so locate it here.
+find_program(PYTHON_EXECUTABLE "python3")
+if(NOT PYTHON_EXECUTABLE)
+  find_program(PYTHON_EXECUTABLE "python")
+endif()
+if(NOT PYTHON_EXECUTABLE)
+  message(FATAL_ERROR "python3 not found — required for build-time code generation")
+endif()
+
 # ── Compiler flags common to all targets ──────────────────────────
 
 # SDL2 is built into Emscripten — no external library needed.
