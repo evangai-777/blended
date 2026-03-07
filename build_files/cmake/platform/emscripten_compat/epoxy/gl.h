@@ -180,6 +180,22 @@ typedef void (*GenericFunctionPointer)(void);
 #ifndef GL_DRAW_INDIRECT_BUFFER
 #  define GL_DRAW_INDIRECT_BUFFER 0x8F3F
 #endif
+#ifndef GL_DISPATCH_INDIRECT_BUFFER
+#  define GL_DISPATCH_INDIRECT_BUFFER 0x90EE
+#endif
+#ifndef GL_COMMAND_BARRIER_BIT
+#  define GL_COMMAND_BARRIER_BIT 0x00000040
+#endif
+
+/* Texture buffer size query */
+#ifndef GL_MAX_TEXTURE_BUFFER_SIZE
+#  define GL_MAX_TEXTURE_BUFFER_SIZE 0x8C2B
+#endif
+
+/* Proxy textures (cube map array) */
+#ifndef GL_PROXY_TEXTURE_CUBE_MAP_ARRAY_ARB
+#  define GL_PROXY_TEXTURE_CUBE_MAP_ARRAY_ARB 0x900B
+#endif
 
 /* Image textures (ES 3.1) */
 #ifndef GL_MAX_IMAGE_UNITS
