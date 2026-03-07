@@ -89,7 +89,7 @@ elseif(APPLE)
       --entitlements "${CMAKE_SOURCE_DIR}/release/darwin/thumbnailer_entitlements.plist"
       --timestamp=none $<TARGET_BUNDLE_DIR:blender-thumbnailer>
   )
-elseif(UNIX)
+elseif(UNIX AND NOT EMSCRIPTEN)
   # -----------------------------------------------------------------------------
   # Build `blender-thumbnailer` executable
 

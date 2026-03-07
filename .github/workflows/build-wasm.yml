@@ -106,9 +106,12 @@ jobs:
           -C build_files/cmake/config/blended_wasm.cmake
 
     # ── Build ─────────────────────────────────────────────────
+    # NOTE: Emscripten's em++ uses ~2x more RAM than native compilers.
+    # GitHub Actions runners have 7 GB RAM, so limit parallelism to 2
+    # to avoid silent OOM kills (no error output, just "subcommand failed").
     - name: Build
       run: |
-        emmake cmake --build $BUILD_DIR --parallel $(nproc) 2>&1 || {
+        emmake cmake --build $BUILD_DIR --parallel 2 2>&1 || {
           echo "::warning::Full build failed — this is expected during early WASM porting."
           echo "::warning::Check build output above for specific compilation errors."
           echo "BUILD_INCOMPLETE=true" >> $GITHUB_ENV
