@@ -1157,7 +1157,7 @@ function(msgfmt_simple
     make_directory ${_file_to_path}
 
     COMMAND ${CMAKE_COMMAND} -E
-    env ${PLATFORM_ENV_BUILD} "$<TARGET_FILE:msgfmt>" ${_file_from} ${_file_to}
+    env ${PLATFORM_ENV_BUILD} ${CMAKE_CROSSCOMPILING_EMULATOR} "$<TARGET_FILE:msgfmt>" ${_file_from} ${_file_to}
 
     DEPENDS msgfmt ${_file_from})
 

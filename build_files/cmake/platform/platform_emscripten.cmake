@@ -197,6 +197,12 @@ set(Epoxy_INCLUDE_DIRS
 )
 set(Epoxy_LIBRARIES bf_emscripten_epoxy_shim CACHE STRING "" FORCE)
 
+# ── Build-time environment ────────────────────────────────────────
+# PLATFORM_ENV_BUILD is used by macros.cmake (e.g., msgfmt_simple) to
+# set environment variables when running build-time tools. On Emscripten
+# we don't need library paths, but the variable must be defined.
+set(PLATFORM_ENV_BUILD "_DUMMY_ENV_VAR_=1")
+
 # ── Disable features that require OS-level APIs ──────────────────
 
 set(WITH_GHOST_X11      OFF CACHE BOOL "" FORCE)
