@@ -29,9 +29,9 @@ static CLG_LogRef LOG = {"image.openjpeg"};
 
 #define JP2_FILEHEADER_SIZE 12
 
-static const char JP2_HEAD[] = {
+static const unsigned char JP2_HEAD[] = {
     0x0, 0x0, 0x0, 0x0C, 0x6A, 0x50, 0x20, 0x20, 0x0D, 0x0A, 0x87, 0x0A};
-static const char J2K_HEAD[] = {0xFF, 0x4F, 0xFF, 0x51, 0x00};
+static const unsigned char J2K_HEAD[] = {0xFF, 0x4F, 0xFF, 0x51, 0x00};
 
 /* We only need this because of how the presets are set */
 /* this typedef is copied from 'openjpeg-1.5.0/applications/codec/image_to_j2k.c' */
