@@ -15,6 +15,11 @@
  * are non-functional at runtime but the code paths that use them are
  * typically guarded by capability checks. */
 
+#ifndef EPOXY_STDBOOL_H
+#define EPOXY_STDBOOL_H
+#include <stdbool.h>
+#endif
+
 #ifndef EPOXY_GL_H
 #define EPOXY_GL_H
 
