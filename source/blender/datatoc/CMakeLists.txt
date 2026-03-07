@@ -22,6 +22,7 @@ if(EMSCRIPTEN)
     -sSINGLE_FILE=1       # Embed .wasm in .js for simpler execution
     -sUSE_PTHREADS=0      # No SharedArrayBuffer
     -sSHARED_MEMORY=0     # No shared memory
+    -sALLOW_MEMORY_GROWTH=1  # Let Node.js grow heap as needed (no fixed cap)
     -sEXIT_RUNTIME=1      # Flush output on exit
   )
 endif()
