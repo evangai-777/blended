@@ -35,8 +35,11 @@ string(APPEND CMAKE_CXX_FLAGS " -s USE_SDL=2")
 # Blender's codebase has many implicit sign conversions (20,000+ in clang-cl)
 # that are intentional. Emscripten's clang enables -Wsign-conversion by default
 # and promotes it to an error, which breaks the build.
-string(APPEND CMAKE_C_FLAGS   " -Wno-sign-conversion -Wno-shorten-64-to-32 -Wno-implicit-int-conversion")
-string(APPEND CMAKE_CXX_FLAGS " -Wno-sign-conversion -Wno-shorten-64-to-32 -Wno-implicit-int-conversion")
+# -Wno-c++11-narrowing: Blender uses brace-initialized lists with implicit
+# narrowing conversions (uchar→char, int→float, etc.) throughout the codebase.
+# These are safe and intentional but Emscripten's clang treats them as errors.
+string(APPEND CMAKE_C_FLAGS   " -Wno-sign-conversion -Wno-shorten-64-to-32 -Wno-implicit-int-conversion -Wno-c++11-narrowing")
+string(APPEND CMAKE_CXX_FLAGS " -Wno-sign-conversion -Wno-shorten-64-to-32 -Wno-implicit-int-conversion -Wno-c++11-narrowing")
 
 # Threading: -pthread is NOT set globally in compiler flags.
 #

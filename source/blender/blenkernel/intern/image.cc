@@ -235,8 +235,9 @@ static void image_foreach_cache(ID *id,
     function_callback(id, &key, reinterpret_cast<void **>(&slot.render), 0, user_data);
   }
 
-  /* Ensure we don't collide with the identifiers used above. */
-  constexpr size_t runtime_base_id = size_t(1) << 32u;
+  /* Ensure we don't collide with the identifiers used above.
+   * Use a shift relative to size_t width so this works on both 32-bit and 64-bit platforms. */
+  constexpr size_t runtime_base_id = size_t(1) << (sizeof(size_t) * 8 - 4);
 
   key.identifier = runtime_base_id + offsetof(bke::ImageRuntime, cache);
   function_callback(id, &key, reinterpret_cast<void **>(&image->runtime->cache), 0, user_data);
