@@ -1288,7 +1288,14 @@ static FT_GlyphSlot blf_glyph_render(FontBLF *settings_font,
   if (glyph_font->variations) {
     FT_Fixed coords[BLF_VARIATIONS_MAX];
     /* Load current design coordinates. */
+#if FREETYPE_MAJOR > 2 || (FREETYPE_MAJOR == 2 && FREETYPE_MINOR >= 9)
     FT_Get_Var_Design_Coordinates(glyph_font->face, BLF_VARIATIONS_MAX, &coords[0]);
+#else
+    /* FT_Get_Var_Design_Coordinates not available; initialize from axis defaults. */
+    for (FT_UInt i = 0; i < glyph_font->variations->num_axis && i < BLF_VARIATIONS_MAX; i++) {
+      coords[i] = glyph_font->variations->axis[i].def;
+    }
+#endif
     /* Update design coordinates with new values. */
 
     weight = blf_glyph_set_variation_weight(glyph_font, coords, weight, weight_target);
