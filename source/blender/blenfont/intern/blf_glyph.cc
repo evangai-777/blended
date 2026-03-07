@@ -1286,16 +1286,10 @@ static FT_GlyphSlot blf_glyph_render(FontBLF *settings_font,
   /* Font variations need to be set before glyph loading. Even if new value is zero. */
 
   if (glyph_font->variations) {
+#if FREETYPE_MAJOR > 2 || (FREETYPE_MAJOR == 2 && FREETYPE_MINOR >= 8)
     FT_Fixed coords[BLF_VARIATIONS_MAX];
     /* Load current design coordinates. */
-#if FREETYPE_MAJOR > 2 || (FREETYPE_MAJOR == 2 && FREETYPE_MINOR >= 9)
     FT_Get_Var_Design_Coordinates(glyph_font->face, BLF_VARIATIONS_MAX, &coords[0]);
-#else
-    /* FT_Get_Var_Design_Coordinates not available; initialize from axis defaults. */
-    for (FT_UInt i = 0; i < glyph_font->variations->num_axis && i < BLF_VARIATIONS_MAX; i++) {
-      coords[i] = glyph_font->variations->axis[i].def;
-    }
-#endif
     /* Update design coordinates with new values. */
 
     weight = blf_glyph_set_variation_weight(glyph_font, coords, weight, weight_target);
@@ -1306,6 +1300,9 @@ static FT_GlyphSlot blf_glyph_render(FontBLF *settings_font,
 
     /* Save updated design coordinates. */
     FT_Set_Var_Design_Coordinates(glyph_font->face, BLF_VARIATIONS_MAX, &coords[0]);
+#endif
+    /* On older FreeType (< 2.8) without design coordinate APIs, font variations
+     * are silently skipped. The font will render with default axis values. */
   }
 
   FT_GlyphSlot glyph = blf_glyph_load(glyph_font, glyph_index, outline_only);
