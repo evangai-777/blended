@@ -27,7 +27,9 @@
  */
 
 #include <cctype>
-#include <cfenv>
+#ifndef __EMSCRIPTEN__
+#  include <cfenv>
+#endif
 #include <cmath>
 #include <cstddef>
 #include <cstdlib>
@@ -173,7 +175,9 @@ eExprPyLike_EvalStatus BLI_expr_pylike_eval(ExprPyLike_Parsed *expr,
   ExprOp *ops = expr->ops.data();
   int sp = 0, pc;
 
+#ifndef __EMSCRIPTEN__
   feclearexcept(FE_ALL_EXCEPT);
+#endif
 
   for (pc = 0; pc >= 0 && pc < expr->ops.size(); pc++) {
     switch (ops[pc].opcode) {
@@ -261,10 +265,20 @@ eExprPyLike_EvalStatus BLI_expr_pylike_eval(ExprPyLike_Parsed *expr,
   *r_result = stack[0];
 
   /* Detect floating point evaluation errors. */
+#ifdef __EMSCRIPTEN__
+  /* Emscripten doesn't support <cfenv>; fall back to checking the result. */
+  if (std::isnan(stack[0])) {
+    return EXPR_PYLIKE_MATH_ERROR;
+  }
+  if (std::isinf(stack[0])) {
+    return EXPR_PYLIKE_DIV_BY_ZERO;
+  }
+#else
   int flags = fetestexcept(FE_DIVBYZERO | FE_INVALID);
   if (flags) {
     return (flags & FE_INVALID) ? EXPR_PYLIKE_MATH_ERROR : EXPR_PYLIKE_DIV_BY_ZERO;
   }
+#endif
 
   return EXPR_PYLIKE_SUCCESS;
 }
@@ -543,7 +557,16 @@ static bool parse_add_func(ExprParseState *state,
   ExprOp *prev_ops = state->ops.end();
   int jmp_gap = state->ops.size() - state->last_jmp;
 
+#ifndef __EMSCRIPTEN__
   feclearexcept(FE_ALL_EXCEPT);
+#endif
+
+/* Helper: check if a constant-folded result is free of FP errors. */
+#ifdef __EMSCRIPTEN__
+#  define CONST_FOLD_OK(result) (!std::isnan(result) && !std::isinf(result))
+#else
+#  define CONST_FOLD_OK(result) (fetestexcept(FE_DIVBYZERO | FE_INVALID) == 0)
+#endif
 
   if (std::holds_alternative<UnaryOpFunc>(funcptr)) {
     UnaryOpFunc func = std::get<UnaryOpFunc>(funcptr);
@@ -553,7 +576,7 @@ static bool parse_add_func(ExprParseState *state,
        * see D6012 for details. */
       volatile double result = func(prev_ops[-1].arg.dval);
 
-      if (fetestexcept(FE_DIVBYZERO | FE_INVALID) == 0) {
+      if (CONST_FOLD_OK(result)) {
         prev_ops[-1].arg.dval = result;
         return true;
       }
@@ -570,7 +593,7 @@ static bool parse_add_func(ExprParseState *state,
        * see D6012 for details. */
       volatile double result = func(prev_ops[-2].arg.dval, prev_ops[-1].arg.dval);
 
-      if (fetestexcept(FE_DIVBYZERO | FE_INVALID) == 0) {
+      if (CONST_FOLD_OK(result)) {
         prev_ops[-2].arg.dval = result;
         state->ops.resize(state->ops.size() - 1);
         state->stack_ptr--;
@@ -591,7 +614,7 @@ static bool parse_add_func(ExprParseState *state,
       volatile double result = func(
           prev_ops[-3].arg.dval, prev_ops[-2].arg.dval, prev_ops[-1].arg.dval);
 
-      if (fetestexcept(FE_DIVBYZERO | FE_INVALID) == 0) {
+      if (CONST_FOLD_OK(result)) {
         prev_ops[-3].arg.dval = result;
         state->ops.resize(state->ops.size() - 2);
         state->stack_ptr -= 2;
@@ -601,6 +624,8 @@ static bool parse_add_func(ExprParseState *state,
 
     parse_add_op(state, OPCODE_FUNC3, -2)->arg.func3 = func;
   }
+
+#undef CONST_FOLD_OK
   else {
     BLI_assert(false);
     return false;
