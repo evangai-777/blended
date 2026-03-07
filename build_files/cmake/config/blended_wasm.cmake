@@ -83,6 +83,7 @@ set(WITH_INTERNATIONAL       OFF CACHE BOOL "" FORCE)
 set(WITH_DRACO               OFF CACHE BOOL "" FORCE)
 set(WITH_FREESTYLE           OFF CACHE BOOL "" FORCE)
 set(WITH_IK_ITASC            OFF CACHE BOOL "" FORCE)
+set(WITH_BLENDER_THUMBNAILER OFF CACHE BOOL "" FORCE)
 
 # ---- Image formats: keep lightweight ones ----
 
