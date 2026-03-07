@@ -47,6 +47,7 @@ if(EMSCRIPTEN)
     -sSINGLE_FILE=1       # Embed .wasm in .js for simpler execution
     -sUSE_PTHREADS=0      # No SharedArrayBuffer
     -sSHARED_MEMORY=0     # No shared memory
+    -sALLOW_MEMORY_GROWTH=1  # Let Node.js grow heap as needed (no fixed cap)
     -sSTACK_SIZE=8388608  # 8 MB stack
     -sSTACK_OVERFLOW_CHECK=2
     -sEXIT_RUNTIME=1      # Flush output on exit
