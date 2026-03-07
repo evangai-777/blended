@@ -289,3 +289,93 @@ void glProgramUniform1i(GLuint program, GLint location, GLint v0)
 {
   (void)program; (void)location; (void)v0;
 }
+
+void glFramebufferTexture(GLenum target, GLenum attachment,
+                          GLuint texture, GLint level)
+{
+  (void)target; (void)attachment; (void)texture; (void)level;
+}
+
+void glFramebufferParameteri(GLenum target, GLenum pname, GLint param)
+{
+  (void)target; (void)pname; (void)param;
+}
+
+void glDrawElementsInstancedBaseVertexBaseInstance(GLenum mode, GLsizei count,
+                                                   GLenum type, const void *indices,
+                                                   GLsizei instancecount,
+                                                   GLint basevertex,
+                                                   GLuint baseinstance)
+{
+  (void)mode; (void)count; (void)type; (void)indices;
+  (void)instancecount; (void)basevertex; (void)baseinstance;
+}
+
+void glDrawArraysInstancedBaseInstance(GLenum mode, GLint first, GLsizei count,
+                                       GLsizei instancecount, GLuint baseinstance)
+{
+  (void)mode; (void)first; (void)count;
+  (void)instancecount; (void)baseinstance;
+}
+
+void glDispatchComputeIndirect(GLintptr indirect)
+{
+  (void)indirect;
+}
+
+void glQueryCounter(GLuint id, GLenum target)
+{
+  (void)id; (void)target;
+}
+
+void glGetQueryObjectiv(GLuint id, GLenum pname, GLint *params)
+{
+  (void)id; (void)pname;
+  if (params) {
+    *params = 0;
+  }
+}
+
+void glGetQueryObjectui64v(GLuint id, GLenum pname, GLuint64 *params)
+{
+  (void)id; (void)pname;
+  if (params) {
+    *params = 0;
+  }
+}
+
+void glPolygonMode(GLenum face, GLenum mode)
+{
+  (void)face; (void)mode;
+}
+
+void glPatchParameteri(GLenum pname, GLint value)
+{
+  (void)pname; (void)value;
+}
+
+void glGetBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size,
+                        void *data)
+{
+  (void)target; (void)offset; (void)size; (void)data;
+}
+
+void glClearNamedBufferData(GLuint buffer, GLenum internalformat,
+                            GLenum format, GLenum type, const void *data)
+{
+  (void)buffer; (void)internalformat; (void)format; (void)type; (void)data;
+}
+
+void glGetUnsignedBytei_vEXT(GLenum target, GLuint index, GLubyte *data)
+{
+  (void)target; (void)index; (void)data;
+}
+
+void glGetUnsignedBytevEXT(GLenum pname, GLubyte *data)
+{
+  (void)pname; (void)data;
+}
+
+void glTextureBarrier(void)
+{
+}

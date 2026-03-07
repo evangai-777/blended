@@ -353,6 +353,243 @@ void glProgramUniform1i(GLuint program, GLint location, GLint v0);
 #  define GL_MAP_COHERENT_BIT 0x0080
 #endif
 
+/* Adjacency primitives (geometry shaders) */
+#ifndef GL_LINES_ADJACENCY
+#  define GL_LINES_ADJACENCY 0x000A
+#endif
+#ifndef GL_LINE_STRIP_ADJACENCY
+#  define GL_LINE_STRIP_ADJACENCY 0x000B
+#endif
+#ifndef GL_TRIANGLES_ADJACENCY
+#  define GL_TRIANGLES_ADJACENCY 0x000C
+#endif
+#ifndef GL_TRIANGLE_STRIP_ADJACENCY
+#  define GL_TRIANGLE_STRIP_ADJACENCY 0x000D
+#endif
+
+/* Tessellation */
+#ifndef GL_PATCHES
+#  define GL_PATCHES 0x000E
+#endif
+#ifndef GL_PATCH_VERTICES
+#  define GL_PATCH_VERTICES 0x8E72
+#endif
+
+/* Stencil (desktop GL has GL_STENCIL_INDEX, GLES3 only GL_STENCIL_INDEX8) */
+#ifndef GL_STENCIL_INDEX
+#  define GL_STENCIL_INDEX 0x1901
+#endif
+
+/* Multisampling */
+#ifndef GL_MULTISAMPLE
+#  define GL_MULTISAMPLE 0x809D
+#endif
+
+/* Program point size */
+#ifndef GL_PROGRAM_POINT_SIZE
+#  define GL_PROGRAM_POINT_SIZE 0x8642
+#endif
+
+/* sRGB framebuffer */
+#ifndef GL_FRAMEBUFFER_SRGB
+#  define GL_FRAMEBUFFER_SRGB 0x8DB9
+#endif
+
+/* Depth clamp */
+#ifndef GL_DEPTH_CLAMP
+#  define GL_DEPTH_CLAMP 0x864F
+#endif
+
+/* Timer queries */
+#ifndef GL_TIMESTAMP
+#  define GL_TIMESTAMP 0x8E28
+#endif
+#ifndef GL_TIME_ELAPSED
+#  define GL_TIME_ELAPSED 0x88BF
+#endif
+
+/* Occlusion queries (GLES3 has ANY_SAMPLES_PASSED but not SAMPLES_PASSED) */
+#ifndef GL_SAMPLES_PASSED
+#  define GL_SAMPLES_PASSED 0x8914
+#endif
+
+/* Memory barrier bits */
+#ifndef GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT
+#  define GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT 0x00000001
+#endif
+#ifndef GL_ELEMENT_ARRAY_BARRIER_BIT
+#  define GL_ELEMENT_ARRAY_BARRIER_BIT 0x00000002
+#endif
+#ifndef GL_UNIFORM_BARRIER_BIT
+#  define GL_UNIFORM_BARRIER_BIT 0x00000004
+#endif
+#ifndef GL_TEXTURE_FETCH_BARRIER_BIT
+#  define GL_TEXTURE_FETCH_BARRIER_BIT 0x00000008
+#endif
+#ifndef GL_SHADER_IMAGE_ACCESS_BARRIER_BIT
+#  define GL_SHADER_IMAGE_ACCESS_BARRIER_BIT 0x00000020
+#endif
+#ifndef GL_BUFFER_UPDATE_BARRIER_BIT
+#  define GL_BUFFER_UPDATE_BARRIER_BIT 0x00000200
+#endif
+#ifndef GL_FRAMEBUFFER_BARRIER_BIT
+#  define GL_FRAMEBUFFER_BARRIER_BIT 0x00000400
+#endif
+#ifndef GL_SHADER_STORAGE_BARRIER_BIT
+#  define GL_SHADER_STORAGE_BARRIER_BIT 0x00002000
+#endif
+#ifndef GL_ALL_BARRIER_BITS
+#  define GL_ALL_BARRIER_BITS 0xFFFFFFFF
+#endif
+
+/* SSBO block size query */
+#ifndef GL_MAX_SHADER_STORAGE_BLOCK_SIZE
+#  define GL_MAX_SHADER_STORAGE_BLOCK_SIZE 0x90DE
+#endif
+
+/* Per-stage SSBO limits (ES 3.1) */
+#ifndef GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS
+#  define GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS 0x90D6
+#endif
+#ifndef GL_MAX_FRAGMENT_SHADER_STORAGE_BLOCKS
+#  define GL_MAX_FRAGMENT_SHADER_STORAGE_BLOCKS 0x90DC
+#endif
+
+/* Geometry shader texture units */
+#ifndef GL_MAX_GEOMETRY_TEXTURE_IMAGE_UNITS
+#  define GL_MAX_GEOMETRY_TEXTURE_IMAGE_UNITS 0x8C29
+#endif
+
+/* Desktop GL varying limit (GLES3 has GL_MAX_VARYING_VECTORS instead) */
+#ifndef GL_MAX_VARYING_FLOATS
+#  define GL_MAX_VARYING_FLOATS 0x8B4B
+#endif
+
+/* Stereo / quad-buffer draw buffers (desktop GL) */
+#ifndef GL_FRONT_LEFT
+#  define GL_FRONT_LEFT 0x0400
+#endif
+#ifndef GL_FRONT_RIGHT
+#  define GL_FRONT_RIGHT 0x0401
+#endif
+#ifndef GL_BACK_LEFT
+#  define GL_BACK_LEFT 0x0402
+#endif
+#ifndef GL_BACK_RIGHT
+#  define GL_BACK_RIGHT 0x0403
+#endif
+#ifndef GL_STEREO
+#  define GL_STEREO 0x0C33
+#endif
+
+/* NVX_gpu_memory_info */
+#ifndef GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX
+#  define GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX 0x9048
+#endif
+#ifndef GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX
+#  define GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX 0x9049
+#endif
+
+/* ATI_meminfo */
+#ifndef GL_TEXTURE_FREE_MEMORY_ATI
+#  define GL_TEXTURE_FREE_MEMORY_ATI 0x87FC
+#endif
+
+/* KHR_debug object label identifiers (GL 4.3 / ES 3.2) */
+#ifndef GL_BUFFER
+#  define GL_BUFFER 0x82E0
+#endif
+#ifndef GL_SAMPLER
+#  define GL_SAMPLER 0x82E6
+#endif
+#ifndef GL_PROGRAM
+#  define GL_PROGRAM 0x82E2
+#endif
+/* GL_TEXTURE (0x1702) and GL_FRAMEBUFFER (0x8D40) are in GLES3.
+ * GL_VERTEX_ARRAY (0x8074) is in GLES3.
+ * GL_SHADER_STORAGE_BUFFER and GL_UNIFORM_BUFFER are defined above. */
+
+/* EXT_memory_object / device UUID constants */
+#ifndef GL_NUM_DEVICE_UUIDS_EXT
+#  define GL_NUM_DEVICE_UUIDS_EXT 0x9596
+#endif
+#ifndef GL_DEVICE_UUID_EXT
+#  define GL_DEVICE_UUID_EXT 0x9597
+#endif
+#ifndef GL_UUID_SIZE_EXT
+#  define GL_UUID_SIZE_EXT 16
+#endif
+#ifndef GL_DEVICE_LUID_EXT
+#  define GL_DEVICE_LUID_EXT 0x9599
+#endif
+#ifndef GL_LUID_SIZE_EXT
+#  define GL_LUID_SIZE_EXT 8
+#endif
+#ifndef GL_DEVICE_NODE_MASK_EXT
+#  define GL_DEVICE_NODE_MASK_EXT 0x959A
+#endif
+
+/* Polygon modes (not in GLES3) */
+#ifndef GL_FILL
+#  define GL_FILL 0x1B02
+#endif
+#ifndef GL_LINE
+#  define GL_LINE 0x1B01
+#endif
+#ifndef GL_POINT
+#  define GL_POINT 0x1B00
+#endif
+
+/* Quads (not in GLES3/WebGL2) */
+#ifndef GL_QUADS
+#  define GL_QUADS 0x0007
+#endif
+
+/* ── Additional desktop GL function stubs ──────────────────────── */
+
+/* Framebuffer (desktop glFramebufferTexture vs GLES3 glFramebufferTexture2D) */
+void glFramebufferTexture(GLenum target, GLenum attachment,
+                          GLuint texture, GLint level);
+void glFramebufferParameteri(GLenum target, GLenum pname, GLint param);
+
+/* Base-vertex / base-instance draw calls (GL 4.2) */
+void glDrawElementsInstancedBaseVertexBaseInstance(GLenum mode, GLsizei count,
+                                                   GLenum type, const void *indices,
+                                                   GLsizei instancecount,
+                                                   GLint basevertex,
+                                                   GLuint baseinstance);
+void glDrawArraysInstancedBaseInstance(GLenum mode, GLint first, GLsizei count,
+                                       GLsizei instancecount, GLuint baseinstance);
+
+/* Compute dispatch indirect */
+void glDispatchComputeIndirect(GLintptr indirect);
+
+/* Timer queries */
+void glQueryCounter(GLuint id, GLenum target);
+void glGetQueryObjectiv(GLuint id, GLenum pname, GLint *params);
+void glGetQueryObjectui64v(GLuint id, GLenum pname, GLuint64 *params);
+
+/* Polygon mode (not in GLES3) */
+void glPolygonMode(GLenum face, GLenum mode);
+
+/* Tessellation */
+void glPatchParameteri(GLenum pname, GLint value);
+
+/* Buffer readback (not in GLES3) */
+void glGetBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size,
+                        void *data);
+
+/* EXT_memory_object functions */
+void glGetUnsignedBytei_vEXT(GLenum target, GLuint index, GLubyte *data);
+void glGetUnsignedBytevEXT(GLenum pname, GLubyte *data);
+
+/* DSA buffer clearing (GL 4.5) */
+void glClearNamedBufferData(GLuint buffer, GLenum internalformat,
+                            GLenum format, GLenum type, const void *data);
+
+/* Texture barrier (GL 4.5) */
+void glTextureBarrier(void);
+
 #ifdef __cplusplus
 }
 #endif
