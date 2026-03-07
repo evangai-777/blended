@@ -138,7 +138,7 @@ BLI_INLINE int utf8_char_compute_skip_or_error_with_mask(const char c, char *r_m
 BLI_INLINE uint utf8_char_decode(const char *p, const char mask, const int len, const uint err)
 {
   /* Originally from GLIB `UTF8_GET` macro, added an 'err' argument. */
-  uint result = p[0] & mask;
+  uint result = uint(p[0] & mask);
   for (int count = 1; count < len; count++) {
     if ((p[count] & 0xc0) != 0x80) {
       return err;
@@ -184,7 +184,7 @@ ptrdiff_t BLI_str_utf8_invalid_byte(const char *str, size_t str_len)
     /* Note that since we always increase p (and decrease length) by one byte in main loop,
      * we only add/subtract extra UTF8 bytes in code below
      * (ab number, aka number of bytes remaining in the UTF8 sequence after the initial one). */
-    ab = utf8_char_compute_skip(c) - 1;
+    ab = utf8_char_compute_skip(char(c)) - 1;
     if (str_len <= size_t(ab)) {
       goto utf8_error;
     }
@@ -1093,7 +1093,7 @@ uint BLI_str_utf8_as_unicode_or_error(const char *p)
   const uchar c = uchar(*p);
 
   char mask = 0;
-  const int len = utf8_char_compute_skip_or_error_with_mask(c, &mask);
+  const int len = utf8_char_compute_skip_or_error_with_mask(char(c), &mask);
   if (UNLIKELY(len == -1)) {
     return BLI_UTF8_ERR;
   }
@@ -1104,7 +1104,7 @@ uint BLI_str_utf8_as_unicode_safe(const char *p)
 {
   const uint result = BLI_str_utf8_as_unicode_or_error(p);
   if (UNLIKELY(result == BLI_UTF8_ERR)) {
-    return *p;
+    return uint(uchar(*p));
   }
   return result;
 }
@@ -1119,7 +1119,7 @@ uint BLI_str_utf8_as_unicode_step_or_error(const char *__restrict p,
   BLI_assert(c != '\0');
 
   char mask = 0;
-  const int len = utf8_char_compute_skip_or_error_with_mask(c, &mask);
+  const int len = utf8_char_compute_skip_or_error_with_mask(char(c), &mask);
   if (UNLIKELY(len == -1) || (*index + size_t(len) > p_len)) {
     return BLI_UTF8_ERR;
   }

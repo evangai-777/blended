@@ -31,6 +31,13 @@ endif()
 string(APPEND CMAKE_C_FLAGS   " -s USE_SDL=2")
 string(APPEND CMAKE_CXX_FLAGS " -s USE_SDL=2")
 
+# Suppress warnings that Emscripten's clang treats as errors.
+# Blender's codebase has many implicit sign conversions (20,000+ in clang-cl)
+# that are intentional. Emscripten's clang enables -Wsign-conversion by default
+# and promotes it to an error, which breaks the build.
+string(APPEND CMAKE_C_FLAGS   " -Wno-sign-conversion -Wno-shorten-64-to-32 -Wno-implicit-int-conversion")
+string(APPEND CMAKE_CXX_FLAGS " -Wno-sign-conversion -Wno-shorten-64-to-32 -Wno-implicit-int-conversion")
+
 # Threading: -pthread is NOT set globally in compiler flags.
 #
 # In Emscripten, -pthread at compile time enables shared-memory codegen

@@ -55,7 +55,7 @@ static uchar ibuf_quality;
 
 bool imb_is_a_jpeg(const uchar *mem, const size_t size)
 {
-  const char magic[2] = {0xFF, 0xD8};
+  const unsigned char magic[2] = {0xFF, 0xD8};
   if (size < sizeof(magic)) {
     return false;
   }
