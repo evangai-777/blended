@@ -122,7 +122,10 @@ const char *BLI_dir_home()
 
 double BLI_dir_free_space(const char *dir)
 {
-#ifdef WIN32
+#ifdef __EMSCRIPTEN__
+  UNUSED_VARS(dir);
+  return -1;
+#elif defined(WIN32)
   DWORD sectorspc, bytesps, freec, clusters;
   char tmp[4];
 
