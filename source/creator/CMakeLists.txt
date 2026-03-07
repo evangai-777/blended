@@ -1929,12 +1929,15 @@ unset(LIB)
 setup_platform_linker_flags(blender)
 setup_platform_linker_libs(blender)
 
-# Emscripten: apply browser-specific link flags to the blender target only.
-# These flags (WebGL2, 512 MB memory, MODULARIZE, IDBFS, etc.) must NOT be
-# in CMAKE_EXE_LINKER_FLAGS because that leaks into build tools (makesdna,
-# makesrna, datatoc, shader_tool) causing data corruption when they run
-# under Node.js with inappropriate browser settings.
+# Emscripten: apply browser-specific compile AND link flags to blender only.
+# These flags must NOT be global because they leak into build tools
+# (makesdna, makesrna, datatoc, shader_tool) causing data corruption.
+#
+# -pthread at compile time: enables shared-memory codegen (TLS, atomics).
+# -pthread at link time: enables SharedArrayBuffer + Web Workers.
+# Both must be per-target — build tools use -sUSE_PTHREADS=0 instead.
 if(EMSCRIPTEN)
+  target_compile_options(blender PRIVATE -pthread)
   target_link_options(blender PRIVATE
     -pthread -sPTHREAD_POOL_SIZE=4
     ${EMSCRIPTEN_BROWSER_LINK_FLAGS}

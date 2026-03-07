@@ -14,15 +14,28 @@ endif()
 
 message(STATUS "Configuring for Emscripten/WebAssembly")
 
-# ── Compiler/linker flags common to all targets ──────────────────
+# ── Compiler flags common to all targets ──────────────────────────
 
 # SDL2 is built into Emscripten — no external library needed.
 string(APPEND CMAKE_C_FLAGS   " -s USE_SDL=2")
 string(APPEND CMAKE_CXX_FLAGS " -s USE_SDL=2")
 
-# Threading via pthreads (mapped to Web Workers + SharedArrayBuffer).
-string(APPEND CMAKE_C_FLAGS   " -pthread")
-string(APPEND CMAKE_CXX_FLAGS " -pthread")
+# Threading: -pthread is NOT set globally in compiler flags.
+#
+# In Emscripten, -pthread at compile time enables shared-memory codegen
+# (TLS segments, -matomics, -mbulk-memory, __EMSCRIPTEN_PTHREADS__).
+# When this flag is global in CMAKE_C/CXX_FLAGS, it applies to ALL
+# translation units — including those linked into build tools that run
+# under Node.js with -sUSE_PTHREADS=0. The resulting compile/link
+# mismatch (shared-memory object code + non-shared-memory runtime)
+# corrupts the WASM data segment, garbling string constants like RNA
+# property identifiers.
+#
+# Instead, -pthread is applied per-target only to the main blender
+# executable in source/creator/CMakeLists.txt. Library code compiled
+# without -pthread still works correctly: std::atomic operations are
+# sequentially consistent by default in single-threaded WASM, and the
+# linker resolves the threading ABI at link time.
 
 # ── Linker flags (Emscripten-specific) ───────────────────────────
 #
