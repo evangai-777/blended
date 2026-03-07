@@ -470,7 +470,7 @@ elseif(WIN32)
   endif()
 endif()
 
-if(UNIX AND NOT APPLE)
+if(UNIX AND NOT APPLE AND NOT EMSCRIPTEN)
   if(WITH_OPENGL_BACKEND)
     list(APPEND SRC
       intern/GHOST_ContextEGL.cc
