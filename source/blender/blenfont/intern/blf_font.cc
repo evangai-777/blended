@@ -2097,7 +2097,11 @@ void blf_font_free(FontBLF *font)
   }
 
   if (font->variations) {
+#if FREETYPE_MAJOR > 2 || (FREETYPE_MAJOR == 2 && FREETYPE_MINOR >= 9)
     FT_Done_MM_Var(font->ft_lib, font->variations);
+#else
+    free(font->variations);
+#endif
   }
 
   if (font->face) {
