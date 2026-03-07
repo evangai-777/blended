@@ -14,26 +14,59 @@ endif()
 
 message(STATUS "Configuring for Emscripten/WebAssembly")
 
-# ── Compiler/linker flags common to all targets ──────────────────
+# ── Compiler flags common to all targets ──────────────────────────
 
 # SDL2 is built into Emscripten — no external library needed.
 string(APPEND CMAKE_C_FLAGS   " -s USE_SDL=2")
 string(APPEND CMAKE_CXX_FLAGS " -s USE_SDL=2")
 
-# Threading via pthreads (mapped to Web Workers + SharedArrayBuffer).
-string(APPEND CMAKE_C_FLAGS   " -pthread")
-string(APPEND CMAKE_CXX_FLAGS " -pthread")
+# Threading: -pthread is NOT set globally in compiler flags.
+#
+# In Emscripten, -pthread at compile time enables shared-memory codegen
+# (TLS segments, -matomics, -mbulk-memory, __EMSCRIPTEN_PTHREADS__).
+# When this flag is global in CMAKE_C/CXX_FLAGS, it applies to ALL
+# translation units — including those linked into build tools that run
+# under Node.js with -sUSE_PTHREADS=0. The resulting compile/link
+# mismatch (shared-memory object code + non-shared-memory runtime)
+# corrupts the WASM data segment, garbling string constants like RNA
+# property identifiers.
+#
+# Instead, -pthread is applied per-target only to the main blender
+# executable in source/creator/CMakeLists.txt. Library code compiled
+# without -pthread still works correctly: std::atomic operations are
+# sequentially consistent by default in single-threaded WASM, and the
+# linker resolves the threading ABI at link time.
 
 # ── Linker flags (Emscripten-specific) ───────────────────────────
+#
+# IMPORTANT: Browser-specific link flags (WebGL, large memory, MODULARIZE,
+# filesystem, etc.) are NOT placed in CMAKE_EXE_LINKER_FLAGS because that
+# variable applies to ALL executables — including build-time tools
+# (makesdna, makesrna, datatoc, shader_tool) that run under Node.js.
+# When these tools inherit browser flags (512 MB INITIAL_MEMORY, WebGL2,
+# MODULARIZE=1, etc.) it causes data corruption and build failures.
+#
+# Instead, browser flags are stored in EMSCRIPTEN_BROWSER_LINK_FLAGS and
+# applied only to the main blender executable in source/creator/CMakeLists.txt.
 
-set(_EMSCRIPTEN_LINK_FLAGS "")
+# ── Build-tool link flags (applied globally) ────────────────────
+# These are safe for ALL executables including build tools.
+# Kept intentionally minimal: just WASM output and basic assertions.
+string(APPEND CMAKE_EXE_LINKER_FLAGS " -sWASM=1 -sASSERTIONS=1")
+
+# ── Browser-target link flags (applied per-target) ──────────────
+# These are collected as a CMake list and applied via target_link_options()
+# in source/creator/CMakeLists.txt.
+set(EMSCRIPTEN_BROWSER_LINK_FLAGS "")
 
 # WebGL2 (OpenGL ES 3.0).
-string(APPEND _EMSCRIPTEN_LINK_FLAGS " -s USE_SDL=2")
-string(APPEND _EMSCRIPTEN_LINK_FLAGS " -s USE_WEBGL2=1")
-string(APPEND _EMSCRIPTEN_LINK_FLAGS " -s FULL_ES3=1")
-string(APPEND _EMSCRIPTEN_LINK_FLAGS " -s MIN_WEBGL_VERSION=2")
-string(APPEND _EMSCRIPTEN_LINK_FLAGS " -s MAX_WEBGL_VERSION=2")
+list(APPEND EMSCRIPTEN_BROWSER_LINK_FLAGS
+  -sUSE_SDL=2
+  -sUSE_WEBGL2=1
+  -sFULL_ES3=1
+  -sMIN_WEBGL_VERSION=2
+  -sMAX_WEBGL_VERSION=2
+)
 
 # NOTE: Threading flags (-pthread, PTHREAD_POOL_SIZE) are intentionally
 # NOT in the global linker flags. Emscripten's driver processes -pthread
@@ -43,38 +76,34 @@ string(APPEND _EMSCRIPTEN_LINK_FLAGS " -s MAX_WEBGL_VERSION=2")
 
 # Memory configuration.
 # Start at 512 MB, allow growth up to 4 GB.
-string(APPEND _EMSCRIPTEN_LINK_FLAGS " -s INITIAL_MEMORY=536870912")
-string(APPEND _EMSCRIPTEN_LINK_FLAGS " -s ALLOW_MEMORY_GROWTH=1")
-string(APPEND _EMSCRIPTEN_LINK_FLAGS " -s MAXIMUM_MEMORY=4294967296")
+list(APPEND EMSCRIPTEN_BROWSER_LINK_FLAGS
+  -sINITIAL_MEMORY=536870912
+  -sALLOW_MEMORY_GROWTH=1
+  -sMAXIMUM_MEMORY=4294967296
+)
 
 # Stack size — Blender's deep call stacks need more than the 64 KB default.
-string(APPEND _EMSCRIPTEN_LINK_FLAGS " -s STACK_SIZE=5242880")
+list(APPEND EMSCRIPTEN_BROWSER_LINK_FLAGS -sSTACK_SIZE=5242880)
 
 # Filesystem: MEMFS by default, IDBFS available for persistence.
-string(APPEND _EMSCRIPTEN_LINK_FLAGS " -s FORCE_FILESYSTEM=1")
-string(APPEND _EMSCRIPTEN_LINK_FLAGS " -lidbfs.js")
+list(APPEND EMSCRIPTEN_BROWSER_LINK_FLAGS -sFORCE_FILESYSTEM=1 -lidbfs.js)
 
 # Export the main function for the Emscripten runtime.
-string(APPEND _EMSCRIPTEN_LINK_FLAGS " -s EXPORTED_RUNTIME_METHODS=[\"callMain\",\"ccall\",\"cwrap\"]")
+list(APPEND EMSCRIPTEN_BROWSER_LINK_FLAGS
+  "-sEXPORTED_RUNTIME_METHODS=[\"callMain\",\"ccall\",\"cwrap\"]"
+)
 
-# Produce .wasm + .js glue.
-string(APPEND _EMSCRIPTEN_LINK_FLAGS " -s WASM=1")
-string(APPEND _EMSCRIPTEN_LINK_FLAGS " -s MODULARIZE=1")
-string(APPEND _EMSCRIPTEN_LINK_FLAGS " -s EXPORT_NAME=\"BlendedModule\"")
+# Produce modularized output so the web shell can control initialization.
+list(APPEND EMSCRIPTEN_BROWSER_LINK_FLAGS
+  -sMODULARIZE=1
+  "-sEXPORT_NAME=\"BlendedModule\""
+)
 
-# Disable exit-runtime so the module stays alive.
-string(APPEND _EMSCRIPTEN_LINK_FLAGS " -s EXIT_RUNTIME=0")
+# Disable exit-runtime so the module stays alive in the browser.
+list(APPEND EMSCRIPTEN_BROWSER_LINK_FLAGS -sEXIT_RUNTIME=0)
 
-# Useful error messages in development.
-string(APPEND _EMSCRIPTEN_LINK_FLAGS " -s ASSERTIONS=1")
-string(APPEND _EMSCRIPTEN_LINK_FLAGS " -s GL_ASSERTIONS=1")
-
-# Apply to all link types.
-string(APPEND CMAKE_EXE_LINKER_FLAGS    " ${_EMSCRIPTEN_LINK_FLAGS}")
-string(APPEND CMAKE_SHARED_LINKER_FLAGS " ${_EMSCRIPTEN_LINK_FLAGS}")
-string(APPEND CMAKE_MODULE_LINKER_FLAGS " ${_EMSCRIPTEN_LINK_FLAGS}")
-
-unset(_EMSCRIPTEN_LINK_FLAGS)
+# GL debug assertions for development.
+list(APPEND EMSCRIPTEN_BROWSER_LINK_FLAGS -sGL_ASSERTIONS=1)
 
 # ── Skip precompiled library detection ───────────────────────────
 # Emscripten provides its own system libraries (SDL2, zlib, libpng, etc.)

@@ -1929,12 +1929,19 @@ unset(LIB)
 setup_platform_linker_flags(blender)
 setup_platform_linker_libs(blender)
 
-# Emscripten threading link flags — applied here (not globally) so that
-# build tools (makesdna, makesrna) can link without -pthread.
-# Emscripten's driver processes -pthread AFTER -s settings, making it
-# impossible to override with -sUSE_PTHREADS=0 on the same link command.
+# Emscripten: apply browser-specific compile AND link flags to blender only.
+# These flags must NOT be global because they leak into build tools
+# (makesdna, makesrna, datatoc, shader_tool) causing data corruption.
+#
+# -pthread at compile time: enables shared-memory codegen (TLS, atomics).
+# -pthread at link time: enables SharedArrayBuffer + Web Workers.
+# Both must be per-target — build tools use -sUSE_PTHREADS=0 instead.
 if(EMSCRIPTEN)
-  target_link_options(blender PRIVATE -pthread -sPTHREAD_POOL_SIZE=4)
+  target_compile_options(blender PRIVATE -pthread)
+  target_link_options(blender PRIVATE
+    -pthread -sPTHREAD_POOL_SIZE=4
+    ${EMSCRIPTEN_BROWSER_LINK_FLAGS}
+  )
 endif()
 
 if(DEFINED PLATFORM_SYMBOLS_MAP)
