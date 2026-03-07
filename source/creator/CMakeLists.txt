@@ -1929,12 +1929,16 @@ unset(LIB)
 setup_platform_linker_flags(blender)
 setup_platform_linker_libs(blender)
 
-# Emscripten threading link flags — applied here (not globally) so that
-# build tools (makesdna, makesrna) can link without -pthread.
-# Emscripten's driver processes -pthread AFTER -s settings, making it
-# impossible to override with -sUSE_PTHREADS=0 on the same link command.
+# Emscripten: apply browser-specific link flags to the blender target only.
+# These flags (WebGL2, 512 MB memory, MODULARIZE, IDBFS, etc.) must NOT be
+# in CMAKE_EXE_LINKER_FLAGS because that leaks into build tools (makesdna,
+# makesrna, datatoc, shader_tool) causing data corruption when they run
+# under Node.js with inappropriate browser settings.
 if(EMSCRIPTEN)
-  target_link_options(blender PRIVATE -pthread -sPTHREAD_POOL_SIZE=4)
+  target_link_options(blender PRIVATE
+    -pthread -sPTHREAD_POOL_SIZE=4
+    ${EMSCRIPTEN_BROWSER_LINK_FLAGS}
+  )
 endif()
 
 if(DEFINED PLATFORM_SYMBOLS_MAP)

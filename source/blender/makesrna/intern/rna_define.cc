@@ -1352,17 +1352,6 @@ PropertyRNA *RNA_def_property(StructOrFunctionRNA *cont_,
     if (!rna_validate_identifier(identifier, true, &error)) {
       CLOG_ERROR(
           &LOG, "property identifier \"%s.%s\" - %s", CONTAINER_RNA_ID(cont), identifier, error);
-      /* Diagnostic hex dump for WASM debugging — shows actual bytes at the
-       * identifier pointer so we can distinguish a wrong pointer from
-       * overwritten data-segment memory. */
-      {
-        fprintf(stderr, "  identifier address: %p\n", (const void *)identifier);
-        fprintf(stderr, "  hex dump (first 32 bytes): ");
-        for (int _i = 0; _i < 32 && identifier[_i]; _i++) {
-          fprintf(stderr, "%02x ", (unsigned char)identifier[_i]);
-        }
-        fprintf(stderr, "\n");
-      }
       DefRNA.error = true;
     }
 
