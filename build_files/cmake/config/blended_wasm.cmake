@@ -93,7 +93,7 @@ set(WITH_GHOST_WAYLAND       OFF CACHE BOOL "" FORCE)
 # ---- Image formats: keep lightweight ones ----
 
 set(WITH_IMAGE_OPENEXR       OFF CACHE BOOL "" FORCE)
-set(WITH_IMAGE_OPENJPEG      ON  CACHE BOOL "" FORCE)
+set(WITH_IMAGE_OPENJPEG      OFF CACHE BOOL "" FORCE)  # Not available via Emscripten ports
 set(WITH_IMAGE_CINEON        ON  CACHE BOOL "" FORCE)
 set(WITH_IMAGE_WEBP          OFF CACHE BOOL "" FORCE)
 

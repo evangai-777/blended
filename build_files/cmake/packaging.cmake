@@ -46,7 +46,9 @@ unset(MY_WC_HASH)
 # Force Package Name
 execute_process(COMMAND date "+%Y%m%d" OUTPUT_VARIABLE CPACK_DATE OUTPUT_STRIP_TRAILING_WHITESPACE)
 string(TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)
-if(MSVC)
+if(EMSCRIPTEN)
+  set(PACKAGE_ARCH wasm32)
+elseif(MSVC)
   if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
     set(PACKAGE_ARCH windows64)
   else()
@@ -135,7 +137,10 @@ macro(add_package_archive packagename extension)
   unset(package_output)
 endmacro()
 
-if(APPLE)
+if(EMSCRIPTEN)
+  # WebAssembly builds are deployed as web assets, not archives.
+  # Packaging is handled by the build_files/web/ deployment scripts.
+elseif(APPLE)
   add_package_archive(
     "${PROJECT_NAME}-${BLENDER_VERSION}-${BUILD_REV}-OSX-${CMAKE_OSX_ARCHITECTURES}"
     "zip"

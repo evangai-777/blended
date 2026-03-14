@@ -237,27 +237,10 @@ void glPopDebugGroup(void)
 {
 }
 
-GLsync glFenceSync(GLenum condition, GLbitfield flags)
-{
-  (void)condition; (void)flags;
-  return NULL;
-}
-
-void glDeleteSync(GLsync sync)
-{
-  (void)sync;
-}
-
-GLenum glClientWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
-{
-  (void)sync; (void)flags; (void)timeout;
-  return GL_ALREADY_SIGNALED;
-}
-
-void glWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
-{
-  (void)sync; (void)flags; (void)timeout;
-}
+/* NOTE: glFenceSync, glDeleteSync, glClientWaitSync, glWaitSync are
+ * part of GLES 3.0 / WebGL2 and provided by Emscripten's runtime.
+ * They must NOT be stubbed here — the real implementations are needed
+ * for correct synchronization behavior. */
 
 void glMemoryBarrier(GLbitfield barriers)
 {

@@ -367,8 +367,9 @@ void glPushDebugGroup(GLenum source, GLuint id, GLsizei length,
                       const GLchar *message);
 void glPopDebugGroup(void);
 
-/* Sync objects */
-typedef struct __GLsync *GLsync;
+/* Sync objects — GLsync, glFenceSync, glDeleteSync, glClientWaitSync,
+ * glWaitSync are part of GLES 3.0 and provided by <GLES3/gl3.h>.
+ * Do NOT redefine or stub them here. */
 #ifndef GL_SYNC_FLUSH_COMMANDS_BIT
 #  define GL_SYNC_FLUSH_COMMANDS_BIT 0x00000001
 #endif
@@ -387,10 +388,6 @@ typedef struct __GLsync *GLsync;
 #ifndef GL_WAIT_FAILED
 #  define GL_WAIT_FAILED 0x911D
 #endif
-GLsync glFenceSync(GLenum condition, GLbitfield flags);
-void glDeleteSync(GLsync sync);
-GLenum glClientWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout);
-void glWaitSync(GLsync sync, GLbitfield flags, GLuint64 timeout);
 
 /* Memory barrier */
 void glMemoryBarrier(GLbitfield barriers);
