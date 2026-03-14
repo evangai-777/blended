@@ -73,10 +73,21 @@ Address in this order once the web build links:
 - `source/blender/gpu/opengl/` — 6 files with Emscripten concerns
 - `source/blender/gpu/intern/` — shader create info
 - Focus: sign conversions, narrowing in GL calls, format mismatches
+- **Status:** Epoxy shim now covers all desktop GL functions and constants
+  used across the full `gpu/opengl/` backend (gl_state, gl_texture,
+  gl_compute, gl_storage_buffer, gl_uniform_buffer, etc.). The code
+  compiles against WebGL2 via no-op stubs. Remaining work is runtime
+  correctness — e.g. `glGetTexImage` stub returns no data, `glMapBuffer`
+  returns NULL, compute dispatch is a no-op.
 
-### Phase 2: Draw engine
+### Phase 2: Draw engine + GLSL shaders
 - `source/blender/draw/` — passes data to GPU, same warning classes
 - Focus: implicit conversions in draw call setup
+- **Note:** The draw engine was not fully audited for WebGL2 gaps, but it
+  primarily passes data to the GPU layer which is now stubbed. Shaders
+  need GLSL version/extension changes (runtime issue, not compilation) —
+  e.g. hardcoded `#version 430`, `sampler1D`/`sampler1DArray` usage,
+  compute shader dispatches. These are runtime fixes, not link errors.
 
 ### Phase 3: Core libraries
 - `source/blender/blenlib/` — math headers already have some pragmas
