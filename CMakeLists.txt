@@ -2779,6 +2779,11 @@ setup_heavy_lib_pool()
 
 
 # -----------------------------------------------------------------------------
+# Warning report (optional — for triage builds)
+
+include(build_files/cmake/warnings_report.cmake)
+
+# -----------------------------------------------------------------------------
 # CPack for generating packages
 
 include(build_files/cmake/packaging.cmake)
