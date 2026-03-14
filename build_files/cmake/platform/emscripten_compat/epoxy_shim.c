@@ -513,6 +513,15 @@ void glBindSamplers(GLuint first, GLsizei count, const GLuint *samplers)
   (void)first; (void)count; (void)samplers;
 }
 
+void glGetProgramInterfaceiv(GLuint program, GLenum programInterface,
+                             GLenum pname, GLint *params)
+{
+  (void)program; (void)programInterface; (void)pname;
+  if (params) {
+    *params = 0;
+  }
+}
+
 void glGetActiveUniformName(GLuint program, GLuint uniformIndex,
                             GLsizei bufSize, GLsizei *length, GLchar *uniformName)
 {

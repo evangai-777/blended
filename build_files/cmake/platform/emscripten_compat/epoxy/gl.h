@@ -800,6 +800,12 @@ void glProgramUniform1i(GLuint program, GLint location, GLint v0);
 #ifndef GL_SHADER_STORAGE_BLOCK
 #  define GL_SHADER_STORAGE_BLOCK 0x92E6
 #endif
+#ifndef GL_ACTIVE_RESOURCES
+#  define GL_ACTIVE_RESOURCES 0x92F5
+#endif
+#ifndef GL_MAX_NAME_LENGTH
+#  define GL_MAX_NAME_LENGTH 0x92F6
+#endif
 #ifndef GL_BUFFER_BINDING
 #  define GL_BUFFER_BINDING 0x9302
 #endif
@@ -893,6 +899,10 @@ void glGenerateTextureMipmap(GLuint texture);
 /* Multi-bind (GL 4.4 / ARB_multi_bind) */
 void glBindTextures(GLuint first, GLsizei count, const GLuint *textures);
 void glBindSamplers(GLuint first, GLsizei count, const GLuint *samplers);
+
+/* Program interface query (GLES 3.1) */
+void glGetProgramInterfaceiv(GLuint program, GLenum programInterface,
+                             GLenum pname, GLint *params);
 
 /* Shader introspection (desktop GL / GLES 3.1) */
 void glGetActiveUniformName(GLuint program, GLuint uniformIndex,
