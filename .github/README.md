@@ -103,6 +103,13 @@ Initial release of Blended:
 
 See [`CHANGELOG.md`](../CHANGELOG.md) for full details.
 
+Warnings Triage
+---------------
+
+Blended inherits thousands of compiler warnings from the Blender codebase that are currently blanket-suppressed in the Emscripten build. Once the web build compiles and links, these will be fixed systematically.
+
+See [`WARNINGS.md`](../WARNINGS.md) for the full triage plan, tooling, and fix priority.
+
 Syncing Upstream Changes
 ------------------------
 
