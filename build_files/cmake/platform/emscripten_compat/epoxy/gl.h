@@ -358,8 +358,14 @@ void glDebugMessageCallback(GLDEBUGPROC callback, const void *userParam);
 void glDebugMessageControl(GLenum source, GLenum type, GLenum severity,
                            GLsizei count, const GLuint *ids,
                            GLboolean enabled);
+void glDebugMessageInsert(GLenum source, GLenum type, GLuint id,
+                          GLenum severity, GLsizei length,
+                          const GLchar *buf);
 void glObjectLabel(GLenum identifier, GLuint name, GLsizei length,
                    const GLchar *label);
+void glPushDebugGroup(GLenum source, GLuint id, GLsizei length,
+                      const GLchar *message);
+void glPopDebugGroup(void);
 
 /* Sync objects */
 typedef struct __GLsync *GLsync;
@@ -582,8 +588,13 @@ void glProgramUniform1i(GLuint program, GLint location, GLint v0);
 #ifndef GL_PROGRAM
 #  define GL_PROGRAM 0x82E2
 #endif
+#ifndef GL_SHADER
+#  define GL_SHADER 0x82E1
+#endif
+#ifndef GL_VERTEX_ARRAY
+#  define GL_VERTEX_ARRAY 0x8074
+#endif
 /* GL_TEXTURE (0x1702) and GL_FRAMEBUFFER (0x8D40) are in GLES3.
- * GL_VERTEX_ARRAY (0x8074) is in GLES3.
  * GL_SHADER_STORAGE_BUFFER and GL_UNIFORM_BUFFER are defined above. */
 
 /* EXT_memory_object / device UUID constants */

@@ -129,7 +129,8 @@ void glLogicOp(GLenum opcode)
 
 void glDrawBuffer(GLenum buf)
 {
-  (void)buf;
+  /* GLES3 has glDrawBuffers but not glDrawBuffer. Emulate via single-element call. */
+  glDrawBuffers(1, &buf);
 }
 
 void glPointSize(GLfloat size)
@@ -212,10 +213,28 @@ void glDebugMessageControl(GLenum source, GLenum type, GLenum severity,
   (void)count; (void)ids; (void)enabled;
 }
 
+void glDebugMessageInsert(GLenum source, GLenum type, GLuint id,
+                          GLenum severity, GLsizei length,
+                          const GLchar *buf)
+{
+  (void)source; (void)type; (void)id;
+  (void)severity; (void)length; (void)buf;
+}
+
 void glObjectLabel(GLenum identifier, GLuint name, GLsizei length,
                    const GLchar *label)
 {
   (void)identifier; (void)name; (void)length; (void)label;
+}
+
+void glPushDebugGroup(GLenum source, GLuint id, GLsizei length,
+                      const GLchar *message)
+{
+  (void)source; (void)id; (void)length; (void)message;
+}
+
+void glPopDebugGroup(void)
+{
 }
 
 GLsync glFenceSync(GLenum condition, GLbitfield flags)
@@ -293,7 +312,9 @@ void glProgramUniform1i(GLuint program, GLint location, GLint v0)
 void glFramebufferTexture(GLenum target, GLenum attachment,
                           GLuint texture, GLint level)
 {
-  (void)target; (void)attachment; (void)texture; (void)level;
+  /* GLES3 has glFramebufferTexture2D but not glFramebufferTexture.
+   * Best-effort: attach as GL_TEXTURE_2D. Layered rendering is not supported. */
+  glFramebufferTexture2D(target, attachment, GL_TEXTURE_2D, texture, level);
 }
 
 void glFramebufferParameteri(GLenum target, GLenum pname, GLint param)
