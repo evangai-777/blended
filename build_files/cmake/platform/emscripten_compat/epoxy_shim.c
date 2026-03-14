@@ -379,3 +379,117 @@ void glGetUnsignedBytevEXT(GLenum pname, GLubyte *data)
 void glTextureBarrier(void)
 {
 }
+
+void glTextureParameteri(GLuint texture, GLenum pname, GLint param)
+{
+  (void)texture; (void)pname; (void)param;
+}
+
+void glTextureParameteriv(GLuint texture, GLenum pname, const GLint *params)
+{
+  (void)texture; (void)pname; (void)params;
+}
+
+void glTextureSubImage1D(GLuint texture, GLint level, GLint xoffset,
+                         GLsizei width, GLenum format, GLenum type,
+                         const void *pixels)
+{
+  (void)texture; (void)level; (void)xoffset;
+  (void)width; (void)format; (void)type; (void)pixels;
+}
+
+void glTextureSubImage2D(GLuint texture, GLint level, GLint xoffset,
+                         GLint yoffset, GLsizei width, GLsizei height,
+                         GLenum format, GLenum type, const void *pixels)
+{
+  (void)texture; (void)level; (void)xoffset; (void)yoffset;
+  (void)width; (void)height; (void)format; (void)type; (void)pixels;
+}
+
+void glTextureSubImage3D(GLuint texture, GLint level, GLint xoffset,
+                         GLint yoffset, GLint zoffset, GLsizei width,
+                         GLsizei height, GLsizei depth, GLenum format,
+                         GLenum type, const void *pixels)
+{
+  (void)texture; (void)level; (void)xoffset; (void)yoffset; (void)zoffset;
+  (void)width; (void)height; (void)depth; (void)format; (void)type; (void)pixels;
+}
+
+void glGetTextureImage(GLuint texture, GLint level, GLenum format,
+                       GLenum type, GLsizei bufSize, void *pixels)
+{
+  (void)texture; (void)level; (void)format; (void)type; (void)bufSize; (void)pixels;
+}
+
+void glCompressedTextureSubImage1D(GLuint texture, GLint level, GLint xoffset,
+                                   GLsizei width, GLenum format,
+                                   GLsizei imageSize, const void *data)
+{
+  (void)texture; (void)level; (void)xoffset;
+  (void)width; (void)format; (void)imageSize; (void)data;
+}
+
+void glCompressedTextureSubImage2D(GLuint texture, GLint level, GLint xoffset,
+                                   GLint yoffset, GLsizei width, GLsizei height,
+                                   GLenum format, GLsizei imageSize,
+                                   const void *data)
+{
+  (void)texture; (void)level; (void)xoffset; (void)yoffset;
+  (void)width; (void)height; (void)format; (void)imageSize; (void)data;
+}
+
+void glCompressedTextureSubImage3D(GLuint texture, GLint level, GLint xoffset,
+                                   GLint yoffset, GLint zoffset, GLsizei width,
+                                   GLsizei height, GLsizei depth, GLenum format,
+                                   GLsizei imageSize, const void *data)
+{
+  (void)texture; (void)level; (void)xoffset; (void)yoffset; (void)zoffset;
+  (void)width; (void)height; (void)depth; (void)format; (void)imageSize; (void)data;
+}
+
+void glTextureBuffer(GLuint texture, GLenum internalformat, GLuint buffer)
+{
+  (void)texture; (void)internalformat; (void)buffer;
+}
+
+void glGetActiveUniformName(GLuint program, GLuint uniformIndex,
+                            GLsizei bufSize, GLsizei *length, GLchar *uniformName)
+{
+  (void)program; (void)uniformIndex;
+  if (length) {
+    *length = 0;
+  }
+  if (uniformName && bufSize > 0) {
+    uniformName[0] = '\0';
+  }
+}
+
+void glGetProgramResourceiv(GLuint program, GLenum programInterface,
+                            GLuint index, GLsizei propCount,
+                            const GLenum *props, GLsizei count,
+                            GLsizei *length, GLint *params)
+{
+  (void)program; (void)programInterface; (void)index;
+  (void)propCount; (void)props;
+  if (length) {
+    *length = 0;
+  }
+  if (params && count > 0) {
+    for (GLsizei i = 0; i < count; i++) {
+      params[i] = 0;
+    }
+  }
+}
+
+void glGetProgramResourceName(GLuint program, GLenum programInterface,
+                              GLuint index, GLsizei bufSize,
+                              GLsizei *length, GLchar *name)
+{
+  (void)program; (void)programInterface; (void)index;
+  if (length) {
+    *length = 0;
+  }
+  if (name && bufSize > 0) {
+    name[0] = '\0';
+  }
+}
