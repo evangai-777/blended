@@ -192,6 +192,24 @@ typedef void (*GenericFunctionPointer)(void);
 #  define GL_MAX_TEXTURE_BUFFER_SIZE 0x8C2B
 #endif
 
+/* Texture swizzle (vec4 variant) */
+#ifndef GL_TEXTURE_SWIZZLE_RGBA
+#  define GL_TEXTURE_SWIZZLE_RGBA 0x8E46
+#endif
+
+/* Depth-stencil texture mode (GLES 3.1) */
+#ifndef GL_DEPTH_STENCIL_TEXTURE_MODE
+#  define GL_DEPTH_STENCIL_TEXTURE_MODE 0x90EA
+#endif
+
+/* Texture LOD range */
+#ifndef GL_TEXTURE_BASE_LEVEL
+#  define GL_TEXTURE_BASE_LEVEL 0x813C
+#endif
+#ifndef GL_TEXTURE_MAX_LEVEL
+#  define GL_TEXTURE_MAX_LEVEL 0x813D
+#endif
+
 /* Proxy textures (cube map array) */
 #ifndef GL_PROXY_TEXTURE_CUBE_MAP_ARRAY_ARB
 #  define GL_PROXY_TEXTURE_CUBE_MAP_ARRAY_ARB 0x900B
@@ -545,6 +563,155 @@ void glProgramUniform1i(GLuint program, GLint location, GLint v0);
 #  define GL_QUADS 0x0007
 #endif
 
+/* Desktop-only sampler types (1D, buffer, multisample, cube-map-array) */
+#ifndef GL_SAMPLER_1D
+#  define GL_SAMPLER_1D 0x8B5D
+#endif
+#ifndef GL_SAMPLER_1D_SHADOW
+#  define GL_SAMPLER_1D_SHADOW 0x8B61
+#endif
+#ifndef GL_SAMPLER_1D_ARRAY
+#  define GL_SAMPLER_1D_ARRAY 0x8DC0
+#endif
+#ifndef GL_SAMPLER_1D_ARRAY_SHADOW
+#  define GL_SAMPLER_1D_ARRAY_SHADOW 0x8DC3
+#endif
+#ifndef GL_SAMPLER_BUFFER
+#  define GL_SAMPLER_BUFFER 0x8DC2
+#endif
+#ifndef GL_SAMPLER_2D_MULTISAMPLE
+#  define GL_SAMPLER_2D_MULTISAMPLE 0x9108
+#endif
+#ifndef GL_SAMPLER_2D_MULTISAMPLE_ARRAY
+#  define GL_SAMPLER_2D_MULTISAMPLE_ARRAY 0x910B
+#endif
+#ifndef GL_SAMPLER_CUBE_MAP_ARRAY_ARB
+#  define GL_SAMPLER_CUBE_MAP_ARRAY_ARB 0x900C
+#endif
+#ifndef GL_INT_SAMPLER_1D
+#  define GL_INT_SAMPLER_1D 0x8DC9
+#endif
+#ifndef GL_INT_SAMPLER_1D_ARRAY
+#  define GL_INT_SAMPLER_1D_ARRAY 0x8DCE
+#endif
+#ifndef GL_INT_SAMPLER_BUFFER
+#  define GL_INT_SAMPLER_BUFFER 0x8DD0
+#endif
+#ifndef GL_INT_SAMPLER_2D_MULTISAMPLE
+#  define GL_INT_SAMPLER_2D_MULTISAMPLE 0x9109
+#endif
+#ifndef GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY
+#  define GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY 0x910C
+#endif
+#ifndef GL_UNSIGNED_INT_SAMPLER_1D
+#  define GL_UNSIGNED_INT_SAMPLER_1D 0x8DD1
+#endif
+#ifndef GL_UNSIGNED_INT_SAMPLER_1D_ARRAY
+#  define GL_UNSIGNED_INT_SAMPLER_1D_ARRAY 0x8DD6
+#endif
+#ifndef GL_UNSIGNED_INT_SAMPLER_BUFFER
+#  define GL_UNSIGNED_INT_SAMPLER_BUFFER 0x8DD8
+#endif
+#ifndef GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE
+#  define GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE 0x910A
+#endif
+#ifndef GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY
+#  define GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY 0x910D
+#endif
+
+/* Desktop-only / GLES 3.1 image types */
+#ifndef GL_IMAGE_1D
+#  define GL_IMAGE_1D 0x904C
+#endif
+#ifndef GL_IMAGE_2D
+#  define GL_IMAGE_2D 0x904D
+#endif
+#ifndef GL_IMAGE_3D
+#  define GL_IMAGE_3D 0x904E
+#endif
+#ifndef GL_IMAGE_CUBE
+#  define GL_IMAGE_CUBE 0x9050
+#endif
+#ifndef GL_IMAGE_BUFFER
+#  define GL_IMAGE_BUFFER 0x9051
+#endif
+#ifndef GL_IMAGE_1D_ARRAY
+#  define GL_IMAGE_1D_ARRAY 0x9052
+#endif
+#ifndef GL_IMAGE_2D_ARRAY
+#  define GL_IMAGE_2D_ARRAY 0x9053
+#endif
+#ifndef GL_IMAGE_CUBE_MAP_ARRAY
+#  define GL_IMAGE_CUBE_MAP_ARRAY 0x9054
+#endif
+#ifndef GL_INT_IMAGE_1D
+#  define GL_INT_IMAGE_1D 0x9057
+#endif
+#ifndef GL_INT_IMAGE_2D
+#  define GL_INT_IMAGE_2D 0x9058
+#endif
+#ifndef GL_INT_IMAGE_3D
+#  define GL_INT_IMAGE_3D 0x9059
+#endif
+#ifndef GL_INT_IMAGE_CUBE
+#  define GL_INT_IMAGE_CUBE 0x905B
+#endif
+#ifndef GL_INT_IMAGE_BUFFER
+#  define GL_INT_IMAGE_BUFFER 0x905C
+#endif
+#ifndef GL_INT_IMAGE_1D_ARRAY
+#  define GL_INT_IMAGE_1D_ARRAY 0x905D
+#endif
+#ifndef GL_INT_IMAGE_2D_ARRAY
+#  define GL_INT_IMAGE_2D_ARRAY 0x905E
+#endif
+#ifndef GL_INT_IMAGE_CUBE_MAP_ARRAY
+#  define GL_INT_IMAGE_CUBE_MAP_ARRAY 0x905F
+#endif
+#ifndef GL_UNSIGNED_INT_IMAGE_1D
+#  define GL_UNSIGNED_INT_IMAGE_1D 0x9062
+#endif
+#ifndef GL_UNSIGNED_INT_IMAGE_2D
+#  define GL_UNSIGNED_INT_IMAGE_2D 0x9063
+#endif
+#ifndef GL_UNSIGNED_INT_IMAGE_3D
+#  define GL_UNSIGNED_INT_IMAGE_3D 0x9064
+#endif
+#ifndef GL_UNSIGNED_INT_IMAGE_CUBE
+#  define GL_UNSIGNED_INT_IMAGE_CUBE 0x9066
+#endif
+#ifndef GL_UNSIGNED_INT_IMAGE_BUFFER
+#  define GL_UNSIGNED_INT_IMAGE_BUFFER 0x9067
+#endif
+#ifndef GL_UNSIGNED_INT_IMAGE_1D_ARRAY
+#  define GL_UNSIGNED_INT_IMAGE_1D_ARRAY 0x9068
+#endif
+#ifndef GL_UNSIGNED_INT_IMAGE_2D_ARRAY
+#  define GL_UNSIGNED_INT_IMAGE_2D_ARRAY 0x9069
+#endif
+#ifndef GL_UNSIGNED_INT_IMAGE_CUBE_MAP_ARRAY
+#  define GL_UNSIGNED_INT_IMAGE_CUBE_MAP_ARRAY 0x906A
+#endif
+
+/* Uniform / UBO introspection constants */
+#ifndef GL_UNIFORM_TYPE
+#  define GL_UNIFORM_TYPE 0x8A37
+#endif
+#ifndef GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS
+#  define GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS 0x8A42
+#endif
+#ifndef GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES
+#  define GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES 0x8A43
+#endif
+
+/* Program resource interface (GLES 3.1) */
+#ifndef GL_SHADER_STORAGE_BLOCK
+#  define GL_SHADER_STORAGE_BLOCK 0x92E6
+#endif
+#ifndef GL_BUFFER_BINDING
+#  define GL_BUFFER_BINDING 0x9302
+#endif
+
 /* ── Additional desktop GL function stubs ──────────────────────── */
 
 /* Framebuffer (desktop glFramebufferTexture vs GLES3 glFramebufferTexture2D) */
@@ -589,6 +756,45 @@ void glClearNamedBufferData(GLuint buffer, GLenum internalformat,
 
 /* Texture barrier (GL 4.5) */
 void glTextureBarrier(void);
+
+/* DSA texture functions (GL 4.5) */
+void glTextureParameteri(GLuint texture, GLenum pname, GLint param);
+void glTextureParameteriv(GLuint texture, GLenum pname, const GLint *params);
+void glTextureSubImage1D(GLuint texture, GLint level, GLint xoffset,
+                         GLsizei width, GLenum format, GLenum type,
+                         const void *pixels);
+void glTextureSubImage2D(GLuint texture, GLint level, GLint xoffset,
+                         GLint yoffset, GLsizei width, GLsizei height,
+                         GLenum format, GLenum type, const void *pixels);
+void glTextureSubImage3D(GLuint texture, GLint level, GLint xoffset,
+                         GLint yoffset, GLint zoffset, GLsizei width,
+                         GLsizei height, GLsizei depth, GLenum format,
+                         GLenum type, const void *pixels);
+void glGetTextureImage(GLuint texture, GLint level, GLenum format,
+                       GLenum type, GLsizei bufSize, void *pixels);
+void glCompressedTextureSubImage1D(GLuint texture, GLint level, GLint xoffset,
+                                   GLsizei width, GLenum format,
+                                   GLsizei imageSize, const void *data);
+void glCompressedTextureSubImage2D(GLuint texture, GLint level, GLint xoffset,
+                                   GLint yoffset, GLsizei width, GLsizei height,
+                                   GLenum format, GLsizei imageSize,
+                                   const void *data);
+void glCompressedTextureSubImage3D(GLuint texture, GLint level, GLint xoffset,
+                                   GLint yoffset, GLint zoffset, GLsizei width,
+                                   GLsizei height, GLsizei depth, GLenum format,
+                                   GLsizei imageSize, const void *data);
+void glTextureBuffer(GLuint texture, GLenum internalformat, GLuint buffer);
+
+/* Shader introspection (desktop GL / GLES 3.1) */
+void glGetActiveUniformName(GLuint program, GLuint uniformIndex,
+                            GLsizei bufSize, GLsizei *length, GLchar *uniformName);
+void glGetProgramResourceiv(GLuint program, GLenum programInterface,
+                            GLuint index, GLsizei propCount,
+                            const GLenum *props, GLsizei count,
+                            GLsizei *length, GLint *params);
+void glGetProgramResourceName(GLuint program, GLenum programInterface,
+                              GLuint index, GLsizei bufSize,
+                              GLsizei *length, GLchar *name);
 
 #ifdef __cplusplus
 }
