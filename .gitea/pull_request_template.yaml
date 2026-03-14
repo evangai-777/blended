@@ -1,22 +1,54 @@
 name: Pull Request
-about: Contribute code to Blender
+about: Contribute code to Blended
 body:
   - type: markdown
     attributes:
       value: |
-        ### Instructions
+        ### Contributing to Blended
 
-        Guides to [contributing code](https://developer.blender.org/docs/handbook/contributing/) and effective [code review](https://developer.blender.org/docs/handbook/contributing/pull_requests/).
+        By submitting code you agree that the contribution is licensed under GNU GPL v3 or later, consistent with the Blended project license.
 
-        By submitting code here, you agree that the code is (compatible with) GNU GPL v2 or later.
-
-        By default, all contributors are added to the AUTHORS file as part of a semi-automated process.
-
-        If you do not wish to be listed there and rather transfer copyright to the Blender Foundation please mention so at the bottom of the PR.
-        This request only needs to be made once and applies to future PR's.
+        All contributors are credited in the AUTHORS file. If you prefer to transfer copyright to the Blender Foundation instead, mention it in the PR description.
 
   - type: textarea
-    id: body
+    id: summary
     attributes:
-      label: "Description"
-      hide_label: true
+      label: "Summary"
+      description: "One-paragraph overview: what changed and why."
+    validations:
+      required: true
+
+  - type: textarea
+    id: changes
+    attributes:
+      label: "Changes"
+      description: "Bullet list of meaningful changes. Group by file or area if needed."
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: "Scope"
+      description: "Check the areas this PR touches."
+      options:
+        - label: "Desktop (Windows / Linux / macOS)"
+        - label: "WebAssembly / Emscripten"
+        - label: "UI / Tiered complexity system"
+        - label: "GPU / Rendering backend"
+        - label: "Build system / CI"
+        - label: "Documentation"
+
+  - type: textarea
+    id: testing
+    attributes:
+      label: "Testing"
+      description: "How was this verified? Include build output, screenshots, or test commands."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reviewer-notes
+    attributes:
+      label: "Reviewer Notes"
+      description: "Optional: known limitations, follow-up work, or areas needing extra attention."
