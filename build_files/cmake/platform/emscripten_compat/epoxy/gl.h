@@ -230,6 +230,62 @@ typedef void (*GenericFunctionPointer)(void);
 #  define GL_TEXTURE_WIDTH 0x1000
 #endif
 
+/* 16-bit normalized texture formats (not in GLES3) */
+#ifndef GL_R16
+#  define GL_R16 0x822A
+#endif
+#ifndef GL_RG16
+#  define GL_RG16 0x822C
+#endif
+#ifndef GL_RGB16
+#  define GL_RGB16 0x8054
+#endif
+#ifndef GL_RGBA16
+#  define GL_RGBA16 0x805B
+#endif
+#ifndef GL_R16_SNORM
+#  define GL_R16_SNORM 0x8F98
+#endif
+#ifndef GL_RG16_SNORM
+#  define GL_RG16_SNORM 0x8F99
+#endif
+#ifndef GL_RGB16_SNORM
+#  define GL_RGB16_SNORM 0x8F9A
+#endif
+#ifndef GL_RGBA16_SNORM
+#  define GL_RGBA16_SNORM 0x8F9B
+#endif
+
+/* S3TC / DXT compressed texture formats (extension) */
+#ifndef GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
+#  define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT 0x83F1
+#endif
+#ifndef GL_COMPRESSED_RGBA_S3TC_DXT3_EXT
+#  define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT 0x83F2
+#endif
+#ifndef GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
+#  define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 0x83F3
+#endif
+#ifndef GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT
+#  define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT 0x8C4D
+#endif
+#ifndef GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT
+#  define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT 0x8C4E
+#endif
+#ifndef GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT
+#  define GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT 0x8C4F
+#endif
+
+/* sRGB without alpha (desktop GL) */
+#ifndef GL_SRGB8
+#  define GL_SRGB8 0x8C41
+#endif
+
+/* Proxy textures (not in GLES3) */
+#ifndef GL_PROXY_TEXTURE_2D_ARRAY
+#  define GL_PROXY_TEXTURE_2D_ARRAY 0x8C1B
+#endif
+
 /* ── Desktop GL function stubs ─────────────────────────────────────
  * Stub declarations for desktop GL functions not in GLES3.
  * Implementations are in epoxy_shim.c — they are no-ops or return
@@ -446,6 +502,9 @@ void glProgramUniform1i(GLuint program, GLint location, GLint v0);
 #endif
 #ifndef GL_SHADER_IMAGE_ACCESS_BARRIER_BIT
 #  define GL_SHADER_IMAGE_ACCESS_BARRIER_BIT 0x00000020
+#endif
+#ifndef GL_TEXTURE_UPDATE_BARRIER_BIT
+#  define GL_TEXTURE_UPDATE_BARRIER_BIT 0x00000100
 #endif
 #ifndef GL_BUFFER_UPDATE_BARRIER_BIT
 #  define GL_BUFFER_UPDATE_BARRIER_BIT 0x00000200
