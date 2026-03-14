@@ -17,6 +17,22 @@
 
 #include "gl_framebuffer.hh"
 
+/* Framebuffer status constants not available in GLES3/WebGL2. */
+#ifndef GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER
+#  define GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER 0x8CDB
+#endif
+#ifndef GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER
+#  define GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER 0x8CDC
+#endif
+#ifndef GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS
+#  define GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS 0x8DA8
+#endif
+
+/* glClearDepth is not available in GLES3; use glClearDepthf instead. */
+#ifndef glClearDepth
+#  define glClearDepth glClearDepthf
+#endif
+
 namespace blender::gpu {
 
 /* -------------------------------------------------------------------- */
@@ -242,7 +258,9 @@ void GLFrameBuffer::subpass_transition_impl(const GPUAttachmentState depth_attac
 
   if (GLContext::framebuffer_fetch_support) {
     if (any_read) {
+#ifdef glFramebufferFetchBarrierEXT
       glFramebufferFetchBarrierEXT();
+#endif
     }
   }
   else if (GLContext::texture_barrier_support) {
@@ -346,7 +364,12 @@ void GLFrameBuffer::apply_state()
         viewports_f[i][j] = viewport_[i][j];
       }
     }
+#ifdef glViewportArrayv
     glViewportArrayv(0, GPU_MAX_VIEWPORTS, viewports_f[0]);
+#else
+    /* glViewportArrayv not available in GLES3/WebGL2, fall back to single viewport. */
+    glViewport(UNPACK4(viewport_[0]));
+#endif
   }
   glScissor(UNPACK4(scissor_));
 

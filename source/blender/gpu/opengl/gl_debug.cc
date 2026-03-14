@@ -27,6 +27,53 @@
 
 #include "gl_debug.hh"
 
+/* KHR_debug constants - not available in WebGL2/GLES3 builds. */
+#ifndef GL_DEBUG_TYPE_ERROR
+#  define GL_DEBUG_TYPE_ERROR 0x824C
+#endif
+#ifndef GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR
+#  define GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR 0x824D
+#endif
+#ifndef GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR
+#  define GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR 0x824E
+#endif
+#ifndef GL_DEBUG_TYPE_PORTABILITY
+#  define GL_DEBUG_TYPE_PORTABILITY 0x824F
+#endif
+#ifndef GL_DEBUG_TYPE_PERFORMANCE
+#  define GL_DEBUG_TYPE_PERFORMANCE 0x8250
+#endif
+#ifndef GL_DEBUG_TYPE_OTHER
+#  define GL_DEBUG_TYPE_OTHER 0x8251
+#endif
+#ifndef GL_DEBUG_TYPE_MARKER
+#  define GL_DEBUG_TYPE_MARKER 0x8268
+#endif
+#ifndef GL_DEBUG_TYPE_PUSH_GROUP
+#  define GL_DEBUG_TYPE_PUSH_GROUP 0x8269
+#endif
+#ifndef GL_DEBUG_TYPE_POP_GROUP
+#  define GL_DEBUG_TYPE_POP_GROUP 0x826A
+#endif
+#ifndef GL_DEBUG_SEVERITY_HIGH
+#  define GL_DEBUG_SEVERITY_HIGH 0x9146
+#endif
+#ifndef GL_DEBUG_SEVERITY_LOW
+#  define GL_DEBUG_SEVERITY_LOW 0x9148
+#endif
+#ifndef GL_DEBUG_SEVERITY_NOTIFICATION
+#  define GL_DEBUG_SEVERITY_NOTIFICATION 0x826B
+#endif
+#ifndef GL_DEBUG_SOURCE_APPLICATION
+#  define GL_DEBUG_SOURCE_APPLICATION 0x824A
+#endif
+#ifndef GL_STACK_UNDERFLOW
+#  define GL_STACK_UNDERFLOW 0x0504
+#endif
+#ifndef GL_STACK_OVERFLOW
+#  define GL_STACK_OVERFLOW 0x0503
+#endif
+
 namespace blender {
 
 static CLG_LogRef LOG = {"gpu.debug"};
