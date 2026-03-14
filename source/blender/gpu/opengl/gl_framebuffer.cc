@@ -33,6 +33,45 @@
 #  define glClearDepth glClearDepthf
 #endif
 
+/* GL_FRAMEBUFFER_SRGB is not available in GLES3/WebGL2. */
+#ifndef GL_FRAMEBUFFER_SRGB
+#  define GL_FRAMEBUFFER_SRGB 0x8DB9
+#endif
+
+/* glDrawBuffer is not available in GLES3/WebGL2; emulate via glDrawBuffers. */
+#ifndef glDrawBuffer
+static inline void glDrawBuffer(GLenum buf)
+{
+  glDrawBuffers(1, &buf);
+}
+#endif
+
+/* glFramebufferTexture (non-layered) is not available in GLES3/WebGL2.
+ * Fall back to glFramebufferTexture2D for GL_TEXTURE_2D targets. */
+#ifndef glFramebufferTexture
+static inline void glFramebufferTexture(GLenum target,
+                                        GLenum attachment,
+                                        GLuint texture,
+                                        GLint level)
+{
+  if (texture == 0) {
+    glFramebufferTexture2D(target, attachment, GL_TEXTURE_2D, 0, 0);
+  }
+  else {
+    /* Best-effort: attach as 2D. Layered rendering is not supported in GLES3. */
+    glFramebufferTexture2D(target, attachment, GL_TEXTURE_2D, texture, level);
+  }
+}
+#endif
+
+/* GL_FRAMEBUFFER_DEFAULT_WIDTH/HEIGHT require GLES 3.1+. */
+#ifndef GL_FRAMEBUFFER_DEFAULT_WIDTH
+#  define GL_FRAMEBUFFER_DEFAULT_WIDTH 0x9310
+#endif
+#ifndef GL_FRAMEBUFFER_DEFAULT_HEIGHT
+#  define GL_FRAMEBUFFER_DEFAULT_HEIGHT 0x9311
+#endif
+
 namespace blender::gpu {
 
 /* -------------------------------------------------------------------- */
@@ -265,7 +304,9 @@ void GLFrameBuffer::subpass_transition_impl(const GPUAttachmentState depth_attac
   }
   else if (GLContext::texture_barrier_support) {
     if (any_read) {
+#ifdef glTextureBarrier
       glTextureBarrier();
+#endif
     }
 
     GLenum attachments[GPU_FB_MAX_COLOR_ATTACHMENT] = {GL_NONE};
