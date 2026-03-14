@@ -112,6 +112,9 @@ typedef void (*GenericFunctionPointer)(void);
 #ifndef GL_COLOR_LOGIC_OP
 #  define GL_COLOR_LOGIC_OP 0x0BF2
 #endif
+#ifndef GL_XOR
+#  define GL_XOR 0x1506
+#endif
 
 /* Provoking vertex */
 #ifndef GL_FIRST_VERTEX_CONVENTION
@@ -300,6 +303,12 @@ void glTexStorage1D(GLenum target, GLsizei levels, GLenum internalformat,
 void glTexSubImage1D(GLenum target, GLint level, GLint xoffset,
                      GLsizei width, GLenum format, GLenum type,
                      const void *data);
+void glCompressedTexImage1D(GLenum target, GLint level, GLenum internalformat,
+                            GLsizei width, GLint border,
+                            GLsizei imageSize, const void *data);
+void glCompressedTexSubImage1D(GLenum target, GLint level, GLint xoffset,
+                               GLsizei width, GLenum format,
+                               GLsizei imageSize, const void *data);
 void glTexBuffer(GLenum target, GLenum internalformat, GLuint buffer);
 
 /* Buffer mapping (desktop style — GLES3 only has glMapBufferRange) */
@@ -460,6 +469,22 @@ void glProgramUniform1i(GLuint program, GLint location, GLint v0);
 /* Multisampling */
 #ifndef GL_MULTISAMPLE
 #  define GL_MULTISAMPLE 0x809D
+#endif
+
+/* Anisotropic filtering (EXT_texture_filter_anisotropic) */
+#ifndef GL_TEXTURE_MAX_ANISOTROPY_EXT
+#  define GL_TEXTURE_MAX_ANISOTROPY_EXT 0x84FE
+#endif
+#ifndef GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
+#  define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT 0x84FF
+#endif
+
+/* Dual-source blending (desktop GL / GLES extension) */
+#ifndef GL_SRC1_COLOR
+#  define GL_SRC1_COLOR 0x88F9
+#endif
+#ifndef GL_SRC1_ALPHA
+#  define GL_SRC1_ALPHA 0x8589
 #endif
 
 /* Program point size */
@@ -821,6 +846,18 @@ void glGetUnsignedBytevEXT(GLenum pname, GLubyte *data);
 void glClearNamedBufferData(GLuint buffer, GLenum internalformat,
                             GLenum format, GLenum type, const void *data);
 
+/* Buffer data clearing (GL 4.3) */
+void glClearBufferData(GLenum target, GLenum internalformat,
+                       GLenum format, GLenum type, const void *data);
+
+/* DSA buffer operations (GL 4.5) */
+GLboolean glUnmapNamedBuffer(GLuint buffer);
+void glGetNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizeiptr size,
+                             void *data);
+void glCopyNamedBufferSubData(GLuint readBuffer, GLuint writeBuffer,
+                              GLintptr readOffset, GLintptr writeOffset,
+                              GLsizeiptr size);
+
 /* Texture barrier (GL 4.5) */
 void glTextureBarrier(void);
 
@@ -851,6 +888,11 @@ void glCompressedTextureSubImage3D(GLuint texture, GLint level, GLint xoffset,
                                    GLsizei height, GLsizei depth, GLenum format,
                                    GLsizei imageSize, const void *data);
 void glTextureBuffer(GLuint texture, GLenum internalformat, GLuint buffer);
+void glGenerateTextureMipmap(GLuint texture);
+
+/* Multi-bind (GL 4.4 / ARB_multi_bind) */
+void glBindTextures(GLuint first, GLsizei count, const GLuint *textures);
+void glBindSamplers(GLuint first, GLsizei count, const GLuint *samplers);
 
 /* Shader introspection (desktop GL / GLES 3.1) */
 void glGetActiveUniformName(GLuint program, GLuint uniformIndex,

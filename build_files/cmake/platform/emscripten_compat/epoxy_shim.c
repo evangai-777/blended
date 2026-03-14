@@ -86,6 +86,22 @@ void glTexSubImage1D(GLenum target, GLint level, GLint xoffset,
   (void)width; (void)format; (void)type; (void)data;
 }
 
+void glCompressedTexImage1D(GLenum target, GLint level, GLenum internalformat,
+                            GLsizei width, GLint border,
+                            GLsizei imageSize, const void *data)
+{
+  (void)target; (void)level; (void)internalformat;
+  (void)width; (void)border; (void)imageSize; (void)data;
+}
+
+void glCompressedTexSubImage1D(GLenum target, GLint level, GLint xoffset,
+                               GLsizei width, GLenum format,
+                               GLsizei imageSize, const void *data)
+{
+  (void)target; (void)level; (void)xoffset;
+  (void)width; (void)format; (void)imageSize; (void)data;
+}
+
 void glTexBuffer(GLenum target, GLenum internalformat, GLuint buffer)
 {
   (void)target; (void)internalformat; (void)buffer;
@@ -370,6 +386,32 @@ void glClearNamedBufferData(GLuint buffer, GLenum internalformat,
   (void)buffer; (void)internalformat; (void)format; (void)type; (void)data;
 }
 
+void glClearBufferData(GLenum target, GLenum internalformat,
+                       GLenum format, GLenum type, const void *data)
+{
+  (void)target; (void)internalformat; (void)format; (void)type; (void)data;
+}
+
+GLboolean glUnmapNamedBuffer(GLuint buffer)
+{
+  (void)buffer;
+  return GL_TRUE;
+}
+
+void glGetNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizeiptr size,
+                             void *data)
+{
+  (void)buffer; (void)offset; (void)size; (void)data;
+}
+
+void glCopyNamedBufferSubData(GLuint readBuffer, GLuint writeBuffer,
+                              GLintptr readOffset, GLintptr writeOffset,
+                              GLsizeiptr size)
+{
+  (void)readBuffer; (void)writeBuffer;
+  (void)readOffset; (void)writeOffset; (void)size;
+}
+
 void glGetUnsignedBytei_vEXT(GLenum target, GLuint index, GLubyte *data)
 {
   (void)target; (void)index; (void)data;
@@ -454,6 +496,21 @@ void glCompressedTextureSubImage3D(GLuint texture, GLint level, GLint xoffset,
 void glTextureBuffer(GLuint texture, GLenum internalformat, GLuint buffer)
 {
   (void)texture; (void)internalformat; (void)buffer;
+}
+
+void glGenerateTextureMipmap(GLuint texture)
+{
+  (void)texture;
+}
+
+void glBindTextures(GLuint first, GLsizei count, const GLuint *textures)
+{
+  (void)first; (void)count; (void)textures;
+}
+
+void glBindSamplers(GLuint first, GLsizei count, const GLuint *samplers)
+{
+  (void)first; (void)count; (void)samplers;
 }
 
 void glGetActiveUniformName(GLuint program, GLuint uniformIndex,
