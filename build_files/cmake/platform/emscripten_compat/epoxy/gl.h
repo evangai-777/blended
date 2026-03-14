@@ -195,6 +195,11 @@ typedef void (*GenericFunctionPointer)(void);
 #  define GL_MAX_TEXTURE_BUFFER_SIZE 0x8C2B
 #endif
 
+/* Texture wrap mode (desktop GL) */
+#ifndef GL_CLAMP_TO_BORDER
+#  define GL_CLAMP_TO_BORDER 0x812D
+#endif
+
 /* Texture swizzle (vec4 variant) */
 #ifndef GL_TEXTURE_SWIZZLE_RGBA
 #  define GL_TEXTURE_SWIZZLE_RGBA 0x8E46
@@ -542,6 +547,9 @@ void glProgramUniform1i(GLuint program, GLint location, GLint v0);
 #endif
 #ifndef GL_SHADER_STORAGE_BARRIER_BIT
 #  define GL_SHADER_STORAGE_BARRIER_BIT 0x00002000
+#endif
+#ifndef GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT
+#  define GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT 0x00004000
 #endif
 #ifndef GL_ALL_BARRIER_BITS
 #  define GL_ALL_BARRIER_BITS 0xFFFFFFFF
