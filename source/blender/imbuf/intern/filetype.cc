@@ -15,7 +15,9 @@
 #include "IMB_imbuf.hh"
 #include "IMB_imbuf_types.hh"
 
-#include "oiio/openimageio_api.h"
+#ifdef WITH_OPENIMAGEIO
+#  include "oiio/openimageio_api.h"
+#endif
 
 #ifdef WITH_IMAGE_OPENEXR
 #  include "openexr/openexr_api.h"
@@ -36,6 +38,7 @@ const ImFileType IMB_FILE_TYPES[] = {
         /*filetype*/ IMB_FTYPE_JPG,
         /*default_save_role*/ COLOR_ROLE_DEFAULT_BYTE,
     },
+#ifdef WITH_OPENIMAGEIO
     {
         /*init*/ nullptr,
         /*exit*/ nullptr,
@@ -72,6 +75,7 @@ const ImFileType IMB_FILE_TYPES[] = {
         /*filetype*/ IMB_FTYPE_TGA,
         /*default_save_role*/ COLOR_ROLE_DEFAULT_BYTE,
     },
+#endif
     {
         /*init*/ nullptr,
         /*exit*/ nullptr,
@@ -110,6 +114,7 @@ const ImFileType IMB_FILE_TYPES[] = {
         /*default_save_role*/ COLOR_ROLE_DEFAULT_FLOAT,
     },
 #endif
+#ifdef WITH_OPENIMAGEIO
     {
         /*init*/ nullptr,
         /*exit*/ nullptr,
@@ -134,6 +139,7 @@ const ImFileType IMB_FILE_TYPES[] = {
         /*filetype*/ IMB_FTYPE_RADHDR,
         /*default_save_role*/ COLOR_ROLE_DEFAULT_FLOAT,
     },
+#endif
 #ifdef WITH_IMAGE_OPENEXR
     {
         /*init*/ imb_initopenexr,
@@ -162,6 +168,7 @@ const ImFileType IMB_FILE_TYPES[] = {
         /*default_save_role*/ COLOR_ROLE_DEFAULT_BYTE,
     },
 #endif
+#ifdef WITH_OPENIMAGEIO
     {
         /*init*/ imb_init_dds,
         /*exit*/ nullptr,
@@ -186,6 +193,7 @@ const ImFileType IMB_FILE_TYPES[] = {
         /*filetype*/ IMB_FTYPE_PSD,
         /*default_save_role*/ COLOR_ROLE_DEFAULT_FLOAT,
     },
+#endif
 #ifdef WITH_IMAGE_WEBP
     {
         /*init*/ nullptr,
@@ -200,6 +208,7 @@ const ImFileType IMB_FILE_TYPES[] = {
         /*default_save_role*/ COLOR_ROLE_DEFAULT_BYTE,
     },
 #endif
+#ifdef WITH_OPENIMAGEIO
     {
         /*init*/ nullptr,
         /*exit*/ nullptr,
@@ -212,6 +221,7 @@ const ImFileType IMB_FILE_TYPES[] = {
         /*filetype*/ IMB_FTYPE_AVIF,
         /*default_save_role*/ COLOR_ROLE_DEFAULT_BYTE,
     },
+#endif
     {
         /* Only implementing thumbnailing for SVG file type to support specialized importers.
          * General file loading, if wanted, would require a better library and would have to
@@ -252,7 +262,9 @@ void imb_filetypes_init()
 {
   const ImFileType *type;
 
+#ifdef WITH_OPENIMAGEIO
   OIIO_init();
+#endif
 
   for (type = IMB_FILE_TYPES; type < IMB_FILE_TYPES_LAST; type++) {
     if (type->init) {

@@ -22,17 +22,9 @@ set(SRC
   intern/conversion.cc
   intern/filetype.cc
   intern/filter.cc
-  intern/format_avif.cc
-  intern/format_bmp.cc
-  intern/format_dds.cc
-  intern/format_hdr.cc
   intern/format_iris.cc
   intern/format_jpeg.cc
-  intern/format_png.cc
-  intern/format_psd.cc
   intern/format_svg.cc
-  intern/format_targa.cc
-  intern/format_tiff.cc
   intern/imageprocess.cc
   intern/interp.cc
   intern/metadata.cc
@@ -74,7 +66,6 @@ set(LIB
   PRIVATE bf::depsgraph
   PRIVATE bf::dna
   PRIVATE bf::gpu
-  bf_imbuf_openimageio
   PRIVATE bf::intern::atomic
   PRIVATE bf::intern::clog
   PRIVATE bf::intern::guardedalloc
@@ -84,9 +75,26 @@ set(LIB
 
   PRIVATE bf::sequencer
   PRIVATE bf::dependencies::zlib
-  PRIVATE bf::dependencies::openimageio
   PRIVATE bf::dependencies::jpeg
 )
+
+if(WITH_OPENIMAGEIO)
+  list(APPEND SRC
+    intern/format_avif.cc
+    intern/format_bmp.cc
+    intern/format_dds.cc
+    intern/format_hdr.cc
+    intern/format_png.cc
+    intern/format_psd.cc
+    intern/format_targa.cc
+    intern/format_tiff.cc
+  )
+  list(APPEND LIB
+    bf_imbuf_openimageio
+    PRIVATE bf::dependencies::openimageio
+  )
+  add_definitions(-DWITH_OPENIMAGEIO)
+endif()
 
 if(WITH_IMAGE_OPENEXR)
   list(APPEND LIB

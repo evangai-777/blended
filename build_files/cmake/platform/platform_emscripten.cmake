@@ -243,7 +243,9 @@ set(WITH_GHOST_SDL      ON  CACHE BOOL "" FORCE)
 # as a safety net (blended_wasm.cmake also sets these, but this ensures
 # correctness even if someone invokes emcmake without the config).
 
+set(WITH_OPENIMAGEIO    OFF CACHE BOOL "" FORCE)  # OpenImageIO not available on Emscripten
 set(WITH_IMAGE_OPENJPEG OFF CACHE BOOL "" FORCE)  # OpenJPEG not available on Emscripten
+set(WITH_IMAGE_CINEON   OFF CACHE BOOL "" FORCE)  # DPX format requires OpenImageIO
 set(WITH_GHOST_CSD      OFF CACHE BOOL "" FORCE)  # No client-side decorations in browser
 set(WITH_OPENGL_BACKEND  ON CACHE BOOL "" FORCE)   # WebGL2 is the only option
 set(WITH_VULKAN_BACKEND OFF CACHE BOOL "" FORCE)

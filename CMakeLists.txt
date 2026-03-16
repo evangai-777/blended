@@ -470,6 +470,7 @@ option(WITH_MOD_OCEANSIM "Enable Ocean Modifier" ON)
 option(WITH_UV_SLIM "SLIM UV unwrapping solver" ON)
 
 # Image format support
+option(WITH_OPENIMAGEIO "Enable OpenImageIO for image I/O (required by most image formats)" ON)
 option(WITH_IMAGE_OPENEXR "Enable OpenEXR Support (http://www.openexr.com)" ON)
 option(WITH_IMAGE_OPENJPEG "Enable OpenJpeg Support (http://www.openjpeg.org)" ON)
 option(WITH_IMAGE_CINEON "Enable CINEON and DPX Image Support" ON)
