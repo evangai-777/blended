@@ -1064,10 +1064,17 @@ static StringRefNull glsl_patch_vertex_get()
   static std::string patch = []() {
     std::stringstream ss;
     /* Version need to go first. */
+#ifdef __EMSCRIPTEN__
+    ss << "#version 300 es\n";
+    ss << "precision highp float;\n";
+    ss << "precision highp int;\n";
+#else
     ss << "#version 430\n";
+#endif
 
     /* Enable extensions for features that are not part of our base GLSL version
      * don't use an extension for something already available! */
+#ifndef __EMSCRIPTEN__
     {
       /* Required extension. */
       ss << "#extension GL_ARB_shader_draw_parameters : enable\n";
@@ -1081,6 +1088,12 @@ static StringRefNull glsl_patch_vertex_get()
     if (GLContext::native_barycentric_support) {
       ss << "#extension GL_AMD_shader_explicit_vertex_parameter: enable\n";
     }
+#else
+    /* WebGL2 / GLSL ES 3.00: no ARB extensions available.
+     * gl_BaseInstance is not available; define a zero fallback. */
+    ss << "#define gpu_BaseInstance 0\n";
+    ss << "#define GPU_ARB_clip_control\n";
+#endif
 
     /* Vulkan GLSL compatibility. */
     ss << "#define gpu_InstanceIndex (gl_InstanceID + gpu_BaseInstance)\n";
@@ -1105,6 +1118,14 @@ static StringRefNull glsl_patch_geometry_get()
   static std::string patch = []() {
     std::stringstream ss;
     /* Version need to go first. */
+#ifdef __EMSCRIPTEN__
+    /* WebGL2 does not support geometry shaders. This patch is compiled but
+     * geometry shader creation should be skipped at runtime. Use GLSL ES
+     * version so the source at least parses without errors. */
+    ss << "#version 300 es\n";
+    ss << "precision highp float;\n";
+    ss << "precision highp int;\n";
+#else
     ss << "#version 430\n";
 
     if (GLContext::layered_rendering_support) {
@@ -1113,6 +1134,7 @@ static StringRefNull glsl_patch_geometry_get()
     if (GLContext::native_barycentric_support) {
       ss << "#extension GL_AMD_shader_explicit_vertex_parameter: enable\n";
     }
+#endif
     ss << "#define GPU_ARB_clip_control\n";
 
     /* Array compatibility. */
@@ -1135,6 +1157,16 @@ static StringRefNull glsl_patch_fragment_get()
   static std::string patch = []() {
     std::stringstream ss;
     /* Version need to go first. */
+#ifdef __EMSCRIPTEN__
+    ss << "#version 300 es\n";
+    ss << "precision highp float;\n";
+    ss << "precision highp int;\n";
+    ss << "precision highp sampler2D;\n";
+    ss << "precision highp sampler3D;\n";
+    ss << "precision highp samplerCube;\n";
+    ss << "precision highp sampler2DArray;\n";
+    ss << "precision highp sampler2DShadow;\n";
+#else
     ss << "#version 430\n";
 
     if (GLContext::layered_rendering_support) {
@@ -1150,6 +1182,7 @@ static StringRefNull glsl_patch_fragment_get()
       ss << "#extension GL_ARB_shader_stencil_export: enable\n";
       ss << "#define GPU_ARB_shader_stencil_export\n";
     }
+#endif
     ss << "#define GPU_ARB_clip_control\n";
 
     /* Array compatibility. */
@@ -1172,7 +1205,16 @@ static StringRefNull glsl_patch_compute_get()
   static std::string patch = []() {
     std::stringstream ss;
     /* Version need to go first. */
+#ifdef __EMSCRIPTEN__
+    /* WebGL2 does not support compute shaders. This patch is compiled but
+     * compute shader creation should be skipped at runtime (all compute
+     * dispatch sites have #ifdef __EMSCRIPTEN__ guards). */
+    ss << "#version 300 es\n";
+    ss << "precision highp float;\n";
+    ss << "precision highp int;\n";
+#else
     ss << "#version 430\n";
+#endif
 
     /* Array compatibility. */
     ss << "#define gpu_Array(_type) _type[]\n";

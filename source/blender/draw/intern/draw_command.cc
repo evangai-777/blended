@@ -889,29 +889,29 @@ void DrawMultiBuf::generate_commands(Vector<Header, 0> & /*headers*/,
 
       if (group.base_index != -1) {
         /* Indexed draw. */
-        cmd_front.indexed.vertex_len = uint(group.vertex_len);
-        cmd_front.indexed.instance_len = front_instance_len;
-        cmd_front.indexed.vertex_first = uint(group.vertex_first);
-        cmd_front.indexed.base_index = uint(group.base_index);
-        cmd_front.indexed.instance_first = front_start;
+        cmd_front.indexed().vertex_len = uint(group.vertex_len);
+        cmd_front.indexed().instance_len = front_instance_len;
+        cmd_front.indexed().vertex_first = uint(group.vertex_first);
+        cmd_front.indexed().base_index = uint(group.base_index);
+        cmd_front.indexed().instance_first = front_start;
 
-        cmd_back.indexed.vertex_len = uint(group.vertex_len);
-        cmd_back.indexed.instance_len = back_instance_len;
-        cmd_back.indexed.vertex_first = uint(group.vertex_first);
-        cmd_back.indexed.base_index = uint(group.base_index);
-        cmd_back.indexed.instance_first = back_start;
+        cmd_back.indexed().vertex_len = uint(group.vertex_len);
+        cmd_back.indexed().instance_len = back_instance_len;
+        cmd_back.indexed().vertex_first = uint(group.vertex_first);
+        cmd_back.indexed().base_index = uint(group.base_index);
+        cmd_back.indexed().instance_first = back_start;
       }
       else {
         /* Array draw (no index buffer). */
-        cmd_front.array.vertex_len = uint(group.vertex_len);
-        cmd_front.array.instance_len = front_instance_len;
-        cmd_front.array.vertex_first = uint(group.vertex_first);
-        cmd_front.array.instance_first = front_start;
+        cmd_front.array().vertex_len = uint(group.vertex_len);
+        cmd_front.array().instance_len = front_instance_len;
+        cmd_front.array().vertex_first = uint(group.vertex_first);
+        cmd_front.array().instance_first = front_start;
 
-        cmd_back.array.vertex_len = uint(group.vertex_len);
-        cmd_back.array.instance_len = back_instance_len;
-        cmd_back.array.vertex_first = uint(group.vertex_first);
-        cmd_back.array.instance_first = back_start;
+        cmd_back.array().vertex_len = uint(group.vertex_len);
+        cmd_back.array().instance_len = back_instance_len;
+        cmd_back.array().vertex_first = uint(group.vertex_first);
+        cmd_back.array().instance_first = back_start;
       }
     }
 

@@ -574,7 +574,7 @@ int BKE_attributes_length(const AttributeOwner &owner,
         if (customdata == nullptr) {
           continue;
         }
-        if (!customdata || !((1 << int(domain)) & domain_mask)) {
+        if (!customdata || !((1u << int(domain)) & domain_mask)) {
           continue;
         }
         for (const CustomDataLayer &layer : Span(customdata->layers, customdata->totlayer)) {
@@ -761,7 +761,7 @@ std::optional<StringRef> BKE_attribute_from_index(AttributeOwner &owner,
       int index = 0;
       for (const int domain : IndexRange(ATTR_DOMAIN_NUM)) {
         CustomData *customdata = info[domain].customdata;
-        if (!customdata || !((1 << int(domain)) & domain_mask)) {
+        if (!customdata || !((1u << int(domain)) & domain_mask)) {
           continue;
         }
         for (const CustomDataLayer &layer : Span(customdata->layers, customdata->totlayer)) {
@@ -817,7 +817,7 @@ int BKE_attribute_to_index(const AttributeOwner &owner,
       int index = 0;
       for (const int domain : IndexRange(ATTR_DOMAIN_NUM)) {
         const CustomData *customdata = info[domain].customdata;
-        if (!customdata || !((1 << int(domain)) & domain_mask)) {
+        if (!customdata || !((1u << int(domain)) & domain_mask)) {
           continue;
         }
         for (const CustomDataLayer &layer : Span(customdata->layers, customdata->totlayer)) {

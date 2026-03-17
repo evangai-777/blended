@@ -1542,10 +1542,10 @@ void orthogonalize_m4_stable(float R[4][4], int axis, bool normalize)
  */
 static bool orthogonalize_m3_zero_axes_impl(float *mat[3], const float unit_length)
 {
-  enum { X = 1 << 0, Y = 1 << 1, Z = 1 << 2 };
-  int flag = 0;
+  enum { X = 1u << 0, Y = 1u << 1, Z = 1u << 2 };
+  uint flag = 0;
   for (int i = 0; i < 3; i++) {
-    flag |= (len_squared_v3(mat[i]) == 0.0f) ? (1 << i) : 0;
+    flag |= (len_squared_v3(mat[i]) == 0.0f) ? (1u << i) : 0u;
   }
 
   /* Either all or none are zero, either way we can't properly resolve this
@@ -1587,7 +1587,7 @@ static bool orthogonalize_m3_zero_axes_impl(float *mat[3], const float unit_leng
   }
 
   for (int i = 0; i < 3; i++) {
-    if (flag & (1 << i)) {
+    if (flag & (1u << i)) {
       if (UNLIKELY(normalize_v3_length(mat[i], unit_length) == 0.0f)) {
         mat[i][i] = unit_length;
       }

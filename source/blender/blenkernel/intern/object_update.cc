@@ -220,7 +220,7 @@ void BKE_object_handle_data_update(Depsgraph *depsgraph, Scene *scene, Object *o
     for (const bke::GeometryComponent::Type type :
          ob->runtime->geometry_set_eval->gather_component_types(true, true))
     {
-      ob->runtime->contained_geometry_types |= uint16_t(1 << size_t(type));
+      ob->runtime->contained_geometry_types |= uint16_t(1u << size_t(type));
     }
   }
 

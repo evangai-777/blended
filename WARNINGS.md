@@ -132,6 +132,14 @@ Address in this order once the web build links:
 - `source/blender/blenlib/` — math headers already have some pragmas
 - `source/blender/blenkernel/` — large, but mostly safe conversions
 - Focus: replace pragmas with proper casts where appropriate
+- **Warning fixes (in progress):**
+  - Fixed `(N << 2)` signed-to-unsigned assignment in `noise.cc` hash
+    functions (4 instances, `uint32_t` targets) — use `Nu << 2`
+  - Fixed `(1 << oct)` in `noise_c.cc` turbulence normalization — `1u`
+  - Fixed `int flag |= (1 << i)` pattern in `math_matrix_c.cc`
+    `orthogonalize_m3_zero_axes_impl()` — use `uint` flag type and `1u`
+  - Fixed `(1 << int(domain)) & domain_mask` in `attribute.cc` (3
+    instances) — use `1u` for unsigned bitmask comparison
 
 ### Phase 4: Freestyle Python bindings
 - `source/blender/freestyle/intern/python/` — 120+ `-Wcast-function-type`

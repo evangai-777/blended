@@ -63,10 +63,11 @@ Stage 1 where all objects render and performance is secondary to correctness.
 
 #### Missing WebGL2 Features
 
-- **SSBOs** — `gl_storage_buffer.cc` has 19 references to `GL_SHADER_STORAGE_BUFFER` (not in WebGL2)
-- **Texture views** — `glTextureView()` (GL 4.3, not in WebGL2)
-- **Image load/store** — used in the storage buffer system
-- **`glCopyImageSubData()`** — efficient texture copies (GL 4.3)
+- ~~**SSBOs**~~ — **DONE** `gl_storage_buffer.cc` now uses `GL_COPY_READ_BUFFER` as
+  buffer target and `GL_UNIFORM_BUFFER` for bind slots on Emscripten
+- **Texture views** — `glTextureView()` (GL 4.3, not in WebGL2) — stubbed as no-op
+- **Image load/store** — used in the storage buffer system — stubbed as no-op
+- **`glCopyImageSubData()`** — efficient texture copies (GL 4.3) — stubbed as no-op
 
 #### System Call Incompatibilities (4 files, low risk)
 
@@ -87,10 +88,22 @@ Stage 1 where all objects render and performance is secondary to correctness.
 
 **Path B: CPU fallback paths for WebGL2** ← **IN PROGRESS**
 - ~~Add `#ifdef __EMSCRIPTEN__` CPU implementations for the 6 compute dispatch sites~~ **DONE**
-- Replace SSBOs with UBO or texture-based fallbacks (future work)
+- ~~Replace SSBOs with UBO or texture-based fallbacks~~ **DONE** — `gl_storage_buffer.cc`
+  uses `GL_COPY_READ_BUFFER` as buffer target on Emscripten, binds via
+  `GL_UNIFORM_BUFFER` slots, clear emulated via CPU fill + `glBufferSubData`,
+  async readback uses `glCopyBufferSubData` + `glMapBufferRange` instead of
+  persistent mapping
 - ~~Bypass GL 4.3 version check for Emscripten~~ **DONE** (in `gl_backend.cc`)
+- ~~GLSL `#version 430` → `#version 300 es`~~ **DONE** — all 4 shader stage
+  patches (vertex, geometry, fragment, compute) in `gl_shader.cc` now emit
+  `#version 300 es` with `precision highp` qualifiers on Emscripten
+- ~~Runtime GL function gap stubs~~ **DONE** — `glMapBuffer` emulated via
+  `glMapBufferRange`, `glGetTexImage` emulated via FBO+`glReadPixels` (2D),
+  `glGetBufferSubData` emulated via `glMapBufferRange`+memcpy,
+  `glCopyNamedBufferSubData` / `glGetNamedBufferSubData` emulated via
+  bind-to-target fallback
 - **Pros:** Works on WebGL2, widest browser support
-- **Cons:** Performance hit (no culling), SSBO→UBO migration still needed for full correctness
+- **Cons:** Performance hit (no culling), some edge cases in texture readback
 
 **Estimated effort:** 2-4 months for a compilable, renderable Stage 1
 
