@@ -41,22 +41,27 @@ string(APPEND CMAKE_CXX_FLAGS " -s USE_SDL=2")
 string(APPEND CMAKE_C_FLAGS   " -Wno-sign-conversion -Wno-shorten-64-to-32 -Wno-implicit-int-conversion -Wno-c++11-narrowing")
 string(APPEND CMAKE_CXX_FLAGS " -Wno-sign-conversion -Wno-shorten-64-to-32 -Wno-implicit-int-conversion -Wno-c++11-narrowing")
 
-# Threading: -pthread is NOT set globally in compiler flags.
+# Threading: -pthread is NOT set globally in compiler flags because it
+# also defines __EMSCRIPTEN_PTHREADS__ and enables TLS, which causes
+# compile/link mismatches for build tools (makesdna, makesrna, etc.)
+# that run under Node.js with -sUSE_PTHREADS=0.
 #
-# In Emscripten, -pthread at compile time enables shared-memory codegen
-# (TLS segments, -matomics, -mbulk-memory, __EMSCRIPTEN_PTHREADS__).
-# When this flag is global in CMAKE_C/CXX_FLAGS, it applies to ALL
-# translation units — including those linked into build tools that run
-# under Node.js with -sUSE_PTHREADS=0. The resulting compile/link
-# mismatch (shared-memory object code + non-shared-memory runtime)
-# corrupts the WASM data segment, garbling string constants like RNA
-# property identifiers.
+# However, the low-level WebAssembly features (-matomics, -mbulk-memory)
+# MUST be set globally. When the final blender executable links with
+# -pthread (which implies --shared-memory), wasm-ld requires ALL object
+# files to be compiled with these features. Library targets (bf_blenlib,
+# bf_blenkernel, etc.) are not direct dependents of the blender target's
+# PRIVATE compile options, so they would otherwise lack these features.
 #
-# Instead, -pthread is applied per-target only to the main blender
-# executable in source/creator/CMakeLists.txt. Library code compiled
-# without -pthread still works correctly: std::atomic operations are
-# sequentially consistent by default in single-threaded WASM, and the
-# linker resolves the threading ABI at link time.
+# Objects compiled with -matomics/-mbulk-memory are safe to link into
+# executables that do NOT use --shared-memory (i.e., build tools):
+# atomics degrade to regular operations and bulk-memory is always valid.
+#
+# -pthread (with its full semantics: TLS, __EMSCRIPTEN_PTHREADS__) is
+# applied per-target only to the main blender executable in
+# source/creator/CMakeLists.txt.
+string(APPEND CMAKE_C_FLAGS   " -matomics -mbulk-memory")
+string(APPEND CMAKE_CXX_FLAGS " -matomics -mbulk-memory")
 
 # ── Linker flags (Emscripten-specific) ───────────────────────────
 #
