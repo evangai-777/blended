@@ -219,10 +219,20 @@ void GLBackend::platform_init()
     printf("Renderer: %s\n", renderer);
   }
 
-  /* Detect support level */
+  /* Detect support level.
+   * WebGL2 is based on OpenGL ES 3.0 (~GL 3.3). The GL 4.3 requirement
+   * blocks Emscripten builds entirely, so we relax it for WASM where the
+   * epoxy shim reports a lower version. Compute shader and SSBO gaps are
+   * handled separately via CPU fallback paths. */
+#ifdef __EMSCRIPTEN__
+  if (!(epoxy_gl_version() >= 30)) {
+    support_level = GPU_SUPPORT_LEVEL_UNSUPPORTED;
+  }
+#else
   if (!(epoxy_gl_version() >= 43)) {
     support_level = GPU_SUPPORT_LEVEL_UNSUPPORTED;
   }
+#endif
   else {
 #if defined(WIN32)
     long long driverVersion = 0;

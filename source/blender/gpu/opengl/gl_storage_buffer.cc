@@ -116,7 +116,7 @@ void GLStorageBuf::bind(int slot)
 
 #ifndef NDEBUG
   BLI_assert(slot < 16);
-  GLContext::get()->bound_ssbo_slots |= 1 << slot;
+  GLContext::get()->bound_ssbo_slots |= uint16_t(1) << slot;
 #endif
 }
 
@@ -133,7 +133,7 @@ void GLStorageBuf::unbind()
   /* NOTE: This only unbinds the last bound slot. */
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, slot_, 0);
   /* Hope that the context did not change. */
-  GLContext::get()->bound_ssbo_slots &= ~(1 << slot_);
+  GLContext::get()->bound_ssbo_slots &= uint16_t(~(uint16_t(1) << slot_));
 #endif
   slot_ = 0;
 }

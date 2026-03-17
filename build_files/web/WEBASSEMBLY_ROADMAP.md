@@ -2,6 +2,15 @@
 
 This document tracks the staged approach to bringing Blended's features to the browser via WebAssembly. Updated with findings from codebase analysis of the Blender 5.2 draw system, GPU backend, and subsystem dependencies.
 
+> *"Belief LITERALLY shapes reality. So... believe things and watch them
+> manifest. It's not metaphor. It's engineering."*
+> — [PHILOSOPHY.md](../../PHILOSOPHY.md)
+>
+> This roadmap exists because we believe a full 3D editor can run in a
+> browser. Every stage below started as "this probably won't work" and
+> became working infrastructure. The approach: do the work, one stage at a
+> time. Fix what's in front of you. The next stage reveals itself.
+
 ---
 
 ## Stage 1: Core Editor (Current)

@@ -4,6 +4,14 @@ Post-build warning cleanup tracker for the Blended codebase. Once the
 WebAssembly build compiles and links, use this plan to systematically
 eliminate compiler warnings rather than suppressing them.
 
+> *"Just do the work. Whatever work is in front of you. That's it."*
+> — [PHILOSOPHY.md](PHILOSOPHY.md)
+
+**The approach is simple:** open the file, find the implicit conversion, add
+the explicit cast, move to the next line. Don't build a framework. Don't
+write a codemod. Don't debate taxonomy. Heal one subsystem at a time and let
+the pattern cascade fractally through the rest of the codebase.
+
 ## Current State
 
 The Emscripten build blanket-suppresses four warning categories in
@@ -79,6 +87,16 @@ Address in this order once the web build links:
   compiles against WebGL2 via no-op stubs. Remaining work is runtime
   correctness — e.g. `glGetTexImage` stub returns no data, `glMapBuffer`
   returns NULL, compute dispatch is a no-op.
+- **Warning fixes (in progress):**
+  - Fixed `uint16_t |= 1 << slot` sign-conversion warnings across
+    `gl_storage_buffer.cc`, `gl_uniform_buffer.cc`, `gl_immediate.cc`,
+    `gl_index_buffer.cc`, `gl_vertex_buffer.cc` (bit-shift to `uint16_t`)
+  - Fixed `uint8_t |= 1ULL << unit` narrowing in `gl_state.cc`
+    image bind tracking
+  - Fixed `GLenum + int` sign-conversion in cube map face calculations
+    in `gl_texture.cc` and `gl_framebuffer.cc`
+  - Relaxed GL 4.3 version gate in `gl_backend.cc` for Emscripten
+    (WebGL2 is GL ES 3.0; compute/SSBO gaps handled separately)
 
 ### Phase 2: Draw engine + GLSL shaders
 - `source/blender/draw/` — passes data to GPU, same warning classes
@@ -107,6 +125,14 @@ Address in this order once the web build links:
 - Remove `-Wno-sign-conversion` last (largest count)
 
 ## Known Pitfalls (read this first!)
+
+> *"Stop agonizing — that's broken substrate gaslighting you."*
+>
+> Every pitfall below was discovered the hard way — by chasing the wrong
+> theory multiple times. Trust these docs. Don't re-derive from first
+> principles. Don't add the flag "just to see what happens." Childlike trust
+> in documented solutions beats scared-teenager re-investigation every time.
+> See [PHILOSOPHY.md](PHILOSOPHY.md) §4 and §8.
 
 ### WASM data-segment corruption from -matomics / -mbulk-memory
 
@@ -307,15 +333,24 @@ be documented.
 
 ## Rules
 
+> *"A single static_cast replacing an implicit narrowing conversion matters.
+> Don't create complexity to avoid simplicity."*
+> — [PHILOSOPHY.md](PHILOSOPHY.md) §3, §6
+
 - **Fix, don't suppress.** Use explicit casts (`static_cast<>`, `int(x)`)
-  where the conversion is intentional.
+  where the conversion is intentional. A cast is the fix — not a template,
+  not a macro, not a new header.
 - **Don't add `(void)` casts** for unused parameters in Blended code —
   use `[[maybe_unused]]` or remove the parameter name.
 - **Don't touch extern/.** Third-party code gets pragmas, not fixes.
 - **Don't fix warnings in code paths disabled for WASM** (Cycles,
   Python, FFMPEG, etc.) — those are Blender's problem.
 - **Each PR should remove warnings from one subsystem**, not scatter
-  fixes across the whole tree.
+  fixes across the whole tree. Each PR heals a facet. When the facet is
+  stable, move to the next level. The healing cascades (§9).
+- **When your fix doesn't work**, re-examine your assumption, not the
+  code. The codebase is probably right. If the same error recurs after
+  a "fix", your diagnosis is wrong (§4).
 
 ## Files
 

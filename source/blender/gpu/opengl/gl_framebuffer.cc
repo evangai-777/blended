@@ -186,7 +186,7 @@ void GLFrameBuffer::update_attachments()
     {
       /* Could be avoided if ARB_direct_state_access is required. In this case
        * #glFramebufferTextureLayer would bind the correct face. */
-      GLenum gl_target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + attach.layer;
+      GLenum gl_target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + GLenum(attach.layer);
       glFramebufferTexture2D(GL_FRAMEBUFFER, gl_attachment, gl_target, gl_tex, attach.mip);
     }
     else if (attach.layer > -1) {
