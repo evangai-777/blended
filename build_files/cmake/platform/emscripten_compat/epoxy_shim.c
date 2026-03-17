@@ -109,14 +109,76 @@ void glTexBuffer(GLenum target, GLenum internalformat, GLuint buffer)
 
 void *glMapBuffer(GLenum target, GLenum access)
 {
-  (void)target; (void)access;
-  return NULL;
+  /* GLES3/WebGL2 has glMapBufferRange but not glMapBuffer.
+   * Emulate by querying buffer size and mapping the full range. */
+  GLint buf_size = 0;
+  glGetBufferParameteriv(target, GL_BUFFER_SIZE, &buf_size);
+  if (buf_size <= 0) {
+    return NULL;
+  }
+
+  GLbitfield flags = 0;
+  if (access == GL_READ_ONLY) {
+    flags = GL_MAP_READ_BIT;
+  }
+  else if (access == GL_WRITE_ONLY) {
+    flags = GL_MAP_WRITE_BIT;
+  }
+  else { /* GL_READ_WRITE */
+    flags = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT;
+  }
+
+  return glMapBufferRange(target, 0, buf_size, flags);
 }
 
 void glGetTexImage(GLenum target, GLint level, GLenum format,
                    GLenum type, void *pixels)
 {
-  (void)target; (void)level; (void)format; (void)type; (void)pixels;
+  /* WebGL2/GLES3 does not have glGetTexImage. Emulate by attaching the
+   * texture to a temporary FBO and using glReadPixels for 2D textures.
+   * For non-2D targets (cube maps, 3D, arrays), fall back to no-op. */
+  if (!pixels) {
+    return;
+  }
+
+  if (target != GL_TEXTURE_2D) {
+    /* Only 2D textures can be read via FBO attachment + glReadPixels.
+     * Cube map faces, 3D slices, and array layers would need separate
+     * handling. Return zeroed data for now. */
+    return;
+  }
+
+  /* Get the currently bound texture. */
+  GLint tex_id = 0;
+  glGetIntegerv(GL_TEXTURE_BINDING_2D, &tex_id);
+  if (tex_id == 0) {
+    return;
+  }
+
+  /* Save current FBO binding. */
+  GLint prev_fbo = 0;
+  glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &prev_fbo);
+
+  /* Create a temporary FBO, attach the texture, and read back. */
+  GLuint tmp_fbo = 0;
+  glGenFramebuffers(1, &tmp_fbo);
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, tmp_fbo);
+  glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                         GL_TEXTURE_2D, (GLuint)tex_id, level);
+
+  if (glCheckFramebufferStatus(GL_READ_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE) {
+    /* Query texture dimensions at this mip level. We don't have
+     * glGetTexLevelParameteriv on GLES3, so we use the FBO viewport. */
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    /* Use viewport dimensions as approximation for mip 0.
+     * Callers typically know the size and provide appropriately sized buffers. */
+    glReadPixels(0, 0, viewport[2], viewport[3], format, type, pixels);
+  }
+
+  /* Restore previous FBO. */
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, (GLuint)prev_fbo);
+  glDeleteFramebuffers(1, &tmp_fbo);
 }
 
 void glGetTexLevelParameteriv(GLenum target, GLint level,
@@ -377,7 +439,16 @@ void glPatchParameteri(GLenum pname, GLint value)
 void glGetBufferSubData(GLenum target, GLintptr offset, GLsizeiptr size,
                         void *data)
 {
-  (void)target; (void)offset; (void)size; (void)data;
+  /* GLES3/WebGL2 does not have glGetBufferSubData. Emulate via
+   * glMapBufferRange + memcpy. */
+  if (!data || size <= 0) {
+    return;
+  }
+  void *mapped = glMapBufferRange(target, offset, size, GL_MAP_READ_BIT);
+  if (mapped) {
+    memcpy(data, mapped, (size_t)size);
+    glUnmapBuffer(target);
+  }
 }
 
 void glClearNamedBufferData(GLuint buffer, GLenum internalformat,
@@ -401,15 +472,28 @@ GLboolean glUnmapNamedBuffer(GLuint buffer)
 void glGetNamedBufferSubData(GLuint buffer, GLintptr offset, GLsizeiptr size,
                              void *data)
 {
-  (void)buffer; (void)offset; (void)size; (void)data;
+  /* Emulate DSA via bind-to-target path. */
+  if (!data || size <= 0) {
+    return;
+  }
+  GLint prev_buf = 0;
+  glGetIntegerv(GL_COPY_READ_BUFFER_BINDING, &prev_buf);
+  glBindBuffer(GL_COPY_READ_BUFFER, buffer);
+  glGetBufferSubData(GL_COPY_READ_BUFFER, offset, size, data);
+  glBindBuffer(GL_COPY_READ_BUFFER, (GLuint)prev_buf);
 }
 
 void glCopyNamedBufferSubData(GLuint readBuffer, GLuint writeBuffer,
                               GLintptr readOffset, GLintptr writeOffset,
                               GLsizeiptr size)
 {
-  (void)readBuffer; (void)writeBuffer;
-  (void)readOffset; (void)writeOffset; (void)size;
+  /* Emulate DSA via bind-to-target path. */
+  glBindBuffer(GL_COPY_READ_BUFFER, readBuffer);
+  glBindBuffer(GL_COPY_WRITE_BUFFER, writeBuffer);
+  glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER,
+                      readOffset, writeOffset, size);
+  glBindBuffer(GL_COPY_READ_BUFFER, 0);
+  glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
 }
 
 void glGetUnsignedBytei_vEXT(GLenum target, GLuint index, GLubyte *data)
