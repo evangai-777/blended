@@ -78,6 +78,37 @@ string(APPEND CMAKE_CXX_FLAGS " -Wno-sign-conversion -Wno-shorten-64-to-32 -Wno-
 # Kept intentionally minimal: just WASM output and basic assertions.
 string(APPEND CMAKE_EXE_LINKER_FLAGS " -sWASM=1 -sASSERTIONS=1")
 
+# ── Reusable function for build-tool targets ─────────────────────
+# Build tools (makesrna, makesdna, datatoc, shader_tool, msgfmt,
+# zstd_compress) run under Node.js at build time, not in a browser.
+# This function applies the standard Node.js flags consistently.
+#
+# Usage:
+#   emscripten_build_tool_flags(<target>)              — basic flags
+#   emscripten_build_tool_flags(<target> STACK_SIZE 8388608) — with stack config
+#
+function(emscripten_build_tool_flags target)
+  cmake_parse_arguments(PARSE_ARGV 1 _EBTF "" "STACK_SIZE" "")
+
+  target_compile_options(${target} PRIVATE -sUSE_PTHREADS=0)
+  target_link_options(${target} PRIVATE
+    -sNODERAWFS=1
+    -sENVIRONMENT=node
+    -sSINGLE_FILE=1
+    -sUSE_PTHREADS=0
+    -sSHARED_MEMORY=0
+    -sALLOW_MEMORY_GROWTH=1
+    -sEXIT_RUNTIME=1
+  )
+
+  if(_EBTF_STACK_SIZE)
+    target_link_options(${target} PRIVATE
+      -sSTACK_SIZE=${_EBTF_STACK_SIZE}
+      -sSTACK_OVERFLOW_CHECK=2
+    )
+  endif()
+endfunction()
+
 # ── Browser-target link flags (applied per-target) ──────────────
 # These are collected as a CMake list and applied via target_link_options()
 # in source/creator/CMakeLists.txt.

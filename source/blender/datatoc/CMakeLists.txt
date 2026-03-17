@@ -14,15 +14,5 @@ add_executable(datatoc ${SRC})
 optimize_debug_target(datatoc)
 
 if(EMSCRIPTEN)
-  # Build tools run under Node.js at build time, not in a browser.
-  target_compile_options(datatoc PRIVATE -sUSE_PTHREADS=0)
-  target_link_options(datatoc PRIVATE
-    -sNODERAWFS=1         # Direct filesystem access under Node.js
-    -sENVIRONMENT=node    # Target Node.js runtime only
-    -sSINGLE_FILE=1       # Embed .wasm in .js for simpler execution
-    -sUSE_PTHREADS=0      # No SharedArrayBuffer
-    -sSHARED_MEMORY=0     # No shared memory
-    -sALLOW_MEMORY_GROWTH=1  # Let Node.js grow heap as needed (no fixed cap)
-    -sEXIT_RUNTIME=1      # Flush output on exit
-  )
+  emscripten_build_tool_flags(datatoc)
 endif()

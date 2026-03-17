@@ -185,8 +185,14 @@ of build tools with Emscripten blocks:
 - `source/blender/blentranslation/msgfmt/CMakeLists.txt`
 - `intern/cycles/kernel/CMakeLists.txt` (zstd_compress)
 
-When adding a NEW build tool, copy the Emscripten block from an existing
-one (makesdna is a good template).
+When adding a NEW build tool, call `emscripten_build_tool_flags(<target>)`
+(defined in `platform_emscripten.cmake`). Use `STACK_SIZE <bytes>` for
+tools that need a larger stack (code generators, shader tools):
+```cmake
+if(EMSCRIPTEN)
+  emscripten_build_tool_flags(my_tool STACK_SIZE 8388608)
+endif()
+```
 
 ### Emscripten sets UNIX=true — watch for false matches
 
