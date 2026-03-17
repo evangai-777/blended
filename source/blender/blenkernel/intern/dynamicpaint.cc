@@ -5434,7 +5434,7 @@ static void dynamic_paint_effect_drip_cb(void *__restrict userdata,
        * Since the odds a same ePoint is modified at the same time by several threads is very low,
        * this is much more efficient than a global spin lock. */
       const uint epointlock_idx = n_trgt / 8;
-      const uint8_t epointlock_bitmask = 1 << (n_trgt & 7); /* 7 == 0b111 */
+      const uint8_t epointlock_bitmask = uint8_t(1u << (n_trgt & 7u)); /* 7 == 0b111 */
       while (atomic_fetch_and_or_uint8(&point_locks[epointlock_idx], epointlock_bitmask) &
              epointlock_bitmask)
       {
@@ -5482,7 +5482,7 @@ static void dynamic_paint_effect_drip_cb(void *__restrict userdata,
 
   {
     const uint ppointlock_idx = index / 8;
-    const uint8_t ppointlock_bitmask = 1 << (index & 7); /* 7 == 0b111 */
+    const uint8_t ppointlock_bitmask = uint8_t(1u << (index & 7u)); /* 7 == 0b111 */
     while (atomic_fetch_and_or_uint8(&point_locks[ppointlock_idx], ppointlock_bitmask) &
            ppointlock_bitmask)
     {

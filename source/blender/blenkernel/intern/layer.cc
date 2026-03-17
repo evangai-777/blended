@@ -1677,7 +1677,7 @@ bool BKE_object_is_visible_in_viewport(const View3D *v3d, const Object *ob)
     return false;
   }
 
-  if ((v3d->object_type_exclude_viewport & (1 << ob->type)) != 0) {
+  if ((v3d->object_type_exclude_viewport & (1u << ob->type)) != 0) {
     return false;
   }
 
