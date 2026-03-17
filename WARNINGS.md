@@ -106,6 +106,27 @@ Address in this order once the web build links:
   need GLSL version/extension changes (runtime issue, not compilation) —
   e.g. hardcoded `#version 430`, `sampler1D`/`sampler1DArray` usage,
   compute shader dispatches. These are runtime fixes, not link errors.
+- **Warning fixes (in progress):**
+  - Fixed `int → uint` sign-conversion in `GPU_compute_dispatch()` calls
+    across `draw_view.cc`, `draw_command.cc`, `draw_manager.cc`,
+    `draw_cache_impl_subdivision.cc`, `eevee_shadow.cc`, `workbench_shadow.cc`
+    (literal `1` → `1u`, `int3` → `uint()` casts)
+  - Fixed `float → uint` implicit conversion in subdivision dispatch
+    size calculation (`draw_cache_impl_subdivision.cc`)
+- **WebGL2 compute fallback (in progress):**
+  - Added `#ifdef __EMSCRIPTEN__` guards around ALL compute dispatch sites
+    in the draw engine (6 locations across 6 files)
+  - **Visibility culling:** Skipped on Emscripten; buffer initialized to
+    all-visible (0xFFFFFFFF), so all objects render without frustum culling
+  - **Resource finalization:** Skipped on Emscripten; bounds stay local-space
+    (acceptable since culling is disabled), ORCO coords uninitialized
+  - **Command generation:** Full CPU fallback implemented in
+    `draw_command.cc` — generates DrawCommands and resource IDs on CPU,
+    respecting front-facing/back-facing handedness sorting
+  - **Subdivision compute:** Skipped on Emscripten; meshes render without
+    GPU-based subdivision refinement
+  - **Shadow visibility:** Skipped on Emscripten for both Eevee and
+    Workbench engines; all shadow casters treated as visible
 
 ### Phase 3: Core libraries
 - `source/blender/blenlib/` — math headers already have some pragmas

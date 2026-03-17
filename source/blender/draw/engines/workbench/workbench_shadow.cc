@@ -239,6 +239,11 @@ void ShadowPass::ShadowView::compute_visibility(ObjectBoundsBuf &bounds,
     GPU_storagebuf_clear(visibility_buf_, data);
   }
 
+#ifdef __EMSCRIPTEN__
+  /* WebGL2 lacks compute shaders. Visibility buffer is already all-ones
+   * (all shadow casters visible). Skip GPU-based shadow visibility culling. */
+  UNUSED_VARS(bounds);
+#else
   if (do_visibility_) {
     /* TODO(@pragma37): Use regular culling for the caps pass. */
     gpu::Shader *shader = current_pass_type_ == ShadowPass::FORCED_FAIL ?
@@ -262,9 +267,10 @@ void ShadowPass::ShadowView::compute_visibility(ObjectBoundsBuf &bounds,
                           GPU_shader_get_ssbo_binding(shader, "fail_visibility_buf"));
     }
     GPU_uniformbuf_bind(data_, DRW_VIEW_UBO_SLOT);
-    GPU_compute_dispatch(shader, divide_ceil_u(resource_len, DRW_VISIBILITY_GROUP_SIZE), 1, 1);
+    GPU_compute_dispatch(shader, divide_ceil_u(resource_len, DRW_VISIBILITY_GROUP_SIZE), 1u, 1u);
     GPU_memory_barrier(GPU_BARRIER_SHADER_STORAGE);
   }
+#endif
 
   GPU_debug_group_end();
 }

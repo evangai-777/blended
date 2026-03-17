@@ -129,6 +129,15 @@ void Manager::end_sync()
 
   DRW_submission_start();
 
+#ifdef __EMSCRIPTEN__
+  /* WebGL2 lacks compute shaders. Resource finalization (bounding box world-space
+   * transforms, ORCO computation) is skipped. Bounds remain in local space, but
+   * this is acceptable because visibility culling is also disabled on Emscripten
+   * (all objects render regardless of frustum intersection). ORCO-dependent
+   * features (Generated texture coordinates) will use uninitialized values —
+   * a known limitation of the Stage 1 web editor. */
+  UNUSED_VARS(resource_len_);
+#else
   /* Dispatch compute to finalize the resources on GPU. Save a bit of CPU time. */
   uint thread_groups = divide_ceil_u(resource_len_, DRW_FINALIZE_GROUP_SIZE);
   gpu::Shader *shader = DRW_shader_draw_resource_finalize_get();
@@ -137,8 +146,9 @@ void Manager::end_sync()
   GPU_storagebuf_bind(matrix_buf.current(), GPU_shader_get_ssbo_binding(shader, "matrix_buf"));
   GPU_storagebuf_bind(bounds_buf.current(), GPU_shader_get_ssbo_binding(shader, "bounds_buf"));
   GPU_storagebuf_bind(infos_buf.current(), GPU_shader_get_ssbo_binding(shader, "infos_buf"));
-  GPU_compute_dispatch(shader, thread_groups, 1, 1);
+  GPU_compute_dispatch(shader, thread_groups, 1u, 1u);
   GPU_memory_barrier(GPU_BARRIER_SHADER_STORAGE);
+#endif
 
   DRW_submission_end();
 

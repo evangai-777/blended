@@ -263,12 +263,18 @@ void DrawIndirect::execute(RecordingState &state) const
 void Dispatch::execute(RecordingState &state) const
 {
   if (is_reference) {
-    GPU_compute_dispatch(
-        state.shader, size_ref->x, size_ref->y, size_ref->z, state.specialization_constants_get());
+    GPU_compute_dispatch(state.shader,
+                         uint(size_ref->x),
+                         uint(size_ref->y),
+                         uint(size_ref->z),
+                         state.specialization_constants_get());
   }
   else {
-    GPU_compute_dispatch(
-        state.shader, size.x, size.y, size.z, state.specialization_constants_get());
+    GPU_compute_dispatch(state.shader,
+                         uint(size.x),
+                         uint(size.y),
+                         uint(size.z),
+                         state.specialization_constants_get());
   }
 }
 
@@ -826,6 +832,94 @@ void DrawMultiBuf::generate_commands(Vector<Header, 0> & /*headers*/,
   command_buf_.get_or_resize(group_count_ * 2);
 
   if (prototype_count_ > 0) {
+#ifdef __EMSCRIPTEN__
+    /* CPU fallback: WebGL2 lacks compute shaders. Generate draw commands and
+     * resource IDs on CPU. Visibility is all-ones (everything visible) because
+     * compute-based culling is also disabled on Emscripten.
+     *
+     * This mirrors the GPU compute shader draw_command_generate_comp.glsl:
+     * for each prototype, check visibility, sort by handedness into the
+     * group's front/back-facing slots, and write resource IDs. */
+
+    /* Pass 1: For each prototype, write resource IDs sorted by handedness.
+     * Front-facing instances come first within each group, then back-facing. */
+    for (uint p = 0; p < prototype_count_; p++) {
+      DrawPrototype &proto = prototype_buf_[p];
+      DrawGroup &group = group_buf_[proto.group_id];
+      ResourceIndex res_idx(proto.res_index);
+      bool is_inverted = res_idx.has_inverted_handedness();
+
+      for (int v = 0; v < view_len; v++) {
+        uint base = group.start * uint(view_len);
+        uint offset;
+        if (is_inverted) {
+          /* Back-facing: placed after all front-facing instances. */
+          offset = base + (group.front_facing_len + group.back_facing_counter) * uint(view_len) +
+                   uint(v);
+          group.back_facing_counter += 1;
+        }
+        else {
+          /* Front-facing: placed at start of group. */
+          offset = base + group.front_facing_counter * uint(view_len) + uint(v);
+          group.front_facing_counter += 1;
+        }
+        group.total_counter += 1;
+
+        if (use_custom_ids) {
+          resource_id_buf_[offset * 2] = proto.res_index;
+          resource_id_buf_[offset * 2 + 1] = proto.custom_id;
+        }
+        else {
+          resource_id_buf_[offset] = proto.res_index;
+        }
+      }
+    }
+
+    /* Pass 2: Generate DrawCommand structs from the group data. Two commands
+     * per group: front-facing (even index) and back-facing (odd index). */
+    for (uint g = 0; g < group_count_; g++) {
+      DrawGroup &group = group_buf_[g];
+      DrawCommand &cmd_front = command_buf_[g * 2];
+      DrawCommand &cmd_back = command_buf_[g * 2 + 1];
+
+      uint front_instance_len = group.front_facing_counter;
+      uint back_instance_len = group.back_facing_counter;
+      uint front_start = group.start * uint(view_len);
+      uint back_start = front_start + group.front_facing_len * uint(view_len);
+
+      if (group.base_index != -1) {
+        /* Indexed draw. */
+        cmd_front.indexed.vertex_len = uint(group.vertex_len);
+        cmd_front.indexed.instance_len = front_instance_len;
+        cmd_front.indexed.vertex_first = uint(group.vertex_first);
+        cmd_front.indexed.base_index = uint(group.base_index);
+        cmd_front.indexed.instance_first = front_start;
+
+        cmd_back.indexed.vertex_len = uint(group.vertex_len);
+        cmd_back.indexed.instance_len = back_instance_len;
+        cmd_back.indexed.vertex_first = uint(group.vertex_first);
+        cmd_back.indexed.base_index = uint(group.base_index);
+        cmd_back.indexed.instance_first = back_start;
+      }
+      else {
+        /* Array draw (no index buffer). */
+        cmd_front.array.vertex_len = uint(group.vertex_len);
+        cmd_front.array.instance_len = front_instance_len;
+        cmd_front.array.vertex_first = uint(group.vertex_first);
+        cmd_front.array.instance_first = front_start;
+
+        cmd_back.array.vertex_len = uint(group.vertex_len);
+        cmd_back.array.instance_len = back_instance_len;
+        cmd_back.array.vertex_first = uint(group.vertex_first);
+        cmd_back.array.instance_first = back_start;
+      }
+    }
+
+    /* Upload CPU-generated data to GPU buffers. */
+    group_buf_.push_update();
+    resource_id_buf_.push_update();
+    command_buf_.push_update();
+#else
     gpu::Shader *shader = DRW_shader_draw_command_generate_get();
     GPU_shader_bind(shader);
     GPU_shader_uniform_1i(shader, "prototype_len", prototype_count_);
@@ -838,10 +932,11 @@ void DrawMultiBuf::generate_commands(Vector<Header, 0> & /*headers*/,
     GPU_storagebuf_bind(prototype_buf_, GPU_shader_get_ssbo_binding(shader, "prototype_buf"));
     GPU_storagebuf_bind(command_buf_, GPU_shader_get_ssbo_binding(shader, "command_buf"));
     GPU_storagebuf_bind(resource_id_buf_, DRW_RESOURCE_ID_SLOT);
-    GPU_compute_dispatch(shader, divide_ceil_u(prototype_count_, DRW_COMMAND_GROUP_SIZE), 1, 1);
+    GPU_compute_dispatch(shader, divide_ceil_u(prototype_count_, DRW_COMMAND_GROUP_SIZE), 1u, 1u);
     /* TODO(@fclem): Investigate moving the barrier in the bind function. */
     GPU_memory_barrier(GPU_BARRIER_SHADER_STORAGE);
     GPU_storagebuf_sync_as_indirect_buffer(command_buf_);
+#endif
   }
 
   GPU_debug_group_end();
