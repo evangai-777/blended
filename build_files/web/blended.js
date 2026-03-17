@@ -213,23 +213,58 @@
     });
   }
 
+  // ── Cross-origin isolation helper ──────────────────────────────
+  // The coi-serviceworker registers on first visit and reloads the page
+  // to enable SharedArrayBuffer.  If the SW is still activating we wait
+  // briefly instead of immediately declaring the feature missing.
+
+  function waitForCrossOriginIsolation(callback) {
+    // Already isolated — proceed immediately.
+    if (window.crossOriginIsolated) {
+      callback();
+      return;
+    }
+
+    // No service worker support — can't fix it, proceed with check.
+    if (!("serviceWorker" in navigator)) {
+      callback();
+      return;
+    }
+
+    // Give the service worker up to 3 seconds to activate and reload.
+    var waited = 0;
+    var interval = 200;      // ms between checks
+    var maxWait = 3000;       // ms total
+    progressText.textContent = "Enabling cross-origin isolation...";
+
+    var timer = setInterval(function () {
+      waited += interval;
+      if (window.crossOriginIsolated || waited >= maxWait) {
+        clearInterval(timer);
+        callback();
+      }
+    }, interval);
+  }
+
   // ── Main entry point ────────────────────────────────────────────
 
-  var result = checkFeatures();
+  waitForCrossOriginIsolation(function () {
+    var result = checkFeatures();
 
-  if (!result.allOk) {
-    var missing = result.features
-      .filter(function (f) { return !f.ok; })
-      .map(function (f) { return f.name; })
-      .join(", ");
+    if (!result.allOk) {
+      var missing = result.features
+        .filter(function (f) { return !f.ok; })
+        .map(function (f) { return f.name; })
+        .join(", ");
 
-    showError(
-      "Your browser is missing required features: " + missing + ". " +
-      "Blended requires a modern browser with WebAssembly, WebGL2, " +
-      "SharedArrayBuffer, and Web Worker support. " +
-      "Please try the latest version of Chrome, Firefox, or Edge."
-    );
-  } else {
-    launchBlended();
-  }
+      showError(
+        "Your browser is missing required features: " + missing + ". " +
+        "Blended requires a modern browser with WebAssembly, WebGL2, " +
+        "SharedArrayBuffer, and Web Worker support. " +
+        "Please try the latest version of Chrome, Firefox, or Edge."
+      );
+    } else {
+      launchBlended();
+    }
+  });
 })();

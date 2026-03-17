@@ -121,7 +121,7 @@ void GLUniformBuf::bind(int slot)
 
 #ifndef NDEBUG
   BLI_assert(slot < 16);
-  GLContext::get()->bound_ubo_slots |= 1 << slot;
+  GLContext::get()->bound_ubo_slots |= uint16_t(1) << slot;
 #endif
 }
 
@@ -138,7 +138,7 @@ void GLUniformBuf::bind_as_ssbo(int slot)
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, slot, ubo_id_);
 #ifndef NDEBUG
   BLI_assert(slot < 16);
-  GLContext::get()->bound_ssbo_slots |= 1 << slot;
+  GLContext::get()->bound_ssbo_slots |= uint16_t(1) << slot;
 #endif
 }
 
@@ -148,7 +148,7 @@ void GLUniformBuf::unbind()
   /* NOTE: This only unbinds the last bound slot. */
   glBindBufferBase(GL_UNIFORM_BUFFER, slot_, 0);
   /* Hope that the context did not change. */
-  GLContext::get()->bound_ubo_slots &= ~(1 << slot_);
+  GLContext::get()->bound_ubo_slots &= uint16_t(~(uint16_t(1) << slot_));
 #endif
   slot_ = 0;
 }

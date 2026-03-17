@@ -286,7 +286,7 @@ void GLTexture::update_sub(int mip,
   GLContext::state_manager_active_get()->texture_bind_temp(this);
   if (type_ == GPU_TEXTURE_CUBE) {
     for (int i = 0; i < extent[2]; i++) {
-      GLenum target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + offset[2] + i;
+      GLenum target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + GLenum(offset[2]) + GLenum(i);
       glTexSubImage2D(target, mip, UNPACK2(offset), UNPACK2(extent), gl_format, gl_type, data);
     }
   }
@@ -464,7 +464,7 @@ void *GLTexture::read(int mip, eGPUDataFormat type)
       size_t cube_face_size = texture_size / 6;
       char *pdata = static_cast<char *>(data);
       for (int i = 0; i < 6; i++, pdata += cube_face_size) {
-        glGetTexImage(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, mip, gl_format, gl_type, pdata);
+        glGetTexImage(GL_TEXTURE_CUBE_MAP_POSITIVE_X + GLenum(i), mip, gl_format, gl_type, pdata);
       }
     }
     else {

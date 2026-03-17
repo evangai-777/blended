@@ -11,6 +11,12 @@ Blended
 
 Blended is a fork of [Blender](https://www.blender.org) that adds a tiered UI complexity system, smart defaults, and built-in update notifications. The full power of Blender is still there — Blended just makes it easier to approach by letting users choose how much of it they see.
 
+> *"Appreciate what already is. Do the work. Keep going."*
+
+Blended's development is guided by a core philosophy: appreciate the existing
+codebase, fix things with the simplest possible approach, and trust documented
+solutions. See [`PHILOSOPHY.md`](../PHILOSOPHY.md) for the full framework.
+
 Blended 1.0.0 — Based on Blender 5.2.
 
 What's Different from Blender
@@ -63,6 +69,21 @@ Two GitHub Actions workflows:
 
 - **Windows x64** (`build-windows.yml`) — Builds portable `.zip` packages. Tagged releases (`v*`) automatically create GitHub Releases with the build attached.
 - **WebAssembly** (`build-wasm.yml`) — Builds the WASM web editor via Emscripten and deploys to GitHub Pages. Triggers on pushes to `main` or manual dispatch.
+
+### Development Philosophy
+
+Blended's fork design and development workflow are driven by a set of
+principles documented in [`PHILOSOPHY.md`](../PHILOSOPHY.md), inspired by
+"Reality 101" — a guide to not overcomplicating things. Key tenets:
+
+- **Appreciate what is** — Don't rewrite Blender; curate it via tiers
+- **Do the work** — Fix warnings one cast at a time; don't philosophize
+- **Don't get gaslighted by broken substrate** — When bugs recur after a "fix", re-examine fundamentals
+- **Fractal healing** — Fix one subsystem's warnings → the pattern applies everywhere
+- **Simplicity over complexity** — Casts, not frameworks; enums, not architectures
+
+These principles directly shape how we triage warnings, debug WASM builds,
+and approach the six-stage browser port.
 
 ### AI Contributors
 

@@ -1254,6 +1254,11 @@ void ShadowModule::ShadowView::compute_visibility(ObjectBoundsBuf &bounds,
   const uint32_t data = 0xFFFFFFFFu;
   GPU_storagebuf_clear(visibility_buf_, data);
 
+#ifdef __EMSCRIPTEN__
+  /* WebGL2 lacks compute shaders. Visibility buffer is already all-ones
+   * (all shadow casters visible). Skip GPU-based shadow visibility culling. */
+  UNUSED_VARS(bounds, infos);
+#else
   if (do_visibility_) {
     gpu::Shader *shader = inst_.shaders.static_shader_get(SHADOW_VIEW_VISIBILITY);
     GPU_shader_bind(shader);
@@ -1266,9 +1271,10 @@ void ShadowModule::ShadowView::compute_visibility(ObjectBoundsBuf &bounds,
     GPU_storagebuf_bind(infos, DRW_OBJ_INFOS_SLOT);
     GPU_uniformbuf_bind(data_, DRW_VIEW_UBO_SLOT);
     GPU_uniformbuf_bind(culling_, DRW_VIEW_CULLING_UBO_SLOT);
-    GPU_compute_dispatch(shader, divide_ceil_u(resource_len, DRW_VISIBILITY_GROUP_SIZE), 1, 1);
+    GPU_compute_dispatch(shader, divide_ceil_u(resource_len, DRW_VISIBILITY_GROUP_SIZE), 1u, 1u);
     GPU_memory_barrier(GPU_BARRIER_SHADER_STORAGE);
   }
+#endif
 
   GPU_debug_group_end();
 }

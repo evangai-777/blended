@@ -573,7 +573,7 @@ void GLStateManager::image_bind(Texture *tex_, int unit)
   formats_[unit] = to_gl_internal_format(tex->format_);
   image_formats[unit] = TextureWriteFormat(tex->format_get());
   tex->is_bound_image_ = true;
-  dirty_image_binds_ |= 1ULL << unit;
+  dirty_image_binds_ |= uint8_t(1U << unit);
 }
 
 void GLStateManager::image_unbind(Texture *tex_)
@@ -588,7 +588,7 @@ void GLStateManager::image_unbind(Texture *tex_)
     if (images_[i] == tex_id) {
       images_[i] = 0;
       image_formats[i] = TextureWriteFormat::Invalid;
-      dirty_image_binds_ |= 1ULL << i;
+      dirty_image_binds_ |= uint8_t(1U << i);
     }
   }
   tex->is_bound_image_ = false;
@@ -599,7 +599,7 @@ void GLStateManager::image_unbind_all()
   for (int i = 0; i < ARRAY_SIZE(images_); i++) {
     if (images_[i] != 0) {
       images_[i] = 0;
-      dirty_image_binds_ |= 1ULL << i;
+      dirty_image_binds_ |= uint8_t(1U << i);
     }
   }
   image_formats.fill(TextureWriteFormat::Invalid);
@@ -635,7 +635,7 @@ uint8_t GLStateManager::bound_image_slots()
   uint8_t bound_slots = 0;
   for (int i = 0; i < ARRAY_SIZE(images_); i++) {
     if (images_[i] != 0) {
-      bound_slots |= 1ULL << i;
+      bound_slots |= uint8_t(1U << i);
     }
   }
   return bound_slots;

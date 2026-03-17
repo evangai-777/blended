@@ -74,9 +74,9 @@ uchar *GLImmediate::begin()
 #ifndef NDEBUG
   if (this->shader->is_polyline) {
     /* Silence error. These are bound inside `immEnd()`. */
-    GLContext::get()->bound_ssbo_slots |= 1 << GPU_SSBO_POLYLINE_POS_BUF_SLOT;
-    GLContext::get()->bound_ssbo_slots |= 1 << GPU_SSBO_POLYLINE_COL_BUF_SLOT;
-    GLContext::get()->bound_ssbo_slots |= 1 << GPU_SSBO_INDEX_BUF_SLOT;
+    GLContext::get()->bound_ssbo_slots |= uint16_t(1) << GPU_SSBO_POLYLINE_POS_BUF_SLOT;
+    GLContext::get()->bound_ssbo_slots |= uint16_t(1) << GPU_SSBO_POLYLINE_COL_BUF_SLOT;
+    GLContext::get()->bound_ssbo_slots |= uint16_t(1) << GPU_SSBO_INDEX_BUF_SLOT;
   }
 #endif
 
@@ -165,9 +165,9 @@ void GLImmediate::end()
     this->polyline_draw_workaround(0);
 
 #ifndef NDEBUG
-    GLContext::get()->bound_ssbo_slots &= ~(1 << GPU_SSBO_POLYLINE_POS_BUF_SLOT);
-    GLContext::get()->bound_ssbo_slots &= ~(1 << GPU_SSBO_POLYLINE_COL_BUF_SLOT);
-    GLContext::get()->bound_ssbo_slots &= ~(1 << GPU_SSBO_INDEX_BUF_SLOT);
+    GLContext::get()->bound_ssbo_slots &= uint16_t(~(uint16_t(1) << GPU_SSBO_POLYLINE_POS_BUF_SLOT));
+    GLContext::get()->bound_ssbo_slots &= uint16_t(~(uint16_t(1) << GPU_SSBO_POLYLINE_COL_BUF_SLOT));
+    GLContext::get()->bound_ssbo_slots &= uint16_t(~(uint16_t(1) << GPU_SSBO_INDEX_BUF_SLOT));
 #endif
   }
   else {

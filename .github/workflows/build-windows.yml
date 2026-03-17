@@ -34,7 +34,7 @@ jobs:
     steps:
     # ── Checkout ──────────────────────────────────────────────
     - name: Checkout source
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         path: src
         fetch-depth: 1
@@ -74,7 +74,7 @@ jobs:
 
     - name: Restore library cache
       id: cache-libs
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ${{ env.SRC_DIR }}/lib/windows_x64
         key: blender-libs-win-x64-${{ steps.submod-hash.outputs.hash }}

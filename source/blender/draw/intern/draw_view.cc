@@ -244,12 +244,20 @@ void View::compute_procedural_bounds()
 
   GPU_debug_group_begin("View.compute_procedural_bounds");
 
+#ifdef __EMSCRIPTEN__
+  /* WebGL2 lacks compute shaders. Procedural bounds finalization (frustum
+   * plane extraction from matrices) is skipped. The culling data from the
+   * CPU-side sync() call is used as-is. This is acceptable because
+   * visibility culling is also disabled on Emscripten. */
+  UNUSED_VARS(global_sync_counter_);
+#else
   gpu::Shader *shader = DRW_shader_draw_view_finalize_get();
   GPU_shader_bind(shader);
   GPU_uniformbuf_bind_as_ssbo(culling_, GPU_shader_get_ssbo_binding(shader, "view_culling_buf"));
   GPU_uniformbuf_bind(data_, DRW_VIEW_UBO_SLOT);
-  GPU_compute_dispatch(shader, 1, 1, 1);
+  GPU_compute_dispatch(shader, 1u, 1u, 1u);
   GPU_memory_barrier(GPU_BARRIER_UNIFORM);
+#endif
 
   GPU_debug_group_end();
 }
@@ -286,6 +294,12 @@ void View::compute_visibility(ObjectBoundsBuf &bounds,
   const uint32_t data = 0xFFFFFFFFu;
   GPU_storagebuf_clear(visibility_buf_, data);
 
+#ifdef __EMSCRIPTEN__
+  /* WebGL2 lacks compute shaders. Visibility buffer is already initialized
+   * to all-ones (0xFFFFFFFF) above, meaning all objects are visible.
+   * Skip the GPU-based frustum culling pass entirely. */
+  UNUSED_VARS(bounds);
+#else
   if (do_visibility_) {
     gpu::Shader *shader = DRW_shader_draw_visibility_compute_get();
     GPU_shader_bind(shader);
@@ -296,9 +310,10 @@ void View::compute_visibility(ObjectBoundsBuf &bounds,
     GPU_storagebuf_bind(visibility_buf_, GPU_shader_get_ssbo_binding(shader, "visibility_buf"));
     GPU_uniformbuf_bind(frozen_ ? data_freeze_ : data_, DRW_VIEW_UBO_SLOT);
     GPU_uniformbuf_bind(frozen_ ? culling_freeze_ : culling_, DRW_VIEW_CULLING_UBO_SLOT);
-    GPU_compute_dispatch(shader, divide_ceil_u(resource_len, DRW_VISIBILITY_GROUP_SIZE), 1, 1);
+    GPU_compute_dispatch(shader, divide_ceil_u(resource_len, DRW_VISIBILITY_GROUP_SIZE), 1u, 1u);
     GPU_memory_barrier(GPU_BARRIER_SHADER_STORAGE);
   }
+#endif
 
   if (frozen_) {
     /* Bind back the non frozen data. */

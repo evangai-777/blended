@@ -2,6 +2,15 @@
 
 This document tracks the staged approach to bringing Blended's features to the browser via WebAssembly. Updated with findings from codebase analysis of the Blender 5.2 draw system, GPU backend, and subsystem dependencies.
 
+> *"Belief LITERALLY shapes reality. So... believe things and watch them
+> manifest. It's not metaphor. It's engineering."*
+> — [PHILOSOPHY.md](../../PHILOSOPHY.md)
+>
+> This roadmap exists because we believe a full 3D editor can run in a
+> browser. Every stage below started as "this probably won't work" and
+> became working infrastructure. The approach: do the work, one stage at a
+> time. Fix what's in front of you. The next stage reveals itself.
+
 ---
 
 ## Stage 1: Core Editor (Current)
@@ -37,16 +46,20 @@ Blended's tiered UI system means the "Simple" tier works perfectly with Stage 1 
 
 Blender 5.x's draw module uses `GPU_compute_dispatch` in **core rendering paths** — not just Eevee, but the draw infrastructure itself. WebGL2 does not support compute shaders. This affects ALL rendering:
 
-| File | Usage |
-|------|-------|
-| `source/blender/draw/intern/draw_view.cc:251,299` | Visibility culling (core) |
-| `source/blender/draw/intern/draw_command.cc:266,270,277,841` | Indirect draw command generation (core) |
-| `source/blender/draw/intern/draw_manager.cc:140` | Resource management (core) |
-| `source/blender/draw/intern/draw_cache_impl_subdivision.cc:978` | Mesh subdivision |
-| `source/blender/draw/engines/eevee/eevee_shadow.cc:1269` | Eevee shadow visibility |
-| `source/blender/draw/engines/workbench/workbench_shadow.cc:265` | Workbench shadow visibility |
+| File | Usage | Emscripten Status |
+|------|-------|-------------------|
+| `source/blender/draw/intern/draw_view.cc:251,299` | Visibility culling (core) | **Guarded** — skipped, all-visible fallback |
+| `source/blender/draw/intern/draw_command.cc:266,270,277,841` | Indirect draw command generation (core) | **CPU fallback implemented** |
+| `source/blender/draw/intern/draw_manager.cc:140` | Resource management (core) | **Guarded** — skipped, local-space bounds |
+| `source/blender/draw/intern/draw_cache_impl_subdivision.cc:978` | Mesh subdivision | **Guarded** — skipped, no GPU subdiv |
+| `source/blender/draw/engines/eevee/eevee_shadow.cc:1269` | Eevee shadow visibility | **Guarded** — skipped, all-visible |
+| `source/blender/draw/engines/workbench/workbench_shadow.cc:265` | Workbench shadow visibility | **Guarded** — skipped, all-visible |
 
-**Neither Eevee NOR Workbench can render without compute shaders under the current draw architecture.**
+**Resolution:** All 6 compute dispatch sites now have `#ifdef __EMSCRIPTEN__` guards.
+The draw command generation has a full CPU fallback that generates indirect draw
+commands on CPU when all objects are visible. Visibility culling, resource
+finalization, and shadow culling are disabled on Emscripten — acceptable for
+Stage 1 where all objects render and performance is secondary to correctness.
 
 #### Missing WebGL2 Features
 
@@ -72,12 +85,12 @@ Blender 5.x's draw module uses `GPU_compute_dispatch` in **core rendering paths*
 - **Pros:** Full feature support, future-proof, no CPU fallbacks needed
 - **Cons:** Narrower browser support, significant backend work
 
-**Path B: CPU fallback paths for WebGL2**
-- Add `#ifdef __EMSCRIPTEN__` CPU implementations for the 6 compute dispatch sites
-- Replace SSBOs with UBO or texture-based fallbacks
-- Bypass GL 4.3 version check for Emscripten
+**Path B: CPU fallback paths for WebGL2** ← **IN PROGRESS**
+- ~~Add `#ifdef __EMSCRIPTEN__` CPU implementations for the 6 compute dispatch sites~~ **DONE**
+- Replace SSBOs with UBO or texture-based fallbacks (future work)
+- ~~Bypass GL 4.3 version check for Emscripten~~ **DONE** (in `gl_backend.cc`)
 - **Pros:** Works on WebGL2, widest browser support
-- **Cons:** Performance hit, ~6+ refactoring sites in core draw code, SSBO→UBO migration
+- **Cons:** Performance hit (no culling), SSBO→UBO migration still needed for full correctness
 
 **Estimated effort:** 2-4 months for a compilable, renderable Stage 1
 

@@ -960,7 +960,7 @@ static void drw_subdiv_compute_dispatch(const DRWSubdivCache &cache,
      * total, which should be enough. If not, we could also use the 3rd dimension. */
     /* TODO(fclem): We could dispatch fewer groups if we compute the prime factorization and
      * get the smallest rect fitting the requirements. */
-    dispatch_rx = dispatch_ry = ceilf(sqrtf(dispatch_size));
+    dispatch_rx = dispatch_ry = uint(ceilf(sqrtf(float(dispatch_size))));
     /* Avoid a completely empty dispatch line caused by rounding. */
     if ((dispatch_rx * (dispatch_ry - 1)) >= dispatch_size) {
       dispatch_ry -= 1;
@@ -975,7 +975,14 @@ static void drw_subdiv_compute_dispatch(const DRWSubdivCache &cache,
   draw_subdiv_ubo_update_and_bind(
       cache, src_offset, dst_offset, total_dispatch_size, has_sculpt_mask, edge_loose_offset);
 
-  GPU_compute_dispatch(shader, dispatch_rx, dispatch_ry, 1);
+#ifdef __EMSCRIPTEN__
+  /* WebGL2 lacks compute shaders. Subdivision compute is a no-op — meshes
+   * will render without GPU-based subdivision refinement. CPU subdivision
+   * via OpenSubdiv (WITH_OPENSUBDIV) may still work if enabled. */
+  UNUSED_VARS(shader, dispatch_rx, dispatch_ry);
+#else
+  GPU_compute_dispatch(shader, dispatch_rx, dispatch_ry, 1u);
+#endif
 }
 
 void draw_subdiv_extract_pos(const DRWSubdivCache &cache, gpu::VertBuf *pos, gpu::VertBuf *orco)
