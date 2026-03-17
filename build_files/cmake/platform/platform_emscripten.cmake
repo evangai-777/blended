@@ -46,16 +46,20 @@ string(APPEND CMAKE_CXX_FLAGS " -Wno-sign-conversion -Wno-shorten-64-to-32 -Wno-
 # compile/link mismatches for build tools (makesdna, makesrna, etc.)
 # that run under Node.js with -sUSE_PTHREADS=0.
 #
-# However, the low-level WebAssembly features (-matomics, -mbulk-memory)
-# MUST be set globally. When the final blender executable links with
-# -pthread (which implies --shared-memory), wasm-ld requires ALL object
-# files to be compiled with these features. Library targets (bf_blenlib,
-# bf_blenkernel, etc.) are not direct dependents of the blender target's
-# PRIVATE compile options, so they would otherwise lack these features.
+# The low-level WebAssembly features (-matomics, -mbulk-memory) are set
+# globally so that library targets (bf_blenlib, bf_blenkernel, etc.)
+# produce objects compatible with blender's shared-memory link (wasm-ld
+# requires all objects to have these features when linking with
+# --shared-memory, which -pthread implies).
 #
-# Objects compiled with -matomics/-mbulk-memory are safe to link into
-# executables that do NOT use --shared-memory (i.e., build tools):
-# atomics degrade to regular operations and bulk-memory is always valid.
+# IMPORTANT: Build tools (makesdna, makesrna, datatoc, shader_tool) link
+# with -sSHARED_MEMORY=0. Despite the flags being "compatible" at the
+# instruction level, the WASM data-segment layout differs between
+# shared-memory and non-shared-memory modes. Objects compiled with
+# -matomics linked into a non-shared-memory binary produce corrupted
+# data segments, garbling string constants (e.g. RNA property identifiers).
+# Each build tool's CMakeLists.txt MUST override these with
+# -mno-atomics -mno-bulk-memory to prevent this corruption.
 #
 # -pthread (with its full semantics: TLS, __EMSCRIPTEN_PTHREADS__) is
 # applied per-target only to the main blender executable in
