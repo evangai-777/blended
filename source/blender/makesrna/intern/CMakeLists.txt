@@ -417,31 +417,7 @@ target_link_libraries(makesrna PRIVATE bf::dependencies::pthreads)
 target_link_libraries(makesrna PRIVATE bf::dependencies::fmt)
 
 if(EMSCRIPTEN)
-  # Build tools run under Node.js at build time, not in a browser.
-  # Browser-specific flags (WebGL, large memory, MODULARIZE, etc.) are NOT
-  # inherited — they live in EMSCRIPTEN_BROWSER_LINK_FLAGS and are applied
-  # only to the main blender target.
-  #
-  # Disable pthreads at both compile and link time: Node.js build-time
-  # environment doesn't support SharedArrayBuffer reliably, and -pthread
-  # in global CFLAGS would otherwise enable shared-memory codegen.
-  #
-  # Override global -matomics/-mbulk-memory: these flags cause WASM
-  # data-segment corruption when linked into non-shared-memory binaries,
-  # garbling string constants like RNA property identifiers.
-  target_compile_options(makesrna PRIVATE -sUSE_PTHREADS=0 -mno-atomics -mno-bulk-memory)
-  target_link_options(makesrna PRIVATE
-    -mno-atomics -mno-bulk-memory  # Override global flags for non-shared-memory link
-    -sNODERAWFS=1         # Direct filesystem access under Node.js
-    -sENVIRONMENT=node    # Target Node.js runtime only
-    -sSINGLE_FILE=1       # Embed .wasm in .js for simpler execution
-    -sUSE_PTHREADS=0      # No SharedArrayBuffer
-    -sSHARED_MEMORY=0     # No shared memory
-    -sALLOW_MEMORY_GROWTH=1  # Let Node.js grow heap as needed (no fixed cap)
-    -sSTACK_SIZE=8388608  # 8 MB stack (generous for a code generator)
-    -sSTACK_OVERFLOW_CHECK=2
-    -sEXIT_RUNTIME=1      # Flush output on exit
-  )
+  emscripten_build_tool_flags(makesrna STACK_SIZE 8388608)
 endif()
 
 # Output `rna_*_gen.cc`.
