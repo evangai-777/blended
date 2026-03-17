@@ -422,16 +422,11 @@ if(EMSCRIPTEN)
   # inherited — they live in EMSCRIPTEN_BROWSER_LINK_FLAGS and are applied
   # only to the main blender target.
   #
-  # Disable pthreads at both compile and link time: Node.js build-time
-  # environment doesn't support SharedArrayBuffer reliably, and -pthread
-  # in global CFLAGS would otherwise enable shared-memory codegen.
-  #
-  # Override global -matomics/-mbulk-memory: these flags cause WASM
-  # data-segment corruption when linked into non-shared-memory binaries,
-  # garbling string constants like RNA property identifiers.
-  target_compile_options(makesrna PRIVATE -sUSE_PTHREADS=0 -mno-atomics -mno-bulk-memory)
+  # Disable pthreads: Node.js build-time environment doesn't support
+  # SharedArrayBuffer. See platform_emscripten.cmake for why -matomics
+  # and -mbulk-memory are NOT set globally.
+  target_compile_options(makesrna PRIVATE -sUSE_PTHREADS=0)
   target_link_options(makesrna PRIVATE
-    -mno-atomics -mno-bulk-memory  # Override global flags for non-shared-memory link
     -sNODERAWFS=1         # Direct filesystem access under Node.js
     -sENVIRONMENT=node    # Target Node.js runtime only
     -sSINGLE_FILE=1       # Embed .wasm in .js for simpler execution

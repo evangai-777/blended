@@ -46,26 +46,20 @@ string(APPEND CMAKE_CXX_FLAGS " -Wno-sign-conversion -Wno-shorten-64-to-32 -Wno-
 # compile/link mismatches for build tools (makesdna, makesrna, etc.)
 # that run under Node.js with -sUSE_PTHREADS=0.
 #
-# The low-level WebAssembly features (-matomics, -mbulk-memory) are set
-# globally so that library targets (bf_blenlib, bf_blenkernel, etc.)
-# produce objects compatible with blender's shared-memory link (wasm-ld
-# requires all objects to have these features when linking with
-# --shared-memory, which -pthread implies).
+# CRITICAL: -matomics and -mbulk-memory must ALSO NOT be set globally.
+# Build tools link against library targets (bf_dna, bf_dna_blenlib, etc.)
+# that are created with blender_add_lib — the same function used for all
+# Blender libraries. When ANY object linked into a non-shared-memory
+# binary was compiled with -matomics, the WASM data-segment layout is
+# corrupted, garbling string constants (e.g. RNA property identifiers
+# become "studi3<garbage>ght_r<garbage>ate_z" instead of
+# "studiolight_rotate_z"). Per-target overrides (-mno-atomics) do NOT
+# help because the library .a objects are already compiled with atomics.
 #
-# IMPORTANT: Build tools (makesdna, makesrna, datatoc, shader_tool) link
-# with -sSHARED_MEMORY=0. Despite the flags being "compatible" at the
-# instruction level, the WASM data-segment layout differs between
-# shared-memory and non-shared-memory modes. Objects compiled with
-# -matomics linked into a non-shared-memory binary produce corrupted
-# data segments, garbling string constants (e.g. RNA property identifiers).
-# Each build tool's CMakeLists.txt MUST override these with
-# -mno-atomics -mno-bulk-memory to prevent this corruption.
-#
-# -pthread (with its full semantics: TLS, __EMSCRIPTEN_PTHREADS__) is
-# applied per-target only to the main blender executable in
-# source/creator/CMakeLists.txt.
-string(APPEND CMAKE_C_FLAGS   " -matomics -mbulk-memory")
-string(APPEND CMAKE_CXX_FLAGS " -matomics -mbulk-memory")
+# Instead, -pthread (which implies -matomics/-mbulk-memory) is applied
+# ONLY to the main blender executable in source/creator/CMakeLists.txt.
+# Library objects compiled without atomics are accepted at link time via
+# -Wl,--no-check-features on the blender target.
 
 # ── Linker flags (Emscripten-specific) ───────────────────────────
 #

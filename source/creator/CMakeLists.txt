@@ -1940,6 +1940,10 @@ if(EMSCRIPTEN)
   target_compile_options(blender PRIVATE -pthread)
   target_link_options(blender PRIVATE
     -pthread -sPTHREAD_POOL_SIZE=4
+    # Allow library objects compiled without -matomics to link into this
+    # shared-memory binary. Global -matomics is NOT set because it corrupts
+    # build tools (makesrna, makesdna) — see platform_emscripten.cmake.
+    -Wl,--no-check-features
     ${EMSCRIPTEN_BROWSER_LINK_FLAGS}
   )
 endif()

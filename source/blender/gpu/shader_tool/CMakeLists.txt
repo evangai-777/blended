@@ -40,10 +40,8 @@ optimize_debug_target(shader_tool)
 
 if(EMSCRIPTEN)
   # Build tools run under Node.js at build time, not in a browser.
-  # Override global -matomics/-mbulk-memory to prevent data-segment corruption.
-  target_compile_options(shader_tool PRIVATE -sUSE_PTHREADS=0 -mno-atomics -mno-bulk-memory)
+  target_compile_options(shader_tool PRIVATE -sUSE_PTHREADS=0)
   target_link_options(shader_tool PRIVATE
-    -mno-atomics -mno-bulk-memory  # Override global flags for non-shared-memory link
     -sNODERAWFS=1         # Direct filesystem access under Node.js
     -sENVIRONMENT=node    # Target Node.js runtime only
     -sSINGLE_FILE=1       # Embed .wasm in .js for simpler execution

@@ -106,6 +106,36 @@ Address in this order once the web build links:
 - Remove `-Wno-c++11-narrowing` first (smallest count)
 - Remove `-Wno-sign-conversion` last (largest count)
 
+## Known Pitfalls (read this first!)
+
+### WASM data-segment corruption from -matomics / -mbulk-memory
+
+**DO NOT** set `-matomics` or `-mbulk-memory` in global `CMAKE_C_FLAGS` /
+`CMAKE_CXX_FLAGS`. These flags MUST NOT appear anywhere in
+`platform_emscripten.cmake`'s global compiler flags.
+
+**Why:** Build tools (makesrna, makesdna, datatoc, shader_tool) run under
+Node.js at build time and link with `-sSHARED_MEMORY=0`. When ANY object
+file linked into these tools was compiled with `-matomics`, the WASM
+data-segment layout is corrupted. String constants become garbled — e.g.
+`"studiolight_rotate_z"` becomes `"studi3<garbage>ght_r<garbage>ate_z"`,
+causing the RNA code generator to fail. Per-target overrides
+(`-mno-atomics`) do NOT help because library targets (bf_dna, bf_dna_blenlib,
+etc.) are shared between build tools and the main blender executable — their
+`.a` objects are already compiled with atomics by the time the build tool links.
+
+**Correct approach:**
+- `-matomics` / `-mbulk-memory` are applied ONLY to the `blender` target
+  via its PRIVATE `-pthread` compile option (in `source/creator/CMakeLists.txt`)
+- The blender link uses `-Wl,--no-check-features` to accept library objects
+  compiled without atomics into its shared-memory binary
+- Build tools compile and link without atomics — no special overrides needed
+
+**This was broken and "fixed" multiple times.** If you're an AI assistant
+working on this codebase: do NOT re-add global `-matomics` or
+`-mbulk-memory` flags. The comment in `platform_emscripten.cmake` explains
+the full rationale. Trust it.
+
 ## Rules
 
 - **Fix, don't suppress.** Use explicit casts (`static_cast<>`, `int(x)`)
