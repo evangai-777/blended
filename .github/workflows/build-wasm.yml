@@ -44,7 +44,7 @@ jobs:
     steps:
     # ── Checkout ──────────────────────────────────────────────
     - name: Checkout source
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 1
         lfs: false
@@ -85,7 +85,7 @@ jobs:
 
     # ── Cache build artifacts ─────────────────────────────────
     - name: Cache CMake build
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       continue-on-error: true
       with:
         path: ${{ env.BUILD_DIR }}
@@ -164,7 +164,7 @@ jobs:
 
     # ── Upload Pages artifact ─────────────────────────────────
     - name: Setup Pages
-      uses: actions/configure-pages@v4
+      uses: actions/configure-pages@v5
 
     - name: Upload Pages artifact
       uses: actions/upload-pages-artifact@v3
