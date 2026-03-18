@@ -160,6 +160,23 @@ list(APPEND EMSCRIPTEN_BROWSER_LINK_FLAGS -sEXIT_RUNTIME=0)
 # GL debug assertions for development.
 list(APPEND EMSCRIPTEN_BROWSER_LINK_FLAGS -sGL_ASSERTIONS=1)
 
+# Skip wasm-opt post-link optimization.
+# Binaryen's wasm-opt -O2 on Blender's ~50 MB WASM binary requires more
+# RAM than GitHub Actions runners (7 GB) or typical dev machines provide.
+# The process gets OOM-killed (SIGKILL -9), which prevents em++ from
+# emitting the .js glue file — making the build appear to fail even though
+# all 5000+ compilation targets succeed.
+#
+# Emscripten runs wasm-opt when OPT_LEVEL >= 2 (i.e. -O2 and above).
+# We force the LINK step to -O1 so that wasm-opt is skipped entirely.
+# Object files are still compiled at whatever CMAKE_BUILD_TYPE dictates
+# (-O2 for Release), so codegen quality is unaffected. Only the
+# post-link Binaryen passes are skipped.
+#
+# For release builds with sufficient memory (16+ GB), run wasm-opt
+# separately:  wasm-opt -O2 bin/blender.wasm -o bin/blender.wasm
+list(APPEND EMSCRIPTEN_BROWSER_LINK_FLAGS -O1)
+
 # ── Skip precompiled library detection ───────────────────────────
 # Emscripten provides its own system libraries (SDL2, zlib, libpng, etc.)
 # via emscripten-ports. No LIBDIR needed.

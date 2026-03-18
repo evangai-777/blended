@@ -136,12 +136,16 @@ jobs:
           if [ -f "$dir/blended.wasm" ] || [ -f "$dir/blender.wasm" ]; then
             wasm_file=$(find "$dir" -maxdepth 1 -name "*.wasm" | head -1)
             js_file=$(find "$dir" -maxdepth 1 -name "*.js" ! -name "*.worker.js" | head -1)
+            worker_file=$(find "$dir" -maxdepth 1 -name "*.worker.js" | head -1)
             if [ -n "$wasm_file" ]; then
               cp "$wasm_file" deploy/blended.wasm
               WASM_FOUND=true
             fi
             if [ -n "$js_file" ]; then
               cp "$js_file" deploy/blended-module.js
+            fi
+            if [ -n "$worker_file" ]; then
+              cp "$worker_file" deploy/blended.worker.js
             fi
             echo "WASM build output found in $dir"
             break

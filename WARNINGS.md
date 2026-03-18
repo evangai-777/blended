@@ -289,6 +289,27 @@ OOM-killed processes produce NO stderr output — the build just says
 **Rule:** Use `--parallel 2` for Emscripten CI builds. If a build fails
 with no error output at all, suspect OOM.
 
+### wasm-opt OOM on large binaries
+
+Binaryen's `wasm-opt` runs as the final post-link step when em++ links
+with `-O2` or higher. For Blender's ~50 MB WASM binary, `wasm-opt -O2`
+requires more RAM than GitHub Actions runners (7 GB) provide. The process
+gets OOM-killed (`SIGKILL -9`), which prevents `em++` from emitting the
+`.js` glue file — making the build appear to fail even though ALL 5000+
+compilation targets succeed and the raw `.wasm` binary exists.
+
+**Symptom:** Build output shows `[5446/5446] Linking CXX executable
+bin/blender.js` then `em++: error: ... wasm-opt ... failed (received
+SIGKILL (-9))`. The `.wasm` file exists on disk but `.js` does not.
+
+**Fix:** Force the LINK step to `-O1` in the browser link flags (in
+`platform_emscripten.cmake`). Emscripten only runs `wasm-opt` when
+`OPT_LEVEL >= 2`, so `-O1` at link time skips it entirely. Object files
+are still compiled at `-O2` (from `CMAKE_BUILD_TYPE=Release`), so codegen
+quality is unaffected — only the post-link Binaryen passes are skipped.
+For release builds with sufficient memory (16+ GB), run `wasm-opt`
+separately: `wasm-opt -O2 bin/blender.wasm -o bin/blender.wasm`.
+
 ### WASM is 32-bit: size_t overflows and pointer assumptions
 
 WASM uses 32-bit pointers and `size_t`. Code like `size_t(1) << 32` or
