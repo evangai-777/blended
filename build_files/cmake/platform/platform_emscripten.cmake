@@ -145,7 +145,7 @@ list(APPEND EMSCRIPTEN_BROWSER_LINK_FLAGS -sFORCE_FILESYSTEM=1 -lidbfs.js)
 
 # Export the main function for the Emscripten runtime.
 list(APPEND EMSCRIPTEN_BROWSER_LINK_FLAGS
-  "-sEXPORTED_RUNTIME_METHODS=[\"callMain\",\"ccall\",\"cwrap\"]"
+  "-sEXPORTED_RUNTIME_METHODS=[\"callMain\",\"ccall\",\"cwrap\",\"FS\",\"ENV\"]"
 )
 
 # Produce modularized output so the web shell can control initialization.

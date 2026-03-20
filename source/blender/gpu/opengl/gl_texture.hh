@@ -168,10 +168,18 @@ inline GLenum to_gl_internal_format(TextureFormat format)
 inline GLenum to_gl_target(GPUTextureType type)
 {
   switch (type) {
+#ifdef __EMSCRIPTEN__
+    /* WebGL2/GLES 3.0 has no 1D texture targets; promote to 2D. */
+    case GPU_TEXTURE_1D:
+      return GL_TEXTURE_2D;
+    case GPU_TEXTURE_1D_ARRAY:
+      return GL_TEXTURE_2D;
+#else
     case GPU_TEXTURE_1D:
       return GL_TEXTURE_1D;
     case GPU_TEXTURE_1D_ARRAY:
       return GL_TEXTURE_1D_ARRAY;
+#endif
     case GPU_TEXTURE_2D:
       return GL_TEXTURE_2D;
     case GPU_TEXTURE_2D_ARRAY:
@@ -193,10 +201,17 @@ inline GLenum to_gl_target(GPUTextureType type)
 inline GLenum to_gl_proxy(GPUTextureType type)
 {
   switch (type) {
+#ifdef __EMSCRIPTEN__
+    case GPU_TEXTURE_1D:
+      return GL_PROXY_TEXTURE_2D;
+    case GPU_TEXTURE_1D_ARRAY:
+      return GL_PROXY_TEXTURE_2D;
+#else
     case GPU_TEXTURE_1D:
       return GL_PROXY_TEXTURE_1D;
     case GPU_TEXTURE_1D_ARRAY:
       return GL_PROXY_TEXTURE_1D_ARRAY;
+#endif
     case GPU_TEXTURE_2D:
       return GL_PROXY_TEXTURE_2D;
     case GPU_TEXTURE_2D_ARRAY:

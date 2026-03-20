@@ -104,13 +104,16 @@
     }
   });
 
+  // Reference to the running Emscripten module instance (set during preRun).
+  var blendedModule = null;
+
   function loadFileIntoFS(file) {
     var reader = new FileReader();
     reader.onload = function (e) {
-      if (typeof Module !== "undefined" && Module.FS) {
+      if (blendedModule && blendedModule.FS) {
         var data = new Uint8Array(e.target.result);
         var path = "/tmp/" + file.name;
-        Module.FS.writeFile(path, data);
+        blendedModule.FS.writeFile(path, data);
         console.log("Wrote " + file.name + " to virtual FS at " + path);
         // TODO: Trigger Blended to open the file via WM operator
       }
@@ -187,18 +190,21 @@
         setTimeout(hideOverlay, 200);
       },
 
-      // Filesystem pre-run: create directories Blender expects.
+      // Filesystem pre-run: create directories Blender expects at startup.
       preRun: [
         function (mod) {
-          // Create standard Blender directories in the virtual filesystem.
-          var dirs = ["/tmp", "/home", "/home/web_user", "/home/web_user/.config"];
-          dirs.forEach(function (d) {
-            try {
-              mod.FS.mkdir(d);
-            } catch (e) {
-              // Directory may already exist.
-            }
-          });
+          blendedModule = mod;
+
+          var mkdirSafe = function (path) {
+            try { mod.FS.mkdir(path); } catch (e) { /* exists */ }
+          };
+
+          // Standard directories.
+          mkdirSafe("/tmp");
+          mkdirSafe("/home");
+          mkdirSafe("/home/web_user");
+          mkdirSafe("/home/web_user/.config");
+          mkdirSafe("/home/web_user/.config/blender");
 
           // Set HOME so Blender finds its config directory.
           mod.ENV = mod.ENV || {};

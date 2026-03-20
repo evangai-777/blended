@@ -76,9 +76,9 @@ void curves_combined_rgb(float factor,
    * UI. The channels are first normalized into the [0, 1] range. */
   float3 parameters = (balanced.rgb - range_minimums.aaa) * range_dividers.aaa;
   float3 coordinates = compute_curve_map_coordinates(parameters);
-  result.r = texture(curve_map, float2(coordinates.x, layer)).a;
-  result.g = texture(curve_map, float2(coordinates.y, layer)).a;
-  result.b = texture(curve_map, float2(coordinates.z, layer)).a;
+  result.r = tex1DArrayLookup(curve_map, float2(coordinates.x, layer)).a;
+  result.g = tex1DArrayLookup(curve_map, float2(coordinates.y, layer)).a;
+  result.b = tex1DArrayLookup(curve_map, float2(coordinates.z, layer)).a;
 
   /* Then, extrapolate if needed. */
   result.rgb = extrapolate_if_needed(parameters, result.rgb, start_slopes.aaa, end_slopes.aaa);
@@ -87,9 +87,9 @@ void curves_combined_rgb(float factor,
    * [0, 1] range. */
   parameters = (result.rgb - range_minimums.rgb) * range_dividers.rgb;
   coordinates = compute_curve_map_coordinates(parameters);
-  result.r = texture(curve_map, float2(coordinates.r, layer)).r;
-  result.g = texture(curve_map, float2(coordinates.g, layer)).g;
-  result.b = texture(curve_map, float2(coordinates.b, layer)).b;
+  result.r = tex1DArrayLookup(curve_map, float2(coordinates.r, layer)).r;
+  result.g = tex1DArrayLookup(curve_map, float2(coordinates.g, layer)).g;
+  result.b = tex1DArrayLookup(curve_map, float2(coordinates.b, layer)).b;
 
   /* Then, extrapolate again if needed. */
   result.rgb = extrapolate_if_needed(parameters, result.rgb, start_slopes.rgb, end_slopes.rgb);
@@ -144,9 +144,9 @@ void curves_combined_only(float factor,
    * UI. The channels are first normalized into the [0, 1] range. */
   float3 parameters = (balanced.rgb - float3(range_minimum)) * float3(range_divider);
   float3 coordinates = compute_curve_map_coordinates(parameters);
-  result.r = texture(curve_map, float2(coordinates.x, layer)).a;
-  result.g = texture(curve_map, float2(coordinates.y, layer)).a;
-  result.b = texture(curve_map, float2(coordinates.z, layer)).a;
+  result.r = tex1DArrayLookup(curve_map, float2(coordinates.x, layer)).a;
+  result.g = tex1DArrayLookup(curve_map, float2(coordinates.y, layer)).a;
+  result.b = tex1DArrayLookup(curve_map, float2(coordinates.z, layer)).a;
 
   /* Then, extrapolate if needed. */
   result.rgb = extrapolate_if_needed(
@@ -240,8 +240,8 @@ void curves_film_like(float factor,
   float max_parameter = (maximum - range_minimum) * range_divider;
   float min_coordinates = compute_curve_map_coordinates(min_parameter);
   float max_coordinates = compute_curve_map_coordinates(max_parameter);
-  float new_min = texture(curve_map, float2(min_coordinates, layer)).a;
-  float new_max = texture(curve_map, float2(max_coordinates, layer)).a;
+  float new_min = tex1DArrayLookup(curve_map, float2(min_coordinates, layer)).a;
+  float new_max = tex1DArrayLookup(curve_map, float2(max_coordinates, layer)).a;
 
   /* Then, extrapolate if needed. */
   new_min = extrapolate_if_needed(min_parameter, new_min, start_slope, end_slope);
@@ -302,9 +302,9 @@ void curves_vector(float3 vector,
    * The components are first normalized into the [0, 1] range. */
   float3 parameters = (vector - range_minimums) * range_dividers;
   float3 coordinates = compute_curve_map_coordinates(parameters);
-  result.x = texture(curve_map, float2(coordinates.x, layer)).x;
-  result.y = texture(curve_map, float2(coordinates.y, layer)).y;
-  result.z = texture(curve_map, float2(coordinates.z, layer)).z;
+  result.x = tex1DArrayLookup(curve_map, float2(coordinates.x, layer)).x;
+  result.y = tex1DArrayLookup(curve_map, float2(coordinates.y, layer)).y;
+  result.z = tex1DArrayLookup(curve_map, float2(coordinates.z, layer)).z;
 
   /* Then, extrapolate if needed. */
   result = extrapolate_if_needed(parameters, result, start_slopes, end_slopes);
@@ -339,7 +339,7 @@ void curves_float(float value,
   /* Evaluate the normalized value on the first curve map. */
   float parameter = (value - range_minimum) * range_divider;
   float coordinates = compute_curve_map_coordinates(parameter);
-  result = texture(curve_map, float2(coordinates, layer)).x;
+  result = tex1DArrayLookup(curve_map, float2(coordinates, layer)).x;
 
   /* Then, extrapolate if needed. */
   result = extrapolate_if_needed(parameter, result, start_slope, end_slope);

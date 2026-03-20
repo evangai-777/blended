@@ -69,6 +69,28 @@ GHOST_Context *GHOST_WindowSDL::newDrawingContext(GHOST_TDrawingContextType type
   switch (type) {
 #ifdef WITH_OPENGL_BACKEND
     case GHOST_kDrawingContextTypeOpenGL: {
+#ifdef __EMSCRIPTEN__
+      /* WebGL2 is OpenGL ES 3.0. Request an ES profile context directly
+       * instead of looping through desktop GL 4.x versions which are
+       * meaningless in a browser. Emscripten's SDL2 needs ES profile +
+       * version 3.0 combined with the -sUSE_WEBGL2=1 link flag. */
+      {
+        GHOST_Context *context = new GHOST_ContextSDL(
+            want_context_params_,
+            sdl_win_,
+            SDL_GL_CONTEXT_PROFILE_ES,
+            3,
+            0,
+            GHOST_OPENGL_SDL_CONTEXT_FLAGS,
+            GHOST_OPENGL_SDL_RESET_NOTIFICATION_STRATEGY);
+
+        if (context->initializeDrawingContext()) {
+          return context;
+        }
+        delete context;
+      }
+      return nullptr;
+#else
       for (int minor = 6; minor >= 3; --minor) {
         GHOST_Context *context = new GHOST_ContextSDL(
             want_context_params_,
@@ -85,6 +107,7 @@ GHOST_Context *GHOST_WindowSDL::newDrawingContext(GHOST_TDrawingContextType type
         delete context;
       }
       return nullptr;
+#endif
     }
 #endif
 

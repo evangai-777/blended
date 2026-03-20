@@ -203,6 +203,27 @@ uint as_uint(string_t str)
   return str.hash;
 }
 
+/* WebGL2 / GLES 3.0 sampler1DArray emulation.
+ * 1D array textures do not exist in GLES 3.0; they are backed by 2D textures
+ * with dimensions (width, numLayers).  texelFetch / textureSize work unchanged
+ * after a simple typedef, but texture() needs the integer layer coordinate
+ * normalised into a [0,1] v-coordinate.  tex1DArrayLookup() does that. */
+#ifdef GL_ES
+#define sampler1DArray sampler2D
+#define isampler1DArray isampler2D
+#define usampler1DArray usampler2D
+vec4 tex1DArrayLookup(sampler2D s, vec2 coord)
+{
+  float num_layers = float(textureSize(s, 0).y);
+  return texture(s, vec2(coord.x, (floor(coord.y) + 0.5) / num_layers));
+}
+#else
+vec4 tex1DArrayLookup(sampler1DArray s, vec2 coord)
+{
+  return texture(s, coord);
+}
+#endif
+
 float4 texelFetchExtend(sampler2D samp, int2 texel, int lvl)
 {
   texel = clamp(texel, int2(0), textureSize(samp, lvl).xy - 1);
