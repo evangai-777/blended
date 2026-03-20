@@ -17,7 +17,7 @@ Blended's development is guided by a core philosophy: appreciate the existing
 codebase, fix things with the simplest possible approach, and trust documented
 solutions. See [`PHILOSOPHY.md`](../PHILOSOPHY.md) for the full framework.
 
-Blended 1.0.0 — Based on Blender 5.2.
+Blended 1.1.0 — Based on Blender 5.2.
 
 What's Different from Blender
 -----------------------------
