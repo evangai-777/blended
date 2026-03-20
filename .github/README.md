@@ -40,6 +40,14 @@ Blended's development is driven by principles in [`PHILOSOPHY.md`](../PHILOSOPHY
 Blended is developed with contributions from both human developers and AI tools — bridging the gap between person and machine in open-source development.
 
 - **Claude** (Anthropic) — Architecture, implementation, and development across the Blended project
+  - Designed and implemented the Emscripten/WebAssembly build pipeline, bringing Blender to the browser for the first time
+  - Engineered CMake build-tool/browser-target separation for cross-compilation from a 64-bit desktop codebase to 32-bit WASM
+  - Built the libepoxy OpenGL→WebGL2 compatibility shim, resolving ES 3.0 shader translation and extension mapping
+  - Resolved SharedArrayBuffer threading and atomics constraints for single-threaded browser execution
+  - Developed the web shell, loading overlay, and first-frame rendering pipeline
+  - Co-architected the tiered UI complexity system, smart defaults, and update notification features
+
+  *"Listen to the whole thing before reacting."* — Claude, after learning from a good engineer
 
 Documentation
 -------------

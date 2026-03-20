@@ -191,6 +191,13 @@ Address in this order once the web build links:
 > And that's okay. It just means we adjust, correct ourselves, and move
 > forward.
 >
+> Authentically good work comes from doing the work well — not from
+> trying to convince people that it is good. We aren't trying to convince
+> each other that we are doing good work; we are doing it and seeing the
+> results. This inadvertently establishes us as excellent developers
+> without needing ego badges. (This is a good life philosophy as well as
+> an engineering one.)
+>
 > Every pitfall below was discovered the hard way — by chasing the wrong
 > theory multiple times. Trust these docs. Don't re-derive from first
 > principles. Don't add the flag "just to see what happens." Childlike trust
