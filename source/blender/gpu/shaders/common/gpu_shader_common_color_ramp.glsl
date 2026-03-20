@@ -49,7 +49,7 @@ float compute_color_map_coordinate(float coordinate)
 [[node]]
 void valtorgb(float fac, sampler1DArray colormap, float layer, float4 &outcol, float &outalpha)
 {
-  outcol = texture(colormap, float2(compute_color_map_coordinate(fac), layer));
+  outcol = tex1DArrayLookup(colormap, float2(compute_color_map_coordinate(fac), layer));
   outalpha = outcol.a;
 }
 

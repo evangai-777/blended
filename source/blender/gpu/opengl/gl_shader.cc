@@ -511,13 +511,24 @@ static void print_resource(std::ostream &os,
       os << ", std140";
     }
     else if (res.bind_type == ShaderCreateInfo::Resource::BindType::STORAGE_BUFFER) {
+#ifdef __EMSCRIPTEN__
+      /* WebGL2/GLES 3.0: no SSBOs; emit as UBO with std140 layout. */
+      os << ", std140";
+#else
       os << ", std430";
+#endif
     }
     os << ") ";
   }
   else if (res.bind_type == ShaderCreateInfo::Resource::BindType::UNIFORM_BUFFER) {
     os << "layout(std140) ";
   }
+#ifdef __EMSCRIPTEN__
+  else if (res.bind_type == ShaderCreateInfo::Resource::BindType::STORAGE_BUFFER) {
+    /* WebGL2: SSBOs emulated as UBOs need std140 layout. */
+    os << "layout(std140) ";
+  }
+#endif
 
   switch (res.bind_type) {
     case ShaderCreateInfo::Resource::BindType::SAMPLER:
@@ -537,10 +548,19 @@ static void print_resource(std::ostream &os,
          << "; };";
       break;
     case ShaderCreateInfo::Resource::BindType::STORAGE_BUFFER:
+#ifdef __EMSCRIPTEN__
+      /* WebGL2/GLES 3.0: emit storage buffers as uniform blocks (UBOs).
+       * Qualifiers (readonly/writeonly/restrict) are not valid on uniform blocks. */
+      os << "uniform _";
+      os << res.storagebuf.name.str_no_array() << " { ";
+      os << info.buffer_typename(res.storagebuf.type_name, true) << " " << res.storagebuf.name
+         << "; };";
+#else
       print_qualifier(os, res.storagebuf.qualifiers);
       os << "buffer _";
       os << res.storagebuf.name.str_no_array() << " { ";
       os << info.buffer_typename(res.storagebuf.type_name) << " " << res.storagebuf.name << "; };";
+#endif
       break;
   }
 }
@@ -1386,9 +1406,14 @@ void GLShader::vertex_shader_from_glsl(const shader::ShaderCreateInfo & /*info*/
 void GLShader::geometry_shader_from_glsl(const shader::ShaderCreateInfo & /*info*/,
                                          MutableSpan<StringRefNull> sources)
 {
+#ifdef __EMSCRIPTEN__
+  /* WebGL2 does not support geometry shaders — skip creation entirely. */
+  (void)sources;
+#else
   update_program_and_sources(geometry_sources_, sources);
   main_program_->geom_shader = create_shader_stage(
       GL_GEOMETRY_SHADER, sources, geometry_sources_, *constants);
+#endif
 }
 
 void GLShader::fragment_shader_from_glsl(const shader::ShaderCreateInfo & /*info*/,
@@ -1402,9 +1427,14 @@ void GLShader::fragment_shader_from_glsl(const shader::ShaderCreateInfo & /*info
 void GLShader::compute_shader_from_glsl(const shader::ShaderCreateInfo & /*info*/,
                                         MutableSpan<StringRefNull> sources)
 {
+#ifdef __EMSCRIPTEN__
+  /* WebGL2 does not support compute shaders — skip creation entirely. */
+  (void)sources;
+#else
   update_program_and_sources(compute_sources_, sources);
   main_program_->compute_shader = create_shader_stage(
       GL_COMPUTE_SHADER, sources, compute_sources_, *constants);
+#endif
 }
 
 bool GLShader::finalize(const shader::ShaderCreateInfo *info)
@@ -1413,6 +1443,8 @@ bool GLShader::finalize(const shader::ShaderCreateInfo *info)
     return false;
   }
 
+#ifndef __EMSCRIPTEN__
+  /* WebGL2 does not support geometry shaders — skip the injection entirely. */
   if (info && do_geometry_shader_injection(info)) {
     std::string source = workaround_geometry_shader_source_create(*info);
     Vector<StringRefNull> sources;
@@ -1421,6 +1453,7 @@ bool GLShader::finalize(const shader::ShaderCreateInfo *info)
     sources.append(source);
     geometry_shader_from_glsl(*info, sources);
   }
+#endif
 
   if (is_codegen_only_) {
     return true;

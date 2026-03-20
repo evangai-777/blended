@@ -36,9 +36,9 @@ void node_composite_hue_correct(float4 color,
    * 1, we multiply by 2 (0.5 * 2 = 1). */
   float3 parameters = (hsv.xxx - minimums) * range_dividers;
   float3 coordinates = compute_hue_curve_map_coordinates(parameters);
-  hsv.x += texture(curve_map, float2(coordinates.x, layer)).x - 0.5f;
-  hsv.y *= texture(curve_map, float2(coordinates.y, layer)).y * 2.0f;
-  hsv.z *= texture(curve_map, float2(coordinates.z, layer)).z * 2.0f;
+  hsv.x += tex1DArrayLookup(curve_map, float2(coordinates.x, layer)).x - 0.5f;
+  hsv.y *= tex1DArrayLookup(curve_map, float2(coordinates.y, layer)).y * 2.0f;
+  hsv.z *= tex1DArrayLookup(curve_map, float2(coordinates.z, layer)).z * 2.0f;
 
   /* Sanitize the new hue and saturation values. */
   hsv.x = fract(hsv.x);
