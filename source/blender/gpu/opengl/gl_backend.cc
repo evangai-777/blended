@@ -298,7 +298,10 @@ void GLBackend::platform_init()
       }
     }
 
-    /* Check SSBO bindings requirement. */
+    /* Check SSBO bindings requirement.
+     * WebGL2/GLES 3.0 does not have SSBOs or ARB extensions; skip these
+     * checks so the Emscripten build is not flagged as unsupported. */
+#ifndef __EMSCRIPTEN__
     GLint max_ssbo_binds_vertex;
     GLint max_ssbo_binds_fragment;
     GLint max_ssbo_binds_compute;
@@ -322,6 +325,7 @@ void GLBackend::platform_init()
       std::cout << "Error: The OpenGL implementation doesn't support ARB_clip_control\n";
       support_level = GPU_SUPPORT_LEVEL_UNSUPPORTED;
     }
+#endif
   }
 
   /* Compute shaders have some issues with those versions (see #94936). */
@@ -594,21 +598,37 @@ bool GLContext::generate_mipmap_workaround = false;
 
 void GLBackend::capabilities_init()
 {
+#ifdef __EMSCRIPTEN__
+  BLI_assert(epoxy_gl_version() >= 30);
+#else
   BLI_assert(epoxy_gl_version() >= 33);
+#endif
   /* Common Capabilities. */
   glGetIntegerv(GL_MAX_TEXTURE_SIZE, &GCaps.max_texture_size);
   glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &GCaps.max_texture_layers);
   glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &GCaps.max_textures_frag);
   glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &GCaps.max_textures_vert);
+#ifndef __EMSCRIPTEN__
   glGetIntegerv(GL_MAX_GEOMETRY_TEXTURE_IMAGE_UNITS, &GCaps.max_textures_geom);
+#else
+  GCaps.max_textures_geom = 0;
+#endif
   glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &GCaps.max_textures);
   glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS, &GCaps.max_uniforms_vert);
   glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &GCaps.max_uniforms_frag);
   glGetIntegerv(GL_MAX_ELEMENTS_INDICES, &GCaps.max_batch_indices);
   glGetIntegerv(GL_MAX_ELEMENTS_VERTICES, &GCaps.max_batch_vertices);
   glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &GCaps.max_vertex_attribs);
+#ifndef __EMSCRIPTEN__
   glGetIntegerv(GL_MAX_VARYING_FLOATS, &GCaps.max_varying_floats);
   glGetIntegerv(GL_MAX_IMAGE_UNITS, &GCaps.max_images);
+#else
+  /* GL_MAX_VARYING_FLOATS is removed in GLES 3.0; use GL_MAX_VARYING_VECTORS * 4. */
+  GLint max_varying_vectors = 0;
+  glGetIntegerv(GL_MAX_VARYING_VECTORS, &max_varying_vectors);
+  GCaps.max_varying_floats = max_varying_vectors * 4;
+  GCaps.max_images = 0;
+#endif
 
   glGetIntegerv(GL_NUM_EXTENSIONS, &GCaps.extensions_len);
   GCaps.extension_get = gl_extension_get;
@@ -616,10 +636,16 @@ void GLBackend::capabilities_init()
   GCaps.max_samplers = GCaps.max_textures;
   GCaps.mem_stats_support = epoxy_has_gl_extension("GL_NVX_gpu_memory_info") ||
                             epoxy_has_gl_extension("GL_ATI_meminfo");
+#ifndef __EMSCRIPTEN__
   GCaps.geometry_shader_support = true;
+#else
+  GCaps.geometry_shader_support = false;
+#endif
   GCaps.max_samplers = GCaps.max_textures;
   GCaps.hdr_viewport_support = false;
 
+#ifndef __EMSCRIPTEN__
+  /* Compute shader and SSBO queries — not available in WebGL2/GLES 3.0. */
   glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &GCaps.max_work_group_count[0]);
   glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &GCaps.max_work_group_count[1]);
   glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &GCaps.max_work_group_count[2]);
@@ -628,23 +654,33 @@ void GLBackend::capabilities_init()
   glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &GCaps.max_work_group_size[2]);
   glGetIntegerv(GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS, &GCaps.max_shader_storage_buffer_bindings);
   glGetIntegerv(GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS, &GCaps.max_compute_shader_storage_blocks);
-  int64_t max_ssbo_size, max_ubo_size;
-  glGetInteger64v(GL_MAX_UNIFORM_BLOCK_SIZE, &max_ubo_size);
-  GCaps.max_uniform_buffer_size = size_t(max_ubo_size);
+  int64_t max_ssbo_size;
   glGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &max_ssbo_size);
   GCaps.max_storage_buffer_size = size_t(max_ssbo_size);
   GLint ssbo_alignment;
   glGetIntegerv(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &ssbo_alignment);
   GCaps.storage_buffer_alignment = size_t(ssbo_alignment);
+#else
+  /* WebGL2: no compute shaders or SSBOs. Leave defaults (zeros). */
+#endif
+
+  int64_t max_ubo_size;
+  glGetInteger64v(GL_MAX_UNIFORM_BLOCK_SIZE, &max_ubo_size);
+  GCaps.max_uniform_buffer_size = size_t(max_ubo_size);
 
   GCaps.stencil_export_support = epoxy_has_gl_extension("GL_ARB_shader_stencil_export");
 
   /* GL specific capabilities. */
   glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE, &GCaps.max_texture_3d_size);
+#ifndef __EMSCRIPTEN__
   glGetIntegerv(GL_MAX_TEXTURE_BUFFER_SIZE,
                 reinterpret_cast<int *>(&GCaps.max_buffer_texture_size));
+#else
+  GCaps.max_buffer_texture_size = 0;
+#endif
   glGetIntegerv(GL_MAX_CUBE_MAP_TEXTURE_SIZE, &GLContext::max_cubemap_size);
   glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_BLOCKS, &GLContext::max_ubo_binds);
+#ifndef __EMSCRIPTEN__
   GLint max_ssbo_binds;
   GLContext::max_ssbo_binds = 999999;
   glGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS, &max_ssbo_binds);
@@ -653,6 +689,9 @@ void GLBackend::capabilities_init()
   GLContext::max_ssbo_binds = min_ii(GLContext::max_ssbo_binds, max_ssbo_binds);
   glGetIntegerv(GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS, &max_ssbo_binds);
   GLContext::max_ssbo_binds = min_ii(GLContext::max_ssbo_binds, max_ssbo_binds);
+#else
+  GLContext::max_ssbo_binds = 0;
+#endif
   GLContext::debug_layer_support = epoxy_gl_version() >= 43 ||
                                    epoxy_has_gl_extension("GL_KHR_debug") ||
                                    epoxy_has_gl_extension("GL_ARB_debug_output");
