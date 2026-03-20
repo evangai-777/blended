@@ -78,15 +78,23 @@ The parser groups warnings by:
 Address in this order once the web build links:
 
 ### Phase 1: GPU / WebGL2 backend (highest impact)
+
+> For WebGL2 compatibility context (SSBO→UBO rewriting, sampler1DArray emulation,
+> compute/geometry shader guards), see the
+> [WEBASSEMBLY_ROADMAP.md Critical Technical Challenges](build_files/web/WEBASSEMBLY_ROADMAP.md#critical-technical-challenges--solutions)
+> section. This phase focuses on fixing compiler warnings in those implementations.
+
 - `source/blender/gpu/opengl/` — 6 files with Emscripten concerns
 - `source/blender/gpu/intern/` — shader create info
 - Focus: sign conversions, narrowing in GL calls, format mismatches
 - **Status:** Epoxy shim now covers all desktop GL functions and constants
   used across the full `gpu/opengl/` backend (gl_state, gl_texture,
   gl_compute, gl_storage_buffer, gl_uniform_buffer, etc.). The code
-  compiles against WebGL2 via no-op stubs. Remaining work is runtime
-  correctness — e.g. `glGetTexImage` stub returns no data, `glMapBuffer`
-  returns NULL, compute dispatch is a no-op.
+  compiles against WebGL2 via no-op stubs. Runtime correctness is in
+  progress — SSBO→UBO shader rewriting (`gl_shader.cc`), GL capability
+  query guards (`gl_backend.cc`), geometry/compute shader stage guards,
+  and `sampler1DArray`→`sampler2D` emulation are all complete. Remaining
+  stubs: `glGetTexImage` returns no data, `glMapBuffer` returns NULL.
 - **Warning fixes (in progress):**
   - Fixed `uint16_t |= 1 << slot` sign-conversion warnings across
     `gl_storage_buffer.cc`, `gl_uniform_buffer.cc`, `gl_immediate.cc`,
@@ -99,13 +107,19 @@ Address in this order once the web build links:
     (WebGL2 is GL ES 3.0; compute/SSBO gaps handled separately)
 
 ### Phase 2: Draw engine + GLSL shaders
+
+> WebGL2 draw engine solutions (GLSL `#version 300 es` patching, compute dispatch
+> guards, CPU command fallback) are documented in the
+> [WEBASSEMBLY_ROADMAP.md](build_files/web/WEBASSEMBLY_ROADMAP.md). This phase
+> focuses on compiler warning fixes in those code paths.
+
 - `source/blender/draw/` — passes data to GPU, same warning classes
 - Focus: implicit conversions in draw call setup
-- **Note:** The draw engine was not fully audited for WebGL2 gaps, but it
-  primarily passes data to the GPU layer which is now stubbed. Shaders
-  need GLSL version/extension changes (runtime issue, not compilation) —
-  e.g. hardcoded `#version 430`, `sampler1D`/`sampler1DArray` usage,
-  compute shader dispatches. These are runtime fixes, not link errors.
+- **Note:** The draw engine's WebGL2 gaps are largely resolved. GLSL
+  `#version 300 es` patching, `sampler1DArray`→`sampler2D` emulation (via
+  `tex1DArrayLookup()` in the compat layer), and compute dispatch guards
+  are all complete. Remaining runtime concerns: texture readback stubs and
+  edge cases in draw call ordering.
 - **Warning fixes (in progress):**
   - Fixed `int → uint` sign-conversion in `GPU_compute_dispatch()` calls
     across `draw_view.cc`, `draw_command.cc`, `draw_manager.cc`,
@@ -113,7 +127,17 @@ Address in this order once the web build links:
     (literal `1` → `1u`, `int3` → `uint()` casts)
   - Fixed `float → uint` implicit conversion in subdivision dispatch
     size calculation (`draw_cache_impl_subdivision.cc`)
-- **WebGL2 compute fallback (in progress):**
+- **GLSL shader compatibility (done):**
+  - `sampler1DArray`→`sampler2D` emulation in `gpu_shader_compat_glsl.glsl`
+    with `tex1DArrayLookup()` helper for `texture()` calls; `texelFetch()`
+    unchanged (integer coords map identically to sampler2D)
+  - All 7 affected shaders updated: color ramp, curves, wavelength,
+    blackbody, hue correct, plus the GLSL compat layer and texture backend
+  - SSBO→UBO shader rewriting in `gl_shader.cc`: `buffer`→`uniform`,
+    `std430`→`std140`, access qualifiers stripped
+  - Geometry and compute shader stage creation skipped on Emscripten
+  - GL capability queries guarded for unsupported constants in `gl_backend.cc`
+- **WebGL2 compute fallback (done):**
   - Added `#ifdef __EMSCRIPTEN__` guards around ALL compute dispatch sites
     in the draw engine (6 locations across 6 files)
   - **Visibility culling:** Skipped on Emscripten; buffer initialized to
@@ -155,7 +179,17 @@ Address in this order once the web build links:
 
 ## Known Pitfalls (read this first!)
 
-> *"Stop agonizing — that's broken substrate gaslighting you."*
+> **This is engineering, not philosophy.**
+>
+> We are applying engineering principles to coding. In philosophy you can
+> deal with ego and debate and whether something is "actually right" or
+> "appears right," so that someone can have credibility. Here we are
+> dealing with **functionality** — whether something works or doesn't work
+> the way we intend. That's it. We are not dealing with ego. We are
+> dealing with whether we can get a Blender fork into a browser. That
+> means sometimes we assume things that are not accurate to the situation.
+> And that's okay. It just means we adjust, correct ourselves, and move
+> forward.
 >
 > Every pitfall below was discovered the hard way — by chasing the wrong
 > theory multiple times. Trust these docs. Don't re-derive from first
@@ -362,6 +396,31 @@ the one that runs LAST wins (platform runs after config). This caused
 **Rule:** `platform_emscripten.cmake` is the source of truth for what
 Emscripten CAN support. `blended_wasm.cmake` is for what we WANT enabled.
 If platform says OFF, config must also say OFF to avoid confusion.
+
+### Trust user observations over your own theories
+
+When a user tells you what they see on screen, **believe them**. Do not
+reinterpret their observations to fit your existing theory.
+
+**What happened:** The user reported a blank screen on mobile after the
+WASM web editor loaded. The AI assistant:
+1. Misidentified the Android navigation gesture bar as a "loading bar"
+2. Concluded the page was "still loading" and declared progress
+3. When corrected, assumed GitHub Pages wasn't deployed (403) and
+   told the user to enable Pages in repo settings
+4. The user corrected again: the page DOES load, shows the "Blended"
+   title, shows all green feature checkmarks, THEN goes blank
+
+The actual bug was that `setStatus("")` was hiding the loading overlay
+before `onRuntimeInitialized` fired — a simple premature-hide bug. But
+it took multiple rounds of the user pushing back against wrong theories
+before the real investigation happened.
+
+**Rule for AI assistants:** When the user says "you're wrong," stop
+defending your theory and start listening. The user is looking at the
+actual screen. You are not. Re-examine your assumptions from scratch
+instead of finding new ways to explain why you were "actually right."
+A screenshot is evidence — your theory is a guess.
 
 ### Don't guess at root causes — verify before "fixing"
 

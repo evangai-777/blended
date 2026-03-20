@@ -152,6 +152,20 @@
       return;
     }
 
+    // Track whether the runtime has truly initialized before hiding overlay.
+    var runtimeReady = false;
+
+    // Safety timeout: if nothing renders within 30 seconds of launch,
+    // show an error instead of leaving the user on a blank screen.
+    var launchTimeout = setTimeout(function () {
+      if (!runtimeReady) {
+        showError(
+          "Blended is taking too long to start. The WebAssembly module may have " +
+          "failed to initialize. Check the browser console (F12) for details."
+        );
+      }
+    }, 30000);
+
     var moduleConfig = {
       canvas: canvas,
 
@@ -166,7 +180,12 @@
       // Track download progress.
       setStatus: function (text) {
         if (!text) {
-          hideOverlay();
+          // Emscripten calls setStatus("") when downloads finish, but the
+          // runtime may not be ready yet.  Only hide the overlay once
+          // onRuntimeInitialized has fired.
+          if (runtimeReady) {
+            hideOverlay();
+          }
           return;
         }
 
@@ -185,6 +204,8 @@
 
       // Called when the runtime is initialized.
       onRuntimeInitialized: function () {
+        runtimeReady = true;
+        clearTimeout(launchTimeout);
         updateProgress(1.0, "Starting Blended...");
         // Short delay so the user sees "Starting..." before the UI takes over.
         setTimeout(hideOverlay, 200);
@@ -214,6 +235,7 @@
     };
 
     BlendedModule(moduleConfig).catch(function (err) {
+      clearTimeout(launchTimeout);
       showError("Failed to start Blended: " + (err.message || err));
       console.error(err);
     });

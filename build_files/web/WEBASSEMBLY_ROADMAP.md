@@ -15,7 +15,7 @@ This document tracks the staged approach to bringing Blended's features to the b
 
 ## Stage 1: Core Editor (Current)
 
-**Status:** In progress — build infrastructure complete, compilation fixes ongoing
+**Status:** In progress — builds, loads in browser, first frame renders. Runtime correctness ongoing
 
 The initial WASM port includes the essential 3D editing experience:
 
@@ -63,8 +63,23 @@ Stage 1 where all objects render and performance is secondary to correctness.
 
 #### Missing WebGL2 Features
 
-- ~~**SSBOs**~~ — **DONE** `gl_storage_buffer.cc` now uses `GL_COPY_READ_BUFFER` as
-  buffer target and `GL_UNIFORM_BUFFER` for bind slots on Emscripten
+- ~~**SSBOs**~~ — **DONE** `gl_storage_buffer.cc` uses `GL_COPY_READ_BUFFER` as
+  buffer target and `GL_UNIFORM_BUFFER` for bind slots on Emscripten; shader
+  declarations rewritten from `buffer`/`std430` to `uniform`/`std140` in
+  `gl_shader.cc` with access qualifiers stripped
+- ~~**sampler1DArray**~~ — **DONE** GLES 3.0 has no 1D or 1D-array textures.
+  `sampler1DArray` typedef'd to `sampler2D` in the GLSL compat layer with a
+  `tex1DArrayLookup()` helper that normalizes integer layer coordinates to
+  `[0,1]` v-coordinates. All 7 shader files updated. `GPU_TEXTURE_1D_ARRAY`
+  mapped to `GL_TEXTURE_2D` in `gl_texture.hh`
+- ~~**Geometry shaders**~~ — **DONE** `geometry_shader_from_glsl()` and geometry
+  shader injection in `finalize()` skipped on Emscripten via `#ifdef` guards
+- ~~**Compute shaders**~~ — **DONE** `compute_shader_from_glsl()` skipped on
+  Emscripten; all 6 dispatch sites have CPU fallbacks (see above)
+- ~~**GL capability queries**~~ — **DONE** Unsupported GL constants
+  (`GL_MAX_GEOMETRY_*`, `GL_MAX_COMPUTE_*`, `GL_MAX_SHADER_STORAGE_*`,
+  `GL_MAX_IMAGE_UNITS`, etc.) guarded with `#ifdef __EMSCRIPTEN__` fallbacks
+  in `gl_backend.cc` to prevent assertion failures during `GPU_init()`
 - **Texture views** — `glTextureView()` (GL 4.3, not in WebGL2) — stubbed as no-op
 - **Image load/store** — used in the storage buffer system — stubbed as no-op
 - **`glCopyImageSubData()`** — efficient texture copies (GL 4.3) — stubbed as no-op
@@ -104,6 +119,33 @@ Stage 1 where all objects render and performance is secondary to correctness.
   bind-to-target fallback
 - **Pros:** Works on WebGL2, widest browser support
 - **Cons:** Performance hit (no culling), some edge cases in texture readback
+
+#### Runtime Fixes (Post-Compilation)
+
+Once the build compiles and links, several runtime issues prevent the editor
+from actually rendering in the browser. These are fixed incrementally:
+
+- ~~**GL context creation**~~ — **DONE** Emscripten's SDL2 needs
+  `SDL_GL_CONTEXT_PROFILE_ES` and ES 3.0 version hints; desktop GL 4.6→4.3
+  version loop is meaningless in a browser (`GHOST_WindowSDL.cc`)
+- ~~**Blank canvas on load**~~ — **DONE** Desktop relies on
+  `SDL_WINDOWEVENT_EXPOSED` to trigger the first redraw; browsers (especially
+  mobile) may never fire this event. Fixed by force-setting `do_refresh` and
+  `do_draw` on all screens before the main loop and on the first iteration
+  (`wm.cc`)
+- ~~**WASM module loading**~~ — **DONE** Emscripten glue code references
+  filenames by their original names (`blender.js`, `blender.wasm`,
+  `blender.worker.js`); renaming them in deploy caused 404s. Keep original
+  filenames (`b1c0b898`)
+- ~~**Exported runtime methods**~~ — **DONE** `FS` and `ENV` added to
+  `EXPORTED_RUNTIME_METHODS` so the web shell can create directories and set
+  environment variables in `preRun` (`a7619579`)
+- ~~**Filesystem setup**~~ — **DONE** Create
+  `/home/web_user/.config/blender/` in `preRun` so `BKE_appdir` finds its
+  expected config directory (`c893f71c`)
+- ~~**wasm-opt OOM**~~ — **DONE** Link step forced to `-O1` to skip
+  `wasm-opt` (which OOM-kills on the ~52 MB binary at `-O2`). Object files
+  still compiled at `-O2` (`0c7dea20`)
 
 **Estimated effort:** 2-4 months for a compilable, renderable Stage 1
 
@@ -278,6 +320,12 @@ Based on codebase analysis, the optimal order prioritizes quick wins and unlocks
 | Compute dispatch | `source/blender/gpu/opengl/gl_compute.cc:25` | `glDispatchCompute` not in WebGL2 |
 | SSBOs | `source/blender/gpu/opengl/gl_storage_buffer.cc` | `GL_SHADER_STORAGE_BUFFER` not in WebGL2 |
 | Texture views | `source/blender/gpu/opengl/gl_texture.cc` | `glTextureView` not in WebGL2 |
+| 1D texture mapping | `source/blender/gpu/opengl/gl_texture.hh` | `GPU_TEXTURE_1D_ARRAY` → `GL_TEXTURE_2D` on Emscripten |
+| Shader compat | `source/blender/gpu/opengl/gl_shader.cc` | Geom/compute guards, SSBO→UBO rewriting |
+| GLSL compat | `source/blender/gpu/shaders/gpu_shader_compat_glsl.glsl` | `sampler1DArray` → `sampler2D` + `tex1DArrayLookup()` |
+| GL capability queries | `source/blender/gpu/opengl/gl_backend.cc` | Unsupported GL_MAX_* constants crash GPU_init() |
+| Window redraw | `source/blender/windowmanager/intern/wm.cc` | Force first-frame draw on Emscripten |
+| GL context | `source/blender/ghost/intern/GHOST_WindowSDL.cc` | ES 3.0 profile for WebGL2 |
 | Subprocess fork | `source/blender/blenlib/intern/BLI_subprocess.cc` | `fork()`/`execv()` not in WASM |
 | Draw culling | `source/blender/draw/intern/draw_view.cc:251,299` | Uses compute dispatch |
 | Draw commands | `source/blender/draw/intern/draw_command.cc:266,270,841` | Uses compute dispatch |

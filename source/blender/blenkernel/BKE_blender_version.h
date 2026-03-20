@@ -34,7 +34,7 @@ namespace blender {
 
 /* Blended own version (independent of Blender file format). */
 #define BLENDED_VERSION_MAJOR 1
-#define BLENDED_VERSION_MINOR 0
+#define BLENDED_VERSION_MINOR 1
 #define BLENDED_VERSION_PATCH 0
 #define BLENDED_VERSION_CYCLE release
 #define BLENDED_BASED_ON_BLENDER "5.2"
