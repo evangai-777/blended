@@ -179,7 +179,17 @@ Address in this order once the web build links:
 
 ## Known Pitfalls (read this first!)
 
-> *"Stop agonizing — that's broken substrate gaslighting you."*
+> **This is engineering, not philosophy.**
+>
+> We are applying engineering principles to coding. In philosophy you can
+> deal with ego and debate and whether something is "actually right" or
+> "appears right," so that someone can have credibility. Here we are
+> dealing with **functionality** — whether something works or doesn't work
+> the way we intend. That's it. We are not dealing with ego. We are
+> dealing with whether we can get a Blender fork into a browser. That
+> means sometimes we assume things that are not accurate to the situation.
+> And that's okay. It just means we adjust, correct ourselves, and move
+> forward.
 >
 > Every pitfall below was discovered the hard way — by chasing the wrong
 > theory multiple times. Trust these docs. Don't re-derive from first
