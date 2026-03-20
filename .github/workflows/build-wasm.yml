@@ -131,22 +131,16 @@ jobs:
 
         # Copy WASM build output (if the build produced it).
         # Search common Emscripten output locations.
+        # Emscripten produces blender.js / blender.wasm / blender.worker.js.
+        # We keep those names so internal references (wasmBinaryFile, worker URL)
+        # resolve correctly.  index.html loads "blender.js" directly.
         WASM_FOUND=false
         for dir in "$BUILD_DIR/bin" "$BUILD_DIR" "$BUILD_DIR/source/creator"; do
-          if [ -f "$dir/blended.wasm" ] || [ -f "$dir/blender.wasm" ]; then
-            wasm_file=$(find "$dir" -maxdepth 1 -name "*.wasm" | head -1)
-            js_file=$(find "$dir" -maxdepth 1 -name "*.js" ! -name "*.worker.js" | head -1)
-            worker_file=$(find "$dir" -maxdepth 1 -name "*.worker.js" | head -1)
-            if [ -n "$wasm_file" ]; then
-              cp "$wasm_file" deploy/blended.wasm
-              WASM_FOUND=true
-            fi
-            if [ -n "$js_file" ]; then
-              cp "$js_file" deploy/blended-module.js
-            fi
-            if [ -n "$worker_file" ]; then
-              cp "$worker_file" deploy/blended.worker.js
-            fi
+          if [ -f "$dir/blender.wasm" ]; then
+            cp "$dir/blender.wasm"      deploy/blender.wasm
+            WASM_FOUND=true
+            [ -f "$dir/blender.js" ]        && cp "$dir/blender.js"        deploy/blender.js
+            [ -f "$dir/blender.worker.js" ] && cp "$dir/blender.worker.js" deploy/blender.worker.js
             echo "WASM build output found in $dir"
             break
           fi
@@ -155,7 +149,7 @@ jobs:
         if [ "$WASM_FOUND" = false ]; then
           echo "::warning::No WASM binary found. Deploying web shell as placeholder."
           # Create a placeholder so the site still loads with a helpful message.
-          echo "// Placeholder: WASM build not yet complete." > deploy/blended-module.js
+          echo "// Placeholder: WASM build not yet complete." > deploy/blender.js
         fi
 
         # Copy data files that Blender needs at startup (if they exist in the build).
