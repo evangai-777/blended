@@ -387,6 +387,31 @@ the one that runs LAST wins (platform runs after config). This caused
 Emscripten CAN support. `blended_wasm.cmake` is for what we WANT enabled.
 If platform says OFF, config must also say OFF to avoid confusion.
 
+### Trust user observations over your own theories
+
+When a user tells you what they see on screen, **believe them**. Do not
+reinterpret their observations to fit your existing theory.
+
+**What happened:** The user reported a blank screen on mobile after the
+WASM web editor loaded. The AI assistant:
+1. Misidentified the Android navigation gesture bar as a "loading bar"
+2. Concluded the page was "still loading" and declared progress
+3. When corrected, assumed GitHub Pages wasn't deployed (403) and
+   told the user to enable Pages in repo settings
+4. The user corrected again: the page DOES load, shows the "Blended"
+   title, shows all green feature checkmarks, THEN goes blank
+
+The actual bug was that `setStatus("")` was hiding the loading overlay
+before `onRuntimeInitialized` fired — a simple premature-hide bug. But
+it took multiple rounds of the user pushing back against wrong theories
+before the real investigation happened.
+
+**Rule for AI assistants:** When the user says "you're wrong," stop
+defending your theory and start listening. The user is looking at the
+actual screen. You are not. Re-examine your assumptions from scratch
+instead of finding new ways to explain why you were "actually right."
+A screenshot is evidence — your theory is a guess.
+
 ### Don't guess at root causes — verify before "fixing"
 
 The RNA string corruption bug was "fixed" 7+ times with different theories:
