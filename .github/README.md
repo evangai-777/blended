@@ -59,7 +59,7 @@ Blended checks [GitHub Releases](https://github.com/EvangAI-777/Blended/releases
 
 Blended is being ported to run **directly in the browser** via WebAssembly — no install required. The Emscripten-compiled build includes the core 3D editor: viewport, mesh editing, sculpting, Eevee rendering, modifiers, UV editing, and basic mesh I/O (OBJ/STL/PLY). Heavy subsystems (Python, Cycles, FFMPEG, physics) are disabled initially and will be restored in future stages.
 
-The web shell includes a loading screen, drag-and-drop `.blend` file support, and `coi-serviceworker` for SharedArrayBuffer threading on GitHub Pages.
+The build compiles, links, and loads in the browser with the first frame rendering. WebGL2 shader compatibility is in place — `sampler1DArray` emulation, geometry/compute shader guards, SSBO→UBO shader rewriting, and GL capability query fallbacks are all complete. The web shell includes a loading screen, drag-and-drop `.blend` file support, and `coi-serviceworker` for SharedArrayBuffer threading on GitHub Pages.
 
 See [`build_files/web/WEBASSEMBLY_ROADMAP.md`](../build_files/web/WEBASSEMBLY_ROADMAP.md) for the full 6-stage roadmap.
 
@@ -120,7 +120,7 @@ Initial release of Blended:
 - **Branding** — "Blended" window titles, splash, theme preset, `.rc`/`.desktop` metadata
 - **Update Notifications** — Background GitHub Release checks with top-bar notification
 - **CI** — Windows x64 portable `.zip` builds; WebAssembly browser build (in progress)
-- **Web Editor** — Emscripten cross-compilation, GitHub Pages deployment, web shell
+- **Web Editor** — Emscripten cross-compilation, GitHub Pages deployment, web shell, WebGL2 shader compat, first-frame rendering
 
 See [`CHANGELOG.md`](../CHANGELOG.md) for full details.
 

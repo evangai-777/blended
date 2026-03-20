@@ -37,3 +37,13 @@ Initial release of Blended.
 - Emscripten cross-compilation infrastructure
 - GitHub Pages deployment pipeline
 - Web shell with loading screen and drag-and-drop .blend support
+- WebGL2 shader compatibility: `sampler1DArray`→`sampler2D` emulation with `tex1DArrayLookup()` helper across 7 shader files
+- Geometry and compute shader stage guards for Emscripten (WebGL2 has neither)
+- SSBO→UBO shader rewriting: `buffer`/`std430` declarations emit `uniform`/`std140` on Emscripten
+- GL capability query guards for unsupported constants (`GL_MAX_GEOMETRY_*`, `GL_MAX_COMPUTE_*`, `GL_MAX_SHADER_STORAGE_*`)
+- `GPU_TEXTURE_1D_ARRAY`→`GL_TEXTURE_2D` mapping for WebGL2
+- GL ES 3.0 context creation for Emscripten's SDL2
+- Force initial window redraw to fix blank canvas on browsers (especially mobile)
+- Runtime method exports (`FS`, `ENV`) and filesystem setup for web shell
+- Fix WASM module loading: keep original Emscripten output filenames
+- Skip `wasm-opt` at link time to avoid OOM on CI runners
