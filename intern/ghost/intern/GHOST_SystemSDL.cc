@@ -144,6 +144,25 @@ GHOST_IContext *GHOST_SystemSDL::createOffscreenContext(GHOST_GPUSettings gpu_se
   switch (gpu_settings.context_type) {
 #ifdef WITH_OPENGL_BACKEND
     case GHOST_kDrawingContextTypeOpenGL: {
+#ifdef __EMSCRIPTEN__
+      /* WebGL2 = OpenGL ES 3.0 — request ES profile directly. */
+      {
+        GHOST_Context *context = new GHOST_ContextSDL(
+            context_params_offscreen,
+            nullptr,
+            SDL_GL_CONTEXT_PROFILE_ES,
+            3,
+            0,
+            GHOST_OPENGL_SDL_CONTEXT_FLAGS,
+            GHOST_OPENGL_SDL_RESET_NOTIFICATION_STRATEGY);
+
+        if (context->initializeDrawingContext()) {
+          return context;
+        }
+        delete context;
+      }
+      return nullptr;
+#else
       for (int minor = 6; minor >= 3; --minor) {
         GHOST_Context *context = new GHOST_ContextSDL(
             context_params_offscreen,
@@ -160,6 +179,7 @@ GHOST_IContext *GHOST_SystemSDL::createOffscreenContext(GHOST_GPUSettings gpu_se
         delete context;
       }
       return nullptr;
+#endif
     }
 #endif
 
