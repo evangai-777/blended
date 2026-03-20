@@ -78,6 +78,12 @@ The parser groups warnings by:
 Address in this order once the web build links:
 
 ### Phase 1: GPU / WebGL2 backend (highest impact)
+
+> For WebGL2 compatibility context (SSBO→UBO rewriting, sampler1DArray emulation,
+> compute/geometry shader guards), see the
+> [WEBASSEMBLY_ROADMAP.md Critical Technical Challenges](build_files/web/WEBASSEMBLY_ROADMAP.md#critical-technical-challenges--solutions)
+> section. This phase focuses on fixing compiler warnings in those implementations.
+
 - `source/blender/gpu/opengl/` — 6 files with Emscripten concerns
 - `source/blender/gpu/intern/` — shader create info
 - Focus: sign conversions, narrowing in GL calls, format mismatches
@@ -101,6 +107,12 @@ Address in this order once the web build links:
     (WebGL2 is GL ES 3.0; compute/SSBO gaps handled separately)
 
 ### Phase 2: Draw engine + GLSL shaders
+
+> WebGL2 draw engine solutions (GLSL `#version 300 es` patching, compute dispatch
+> guards, CPU command fallback) are documented in the
+> [WEBASSEMBLY_ROADMAP.md](build_files/web/WEBASSEMBLY_ROADMAP.md). This phase
+> focuses on compiler warning fixes in those code paths.
+
 - `source/blender/draw/` — passes data to GPU, same warning classes
 - Focus: implicit conversions in draw call setup
 - **Note:** The draw engine's WebGL2 gaps are largely resolved. GLSL
