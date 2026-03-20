@@ -43,6 +43,10 @@
 #include "BKE_screen.hh"
 #include "BKE_workspace.hh"
 
+#ifdef __EMSCRIPTEN__
+#  include "GHOST_IWindow.hh"
+#endif
+
 #include "WM_api.hh"
 #include "WM_keymap.hh"
 #include "WM_message.hh"
@@ -598,6 +602,9 @@ void wm_close_and_free(bContext *C, wmWindowManager *wm)
 }
 
 #ifdef __EMSCRIPTEN__
+/** Whether the very first main-loop iteration has run (used to force initial redraw). */
+static bool wm_emscripten_first_frame_done = false;
+
 /**
  * Single iteration of the main loop, called by emscripten_set_main_loop_arg().
  * This replaces the blocking while(true) loop for browser execution.
@@ -605,6 +612,21 @@ void wm_close_and_free(bContext *C, wmWindowManager *wm)
 static void wm_main_loop_iteration(void *arg)
 {
   bContext *C = static_cast<bContext *>(arg);
+
+  /* On the first few frames, force all windows to redraw.  In the browser
+   * (especially on mobile) the window system may never send the initial
+   * expose event that the desktop path relies on, leaving the canvas blank. */
+  if (!wm_emscripten_first_frame_done) {
+    wm_emscripten_first_frame_done = true;
+    wmWindowManager *wm = CTX_wm_manager(C);
+    for (wmWindow &win : wm->windows) {
+      bScreen *screen = WM_window_get_active_screen(&win);
+      if (screen) {
+        screen->do_refresh = true;
+        screen->do_draw = true;
+      }
+    }
+  }
 
   /* Get events from ghost, handle window events, add to window queues. */
   wm_window_events_process(C);
@@ -627,6 +649,28 @@ void WM_main(bContext *C)
   wm_event_do_refresh_wm_and_depsgraph(C);
 
 #ifdef __EMSCRIPTEN__
+  /* Force all windows to redraw on the first frame. On desktop, the window
+   * system sends an expose event that triggers the initial draw.  In the
+   * browser (especially on mobile) SDL_WINDOWEVENT_EXPOSED may never fire,
+   * leaving the canvas blank.  Mark every screen for refresh so that
+   * wm_draw_update_test_window() returns true on the first iteration. */
+  {
+    wmWindowManager *wm = CTX_wm_manager(C);
+    for (wmWindow &win : wm->windows) {
+      bScreen *screen = WM_window_get_active_screen(&win);
+      if (screen) {
+        screen->do_refresh = true;
+        screen->do_draw = true;
+      }
+      /* Also force the GHOST window into the dirty list so that
+       * generateWindowExposeEvents() sends a GHOST_kEventWindowUpdate. */
+      if (win.runtime->ghostwin) {
+        GHOST_IWindow *ghost_win = static_cast<GHOST_IWindow *>(win.runtime->ghostwin);
+        ghost_win->invalidate();
+      }
+    }
+  }
+
   /* Emscripten requires a non-blocking callback-driven main loop.
    * 0 = use requestAnimationFrame (typically 60 fps, vsync'd).
    * true = simulate infinite loop (keeps the call stack alive). */
