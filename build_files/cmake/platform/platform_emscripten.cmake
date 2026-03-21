@@ -138,7 +138,7 @@ list(APPEND EMSCRIPTEN_BROWSER_LINK_FLAGS
 )
 
 # Stack size — Blender's deep call stacks need more than the 64 KB default.
-list(APPEND EMSCRIPTEN_BROWSER_LINK_FLAGS -sSTACK_SIZE=5242880)
+list(APPEND EMSCRIPTEN_BROWSER_LINK_FLAGS -sSTACK_SIZE=16777216)
 
 # Filesystem: MEMFS by default, IDBFS available for persistence.
 list(APPEND EMSCRIPTEN_BROWSER_LINK_FLAGS -sFORCE_FILESYSTEM=1 -lidbfs.js)
