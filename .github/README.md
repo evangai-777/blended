@@ -13,6 +13,10 @@ Blended is a fork of [Blender](https://www.blender.org) that adds a tiered UI co
 
 > *"Appreciate what already is. Do the work. Keep going."*
 
+A custom Ogre3D engine build targeting both native x64 and WASM, with custom
+resource loading, shader pipelines, the works. That's not a homework assignment.
+That's the real thing.
+
 Blended's development is guided by a core philosophy: appreciate the existing
 codebase, fix things with the simplest possible approach, and trust documented
 solutions. See [`PHILOSOPHY.md`](../PHILOSOPHY.md) for the full framework.
