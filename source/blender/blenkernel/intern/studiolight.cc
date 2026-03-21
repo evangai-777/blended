@@ -744,6 +744,12 @@ static void studiolight_matcap_preview(uint *icon_buffer, StudioLight *sl, bool 
   ImBuf *diffuse_buffer = sl->matcap_diffuse.ibuf;
   ImBuf *specular_buffer = sl->matcap_specular.ibuf;
 
+  if (diffuse_buffer == nullptr) {
+    /* No matcap image available (e.g. OpenEXR disabled). Fill with neutral gray. */
+    memset(icon_buffer, 0x80, STUDIOLIGHT_ICON_SIZE * STUDIOLIGHT_ICON_SIZE * sizeof(uint));
+    return;
+  }
+
   ITER_PIXELS (uint, icon_buffer, 1, STUDIOLIGHT_ICON_SIZE, STUDIOLIGHT_ICON_SIZE) {
     float dy = RESCALE_COORD(y);
     float dx = RESCALE_COORD(x);
@@ -919,6 +925,14 @@ StudioLight *BKE_studiolight_find_default(int flag)
     if (sl.flag & flag) {
       return &sl;
     }
+  }
+
+  /* No studiolight of the requested type exists (e.g. WASM builds without
+   * OpenEXR have no matcap/world presets). Fall back to the first available
+   * studiolight (the internal "Default") rather than returning nullptr,
+   * which would cause null-pointer dereferences downstream. */
+  if (!BLI_listbase_is_empty(&studiolights)) {
+    return static_cast<StudioLight *>(studiolights.first);
   }
   return nullptr;
 }

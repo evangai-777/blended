@@ -1542,6 +1542,12 @@ static PointerRNA rna_View3DShading_selected_studio_light_get(PointerRNA *ptr)
     /* OB_MATERIAL and OB_RENDER */
     sl = BKE_studiolight_find(shading->lookdev_light, STUDIOLIGHT_TYPE_WORLD);
   }
+  if (sl == nullptr) {
+    /* Fallback: no studiolight of the requested type exists (e.g. WASM build
+     * without OpenEXR). Use the first available studiolight to avoid passing
+     * a null pointer into RNA which would crash icon rendering. */
+    sl = BKE_studiolight_find_default(STUDIOLIGHT_TYPE_STUDIO);
+  }
   return RNA_pointer_create_with_parent(*ptr, RNA_StudioLight, sl);
 }
 
