@@ -202,7 +202,7 @@ Address in this order once the web build links:
 > theory multiple times. Trust these docs. Don't re-derive from first
 > principles. Don't add the flag "just to see what happens." Childlike trust
 > in documented solutions beats scared-teenager re-investigation every time.
-> See [PHILOSOPHY.md](PHILOSOPHY.md) §4 and §8.
+> See [PHILOSOPHY.md](PHILOSOPHY.md) §4, §9, and §11.
 
 ### WASM data-segment corruption from -matomics / -mbulk-memory
 
@@ -451,7 +451,7 @@ be documented.
 
 > *"A single static_cast replacing an implicit narrowing conversion matters.
 > Don't create complexity to avoid simplicity."*
-> — [PHILOSOPHY.md](PHILOSOPHY.md) §3, §6
+> — [PHILOSOPHY.md](PHILOSOPHY.md) §3, §6, §7
 
 - **Fix, don't suppress.** Use explicit casts (`static_cast<>`, `int(x)`)
   where the conversion is intentional. A cast is the fix — not a template,
