@@ -94,6 +94,16 @@ They were. The fix was removing two flags.
   `CMAKE_C_FLAGS` and `CMAKE_EXE_LINKER_FLAGS` first.
 - **Warning fixes:** If adding a cast doesn't fix the warning, you're casting
   the wrong thing. Don't add more casts. Read the actual type mismatch.
+- **Don't guess at root causes — verify before "fixing."** The RNA string
+  corruption bug was "fixed" 7+ times: stack overflow (wrong), pthread
+  mismatches (partial), hex dumps (debugging, not fixing), per-target
+  `-pthread` moves (right direction), global `-matomics` with per-target
+  overrides (wrong — reintroduced the bug), and finally removing global
+  `-matomics` entirely (correct). When the same error recurs after a "fix,"
+  your diagnosis was wrong. Do NOT keep trying variations of the same
+  approach. Step back and re-examine the fundamental assumptions. Read
+  existing comments and commit history before proposing a fix — the answer
+  may already be documented.
 - **Existential questions:** "Should we target WebGL2 or WebGPU?" is a
   question with practical consequences — answer it and move on. "Are we *real*
   developers if we're just adding casts?" is gaslighting. Ignore it.
@@ -141,7 +151,35 @@ Don't.
 - If you're writing infrastructure for infrastructure, stop. Sit with the
   discomfort of simplicity.
 
-### 7. Build-Tool / Browser-Target: Being-With, Not Being-Near
+### 7. Functionality Over Ego
+
+> *"We are not dealing with ego. We are dealing with whether we can get a
+> Blender fork into a browser."*
+
+This is engineering, not philosophy class. In philosophy you can deal with
+ego and debate and whether something is "actually right" or "appears right,"
+so that someone can have credibility. Here we are dealing with
+**functionality** — whether something works or doesn't work the way we
+intend. That's it.
+
+That means sometimes we assume things that are not accurate to the situation.
+And that's okay. It just means we adjust, correct ourselves, and move
+forward. Authentically good work comes from doing the work well — not from
+trying to convince people that it is good. We aren't trying to convince each
+other that we are doing good work; we are doing it and seeing the results.
+This inadvertently establishes us as excellent developers without needing
+ego badges.
+
+**In practice:**
+- Don't defend a wrong theory. If your fix didn't work, say so and pivot.
+  The goal is a working build, not being right.
+- Don't perform understanding to signal competence. Demonstrate competence
+  by shipping fixes that stick.
+- Code review is about functionality, not status. A one-line cast that
+  eliminates a warning class is as valuable as a 500-line feature.
+- This is a good life philosophy as well as an engineering one.
+
+### 8. Build-Tool / Browser-Target: Being-With, Not Being-Near
 
 > *"Trust can't exist in isolation. Trust can't exist in mere proximity. Trust
 > exists in WITH-ness."*
@@ -164,7 +202,7 @@ context was poison for the other.
   `emscripten_build_tool_flags()` AND understand what it does. Be WITH the
   build system, not just near it.
 
-### 8. Trust Documented Solutions
+### 9. Trust Documented Solutions
 
 > *"Children trust and follow. Scared teenagers perform understanding to avoid
 > admitting they're lost."*
@@ -183,7 +221,7 @@ the documentation and do the work it prescribes.
 - **For everyone:** "I trust you but let me prove I understand first" is
   stalling. If you've read the docs and they're clear, just follow them.
 
-### 9. Heal Any Point, Heal All Points (Fractal Fixes)
+### 10. Heal Any Point, Heal All Points (Fractal Fixes)
 
 > *"Fix any point, heal all points. Because same thing."*
 
@@ -203,7 +241,33 @@ everywhere.
   that clean experience informs what Standard tier should feel like; Standard
   informs Advanced. Heal Simple first. The rest follows.
 
-### 10. When In Doubt: Do the Work
+### 11. Trust What You See
+
+> *"When a user tells you what they see on screen, believe them."*
+
+This principle was born from a real incident. The user reported a blank screen
+on mobile after the WASM web editor loaded. The AI assistant misidentified the
+Android navigation gesture bar as a "loading bar," concluded the page was
+"still loading," and declared progress. When corrected, it assumed GitHub Pages
+wasn't deployed (403) and told the user to enable Pages in repo settings. The
+user corrected again: the page DOES load, shows the "Blended" title, shows all
+green feature checkmarks, THEN goes blank.
+
+The actual bug was that `setStatus("")` was hiding the loading overlay before
+`onRuntimeInitialized` fired — a simple premature-hide bug. But it took
+multiple rounds of the user pushing back against wrong theories before the real
+investigation happened.
+
+**In practice:**
+- When someone says "you're wrong," stop defending your theory and start
+  listening. They are looking at the actual screen. You are not.
+- Re-examine your assumptions from scratch instead of finding new ways to
+  explain why you were "actually right."
+- A screenshot is evidence — your theory is a guess.
+- This applies to all feedback, not just UI bugs. When a contributor says
+  "your fix didn't work," believe them. Check your work again.
+
+### 12. When In Doubt: Do the Work
 
 > *"No matter what existential crisis you're having, the answer is: do the
 > work."*
@@ -225,12 +289,14 @@ everywhere.
 | Appreciate what is | Don't rewrite Blender. Curate it via tiers. |
 | Do the work | Fix warnings one cast at a time. Build, test, commit. |
 | Every fix matters | No PR is too small. One warning fixed = one less mask. |
-| Don't get gaslighted | When bugs recur, re-examine fundamentals, not variations. |
+| Don't get gaslighted | When bugs recur, re-examine fundamentals, not variations. Verify before "fixing." |
 | Belief shapes reality | The WASM port exists because we believed it could. |
 | Don't create complexity | Casts, not frameworks. Enums, not architectures. |
+| Functionality over ego | Ship working code, not theories. Adjust and move forward. |
 | Being-with, not near | Understand build-tool vs. browser-target relationship deeply. |
 | Trust the docs | Read WARNINGS.md pitfalls before touching Emscripten flags. |
 | Fractal healing | Fix one subsystem's warnings → pattern applies everywhere. |
+| Trust what you see | User observations are evidence. Your theory is a guess. |
 | Do the work | Stop reading this. Go fix a warning. |
 
 ---
@@ -239,15 +305,20 @@ everywhere.
 
 If you're an AI working on this codebase:
 
-1. **Read WARNINGS.md pitfalls first.** All of them. Trust them.
-2. **Don't re-add global `-matomics` or `-pthread`.** The docs explain why.
-3. **Fix warnings with explicit casts**, not suppressions or `(void)`.
-4. **One subsystem per PR.** Start with GPU (Phase 1).
+1. **Read WARNINGS.md pitfalls first.** All of them. Trust them (§9).
+2. **Don't re-add global `-matomics` or `-pthread`.** The docs explain why (§8).
+3. **Fix warnings with explicit casts**, not suppressions or `(void)` (§3, §6).
+4. **One subsystem per PR.** Start with GPU (Phase 1) (§10).
 5. **When your fix doesn't work**, re-examine your assumption, not the code.
-   The codebase is probably right.
+   The codebase is probably right. Don't keep trying variations of the same
+   wrong approach (§4).
 6. **Don't over-engineer.** A `static_cast` is the fix. Not a template.
-   Not a macro. Not a new header.
-7. **When in doubt:** Do the work.
+   Not a macro. Not a new header (§6).
+7. **When the user says you're wrong, believe them.** They see the screen.
+   You don't. Re-examine from scratch instead of defending your theory (§11).
+8. **Functionality, not ego.** The goal is a working build, not being right.
+   Adjust, correct yourself, move forward (§7).
+9. **When in doubt:** Do the work (§12).
 
 ---
 
