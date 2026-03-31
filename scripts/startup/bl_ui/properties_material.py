@@ -47,8 +47,16 @@ class MaterialButtonsPanel:
     bl_context = "material"
     # COMPAT_ENGINES must be defined in each subclass, external engines can add themselves here
 
+    # Blended: Minimum tier required to show this panel.
+    # Override in subclasses: 0=Simple, 1=Standard, 2=Advanced.
+    blended_min_tier = 0
+
     @classmethod
     def poll(cls, context):
+        if cls.blended_min_tier > 0:
+            from blended_utils import tier_at_least
+            if not tier_at_least(context, cls.blended_min_tier):
+                return False
         mat = context.material
         return mat and (context.engine in cls.COMPAT_ENGINES) and not mat.grease_pencil
 
@@ -57,6 +65,7 @@ class MATERIAL_PT_preview(MaterialButtonsPanel, Panel):
     bl_label = "Preview"
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
+    blended_min_tier = 1
 
     def draw(self, context):
         self.layout.template_preview(context.material)
@@ -70,6 +79,7 @@ class MATERIAL_PT_custom_props(MaterialButtonsPanel, PropertyPanel, Panel):
     }
     _context_path = "material"
     _property_type = bpy.types.Material
+    blended_min_tier = 2
 
 
 class EEVEE_MATERIAL_PT_context_material(MaterialButtonsPanel, Panel):
@@ -179,9 +189,13 @@ class EEVEE_MATERIAL_PT_volume(MaterialButtonsPanel, Panel):
     bl_context = "material"
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
+    blended_min_tier = 1
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         engine = context.engine
         mat = context.material
         return mat and (engine in cls.COMPAT_ENGINES) and not mat.grease_pencil
@@ -201,9 +215,13 @@ class EEVEE_MATERIAL_PT_displacement(MaterialButtonsPanel, Panel):
     bl_context = "material"
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
+    blended_min_tier = 1
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         engine = context.engine
         mat = context.material
         return mat and (engine in cls.COMPAT_ENGINES) and not mat.grease_pencil
@@ -224,9 +242,13 @@ class EEVEE_MATERIAL_PT_thickness(MaterialButtonsPanel, Panel):
     bl_context = "material"
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
+    blended_min_tier = 1
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         engine = context.engine
         mat = context.material
         return mat and (engine in cls.COMPAT_ENGINES) and not mat.grease_pencil
@@ -297,6 +319,7 @@ class EEVEE_MATERIAL_PT_viewport_settings(MaterialButtonsPanel, Panel):
     bl_context = "material"
     bl_parent_id = "MATERIAL_PT_viewport"
     COMPAT_ENGINES = {'BLENDER_RENDER'}
+    blended_min_tier = 1
 
     def draw(self, context):
         draw_material_settings(self, context)
@@ -306,6 +329,7 @@ class EEVEE_MATERIAL_PT_settings(MaterialButtonsPanel, Panel):
     bl_label = "Settings"
     bl_context = "material"
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
+    blended_min_tier = 1
 
     def draw(self, context):
         layout = self.layout
@@ -354,9 +378,13 @@ class MATERIAL_PT_viewport(MaterialButtonsPanel, Panel):
     bl_context = "material"
     bl_options = {'DEFAULT_CLOSED'}
     bl_order = 10
+    blended_min_tier = 1
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         mat = context.material
         return mat and not mat.grease_pencil
 
@@ -376,9 +404,13 @@ class MATERIAL_PT_lineart(MaterialButtonsPanel, Panel):
     bl_label = "Line Art"
     bl_options = {'DEFAULT_CLOSED'}
     bl_order = 10
+    blended_min_tier = 2
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         mat = context.material
         return mat and not mat.grease_pencil
 
@@ -415,6 +447,7 @@ class MATERIAL_PT_animation(MaterialButtonsPanel, Panel, PropertiesAnimationMixi
         'BLENDER_EEVEE',
         'BLENDER_WORKBENCH',
     }
+    blended_min_tier = 1
 
     def draw(self, context):
         layout = self.layout
