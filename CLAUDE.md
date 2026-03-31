@@ -48,3 +48,19 @@ make check_pep8     # Python PEP8 formatting
 make check_cppcheck # Static code analysis
 make check_mypy     # Python type checking
 ```
+
+---
+
+## Coding Conventions
+
+| Language | Indent | Line Limit | Style | Enforced By |
+|----------|--------|------------|-------|-------------|
+| C/C++ | 2 spaces | 99 chars | `snake_case`, `#pragma once`, SPDX headers | `.clang-format` |
+| Python | 4 spaces | 120 chars | PEP8, autopep8 aggressive=2 | `pyproject.toml` |
+| CMake | 2 spaces | 99 chars | lowercase commands | `.editorconfig` |
+| GLSL | 2 spaces | 99 chars | follows C conventions | `.editorconfig` |
+
+- **C/C++ function prefixes**: `BKE_*` (blenkernel), `BLI_*` (blenlib), `ED_*` (editors), `WM_*` (window manager), `RNA_*` (runtime data), `DNA_*` (stored data)
+- **C++ namespaces**: `blender::module::submodule` pattern (e.g., `blender::ed::vse`, `blender::geometry`)
+- **SPDX headers**: Every file starts with `/* SPDX-FileCopyrightText: ... */` and `/* SPDX-License-Identifier: GPL-2.0-or-later */`
+- **Header guards**: `#pragma once` (not `#ifndef` guards)
