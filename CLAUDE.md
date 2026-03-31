@@ -145,3 +145,15 @@ Read these before making significant changes:
 - **WASM build verification**: Build completes without error; CI deploys to GitHub Pages automatically on push to `main`
 - **WASM binary validation**: Use `wasm-validate output.wasm` to verify binary integrity before deployment (see `TEMPLATE.md` Section 19 for full validation checklist)
 - **Browser testing**: Open deployed GitHub Pages URL; check browser console for errors; verify canvas renders
+
+---
+
+## Git Workflow & Commit Practices
+
+- **Commit and push frequently** — after each logical unit of work, not in large batches
+- **Break large changes into small commits** — each commit should be reviewable in isolation
+- **One subsystem per PR** — don't bundle unrelated changes across different modules
+- **Descriptive commit messages** — explain the "why", not just the "what"
+- **Always push to the designated feature branch** — never push directly to `main` without review
+- **When writing documentation or config files**, commit each section separately — don't write the entire file and commit once
+- **Verify each push succeeded** before moving to the next task
