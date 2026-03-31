@@ -80,3 +80,20 @@ make check_mypy     # Python type checking
 **Update Checker:** `scripts/startup/blended_update_check.py` — background GitHub Release polling with 24-hour cache, non-blocking, top-bar notification with one-click download
 
 **Branding:** Window titles, splash screen, about dialog, theme preset (`Blended.xml`), Windows `.rc` metadata, Linux `.desktop` entry — all say "Blended"
+
+---
+
+## Critical Pitfalls
+
+### Emscripten: Build-Tool vs Browser-Target Separation
+
+> **NEVER set `-matomics` or `-mbulk-memory` as global compiler flags.**
+
+Build tools (makesdna, makesrna, datatoc, shader_tool) run under **Node.js** at build time. The browser target (blender WASM executable) runs in the **browser**. These two targets require completely different compiler/linker flags. Mixing them corrupts WASM data segments — producing garbled RNA strings and broken initialization.
+
+- **Build tools**: Use `emscripten_build_tool_flags()` CMake helper (in `platform_emscripten.cmake`)
+- **Browser target**: Use `EMSCRIPTEN_BROWSER_LINK_FLAGS` applied per-target in `source/creator/CMakeLists.txt`
+- **Global flags** (safe for all): `-sWASM=1`, `-sASSERTIONS=1`
+- **Browser-only flags** (NEVER global): WebGL2, SharedArrayBuffer, `-matomics`, `-mbulk-memory`, `-pthread`
+
+See `TEMPLATE.md` Section 3 (Build System Translation) and Section 13 (Known Pitfalls, Pitfall 1: Global Flag Contamination) for the generalized pattern.
