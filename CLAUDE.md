@@ -25,3 +25,26 @@ Core philosophy: "Appreciate what already is" — curate Blender, don't rewrite 
 | `doc/` | Doxygen config, Python API docs, developer guides |
 | `release/` | Platform packaging: Windows `.rc`, Linux `.desktop`, icons, datafiles |
 | `tools/` | Developer utilities: code checks, formatting, maintenance scripts |
+
+---
+
+## Build Commands
+
+```bash
+# Desktop builds (via GNUmakefile convenience targets)
+make debug          # Debug binary
+make release        # Release with all options
+make lite           # Smaller binary, faster build
+make ninja          # Use Ninja instead of Make
+make ccache         # Use ccache for faster rebuilds
+
+# WebAssembly (Emscripten)
+emcmake cmake -S . -B build-wasm -C build_files/cmake/config/blended_wasm.cmake
+emmake cmake --build build-wasm
+
+# Testing & checking
+make test           # Run ctest
+make check_pep8     # Python PEP8 formatting
+make check_cppcheck # Static code analysis
+make check_mypy     # Python type checking
+```
