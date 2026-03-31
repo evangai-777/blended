@@ -14,8 +14,15 @@ class DataButtonsPanel:
     bl_region_type = 'WINDOW'
     bl_context = "data"
 
+    # Blended: Minimum tier required to show this panel.
+    # Override in subclasses: 0=Simple, 1=Standard, 2=Advanced.
+    blended_min_tier = 1
+
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         engine = context.engine
         return context.speaker and (engine in cls.COMPAT_ENGINES)
 
@@ -140,6 +147,7 @@ class DATA_PT_custom_props_speaker(DataButtonsPanel, PropertyPanel, Panel):
     }
     _context_path = "object.data"
     _property_type = bpy.types.Speaker
+    blended_min_tier = 2
 
 
 classes = (

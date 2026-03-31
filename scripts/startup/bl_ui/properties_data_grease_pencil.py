@@ -12,8 +12,15 @@ class DataButtonsPanel:
     bl_region_type = 'WINDOW'
     bl_context = "data"
 
+    # Blended: Minimum tier required to show this panel.
+    # Override in subclasses: 0=Simple, 1=Standard, 2=Advanced.
+    blended_min_tier = 1
+
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         return hasattr(context, "grease_pencil") and context.grease_pencil
 
 
@@ -22,8 +29,14 @@ class LayerDataButtonsPanel:
     bl_region_type = 'WINDOW'
     bl_context = "data"
 
+    # Blended: Minimum tier required to show this panel.
+    blended_min_tier = 1
+
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         grease_pencil = context.grease_pencil
         return grease_pencil and grease_pencil.layers.active
 
@@ -340,9 +353,13 @@ class DATA_PT_grease_pencil_layer_group_display(Panel):
     bl_region_type = 'WINDOW'
     bl_context = "data"
     bl_options = {'DEFAULT_CLOSED'}
+    blended_min_tier = 1
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         grease_pencil = context.grease_pencil
         return grease_pencil and grease_pencil.layer_groups.active
 
@@ -442,6 +459,7 @@ class DATA_PT_grease_pencil_animation(DataButtonsPanel, PropertiesAnimationMixin
 class DATA_PT_grease_pencil_custom_props(DataButtonsPanel, PropertyPanel, Panel):
     _context_path = "object.data"
     _property_type = bpy.types.GreasePencil
+    blended_min_tier = 2
 
 
 class GREASE_PENCIL_UL_attributes(UIList):

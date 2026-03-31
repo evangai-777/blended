@@ -12,8 +12,15 @@ class DataButtonsPanel:
     bl_region_type = 'WINDOW'
     bl_context = "data"
 
+    # Blended: Minimum tier required to show this panel.
+    # Override in subclasses: 0=Simple, 1=Standard, 2=Advanced.
+    blended_min_tier = 2
+
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         engine = context.scene.render.engine
         return hasattr(context, "pointcloud") and context.pointcloud and (engine in cls.COMPAT_ENGINES)
 
