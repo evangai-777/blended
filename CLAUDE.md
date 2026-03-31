@@ -132,3 +132,16 @@ Read these before making significant changes:
 | `build_files/web/WEBASSEMBLY_ROADMAP.md` | 6-stage browser port plan, technical challenges, current status | Before WASM feature work |
 | `UPSTREAM_SYNC.md` | How to merge upstream Blender, conflict-prone file list | Before upstream merges |
 | `CHANGELOG.md` | Blended-specific release notes | When preparing releases |
+
+---
+
+## Testing & Verification
+
+- **C++ unit tests**: GTest framework — run via `make test` or `ctest` from build directory
+- **Python tests**: Located in `tests/python/` — run PEP8 checks via `make check_pep8`
+- **Static analysis**: `make check_cppcheck` for C++ static analysis
+- **Type checking**: `make check_mypy` for Python type checking
+- **Warning triage**: `python3 build_files/utils/parse_warnings.py <build_log>` — groups warnings by subsystem/type
+- **WASM build verification**: Build completes without error; CI deploys to GitHub Pages automatically on push to `main`
+- **WASM binary validation**: Use `wasm-validate output.wasm` to verify binary integrity before deployment (see `TEMPLATE.md` Section 19 for full validation checklist)
+- **Browser testing**: Open deployed GitHub Pages URL; check browser console for errors; verify canvas renders
