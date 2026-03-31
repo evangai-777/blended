@@ -203,6 +203,12 @@ class VIEW3D_PT_tools_armatureedit_options(View3DPanel, Panel):
     bl_category = "Tool"
     bl_context = ".armature_edit"  # dot on purpose (access from topbar)
     bl_label = "Options"
+    blended_min_tier = 1
+
+    @classmethod
+    def poll(cls, context):
+        from blended_utils import tier_at_least
+        return tier_at_least(context, cls.blended_min_tier)
 
     def draw(self, context):
         arm = context.active_object.data
@@ -216,6 +222,12 @@ class VIEW3D_PT_tools_posemode_options(View3DPanel, Panel):
     bl_category = "Tool"
     bl_context = ".posemode"  # dot on purpose (access from topbar)
     bl_label = "Pose Options"
+    blended_min_tier = 1
+
+    @classmethod
+    def poll(cls, context):
+        from blended_utils import tier_at_least
+        return tier_at_least(context, cls.blended_min_tier)
 
     def draw(self, context):
         pose = context.active_object.pose
@@ -261,9 +273,13 @@ class View3DPaintBrushPanel(View3DPaintPanel):
 class VIEW3D_PT_tools_particlemode(Panel, View3DPaintPanel):
     bl_context = ".paint_common"  # dot on purpose (access from topbar)
     bl_label = "Particle Tool"
+    blended_min_tier = 1
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         settings = context.tool_settings.particle_edit
         return (settings and settings.brush and context.particle_edit_object)
 
@@ -1415,6 +1431,12 @@ class VIEW3D_PT_tools_particlemode_options(View3DPanel, Panel):
     bl_context = ".particlemode"
     bl_label = "Options"
     bl_options = {'DEFAULT_CLOSED'}
+    blended_min_tier = 1
+
+    @classmethod
+    def poll(cls, context):
+        from blended_utils import tier_at_least
+        return tier_at_least(context, cls.blended_min_tier)
 
     def draw(self, context):
         layout = self.layout
