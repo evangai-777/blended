@@ -64,3 +64,19 @@ make check_mypy     # Python type checking
 - **C++ namespaces**: `blender::module::submodule` pattern (e.g., `blender::ed::vse`, `blender::geometry`)
 - **SPDX headers**: Every file starts with `/* SPDX-FileCopyrightText: ... */` and `/* SPDX-License-Identifier: GPL-2.0-or-later */`
 - **Header guards**: `#pragma once` (not `#ifndef` guards)
+
+---
+
+## Fork-Specific Patterns (What Makes Blended Different)
+
+**Tiered UI System:**
+- `eUserPref_UI_Tier` enum in `DNA_userdef_enums.h` — defines Simple (0), Standard (1), Advanced (2)
+- `blended_min_tier` field on panels and workspaces — controls visibility per tier
+- Tier gating in `rna_screen.cc` — panels poll their tier against user preference
+- Workspace tab filtering — workspaces tagged with minimum tier
+
+**Smart Defaults:** `scripts/startup/blended_defaults.py` applies tier-aware settings on new file creation (e.g., Simple: EEVEE + AO enabled; Advanced: full Blender defaults)
+
+**Update Checker:** `scripts/startup/blended_update_check.py` — background GitHub Release polling with 24-hour cache, non-blocking, top-bar notification with one-click download
+
+**Branding:** Window titles, splash screen, about dialog, theme preset (`Blended.xml`), Windows `.rc` metadata, Linux `.desktop` entry — all say "Blended"
