@@ -15,26 +15,46 @@ class CurveButtonsPanel:
     bl_region_type = 'WINDOW'
     bl_context = "data"
 
+    # Blended: Minimum tier required to show this panel.
+    # Override in subclasses: 0=Simple, 1=Standard, 2=Advanced.
+    blended_min_tier = 0
+
     @classmethod
     def poll(cls, context):
+        if cls.blended_min_tier > 0:
+            from blended_utils import tier_at_least
+            if not tier_at_least(context, cls.blended_min_tier):
+                return False
         return (context.curve is not None)
 
 
 class CurveButtonsPanelCurve(CurveButtonsPanel):
     @classmethod
     def poll(cls, context):
+        if cls.blended_min_tier > 0:
+            from blended_utils import tier_at_least
+            if not tier_at_least(context, cls.blended_min_tier):
+                return False
         return (type(context.curve) is Curve)
 
 
 class CurveButtonsPanelSurface(CurveButtonsPanel):
     @classmethod
     def poll(cls, context):
+        if cls.blended_min_tier > 0:
+            from blended_utils import tier_at_least
+            if not tier_at_least(context, cls.blended_min_tier):
+                return False
         return (type(context.curve) is SurfaceCurve)
 
 
 class CurveButtonsPanelText(CurveButtonsPanel):
     @classmethod
     def poll(cls, context):
+        if cls.blended_min_tier > 0:
+            from blended_utils import tier_at_least
+            if not tier_at_least(context, cls.blended_min_tier):
+                return False
         return (type(context.curve) is TextCurve)
 
 
@@ -43,6 +63,10 @@ class CurveButtonsPanelActive(CurveButtonsPanel):
 
     @classmethod
     def poll(cls, context):
+        if cls.blended_min_tier > 0:
+            from blended_utils import tier_at_least
+            if not tier_at_least(context, cls.blended_min_tier):
+                return False
         curve = context.curve
         return (curve and type(curve) is not TextCurve and curve.splines.active)
 
@@ -124,6 +148,7 @@ class DATA_PT_shape_curve(CurveButtonsPanel, Panel):
 class DATA_PT_curve_texture_space(CurveButtonsPanel, Panel):
     bl_label = "Texture Space"
     bl_options = {'DEFAULT_CLOSED'}
+    blended_min_tier = 1
 
     def draw(self, context):
         layout = self.layout
@@ -144,9 +169,13 @@ class DATA_PT_curve_texture_space(CurveButtonsPanel, Panel):
 class DATA_PT_geometry_curve(CurveButtonsPanelCurve, Panel):
     bl_label = "Geometry"
     bl_options = {'DEFAULT_CLOSED'}
+    blended_min_tier = 1
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         return (type(context.curve) in {Curve, TextCurve})
 
     def draw(self, context):
@@ -175,9 +204,13 @@ class DATA_PT_geometry_curve(CurveButtonsPanelCurve, Panel):
 class DATA_PT_geometry_curve_bevel(CurveButtonsPanelCurve, Panel):
     bl_label = "Bevel"
     bl_parent_id = "DATA_PT_geometry_curve"
+    blended_min_tier = 1
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         return (type(context.curve) in {Curve, TextCurve})
 
     def draw(self, context):
@@ -201,6 +234,7 @@ class DATA_PT_geometry_curve_bevel(CurveButtonsPanelCurve, Panel):
 
 
 class DATA_PT_curve_animation(CurveButtonsPanel, PropertiesAnimationMixin, PropertyPanel, Panel):
+    blended_min_tier = 1
     def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
@@ -223,9 +257,13 @@ class DATA_PT_geometry_curve_start_end(CurveButtonsPanelCurve, Panel):
     bl_label = "Start & End Mapping"
     bl_parent_id = "DATA_PT_geometry_curve"
     bl_options = {'DEFAULT_CLOSED'}
+    blended_min_tier = 1
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         # Text objects don't support these properties
         return (type(context.curve) is Curve)
 
@@ -253,6 +291,7 @@ class DATA_PT_geometry_curve_start_end(CurveButtonsPanelCurve, Panel):
 class DATA_PT_pathanim(CurveButtonsPanelCurve, Panel):
     bl_label = "Path Animation"
     bl_options = {'DEFAULT_CLOSED'}
+    blended_min_tier = 1
 
     def draw_header(self, context):
         curve = context.curve
@@ -439,6 +478,7 @@ class DATA_PT_text_boxes(CurveButtonsPanelText, Panel):
 class DATA_PT_custom_props_curve(CurveButtonsPanel, PropertyPanel, Panel):
     _context_path = "object.data"
     _property_type = bpy.types.Curve
+    blended_min_tier = 2
 
 
 classes = (
