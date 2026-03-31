@@ -142,6 +142,24 @@ def apply_tier_defaults(scene=None):
         # Advanced: EEVEE default, enable Python tooltips for scripting users.
         view.show_tooltips_python = True
 
+    # Tier-aware sidebar visibility: hide N-panel in Simple to reduce clutter.
+    if tier == TIER_SIMPLE:
+        for screen in bpy.data.screens:
+            for area in screen.areas:
+                if area.type == 'VIEW_3D':
+                    for region in area.regions:
+                        if region.type == 'UI':
+                            area.spaces[0].show_region_ui = False
+
+    # Tier-aware outliner display: Simple uses VIEW_LAYER, Standard uses default.
+    if tier == TIER_SIMPLE:
+        for screen in bpy.data.screens:
+            for area in screen.areas:
+                if area.type == 'OUTLINER':
+                    for space in area.spaces:
+                        if space.type == 'OUTLINER':
+                            space.display_mode = 'VIEW_LAYER'
+
     # Setup startup scene objects per tier.
     _setup_startup_scene(scene, tier)
 
