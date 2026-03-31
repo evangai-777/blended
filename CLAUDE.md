@@ -117,3 +117,18 @@ When merging upstream Blender releases, 30+ files are known to conflict. Always 
 ### Don't Over-Engineer
 
 `static_cast` is the fix, not a template wrapper. Casts, not frameworks. Enums, not architectures. Three similar lines of code is better than a premature abstraction. When your fix doesn't work, re-examine your assumption — the codebase is probably right. See `PHILOSOPHY.md` principle 6: "Don't create complexity to avoid simplicity."
+
+---
+
+## Key Documentation Cross-References
+
+Read these before making significant changes:
+
+| Document | Purpose | When to Read |
+|----------|---------|--------------|
+| `PHILOSOPHY.md` | 12 development principles + AI assistant guidelines (§9) | Before any work — sets the tone |
+| `WARNINGS.md` | Compiler warning triage plan, tooling, 5-phase fix strategy | Before fixing warnings |
+| `TEMPLATE.md` | 3D-to-Web porting template (20 sections: build systems, GPU translation, threading, pitfalls, validation, diagnostics) | Before any Emscripten/WASM work |
+| `build_files/web/WEBASSEMBLY_ROADMAP.md` | 6-stage browser port plan, technical challenges, current status | Before WASM feature work |
+| `UPSTREAM_SYNC.md` | How to merge upstream Blender, conflict-prone file list | Before upstream merges |
+| `CHANGELOG.md` | Blended-specific release notes | When preparing releases |
