@@ -14,8 +14,16 @@ class BoneButtonsPanel:
     bl_region_type = 'WINDOW'
     bl_context = "bone"
 
+    # Blended: Minimum tier required to show this panel.
+    # Override in subclasses: 0=Simple, 1=Standard, 2=Advanced.
+    blended_min_tier = 1
+
     @classmethod
     def poll(cls, context):
+        if cls.blended_min_tier > 0:
+            from blended_utils import tier_at_least
+            if not tier_at_least(context, cls.blended_min_tier):
+                return False
         return (context.bone or context.edit_bone)
 
 
@@ -562,6 +570,7 @@ class BONE_PT_deform(BoneButtonsPanel, Panel):
 
 class BONE_PT_custom_props(BoneButtonsPanel, rna_prop_ui.PropertyPanel, Panel):
     _property_type = bpy.types.Bone, bpy.types.EditBone, bpy.types.PoseBone
+    blended_min_tier = 2
 
     @classmethod
     def _poll(cls, context):
