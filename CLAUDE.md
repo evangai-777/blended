@@ -109,3 +109,11 @@ See `TEMPLATE.md` Section 3 (Build System Translation) and Section 13 (Known Pit
 - **Fractal principle**: Fix one subsystem correctly → the same pattern applies to all others
 
 See `TEMPLATE.md` Section 17 (For AI Assistants) and `PHILOSOPHY.md` §9 for general AI contributor guidance.
+
+### Upstream Sync Conflicts
+
+When merging upstream Blender releases, 30+ files are known to conflict. Always consult `UPSTREAM_SYNC.md` before merging. Key conflict-prone files include: `BKE_blender_version.h`, `DNA_userdef_types.h`, `DNA_userdef_enums.h`, `rna_userdef.cc`, `rna_workspace.cc`, `rna_screen.cc`, `DNA_workspace_types.h`, `scripts/startup/bl_ui/*.py`, `CMakeLists.txt`, and all release/branding files.
+
+### Don't Over-Engineer
+
+`static_cast` is the fix, not a template wrapper. Casts, not frameworks. Enums, not architectures. Three similar lines of code is better than a premature abstraction. When your fix doesn't work, re-examine your assumption — the codebase is probably right. See `PHILOSOPHY.md` principle 6: "Don't create complexity to avoid simplicity."
