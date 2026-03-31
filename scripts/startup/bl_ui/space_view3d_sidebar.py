@@ -12,6 +12,16 @@ class GlobalTransformPanelMixin:
     bl_region_type = 'UI'
     bl_category = "Animation"
 
+    # Blended: Animation sidebar panels are Standard tier.
+    blended_min_tier = 1
+
+    @classmethod
+    def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
+        return True
+
 
 class VIEW3D_PT_copy_global_transform(GlobalTransformPanelMixin, Panel):
     bl_label = "Global Transform"

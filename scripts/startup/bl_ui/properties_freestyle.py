@@ -13,9 +13,13 @@ class RenderFreestyleButtonsPanel:
     bl_region_type = 'WINDOW'
     bl_context = "render"
     # COMPAT_ENGINES must be defined in each subclass, external engines can add themselves here
+    blended_min_tier = 2
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         scene = context.scene
         with_freestyle = bpy.app.build_options.freestyle
         return scene and with_freestyle and (context.engine in cls.COMPAT_ENGINES)
@@ -55,9 +59,13 @@ class ViewLayerFreestyleButtonsPanel:
     bl_context = "view_layer"
     bl_order = 10
     # COMPAT_ENGINES must be defined in each subclass, external engines can add themselves here
+    blended_min_tier = 2
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         scene = context.scene
         rd = scene.render
         with_freestyle = bpy.app.build_options.freestyle
@@ -1272,9 +1280,13 @@ class MaterialFreestyleButtonsPanel:
     bl_region_type = 'WINDOW'
     bl_context = "material"
     # COMPAT_ENGINES must be defined in each subclass, external engines can add themselves here
+    blended_min_tier = 2
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         scene = context.scene
         material = context.material
         with_freestyle = bpy.app.build_options.freestyle

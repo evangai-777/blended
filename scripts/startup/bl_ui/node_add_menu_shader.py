@@ -475,23 +475,26 @@ class NODE_MT_shader_node_all_base(node_add_menu.NodeMenu):
     # & Swap menus can share the same layout while each using their
     # corresponding menus
     def draw(self, context):
-        del context
+        from blended_utils import is_simple
         layout = self.layout
         self.draw_menu(layout, "Input")
         self.draw_menu(layout, "Output")
         layout.separator()
         # Do not order this alphabetically, we are matching the order in the output node.
         self.draw_menu(layout, "Shader")
-        self.draw_menu(layout, "Displacement")
+        if not is_simple(context):
+            self.draw_menu(layout, "Displacement")
         layout.separator()
         self.draw_menu(layout, "Color")
         self.draw_menu(layout, "Texture")
-        self.draw_menu(layout, "Utilities")
+        if not is_simple(context):
+            self.draw_menu(layout, "Utilities")
         layout.separator()
         self.draw_root_assets(layout)
         layout.separator()
         self.draw_menu(layout, "Group")
-        self.draw_menu(layout, "Layout")
+        if not is_simple(context):
+            self.draw_menu(layout, "Layout")
 
 
 add_menus = {

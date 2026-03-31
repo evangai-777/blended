@@ -732,9 +732,13 @@ class DOPESHEET_PT_custom_props_action(PropertyPanel, Panel):
     bl_context = "data"
     _context_path = "active_action"
     _property_type = bpy.types.Action
+    blended_min_tier = 2
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         return bool(context.active_action)
 
 
@@ -946,9 +950,13 @@ class GreasePencilLayersDopeSheetPanel:
     bl_space_type = 'DOPESHEET_EDITOR'
     bl_region_type = 'UI'
     bl_category = "View"
+    blended_min_tier = 1
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         st = context.space_data
         ob = context.object
         if st.mode != 'GPENCIL' or ob is None or ob.type != 'GREASEPENCIL':

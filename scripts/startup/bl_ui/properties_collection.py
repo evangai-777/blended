@@ -16,8 +16,16 @@ class CollectionButtonsPanel:
     bl_region_type = 'WINDOW'
     bl_context = "collection"
 
+    # Blended: Minimum tier required to show this panel.
+    # Override in subclasses: 0=Simple, 1=Standard, 2=Advanced.
+    blended_min_tier = 0
+
     @classmethod
     def poll(cls, context):
+        if cls.blended_min_tier > 0:
+            from blended_utils import tier_at_least
+            if not tier_at_least(context, cls.blended_min_tier):
+                return False
         return context.collection != context.scene.collection
 
 
@@ -64,6 +72,7 @@ class COLLECTION_PT_viewlayer_flags(CollectionButtonsPanel, Panel):
 
 class COLLECTION_PT_exporters(CollectionButtonsPanel, Panel):
     bl_label = "Exporters"
+    blended_min_tier = 1
 
     def draw(self, context):
         layout = self.layout
@@ -83,6 +92,7 @@ class COLLECTION_MT_context_menu_instance_offset(Menu):
 
 class COLLECTION_PT_instancing(CollectionButtonsPanel, Panel):
     bl_label = "Instancing"
+    blended_min_tier = 1
 
     def draw(self, context):
         layout = self.layout
@@ -98,6 +108,7 @@ class COLLECTION_PT_instancing(CollectionButtonsPanel, Panel):
 class COLLECTION_PT_lineart_collection(CollectionButtonsPanel, Panel):
     bl_label = "Line Art"
     bl_order = 10
+    blended_min_tier = 2
 
     def draw(self, context):
         layout = self.layout
@@ -128,6 +139,7 @@ class COLLECTION_PT_lineart_collection(CollectionButtonsPanel, Panel):
 class COLLECTION_PT_collection_custom_props(CollectionButtonsPanel, PropertyPanel, Panel):
     _context_path = "collection"
     _property_type = Collection
+    blended_min_tier = 2
 
 
 classes = (

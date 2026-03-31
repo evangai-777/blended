@@ -26,6 +26,12 @@ class WorkSpaceButtonsPanel:
 class WORKSPACE_PT_main(WorkSpaceButtonsPanel, Panel):
     bl_label = "Workspace"
     bl_options = {'DEFAULT_CLOSED'}
+    blended_min_tier = 1
+
+    @classmethod
+    def poll(cls, context):
+        from blended_utils import tier_at_least
+        return tier_at_least(context, cls.blended_min_tier)
 
     def draw(self, context):
         workspace = context.workspace
@@ -169,6 +175,7 @@ class WORKSPACE_UL_addons_items(UIList):
 
 class WORKSPACE_PT_custom_props(WorkSpaceButtonsPanel, PropertyPanel, Panel):
     bl_parent_id = "WORKSPACE_PT_main"
+    blended_min_tier = 2
 
     _context_path = "workspace"
     _property_type = bpy.types.WorkSpace

@@ -2,7 +2,22 @@
 
 ## 1.1.0 — Based on Blender 5.2
 
-WebAssembly browser port and build infrastructure improvements.
+WebAssembly browser port, build infrastructure improvements, and comprehensive tier filtering.
+
+### Tiered UI Expansion
+- Extended `blended_min_tier` panel filtering to 30+ property files across all data types
+- Material, light, camera, mesh panels: granular tier assignments (Simple → core, Standard → intermediate, Advanced → custom props)
+- Armature, bone, curve, texture: full data-type-level tier gating
+- Specialized data types: grease pencil, lattice, metaball (Standard); lightprobe, point cloud, volume (Advanced)
+- Collection panels: instancing/exporters at Standard, Line Art at Advanced
+- 3D View sidebar/toolbar: animation panels at Standard, particle mode at Standard
+- Image/UV Editor: scopes and mask panels at Standard, UDIM tiles at Standard
+- Node Editor: texture mapping/backdrop/quality at Standard, custom properties at Advanced
+- Dope Sheet: grease pencil layer panels at Standard, custom properties at Advanced
+- Freestyle rendering: all panels gated to Advanced tier
+- Workspace settings: panel gated to Standard, custom properties at Advanced
+- Shader node add menu: simplified for Simple tier (hides Displacement, Utilities, Layout)
+- Smart defaults: Simple tier hides N-panel sidebar, sets outliner to View Layer mode
 
 ### Web Editor (WebAssembly) — In Progress
 - Emscripten cross-compilation: compiles, links, and renders first frame in-browser

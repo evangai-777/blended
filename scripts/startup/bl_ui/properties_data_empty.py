@@ -11,8 +11,16 @@ class DataButtonsPanel:
     bl_region_type = 'WINDOW'
     bl_context = "data"
 
+    # Blended: Minimum tier required to show this panel.
+    # Override in subclasses: 0=Simple, 1=Standard, 2=Advanced.
+    blended_min_tier = 0
+
     @classmethod
     def poll(cls, context):
+        if cls.blended_min_tier > 0:
+            from blended_utils import tier_at_least
+            if not tier_at_least(context, cls.blended_min_tier):
+                return False
         ob = context.object
         return (ob and ob.type == 'EMPTY')
 
@@ -62,6 +70,10 @@ class DATA_PT_empty_image(DataButtonsPanel, Panel):
 
     @classmethod
     def poll(cls, context):
+        if cls.blended_min_tier > 0:
+            from blended_utils import tier_at_least
+            if not tier_at_least(context, cls.blended_min_tier):
+                return False
         ob = context.object
         return (ob and ob.type == 'EMPTY' and ob.empty_display_type == 'IMAGE')
 

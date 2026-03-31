@@ -64,6 +64,10 @@ class TextureButtonsPanel:
     bl_region_type = 'WINDOW'
     bl_context = "texture"
 
+    # Blended: Minimum tier required to show this panel.
+    # Override in subclasses: 0=Simple, 1=Standard, 2=Advanced.
+    blended_min_tier = 1
+
 
 class TEXTURE_PT_preview(TextureButtonsPanel, Panel):
     bl_label = "Preview"
@@ -75,6 +79,9 @@ class TEXTURE_PT_preview(TextureButtonsPanel, Panel):
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         tex = context.texture
         return tex and (tex.type != 'NONE' or tex.use_nodes) and (context.engine in cls.COMPAT_ENGINES)
 
@@ -151,6 +158,9 @@ class TEXTURE_PT_node(TextureButtonsPanel, Panel):
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         node = context.texture_node
         return node and (context.engine in cls.COMPAT_ENGINES)
 
@@ -168,6 +178,9 @@ class TextureTypePanel(TextureButtonsPanel):
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         tex = context.texture
         engine = context.engine
         return tex and ((tex.type == cls.tex_type and not tex.use_nodes) and (engine in cls.COMPAT_ENGINES))
@@ -689,6 +702,9 @@ class TextureSlotPanel(TextureButtonsPanel):
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         if not hasattr(context, "texture_slot"):
             return False
 
@@ -705,6 +721,9 @@ class TEXTURE_PT_mapping(TextureSlotPanel, Panel):
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         idblock = context_tex_datablock(context)
         if isinstance(idblock, Brush) and not context.sculpt_object:
             return False
@@ -777,6 +796,9 @@ class TEXTURE_PT_influence(TextureSlotPanel, Panel):
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         idblock = context_tex_datablock(context)
         if isinstance(idblock, Brush):
             return False
@@ -848,6 +870,9 @@ class TEXTURE_PT_influence(TextureSlotPanel, Panel):
 class TextureColorsPoll:
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         tex = context.texture
         return tex and (tex.type != 'NONE' or tex.use_nodes) and (context.engine in cls.COMPAT_ENGINES)
 
@@ -915,6 +940,9 @@ class TEXTURE_PT_colors_ramp(TextureButtonsPanel, TextureColorsPoll, Panel):
 class TEXTURE_PT_animation(TextureButtonsPanel, PropertiesAnimationMixin, PropertyPanel, Panel):
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         return bool(context.texture)
 
     def draw(self, context):
@@ -955,9 +983,13 @@ class TEXTURE_PT_custom_props(TextureButtonsPanel, PropertyPanel, Panel):
     }
     _context_path = "texture"
     _property_type = Texture
+    blended_min_tier = 2
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         return context.texture and (context.engine in cls.COMPAT_ENGINES)
 
 

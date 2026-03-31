@@ -14,8 +14,16 @@ class DataButtonsPanel:
     bl_region_type = 'WINDOW'
     bl_context = "data"
 
+    # Blended: Minimum tier required to show this panel.
+    # Override in subclasses: 0=Simple, 1=Standard, 2=Advanced.
+    blended_min_tier = 0
+
     @classmethod
     def poll(cls, context):
+        if cls.blended_min_tier > 0:
+            from blended_utils import tier_at_least
+            if not tier_at_least(context, cls.blended_min_tier):
+                return False
         engine = context.engine
         return context.light and (engine in cls.COMPAT_ENGINES)
 
@@ -49,6 +57,7 @@ class DATA_PT_preview(DataButtonsPanel, Panel):
         'BLENDER_RENDER',
         'BLENDER_EEVEE',
     }
+    blended_min_tier = 1
 
     def draw(self, context):
         self.layout.template_preview(context.light)
@@ -144,9 +153,13 @@ class DATA_PT_EEVEE_light_distance(DataButtonsPanel, Panel):
     bl_parent_id = "DATA_PT_EEVEE_light"
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
+    blended_min_tier = 1
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         light = context.light
         engine = context.engine
 
@@ -172,6 +185,7 @@ class DATA_PT_EEVEE_light_shadow(DataButtonsPanel, Panel):
     bl_parent_id = "DATA_PT_EEVEE_light"
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
+    blended_min_tier = 1
 
     def draw_header(self, context):
         light = context.light
@@ -206,6 +220,7 @@ class DATA_PT_EEVEE_light_influence(DataButtonsPanel, Panel):
     bl_parent_id = "DATA_PT_EEVEE_light"
     bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {'BLENDER_EEVEE'}
+    blended_min_tier = 1
 
     def draw(self, context):
         layout = self.layout
@@ -267,6 +282,7 @@ class DATA_PT_light_animation(DataButtonsPanel, PropertiesAnimationMixin, Proper
         'BLENDER_EEVEE',
         'BLENDER_WORKBENCH',
     }
+    blended_min_tier = 1
 
     def draw(self, context):
         layout = self.layout
@@ -294,6 +310,7 @@ class DATA_PT_custom_props_light(DataButtonsPanel, PropertyPanel, Panel):
     }
     _context_path = "object.data"
     _property_type = bpy.types.Light
+    blended_min_tier = 2
 
 
 classes = (

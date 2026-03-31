@@ -1020,30 +1020,70 @@ class IMAGE_PT_mask(MASK_PT_mask, Panel):
     bl_space_type = 'IMAGE_EDITOR'
     bl_region_type = 'UI'
     bl_category = "Mask"
+    blended_min_tier = 1
+
+    @classmethod
+    def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
+        return super().poll(context)
 
 
 class IMAGE_PT_mask_layers(MASK_PT_layers, Panel):
     bl_space_type = 'IMAGE_EDITOR'
     bl_region_type = 'UI'
     bl_category = "Mask"
+    blended_min_tier = 1
+
+    @classmethod
+    def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
+        return super().poll(context)
 
 
 class IMAGE_PT_active_mask_spline(MASK_PT_spline, Panel):
     bl_space_type = 'IMAGE_EDITOR'
     bl_region_type = 'UI'
     bl_category = "Mask"
+    blended_min_tier = 1
+
+    @classmethod
+    def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
+        return super().poll(context)
 
 
 class IMAGE_PT_active_mask_point(MASK_PT_point, Panel):
     bl_space_type = 'IMAGE_EDITOR'
     bl_region_type = 'UI'
     bl_category = "Mask"
+    blended_min_tier = 1
+
+    @classmethod
+    def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
+        return super().poll(context)
 
 
 class IMAGE_PT_mask_animation(MASK_PT_animation, Panel):
     bl_space_type = 'IMAGE_EDITOR'
     bl_region_type = 'UI'
     bl_category = "Mask"
+    blended_min_tier = 1
+
+    @classmethod
+    def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
+        return super().poll(context)
 
 
 # --- end mask ---
@@ -1207,9 +1247,13 @@ class IMAGE_PT_udim_tiles(Panel):
     bl_region_type = 'UI'
     bl_category = "Image"
     bl_label = "UDIM Tiles"
+    blended_min_tier = 1
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         sima = context.space_data
         return (sima and sima.image and sima.image.source == 'TILED')
 
@@ -1444,8 +1488,13 @@ class IMAGE_PT_uv_sculpt_options(Panel):
 
 
 class ImageScopesPanel:
+    blended_min_tier = 1
+
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         sima = context.space_data
 
         if not (sima and sima.image):
