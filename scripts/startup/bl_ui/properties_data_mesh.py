@@ -142,8 +142,16 @@ class MeshButtonsPanel:
     bl_region_type = 'WINDOW'
     bl_context = "data"
 
+    # Blended: Minimum tier required to show this panel.
+    # Override in subclasses: 0=Simple, 1=Standard, 2=Advanced.
+    blended_min_tier = 0
+
     @classmethod
     def poll(cls, context):
+        if cls.blended_min_tier > 0:
+            from blended_utils import tier_at_least
+            if not tier_at_least(context, cls.blended_min_tier):
+                return False
         engine = context.engine
         return context.mesh and (engine in cls.COMPAT_ENGINES)
 
@@ -178,6 +186,7 @@ class DATA_PT_texture_space(MeshButtonsPanel, Panel):
         'BLENDER_EEVEE',
         'BLENDER_WORKBENCH',
     }
+    blended_min_tier = 1
 
     def draw(self, context):
         layout = self.layout
@@ -304,9 +313,13 @@ class DATA_PT_shape_keys(MeshButtonsPanel, Panel):
         'BLENDER_EEVEE',
         'BLENDER_WORKBENCH',
     }
+    blended_min_tier = 1
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         engine = context.engine
         obj = context.object
         return (obj and obj.type in {'MESH', 'LATTICE', 'CURVE', 'SURFACE'} and (engine in cls.COMPAT_ENGINES))
@@ -440,6 +453,7 @@ class DATA_PT_customdata(MeshButtonsPanel, Panel):
         'BLENDER_EEVEE',
         'BLENDER_WORKBENCH',
     }
+    blended_min_tier = 1
 
     def draw(self, context):
         layout = self.layout
@@ -464,6 +478,7 @@ class DATA_PT_mesh_animation(MeshButtonsPanel, PropertiesAnimationMixin, Propert
         'BLENDER_EEVEE',
         'BLENDER_WORKBENCH',
     }
+    blended_min_tier = 1
 
     def draw(self, context):
         layout = self.layout
@@ -491,6 +506,7 @@ class DATA_PT_custom_props_mesh(MeshButtonsPanel, PropertyPanel, Panel):
     }
     _context_path = "object.data"
     _property_type = bpy.types.Mesh
+    blended_min_tier = 2
 
 
 class MESH_UL_attributes(UIList):
@@ -549,6 +565,7 @@ class DATA_PT_mesh_attributes(MeshButtonsPanel, Panel):
         'BLENDER_EEVEE',
         'BLENDER_WORKBENCH',
     }
+    blended_min_tier = 1
 
     def draw(self, context):
         mesh = context.mesh
@@ -687,6 +704,7 @@ class DATA_PT_vertex_colors(MeshButtonsPanel, Panel):
         'BLENDER_EEVEE',
         'BLENDER_WORKBENCH',
     }
+    blended_min_tier = 1
 
     def draw(self, context):
         mesh = context.mesh
