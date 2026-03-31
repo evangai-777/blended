@@ -71,11 +71,14 @@ make check_mypy     # Python type checking
 
 **Tiered UI System:**
 - `eUserPref_UI_Tier` enum in `DNA_userdef_enums.h` — defines Simple (0), Standard (1), Advanced (2)
-- `blended_min_tier` field on panels and workspaces — controls visibility per tier
-- Tier gating in `rna_screen.cc` — panels poll their tier against user preference
-- Workspace tab filtering — workspaces tagged with minimum tier
+- `blended_min_tier` class attribute on panel base classes — controls visibility per tier
+- `blended_utils.py` module: `get_ui_tier()`, `tier_at_least()`, `is_simple()`, `is_standard()`, `is_advanced()`
+- Tier gating in `rna_screen.cc` — C-level editor/panel poll checks
+- Workspace tab filtering — workspaces tagged with minimum tier in `blended_defaults.py`
+- **30+ panel files** with tier filtering: properties (material, light, camera, mesh, armature, bone, curve, texture, collection, curves, empty, grease pencil, lattice, lightprobe, metaball, pointcloud, speaker, volume), space editors (view3d sidebar/toolbar, image, dopesheet, node), freestyle, workspace
+- **Pattern**: Add `blended_min_tier = N` to base class, check in `poll()` via `tier_at_least()`; panels with own polls need explicit tier checks
 
-**Smart Defaults:** `scripts/startup/blended_defaults.py` applies tier-aware settings on new file creation (e.g., Simple: EEVEE + AO enabled; Advanced: full Blender defaults)
+**Smart Defaults:** `scripts/startup/blended_defaults.py` applies tier-aware settings on new file creation (e.g., Simple: Workbench + hidden N-panel + View Layer outliner; Standard: EEVEE + Material Preview; Advanced: full Blender defaults)
 
 **Update Checker:** `scripts/startup/blended_update_check.py` — background GitHub Release polling with 24-hour cache, non-blocking, top-bar notification with one-click download
 
