@@ -850,9 +850,17 @@ class NODE_PT_active_node_custom_properties(rna_prop_ui.PropertyPanel, Panel):
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'
     bl_category = "Node"
+    blended_min_tier = 2
 
     _context_path = "active_node"
     _property_type = bpy.types.Node
+
+    @classmethod
+    def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
+        return super().poll(context)
 
 
 class NODE_PT_texture_mapping(Panel):
@@ -866,8 +874,13 @@ class NODE_PT_texture_mapping(Panel):
         'BLENDER_WORKBENCH',
     }
 
+    blended_min_tier = 1
+
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         node = context.active_node
         return node and hasattr(node, "texture_mapping") and (context.engine in cls.COMPAT_ENGINES)
 
@@ -901,9 +914,13 @@ class NODE_PT_backdrop(Panel):
     bl_region_type = 'UI'
     bl_category = "View"
     bl_label = "Backdrop"
+    blended_min_tier = 1
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         snode = context.space_data
         return snode.tree_type == 'CompositorNodeTree'
 
@@ -937,9 +954,13 @@ class NODE_PT_quality(Panel):
     bl_region_type = 'UI'
     bl_category = "Options"
     bl_label = "Performance"
+    blended_min_tier = 1
 
     @classmethod
     def poll(cls, context):
+        from blended_utils import tier_at_least
+        if not tier_at_least(context, cls.blended_min_tier):
+            return False
         snode = context.space_data
         return snode.tree_type == 'CompositorNodeTree' and snode.node_tree is not None
 
