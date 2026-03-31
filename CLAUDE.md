@@ -97,3 +97,15 @@ Build tools (makesdna, makesrna, datatoc, shader_tool) run under **Node.js** at 
 - **Browser-only flags** (NEVER global): WebGL2, SharedArrayBuffer, `-matomics`, `-mbulk-memory`, `-pthread`
 
 See `TEMPLATE.md` Section 3 (Build System Translation) and Section 13 (Known Pitfalls, Pitfall 1: Global Flag Contamination) for the generalized pattern.
+
+### Warning Fix Patterns
+
+20,000+ warnings are currently blanket-suppressed in the Emscripten build. Fix them incrementally:
+
+- **Use explicit casts** (`static_cast<uint>()`, `static_cast<int>()`), not `#pragma` suppressions
+- **One subsystem per PR** — don't mix GPU fixes with Draw fixes
+- **Follow the phase order** in `WARNINGS.md`: Phase 1 GPU → Phase 2 Draw → Phase 3 Core → etc.
+- **Use the triage tool**: `python3 build_files/utils/parse_warnings.py <build_log>` to group warnings by subsystem and type
+- **Fractal principle**: Fix one subsystem correctly → the same pattern applies to all others
+
+See `TEMPLATE.md` Section 17 (For AI Assistants) and `PHILOSOPHY.md` §9 for general AI contributor guidance.
