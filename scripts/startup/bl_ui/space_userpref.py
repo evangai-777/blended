@@ -231,8 +231,11 @@ class USERPREF_PT_interface_display(InterfacePanel, CenterAlignMixIn, Panel):
         # Blended UI tier selector.
         box = col.box()
         box.label(text="Blended Interface Tier", icon='PREFERENCES')
-        box.prop(view, "ui_tier", text="")
-        box.label(text="Controls how much of the interface is visible. You can change this anytime.")
+        box.prop(view, "ui_tier", text="Tier")
+        sub = box.column(align=True)
+        sub.scale_y = 0.8
+        sub.label(text="Controls how much of the")
+        sub.label(text="interface is visible.")
 
         col.separator()
 
