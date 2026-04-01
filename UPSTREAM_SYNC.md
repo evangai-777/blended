@@ -108,3 +108,57 @@ When syncing to a new Blender release (e.g., 5.2 to 5.3):
 2. Consider bumping `BLENDED_VERSION_MINOR` or `BLENDED_VERSION_PATCH`
 3. Update `.github/README.md` to reference the new upstream version
 4. Test that `.blend` file compatibility is maintained (`BLENDER_FILE_VERSION` tracks upstream)
+
+---
+
+## Cherry-Picking
+
+Rather than doing a full merge, individual upstream commits can be cherry-picked
+when they fix something Blended already touches or add a capability that fits
+the project's goals without conflict risk.
+
+### When to Cherry-Pick vs Full Merge
+
+Cherry-pick when:
+- The change is isolated to one or two files with no Blended overlap
+- It's a bug fix in a subsystem Blended modifies (safer to pull in early)
+- It's a UX improvement directly relevant to learners
+
+Full merge instead when:
+- Many related commits need to land together to work correctly
+- Dependency libraries (OpenVDB, OpenColorIO, etc.) are updated
+- Python version is bumped (requires coordinated changes across many files)
+
+### Blender 5.1 Changes Worth Evaluating (as of April 2026)
+
+Blender 5.1 was released March 17, 2026. The fork currently tracks the
+Blender 5.2 alpha branch (`BLENDER_VERSION 502`). These 5.1 changes may or
+may not be present in the 5.2 alpha base — verify before cherry-picking.
+
+| Change | Affected Blended Areas | Priority | Notes |
+|--------|----------------------|----------|-------|
+| **Preferences search field added** | Tier dropdown in Preferences UI | High | Blended adds a tier selector to Preferences — verify it's findable by search and renders correctly alongside the new search widget |
+| **Asset Libraries individually disableable** | `blended_defaults.py` | High | Ideal Simple-tier smart default: disable non-essential asset libraries for new users. `bpy.context.preferences.filepaths.asset_libraries` |
+| **`template_list` `columns` param deprecated** | Any panel using `template_list` | Medium | Audit all tier-gated panels that call `template_list` — remove `columns=` argument if present |
+| **Node Tools require global unique `idname`** | `space_node.py` node add menu | Medium | Blended hides node submenus by tier; verify no node tool `idname` conflicts after this change |
+| **Grease Pencil fills revamp** (auto-converted on open) | GP tier-gated panels | Medium | GP panels are gated to Standard/Advanced tier — confirm panel visibility logic still holds after fill system conversion |
+| **Python upgraded to 3.13** | `blended_utils.py`, `blended_defaults.py`, `blended_update_check.py` | Low | Likely compatible, but run `make check_mypy` and `make check_pep8` against 3.13 to confirm |
+| **Outliner auto-scroll on rename** | No Blended overlap | Low | Pure UX polish, safe to include |
+
+### How to Verify a Cherry-Pick Candidate
+
+```bash
+# Find the commit on the upstream blender-v5.1-release branch
+git fetch upstream
+git log upstream/blender-v5.1-release --oneline --grep="asset librar"
+
+# Preview what the commit changes
+git show <commit-sha> --stat
+
+# Cherry-pick onto your sync branch
+git cherry-pick <commit-sha>
+```
+
+If the cherry-pick conflicts with a Blended-modified file, resolve by keeping
+the Blended addition and integrating the upstream change around it — same
+strategy as a full merge conflict. See "Conflict-Prone Files" above.
