@@ -160,3 +160,18 @@ Read these before making significant changes:
 - **Always push to the designated feature branch** — never push directly to `main` without review
 - **When writing documentation or config files**, commit each section separately — don't write the entire file and commit once
 - **Verify each push succeeded** before moving to the next task
+
+---
+
+## Working with Claude Code Efficiently
+
+Token budgets are real. These habits keep sessions productive:
+
+- **Be specific.** "Fix `MATERIAL_PT_preview` poll in `properties_material.py` — it's not calling `tier_at_least()`" costs far less than "there's a bug in the tier system." Vague tasks burn tokens on discovery.
+- **Direct tools beat agents for directed work.** Use Grep/Read/Glob directly when you know the file or symbol. Agents are for open-ended research, not single-file lookups.
+- **Front-load constraints.** Say "don't refactor anything outside this function" or "keep it under 20 lines" at the start — not after a 200-line response arrives.
+- **One task, one session.** Commit and close when a logical unit is done. Clean context = fewer tokens per useful output next time.
+- **Plan before large changes.** For anything touching 3+ files, ask for a one-paragraph approach first. Wrong approach caught in planning is cheaper than wrong approach caught in code review.
+- **This file is your best token saver.** Every time Claude re-learns a convention it could have read here, that's wasted budget. Keep it accurate.
+
+See `SAVINGS.md` for the full guide, including an emergency checklist for near-cap sessions.
