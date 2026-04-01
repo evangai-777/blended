@@ -165,13 +165,122 @@ Read these before making significant changes:
 
 ## Working with Claude Code Efficiently
 
-Token budgets are real. These habits keep sessions productive:
+Token budgets are real. These habits keep sessions productive.
 
-- **Be specific.** "Fix `MATERIAL_PT_preview` poll in `properties_material.py` — it's not calling `tier_at_least()`" costs far less than "there's a bug in the tier system." Vague tasks burn tokens on discovery.
-- **Direct tools beat agents for directed work.** Use Grep/Read/Glob directly when you know the file or symbol. Agents are for open-ended research, not single-file lookups.
-- **Front-load constraints.** Say "don't refactor anything outside this function" or "keep it under 20 lines" at the start — not after a 200-line response arrives.
-- **One task, one session.** Commit and close when a logical unit is done. Clean context = fewer tokens per useful output next time.
-- **Plan before large changes.** For anything touching 3+ files, ask for a one-paragraph approach first. Wrong approach caught in planning is cheaper than wrong approach caught in code review.
-- **This file is your best token saver.** Every time Claude re-learns a convention it could have read here, that's wasted budget. Keep it accurate.
+### The Core Idea
 
-See `SAVINGS.md` for the full guide, including an emergency checklist for near-cap sessions.
+Tokens are spent on two things: **context** (what Claude reads) and **output**
+(what Claude writes). Both matter. Most waste comes from one of three patterns:
+
+1. Vague tasks that require many clarifying rounds
+2. Agents launched for things a direct tool call could handle
+3. Asking Claude to explore before you've told it where to look
+
+### High-Leverage Patterns
+
+**1. Be specific about the target.**
+"Fix `MATERIAL_PT_preview` poll in `properties_material.py` — it's not calling
+`tier_at_least()`" costs far less than "there's a bug in the tier system."
+Vague tasks burn tokens on discovery. Name the file, the function, the line.
+
+**2. Know the file before asking Claude to find it.**
+If you already know where something lives, say so. "Read
+`scripts/modules/blended_utils.py` lines 40–60" costs far less than "find
+where the tier check happens." Searching costs tokens. Knowing costs zero.
+
+**3. Avoid agents for directed searches.**
+Agents are powerful but expensive. For anything with a clear target, use tools
+directly:
+- "Find the definition of `tier_at_least`" → Grep directly
+- "Does `properties_material.py` call `template_list`?" → Grep directly
+- "What's in `blended_defaults.py`?" → Read directly
+
+Agents add spawning and summarizing overhead. Skip them when you have a target.
+
+**4. Use agents only for genuinely open-ended work.**
+Good: researching upstream Blender commits across many pages, exploring an
+unfamiliar subsystem for the first time, running a background task while you
+work on something else. Bad: finding a single function, reading one file,
+answering a question about code you could just grep.
+
+**5. One task, one session.**
+Sessions accumulate context. When a logical unit is done (a bug fix, a feature,
+a research task), commit, push, and start fresh. Clean context = fewer tokens
+per useful output.
+
+**6. Commit frequently, before context gets heavy.**
+Every commit is a checkpoint. If a session ends or gets compressed, a clean
+`git log` lets Claude reconstruct intent without re-reading files. Small
+commits also mean smaller diffs and faster code review passes.
+
+**7. Front-load constraints.**
+Say what NOT to do at the start — not after Claude has already done it:
+- "Don't spawn agents, use direct tool calls."
+- "Don't refactor anything outside this function."
+- "Keep it under 20 lines."
+- "Don't add comments or docstrings."
+
+Correcting an unwanted 200-line response costs more than preventing it.
+
+**8. Ask for a plan before a big implementation.**
+For anything touching more than 3 files, ask for a one-paragraph approach
+first. Wrong approach caught in planning is cheaper than wrong approach caught
+after 400 lines of code have been written.
+
+**9. Narrow the scope of exploratory tasks.**
+"Scan all recent upstream Blender commits and tell me what's relevant" launched
+an agent that hit the token cap. "Fetch the Blender 5.1 release notes and
+summarize the UI and Python API changes" produced the same useful output with
+three direct tool calls. Scoping the question scopes the work.
+
+**10. This file is your best token saver.**
+Every time Claude re-learns a convention it could have read here, that's wasted
+budget. When you notice Claude doing something wrong repeatedly, add it to this
+file rather than correcting it every session.
+
+### Token Cost Reference
+
+| Operation | Relative Cost |
+|-----------|--------------|
+| Direct file read (Read tool) | Low |
+| Direct Grep/Glob search | Low |
+| Single WebFetch | Medium |
+| Single WebSearch | Medium |
+| Agent (foreground, simple task) | High |
+| Agent (foreground, research task) | Very High |
+| Agent (background, long-running) | Very High + waits |
+| Large refactor across 10+ files | Very High |
+| Back-and-forth correction loops | Compounds fast |
+
+### Emergency Mode (Near the Cap)
+
+When you're at ~10% remaining:
+
+1. **No agents.** Direct tool calls only.
+2. **No exploration.** Know the file before asking about it.
+3. **One thing.** Pick the single highest-value task and do only that.
+4. **Short outputs.** "In one paragraph." "Under 20 lines." "Just the diff."
+5. **Skip the docs.** No comments, docstrings, or summaries unless they're
+   the actual deliverable.
+6. **Commit before you start.** If the session ends mid-task, you want a
+   clean base to return to next week.
+
+### What's Worth Spending Tokens On
+
+In rough priority order for this project:
+
+1. **Bug fixes with a clear reproduction** — high value, tight scope
+2. **Implementing a feature you've already designed** — efficient with a spec
+3. **One-time research with durable output** — pays for itself (e.g. upstream
+   sync analysis written into `UPSTREAM_SYNC.md`)
+4. **Refactoring** — low priority; defer unless actively blocking work
+5. **Exploration / "what does this code do?"** — use sparingly; read it
+   yourself when you can
+
+### The Meta-Principle
+
+Claude Code works best when you treat it like a skilled contractor, not a
+search engine. A contractor does their best work when handed a blueprint, not
+when asked to figure out what to build. The more you've thought through a task
+before opening a session, the more of your token budget goes toward actual
+work rather than planning overhead.
