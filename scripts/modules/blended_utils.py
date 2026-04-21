@@ -30,10 +30,23 @@ TIER_NAMES = {
     TIER_ADVANCED: "Advanced",
 }
 
+# RNA enum properties return string identifiers, not integers.
+# Map from the identifier defined in rna_userdef.cc to our int constants.
+_TIER_FROM_ID = {
+    'SIMPLE': TIER_SIMPLE,
+    'STANDARD': TIER_STANDARD,
+    'ADVANCED': TIER_ADVANCED,
+}
+
 
 def get_ui_tier(context):
-    """Return the current UI tier value from user preferences."""
-    return int(context.preferences.view.ui_tier)
+    """Return the current UI tier as an integer (0/1/2)."""
+    raw = context.preferences.view.ui_tier
+    # RNA exposes PROP_ENUM as a string identifier; guard against future
+    # changes that might return an integer directly.
+    if isinstance(raw, str):
+        return _TIER_FROM_ID.get(raw, TIER_STANDARD)
+    return int(raw)
 
 
 def tier_at_least(context, tier):
