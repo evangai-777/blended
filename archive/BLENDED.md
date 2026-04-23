@@ -121,7 +121,7 @@ Identified, principles locked, final per-format decisions still being headhunted
 
 ---
 
-## 6. Launcher Architecture [LOCKED in principle, UI details OPEN]
+## 6. Launcher Architecture [SUPERSEDED by §11 — preserved for history]
 
 ### Structure
 
@@ -302,7 +302,53 @@ Blender itself has marked these for replacement. Blended finishes the job.
 
 ---
 
-## 11. Document Conventions
+## 11. Pipeline as UX [LOCKED, supersedes §6]
+
+The user-facing structure of Blended **is** the production pipeline. Not a menu of workspaces. Not a grid of tool doors. A visible flow through animation production, with animation as the apex and everything else feeding into or out from it.
+
+### The pipeline (canonical order)
+
+> Storyboard / Annotation → 2D Animation *(pre-vis or final)* → Assets *(Sculpt / Model / Rigs)* → Environments → VFX + Sound → **KEYFRAMES / TIMELINES [apex]** → Compositing / Video Editing
+
+Animation is the apex because every upstream stage feeds into it and every downstream stage serves it. This replaces §6's "Animator is the headline door because we said so" with something structurally honest: the pipeline shows *why* animation sits at the center.
+
+### Launcher structure [LOCKED in principle, pixel-level UI still OPEN]
+
+- **Top of launcher:** a single-word prompt — **"Blending?"** — question mark intended. Reads both as status ("what's blending?") and invitation ("want to blend?"). Matches the playful register the project wants to hold.
+- **Body:** vertical tiles, one per pipeline stage, stacked top to bottom. The whole pipeline visible at a glance.
+- **Each stage tile contains:** the stage name, and buttons for the specific modes accessible from that stage.
+  - *Storyboarding* tile → mode buttons for storyboard / annotation workflows
+  - *2D Animation* tile → draw / ink / animate buttons (community-extensible per §2)
+  - *Assets* tile → Sculpt, Model, Rigs buttons
+  - *Environments* tile → environment-specific modes
+  - *VFX + Sound* tile → sim, particle, sound-edit modes
+  - *Animate* tile → timeline / dope sheet / F-curve / NLA entries (the apex)
+  - *Composite / Edit* tile → compositor, VSE
+- **Visual hierarchy:** every stage equally visible; whole pipeline on one screen, no drill-downs. The apex stage may be styled to draw the eye, but nothing is hidden behind a click.
+
+### Principles [LOCKED]
+
+- **Freely jumpable.** Enter any stage at any time, regardless of project state. Pipeline is the organizing metaphor, not a forced sequence.
+- **Directly enterable.** A sculptor who just wants to sculpt clicks Sculpt under Assets and is there. No pipeline-walk required.
+- **Project state reflected back.** The launcher shows *where the current project has content* — stages with data look different from empty stages. First-time new user sees all stages neutral/inviting.
+- **Pipeline is the default view, not mandatory.** Re-enterable from any workspace via a global hotkey or equivalent.
+- **Each stage button opens a filtered view of the same project.** The `.blended` file is one file; the mode controls what's visible. (This is why §10's UI-state datablock removals are load-bearing — once SCR/WM/WS are not project data, the launcher becomes the canonical workspace system.)
+
+### What this settles
+
+- **§6 Launcher** is superseded by this section. Preserved there for history.
+- **§2 substrate split** is still true but more nuanced inside the pipeline: 2D is early/optional at the front (Storyboard, 2D Animation); 3D is mid-pipeline (Assets, Environments); Animation and post are substrate-agnostic.
+- **§10 datablock ownership** gets natural homes — each datablock type belongs to a stage, which helps "filtered view per workspace" land cleanly.
+
+### Still open
+
+- **VFX placement.** Pre-animation VFX (particles, sims, assets-that-move) vs post-animation VFX (compositing-style). Both exist; may need two tiles or one with sub-differentiation. Parked.
+- **Stage granularity.** Assets = Sculpt + Model + Rigs as one stage with three mode buttons (current plan) vs three sibling stages. Current plan: one stage.
+- **Project state visualization.** How "where you are in your project" renders on the pipeline — progress indicators, filled tiles, content markers — all UI detail for later.
+
+---
+
+## 12. Document Conventions
 
 - Tag new sections with [LOCKED] / [OPEN] / [REJECTED] / [GUARDRAIL].
 - When reopening a LOCKED section, state why and what new evidence changed the call.
