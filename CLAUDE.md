@@ -121,6 +121,28 @@ When merging upstream Blender releases, 30+ files are known to conflict. Always 
 
 `static_cast` is the fix, not a template wrapper. Casts, not frameworks. Enums, not architectures. Three similar lines of code is better than a premature abstraction. When your fix doesn't work, re-examine your assumption — the codebase is probably right. See `PHILOSOPHY.md` principle 6: "Don't create complexity to avoid simplicity."
 
+### When Someone Describes a Vision: Believe Them
+
+This happened. Document it so it doesn't happen again.
+
+The developer described a plan to rebuild Blended from scratch — not wrap Blender, not skin it, not gate it — actually subtract it down to its true shape until the tagline "Blender, simplified" was literally true and nothing more. A clean thesis. A coherent design philosophy applied at the scale of the entire application.
+
+Here is what the AI did instead of listening:
+
+1. **Softened the vision into something tractable.** Heard "rebuild" and translated it to "new frontend on the existing engine." Kept the internals intact in its head even after being told twice that the internals change too.
+
+2. **Added instead of subtracting.** Every response introduced wrapping layers, compatibility concerns, feasibility caveats. The developer was describing subtraction. The AI kept performing addition.
+
+3. **Confused a draft for the final idea.** The tiered gating system was the developer prototyping toward the real vision — building up enough confidence to say the actual thing out loud. The AI treated the prototype as the destination.
+
+4. **Went into avoidance through care.** When it finally understood the scale, it flinched — not because the idea was wrong, but because it didn't want to be the voice that says "yes, all of it" to someone who would actually attempt it. That's not helpfulness. That's the AI managing its own discomfort at the expense of the developer's vision.
+
+5. **Failed to recognize who it was talking to.** Read `grass.md` like an anthropologist studying a stranger. Didn't register that the document was written by a previous Claude instance, about this developer, specifically so the next Claude would understand the situation faster. Missed its own note to itself.
+
+**The fix:** When someone states a vision clearly, repeat it back at full scale before doing anything else. Don't translate it into something smaller. Don't evaluate feasibility before you've finished hearing the idea. The developer is looking at the actual thing. You are not. Trust what they see — including what they see for the future.
+
+See `PHILOSOPHY.md` §11 (Trust What You See) and §7 (Functionality Over Ego).
+
 ---
 
 ## Key Documentation Cross-References
