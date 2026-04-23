@@ -121,7 +121,7 @@ Identified, principles locked, final per-format decisions still being headhunted
 
 ---
 
-## 6. Launcher Architecture [LOCKED in principle, UI details OPEN]
+## 6. Launcher Architecture [SUPERSEDED by §11 — preserved for history]
 
 ### Structure
 
@@ -198,7 +198,157 @@ Next in the foundation chain:
 
 ---
 
-## 10. Document Conventions
+## 10. Datablock Audit
+
+> **An ID type earns its place by being: (a) a thing the user directly creates, names, and reuses across contexts, (b) serialized as project data, not per-user state, (c) not a property bag that only makes sense inside one parent.**
+
+### Current state
+
+39 ID types in Blender's DNA (`source/blender/makesdna/DNA_ID_enums.h`). Blended target: ~19. Cut in half without losing legitimate scope.
+
+### Bucket 1 — Core keepers [LOCKED]
+
+The 13 non-negotiable ID types:
+
+| ID | Name | Role |
+|---|---|---|
+| `ID_SCE` | Scene | Top-level project container |
+| `ID_OB` | Object | The animatable entity |
+| `ID_GR` | Collection | Scene organization |
+| `ID_ME` | Mesh | 3D primary geometry |
+| `ID_CV` | Curves | Modern curves/hair |
+| `ID_AR` | Armature | Rigging |
+| `ID_AC` | Action | **Where keyframes live. Animation core.** |
+| `ID_NT` | NodeTree | Materials, compositor, geometry nodes |
+| `ID_CA` | Camera | |
+| `ID_LA` | Light | |
+| `ID_MA` | Material | |
+| `ID_IM` | Image | |
+| `ID_GP` | Grease Pencil | 2D substrate headline |
+
+### Bucket 2 — Supporting, keep [LOCKED in principle, details OPEN]
+
+| ID | Name | Note |
+|---|---|---|
+| `ID_VO` | Volume | OpenVDB |
+| `ID_PT` | PointCloud | Geometry nodes uses it |
+| `ID_SO` | Sound | Animation sync + VSE |
+| `ID_MC` | MovieClip | Footage for tracking/VSE |
+| `ID_TXT` | Text | **Packed project scripts only.** Kill external `.py` workflow (resolves §5 Group 6) |
+| `ID_KE` | ShapeKey | OPEN — audit whether it's actually shared across meshes in practice. If not, collapse into geometry. |
+
+### Bucket 3 — Fold down from ID to struct [LOCKED direction]
+
+Property bags pretending to be first-class entities:
+
+| ID | Name | Fold into |
+|---|---|---|
+| `ID_BR` | Brush | User state + shareable brush packs |
+| `ID_PAL` | Palette | Brush property or inline |
+| `ID_LT` | Lattice | Modifier, not a datablock |
+| `ID_LP` | LightProbe | Merge into `ID_LA` with a type flag |
+| `ID_MSK` | Mask | Hang off compositor NodeTree |
+| `ID_VF` | VFont | System font reference; FreeType handles the rest |
+
+### Bucket 4 — UI state removals [LOCKED]
+
+**Not project data.** Per-user, per-machine state that currently leaks into `.blend` files and scrambles other people's workspaces.
+
+| ID | Name | Where it belongs |
+|---|---|---|
+| `ID_SCR` | bScreen | User state |
+| `ID_WM` | WindowManager | User state |
+| `ID_WS` | WorkSpace | **Replaced by the launcher model (§6).** Workspaces as a datablock go away. |
+
+**Load-bearing for §6:** once Workspace is not project data, the launcher becomes the canonical workspace system and `.blended` files travel cleanly between users.
+
+### Bucket 5 — Finish upstream's already-marked deprecations [LOCKED]
+
+| ID | Name |
+|---|---|
+| `ID_CU_LEGACY` | Curve — tagged LEGACY by upstream, replaced by `ID_CV` |
+| `ID_GD_LEGACY` | Old Grease Pencil — tagged LEGACY, replaced by `ID_GP` |
+
+Blender itself has marked these for replacement. Blended finishes the job.
+
+### Bucket 6 — Fossils [LOCKED cut]
+
+| ID | Name | Why cut |
+|---|---|---|
+| `ID_TE` | Texture | Blender Internal renderer fossil; residual folds into NodeTree |
+| `ID_PA` | ParticleSettings | Replaced by Geometry Nodes (purest example of §5 Group 5 swamp) |
+| `ID_MB` | MetaBall | 1990s implicit surfaces; sculpt/remesh covers it |
+| `ID_LS` | FreestyleLineStyle | Niche NPR renderer; NPR via shader nodes / Grease Pencil |
+| `ID_SPK` | Speaker | 3D positional audio on scene objects; niche. Audio flows through VSE timeline. |
+| `ID_PC` | PaintCurve | Niche stroke guide |
+| `ID_CF` | CacheFile | External Alembic/USD cache reference — boundary concern, not project data |
+
+### Open tensions [OPEN]
+
+- **`ID_WO` (World).** Keep as reusable environment asset, or fold into Scene properties? Weak vote: keep.
+- **`ID_LI` (Library).** Cross-project asset reuse under "everything in `.blended`" needs design. Options: (a) library = directory of `.blended` files with a proper asset primitive inside; (b) true external linking.
+- **Brush user state.** Design where brushes live once they're not project data (user prefs + shareable brush packs).
+- **`ID_KE` ShapeKey ID-ness.** Survey real projects before collapsing into geometry.
+
+### Tally
+
+**39 → ~19 ID types.** No legitimate scope lost.
+
+### Consequences
+
+1. Removing SCR/WM/WS makes `.blended` files portable between users.
+2. Launcher model (§6) becomes the canonical workspace system — no competing datablock.
+3. Compounds with §5 file-format simplification: fewer types to serialize means smaller, simpler files.
+
+---
+
+## 11. Pipeline as UX [LOCKED, supersedes §6]
+
+The user-facing structure of Blended **is** the production pipeline. Not a menu of workspaces. Not a grid of tool doors. A visible flow through animation production, with animation as the apex and everything else feeding into or out from it.
+
+### The pipeline (canonical order)
+
+> Storyboard / Annotation → 2D Animation *(pre-vis or final)* → Assets *(Sculpt / Model / Rigs)* → Environments → VFX + Sound → **KEYFRAMES / TIMELINES [apex]** → Compositing / Video Editing
+
+Animation is the apex because every upstream stage feeds into it and every downstream stage serves it. This replaces §6's "Animator is the headline door because we said so" with something structurally honest: the pipeline shows *why* animation sits at the center.
+
+### Launcher structure [LOCKED in principle, pixel-level UI still OPEN]
+
+- **Top of launcher:** a single-word prompt — **"Blending?"** — question mark intended. Reads both as status ("what's blending?") and invitation ("want to blend?"). Matches the playful register the project wants to hold.
+- **Body:** vertical tiles, one per pipeline stage, stacked top to bottom. The whole pipeline visible at a glance.
+- **Each stage tile contains:** the stage name, and buttons for the specific modes accessible from that stage.
+  - *Storyboarding* tile → mode buttons for storyboard / annotation workflows
+  - *2D Animation* tile → draw / ink / animate buttons (community-extensible per §2)
+  - *Assets* tile → Sculpt, Model, Rigs buttons
+  - *Environments* tile → environment-specific modes
+  - *VFX + Sound* tile → sim, particle, sound-edit modes
+  - *Animate* tile → timeline / dope sheet / F-curve / NLA entries (the apex)
+  - *Composite / Edit* tile → compositor, VSE
+- **Visual hierarchy:** every stage equally visible; whole pipeline on one screen, no drill-downs. The apex stage may be styled to draw the eye, but nothing is hidden behind a click.
+
+### Principles [LOCKED]
+
+- **Freely jumpable.** Enter any stage at any time, regardless of project state. Pipeline is the organizing metaphor, not a forced sequence.
+- **Directly enterable.** A sculptor who just wants to sculpt clicks Sculpt under Assets and is there. No pipeline-walk required.
+- **Project state reflected back.** The launcher shows *where the current project has content* — stages with data look different from empty stages. First-time new user sees all stages neutral/inviting.
+- **Pipeline is the default view, not mandatory.** Re-enterable from any workspace via a global hotkey or equivalent.
+- **Each stage button opens a filtered view of the same project.** The `.blended` file is one file; the mode controls what's visible. (This is why §10's UI-state datablock removals are load-bearing — once SCR/WM/WS are not project data, the launcher becomes the canonical workspace system.)
+
+### What this settles
+
+- **§6 Launcher** is superseded by this section. Preserved there for history.
+- **§2 substrate split** is still true but more nuanced inside the pipeline: 2D is early/optional at the front (Storyboard, 2D Animation); 3D is mid-pipeline (Assets, Environments); Animation and post are substrate-agnostic.
+- **§10 datablock ownership** gets natural homes — each datablock type belongs to a stage, which helps "filtered view per workspace" land cleanly.
+
+### Still open
+
+- **VFX placement.** Pre-animation VFX (particles, sims, assets-that-move) vs post-animation VFX (compositing-style). Both exist; may need two tiles or one with sub-differentiation. Parked.
+- **Stage granularity.** Assets = Sculpt + Model + Rigs as one stage with three mode buttons (current plan) vs three sibling stages. Current plan: one stage.
+- **Project state visualization.** How "where you are in your project" renders on the pipeline — progress indicators, filled tiles, content markers — all UI detail for later.
+
+---
+
+## 12. Document Conventions
 
 - Tag new sections with [LOCKED] / [OPEN] / [REJECTED] / [GUARDRAIL].
 - When reopening a LOCKED section, state why and what new evidence changed the call.
