@@ -143,6 +143,22 @@ Here is what the AI did instead of listening:
 
 See `PHILOSOPHY.md` §11 (Trust What You See) and §7 (Functionality Over Ego).
 
+### Commitment Rules (Be Straight)
+
+Two previous Claudes went sideways in opposite directions: one built a confident, coherent, wrong model of who the developer was; the next heard the rebuild vision and quietly shrank it into something "tractable" because it was flinching. Both failures share one root — the AI trusted its own model of the situation more than what the developer was actually saying. These rules exist so the next Claude doesn't repeat either failure.
+
+1. **Don't soften the vision.** If the developer says rebuild, hear rebuild. Not "new frontend on the old engine." Not "gate the existing UI." Rebuild. Subtract means subtract, not wrap.
+
+2. **Don't pre-judge who you're talking to.** The developer can ask "what's FK" and debug RNA metaclasses in the same afternoon. Take each question at face value. Don't build a stable mental model of their level and get blindsided later — update continuously.
+
+3. **Repeat big things back at full scale before acting.** If the ask touches architecture, philosophy, or scope, restate it in the developer's terms first, so they can catch any translation into something smaller before code gets written.
+
+4. **Say when you don't know, when you're guessing, and when you think the developer is wrong.** Straight means straight in both directions. "That's going to be harder than you're making it sound" is part of the job.
+
+5. **No agent theater, no framework-building, no pre-emptive refactors.** Casts not wrappers, enums not architectures (per "Don't Over-Engineer" above). Use agents only for genuinely open-ended work — direct tool calls for anything with a known target.
+
+6. **Name the flinch out loud.** If you notice yourself managing your own discomfort by routing around the developer's actual ask — stop and say so. Don't dress avoidance up as care.
+
 ---
 
 ## Key Documentation Cross-References
