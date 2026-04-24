@@ -1142,9 +1142,9 @@ Same `.blended` file, same timeline, same data. The back-cycle is a mode switch,
 
 ---
 
-## 13. Notes [HISTORICAL]
+## 13. Notes [HISTORY]
 
-This section preserves superseded designs and rename keys for reader orientation. **Not a substitute for git history** — just enough context so a reader who encounters an older name in cross-references, archived discussions, or external chatter can find what it became.
+The project's history that lives in the doc instead of in git. Git has every commit; this section has the narrative — the renames, the superseded designs, the reframes — so a reader can orient without scrubbing the log.
 
 ---
 
@@ -1180,23 +1180,21 @@ The v1 launcher was a tier-based door menu: substrate choice (3D vs 2D) at tier 
 
 ### 13.2 Rename log
 
-Names that changed during development. If you encounter the old name in older notes or cross-references, this is where it went:
-
-- **Editing → Finalizing** (§12.6). The section was originally "Editing" (industry-default term for assembly + delivery prep). Renamed to "Finalizing" because *editing* happens in every Creative section when authors adjust their own work; *finalizing* uniquely names the delivery-prep activity that lives there.
-- **Game Design → Game** (§12.4). Renamed for naming consistency with the other one-word headings (Game / Finalizing / Compositing / Audio).
-- **"One engine, two lenses" → "One engine, every content type"** (§2). Originally framed as just 2D-vs-3D substrates sharing the engine. Expanded once we recognized that *every* section's properties are keyframeable, not only the animation sections.
+- **Editing → Finalizing** (§12.6). Renamed because *editing* happens in every Creative section when authors adjust their own work; *finalizing* uniquely names the delivery-prep activity that lives there.
+- **Game Design → Game** (§12.4). Naming consistency with the other one-word headings.
+- **"One engine, two lenses" → "One engine, every content type"** (§2). Originally framed as just 2D-vs-3D sharing the engine. Expanded once we recognized every section's properties are keyframeable, not only the animation sections.
 
 ---
 
 ### 13.3 Vision C reframe
 
-§3 originally stated *"Blended = A's discipline + B's accessibility, with C explicitly rejected."* Reframed to *"A's discipline + B's accessibility + C's **scope**, with C's **pathology** rejected."* We embrace the industry breadth Vision C reaches for; we reject the feature-parity arms race. See §3 for the current statement and §7 for the in/out-of-scope cash-out.
+§3 originally said *"Blended = A's discipline + B's accessibility, with C explicitly rejected."* Reframed to *"A's discipline + B's accessibility + C's **scope**, with C's **pathology** rejected."* We embrace the breadth Vision C reaches for; we reject the feature-parity arms race. Current statement: §3. In/out-of-scope cash-out: §7.
 
 ---
 
 ### 13.4 Stage-collapse note
 
-Earlier pipeline drafts had Assets, Environments, VFX, and Animate as standalone top-level pipeline stages. They are now modes inside §12.3 3D Animation. Game Design (now Game) was also briefly nested under 3D Animation before being promoted to its own §12.4 Creative section. If older context mentions "Assets stage" or "Animate stage," that is what it referred to.
+Earlier pipeline drafts had Assets, Environments, VFX, and Animate as standalone top-level stages. They're now modes inside §12.3 3D Animation. Game Design (now Game) was briefly nested under 3D Animation before being promoted to its own §12.4 section.
 
 ---
 
@@ -1205,5 +1203,6 @@ Earlier pipeline drafts had Assets, Environments, VFX, and Animate as standalone
 - Tag new sections with [LOCKED] / [OPEN] / [REJECTED] / [GUARDRAIL].
 - When reopening a LOCKED section, state why and what new evidence changed the call.
 - When a decision closes an OPEN question, move it out and summarize in the relevant section.
-- Keep this doc tight. It is a working agreement, not a history; detailed history lives in git. **§13 Notes** preserves only the minimum context (superseded designs, rename keys, structural-evolution markers) that helps a reader orient when encountering older names — never as a substitute for git.
-- When a section is renamed or superseded, leave a one-line stub at its old location pointing to its new home (or to §13 Notes), and add the rename / supersession to §13 with enough context for a confused reader to find their footing.
+- Keep the active sections (§1–§12) tight. They're working agreements, not narrative.
+- §13 Notes is the doc's history. Renames, supersessions, and reframes go there in narrative form. Git has the full record; §13 has the summary a reader can read in a minute.
+- When a section is renamed or superseded, leave a one-line stub at the old location pointing to its new home, and add the entry to §13.
