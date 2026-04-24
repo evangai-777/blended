@@ -64,18 +64,32 @@ Under the hood: **one engine, two lenses.** The depsgraph, keyframes, timeline, 
 
 ## 3. Historical Context & Why This Matters [LOCKED]
 
-Blender carries three stacked, unreconciled visions. Blended explicitly reconciles them.
+Blender carries three stacked, unreconciled visions. Blended blends them.
 
 | Era | Blender | Vision |
 |---|---|---|
 | 1993–1998 | NeoGeo in-house tool | **A** — opinionated studio tool |
 | 1998–2002 | NaN / Foundation rescue | **B** — "free 3D software for everyone," access mission, identity undefined |
 | 2003–2018 | Open Movies era | **A-redux** — dogfood-driven, studio-shaped |
-| 2019–today | Industry DCC era | **C** — feature parity with Maya/Houdini/ZBrush/Premiere/Nuke |
+| 2019–today | Industry DCC era | **C** — industry-range creative suite (2D, 3D, games, compositing, editing, audio) |
 
-**Blended = A's discipline + B's accessibility, with C explicitly rejected.**
+### What Blended takes from each, and what it refuses
 
-The substrate split (§2) resolves the secondary tension between "animation tool" (A's origin) and "3D software for everyone" (B's stated mission). Animation is the *shaping discipline*; 2D/3D software is the *scope*.
+**Blended = A's discipline + B's accessibility + C's scope, with C's *pathology* explicitly rejected.**
+
+- **From A** — opinionated discipline. Animation is the shaping discipline; the core is designed around it; decisions are made, not deferred.
+- **From B** — accessibility. The tool is openable by a first-time user. Launcher tells the truth about what Blended is. "Free 2D and 3D software tools" in the slogan means access is real, not rhetorical.
+- **From C — *scope, not pathology*.** Blended commits to the breadth of professional creative work C has always been reaching for: 2D animation, 3D animation, game asset creation, compositing, editing, audio, illustration (when in scope). The pipeline sections in §11 (Storyboarding, 2D Animation, 3D Animation, Game Design, Editing, Compositing, Audio) *are* C's scope, honestly inhabited.
+
+### What C's *pathology* means, specifically
+
+C's failure mode — the one that made Blender feel pathological — is not having broad scope. It's:
+
+1. **Feature-parity arms race** — adding features because Maya / Houdini / ZBrush / Premiere / Nuke have them, not because the feature serves the core.
+2. **Core deformation by industry quirks** — letting FBX, USD, or other interchange-format idiosyncrasies shape the internal data model instead of translating at the boundary (see §5).
+3. **Co-equal unreconciled identities** — "we are also a game engine and a video editor and a CAD tool" without a shaping discipline to resolve the conflicts.
+
+Blended embraces C's *breadth* while rejecting those three failure modes. The substrate split (§2) and the Creative/Post pipeline grouping (§11) are what make breadth coherent instead of pathological. Animation is still the shaping discipline; breadth lives around it, not in place of it.
 
 ---
 
@@ -151,24 +165,28 @@ Identified, principles locked, final per-format decisions still being headhunted
 
 ## 7. What's In Scope [LOCKED]
 
-Default rule: **include if it fits 2D or 3D software AND doesn't deform the animation-shaped core.** Exclude only for genuine identity/runtime conflicts.
+Default rule: **include if it fits 2D or 3D creative work AND doesn't deform the animation-shaped core.** Scope is broad (C's breadth, embraced per §3). Exclude only for genuine identity/runtime conflicts or C-pathology tells.
 
 ### In scope
-- 3D and 2D animation (the core)
-- 3D modeling, sculpting, rendering (supporting, but competent as standalone uses)
-- Rigging and character animation
-- Game asset creation, rigging for game engines, animation export to Unity/Unreal/Godot, sprite sheets, 2D game art
+- 2D and 3D animation (the shaping discipline)
+- 3D modeling, sculpting, rigging, rendering
+- Game asset creation, rigging for game engines, animation export to Unity/Unreal/Godot, sprite sheets, 2D game art, LOD/baking workflows
 - Still-frame renders, product visualization, architectural visualization
 - Grease Pencil (2D) with optional bridging into 3D scenes
-- Compositing, video sequence editing (as post-animation finishers)
-- Geometry nodes (procedural rigs, procedural motion)
+- Compositing, video editing, audio mixing (as post-animation finishers)
+- Geometry nodes (procedural rigs, procedural motion, procedural environments)
 - USD / glTF / FBX / OBJ / Alembic at the boundary
+- Illustration, concept art, and graphic design workflows (§11 Design section)
 
 ### Out of scope [REJECTED]
-- **Runtime game engine inside Blended** (BGE/UPBGE style), gameplay scripting, interactive runtime as an output medium
-- **Feature-parity arms race** with Maya/Houdini/ZBrush/Premiere/Nuke (the Vision C trap)
-- **Legacy/fossil formats** that exist because no one dared delete them (see §5 Groups 2–3)
-- **"Co-equal at identity level"** — animation-and-generalist as twin identities. That is Blender's current pathology. See §3.
+
+Rejected for specific reasons, not because "Vision C." Scope is embraced; only pathology is rejected (see §3).
+
+- **Runtime game engine inside Blended** (BGE/UPBGE style), gameplay scripting, interactive runtime as an output medium. *Reason: identity/runtime conflict — Blended authors content; it doesn't host runtime gameplay.*
+- **Feature-parity arms race.** Adding features because Maya/Houdini/ZBrush/Premiere/Nuke/Photoshop/Illustrator have them, not because they serve the core. *Reason: C-pathology tell — see §3.* Scope expansion on its own isn't the pathology; parity-reasoning is.
+- **Core deformation by industry format quirks.** Interchange formats translate at the §5 boundary; they do not reshape internal data models. *Reason: C-pathology tell.*
+- **"Co-equal at identity level"** — animation-and-generalist as twin unreconciled identities. *Reason: this is Blender's current pathology; the substrate split (§2) and Creative/Post grouping (§11) resolve it.*
+- **Legacy/fossil formats** that exist because no one dared delete them (see §5 Groups 2–3, §10 Bucket 6). *Reason: accumulated cruft with no active user base.*
 
 ---
 
@@ -177,11 +195,11 @@ Default rule: **include if it fits 2D or 3D software AND doesn't deform the anim
 Named failure modes. If you catch yourself or a collaborator doing these, push back.
 
 1. **Exclusion bias.** Once the broader substrate frame was agreed, the first instinct was still to *cut* things (Framing A energy). Wrong under our agreed frame. Correct default: **include if it fits the scope and doesn't deform the core.** Claude flagged this bias in-session; it applies to humans too.
-2. **Co-equal trap (Framing C).** "Both X and Y are co-equal identities" is indistinguishable in practice from "we haven't decided." If two ideas sound co-equal, find the structural layer where one is scope and the other is shaping discipline, or find a substrate split (§2). Do not leave identity co-equality unresolved.
+2. **Co-equal identities trap.** "Both X and Y are co-equal identities" is indistinguishable in practice from "we haven't decided." (This is distinct from Vision C in §3 — Vision C is about *scope and pathology*, not identity co-equality.) If two ideas sound co-equal, find the structural layer where one is scope and the other is shaping discipline, or find a substrate split (§2). Do not leave identity co-equality unresolved.
 3. **Implicit priority drift.** Blender's disease is that priorities exist but are never stated. If Blended starts accumulating features justified by implicit priorities, stop and re-read §1.
 4. **UI-first temptation.** UI before data model = the failure mode of the previous attempt. Don't.
 5. **Format-as-shaper.** If an industry format's quirks are deforming the core data model, the boundary is leaking. Fix the boundary, not the core.
-6. **"Feature parity" language.** If someone argues for a feature on the grounds that Maya/Houdini/ZBrush has it, that is a Vision C tell. Evaluate on whether it serves the core + scope, not on parity.
+6. **"Feature parity" language.** If someone argues for a feature on the grounds that Maya/Houdini/ZBrush/Premiere/Nuke has it, that is a **Vision C *pathology*** tell — not a scope argument. C's scope (industry breadth) is embraced per §3; C's pathology (feature-parity arms race) is not. Evaluate every feature on whether it serves the core and the shaping discipline, not on who else has it.
 
 ---
 
@@ -304,51 +322,201 @@ Blender itself has marked these for replacement. Blended finishes the job.
 
 ## 11. Pipeline as UX [LOCKED, supersedes §6]
 
-The user-facing structure of Blended **is** the production pipeline. Not a menu of workspaces. Not a grid of tool doors. A visible flow through animation production, with animation as the apex and everything else feeding into or out from it.
+The user-facing structure of Blended **is** the production pipeline. Not a menu of workspaces. Not a grid of tool doors. A visible flow through creative work, grouped into **Creative (authoring)** and **Post (finishing)**, with animation as the shaping discipline of both the 2D and 3D authoring sections.
 
 ### The pipeline (canonical order)
 
-> Storyboard / Annotation → 2D Animation *(pre-vis or final)* → Assets *(Sculpt / Model / Rigs)* → Environments → VFX + Sound → **KEYFRAMES / TIMELINES [apex]** → Compositing / Video Editing
+> **Creative:** Storyboarding → 2D Animation → 3D Animation → Game → Design
+>
+> **Post:** Editing → Compositing → Audio
 
-Animation is the apex because every upstream stage feeds into it and every downstream stage serves it. This replaces §6's "Animator is the headline door because we said so" with something structurally honest: the pipeline shows *why* animation sits at the center.
+Animation is the **shaping discipline** of the Creative section (2D Animation and 3D Animation each have their own internal `Animate` mode as the apex within their section). Post stages serve the animation output.
 
 ### Launcher structure [LOCKED in principle, pixel-level UI still OPEN]
 
-- **Top of launcher:** a single-word prompt — **"Blending?"** — question mark intended. Reads both as status ("what's blending?") and invitation ("want to blend?"). Matches the playful register the project wants to hold.
-- **Body:** vertical tiles, one per pipeline stage, stacked top to bottom. The whole pipeline visible at a glance.
-- **Each stage tile contains:** the stage name, and buttons for the specific modes accessible from that stage.
-  - *Storyboarding* tile → mode buttons for storyboard / annotation workflows
-  - *2D Animation* tile → draw / ink / animate buttons (community-extensible per §2)
-  - *Assets* tile → Sculpt, Model, Rigs buttons
-  - *Environments* tile → environment-specific modes
-  - *VFX + Sound* tile → sim, particle, sound-edit modes
-  - *Animate* tile → timeline / dope sheet / F-curve / NLA entries (the apex)
-  - *Composite / Edit* tile → compositor, VSE
-- **Visual hierarchy:** every stage equally visible; whole pipeline on one screen, no drill-downs. The apex stage may be styled to draw the eye, but nothing is hidden behind a click.
+**The whole launcher is a single vertical scrollable view.** Not a grid of tiles. Not a modal door that expands. Everything visible at once; scroll to see what's below the fold.
+
+- **"Blending?"** — the prompt at the very top. Single word, question mark intended. Reads both as status ("what's blending?") and invitation ("want to blend?"). Sets the playful register.
+- **Below that, each pipeline section as a bold heading with its mode buttons listed underneath it**, stacked vertically into two groups:
+
+```
+"Blending?"
+
+╌╌ CREATIVE ╌╌
+
+Storyboarding
+  [Board]
+
+2D Animation
+  [Animate] [Frame-by-Frame] [Paint]
+
+3D Animation
+  [Sculpt] [Model] [Rig] [Environment] [VFX] [Animate]
+
+Game
+  [Asset] [Level] [Bake] [Export]        (industry-expandable)
+
+Design
+  [Graphic] [Illustration] [Concept]     (industry-expandable)
+
+╌╌ POST ╌╌
+
+Editing
+  [Video] [Sketch] [Polish]              (industry-expandable)
+
+Compositing
+  [Composite]                            (industry-expandable)
+
+Audio
+  [Mix] [Score]
+```
+
+- `╌╌ CREATIVE ╌╌` and `╌╌ POST ╌╌` may be literal visual separators or just implicit spacing — UI detail.
+- Most headings ship with a placeholder/starter mode set; industry-specific modes can be added as adjacent buttons without changing the section structure.
+- **Scan, scroll, click.** That's the whole interaction. No drill-downs, no hover states, no modal expansions.
 
 ### Principles [LOCKED]
 
-- **Freely jumpable.** Enter any stage at any time, regardless of project state. Pipeline is the organizing metaphor, not a forced sequence.
-- **Directly enterable.** A sculptor who just wants to sculpt clicks Sculpt under Assets and is there. No pipeline-walk required.
-- **Project state reflected back.** The launcher shows *where the current project has content* — stages with data look different from empty stages. First-time new user sees all stages neutral/inviting.
+- **Freely jumpable.** Enter any section / mode at any time, regardless of project state. Pipeline is the organizing metaphor, not a forced sequence.
+- **Directly enterable.** A sculptor who just wants to sculpt clicks `Sculpt` under 3D Animation and is there. No pipeline-walk required.
+- **Project state reflected back.** The launcher shows *where the current project has content* — sections with data look different from empty ones. First-time new user sees all sections neutral/inviting.
 - **Pipeline is the default view, not mandatory.** Re-enterable from any workspace via a global hotkey or equivalent.
-- **Each stage button opens a filtered view of the same project.** The `.blended` file is one file; the mode controls what's visible. (This is why §10's UI-state datablock removals are load-bearing — once SCR/WM/WS are not project data, the launcher becomes the canonical workspace system.)
+- **Each mode button opens a filtered view of the same project.** The `.blended` file is one file; the mode controls what's visible. (This is why §10's UI-state datablock removals are load-bearing — once SCR/WM/WS are not project data, the launcher becomes the canonical workspace system.)
+
+### Project-level settings [LOCKED]
+
+Cross-cutting animation engine settings (framerate, renderer, output, color management, motion blur) apply to both 2D Animation and 3D Animation. They live in a **project-level config** accessible globally from the launcher (gear icon or a "Project" row at the top of the scroll), **not inside any one section.** Changing framerate affects both 2D and 3D content — one engine, one config, two content types. §2's "one engine, two lenses" made literal.
 
 ### What this settles
 
 - **§6 Launcher** is superseded by this section. Preserved there for history.
-- **§2 substrate split** is still true but more nuanced inside the pipeline: 2D is early/optional at the front (Storyboard, 2D Animation); 3D is mid-pipeline (Assets, Environments); Animation and post are substrate-agnostic.
-- **§10 datablock ownership** gets natural homes — each datablock type belongs to a stage, which helps "filtered view per workspace" land cleanly.
+- **§2 substrate split** made structural: 2D Animation and 3D Animation as parallel Creative sections, each with animation as the shaping discipline.
+- **§10 datablock ownership** — each datablock type belongs to a section/mode, which makes "filtered view per workspace" land cleanly.
+- **Assets / Environments / VFX** are **not** standalone pipeline stages — they're modes *inside* 3D Animation, because they're tools used while doing 3D animation, not discrete production phases.
+- **Game is its own Creative section**, not a mode under 3D Animation — game asset creation has genuinely different quality metrics (polycount, UV efficiency, engine-export formats, LODs) that don't belong under "3D Animation."
+- **Design is its own Creative section**, covering graphic design, illustration, and concept art workflows. These are C-scope (embraced per §3) — Blended is "2D and 3D software tools," plural. The guardrail is against feature-parity pathology (no "we must match every Illustrator feature"), not against the scope itself. Modes stay industry-expandable and pipeline-adjacent when they can be (concept art feeds animation, UI art feeds Game, etc.).
 
 ### Still open
 
-- **VFX placement.** Pre-animation VFX (particles, sims, assets-that-move) vs post-animation VFX (compositing-style). Both exist; may need two tiles or one with sub-differentiation. Parked.
-- **Stage granularity.** Assets = Sculpt + Model + Rigs as one stage with three mode buttons (current plan) vs three sibling stages. Current plan: one stage.
-- **Project state visualization.** How "where you are in your project" renders on the pipeline — progress indicators, filled tiles, content markers — all UI detail for later.
+- **Editing vs Compositing merge.** Industry keeps them separate; we probably should too. Parked.
+- **Creative / Post visual separators.** Actual UI dividers vs implicit spacing — pixel detail for later.
+- **Design mode expansion.** Initial modes (`Graphic`, `Illustration`, `Concept`) are starters; community- and industry-expandable. Typography / Layout / Print etc. can be added as separate modes when the use case is real, without changing the heading.
 
 ---
 
-## 12. Document Conventions
+## 12. Pipeline Stages — Detailed Specs
+
+This section fills in concrete specs for each pipeline stage from §11 as they get head-hunted. Stages without entries here are placeholders for future work.
+
+---
+
+### 12.1 Storyboarding [LOCKED in principle, pixel-level UI still OPEN]
+
+**What it is.** The earliest form of the project. Rough panels drawn to establish narrative flow. Under the principle *"storyboard IS the first pass of animation,"* storyboard panels literally become the keyframes of the 2D Animation stage and the timing markers of the Animate stage. Nothing is exported, nothing is rebuilt when moving downstream.
+
+**Mode buttons under the tile:** `Board` (and possibly `Animatic` as a playback-focused view; TBD — most likely just `Board`).
+
+**Screen layout (Board mode):**
+
+- **Canvas** — left ~2/3, dominant. The current panel. You draw here with Grease Pencil.
+- **Panel strip** — bottom of the canvas area. Thumbnails of panels in order, scrollable. Click to jump; drag to reorder. Playhead visible as a highlighted thumbnail.
+- **Timeline** — below the panel strip. Thin band showing time, playhead visible. Sound waveform runs along it if scratch audio exists.
+- **Storyboard outliner** — right side (replaces the standard properties/outliner). Tree of narrative scenes (`Scene 1`, `Scene 2`, …), each renameable exactly like entries in the regular outliner. Click a scene to view its panels.
+- **Minimal drawing toolbar** — pen, eraser, color, brush size. That's it. No material editor, no modifier stack, no N-panel.
+- **Play button** — one big one. Plays the animatic with scratch sound.
+
+**Data model — no new datablocks needed.** Everything reuses existing IDs kept in §10:
+
+| Storyboard concept | Existing datablock |
+|---|---|
+| Narrative scene (e.g. "Scene 1") | `ID_SCE` |
+| Panels within a scene | Keyframes on the scene's timeline |
+| Panel drawings | `ID_GP` (Grease Pencil) strokes |
+| Scratch dialogue / music | `ID_SO` (Sound) |
+| Camera arrows, action paths, notes | Grease Pencil strokes on a non-rendering annotation layer |
+
+This uses `ID_SCE` for what it was always supposed to be good at — a narrative section with its own timeline — instead of the current Blender mess where Scenes mean "render-settings containers" more often than "narrative sections."
+
+**The A/B resolution (panel-as-frame vs panel-as-scene) — both, at different UI layers:**
+
+- **Timeline layer:** each panel is a keyframe of one scene. Animation-native. "Storyboard IS the first pass" cashes out literally here.
+- **Outliner layer:** panels are grouped under named narrative scenes shown as a tree. Traditional storyboard structure, narrative-native.
+
+These aren't competing models — they're the same data viewed through two different UI surfaces.
+
+**Transition to the next stage.** When the user moves to **2D Animation**, the same scenes, same Grease Pencil strokes, same timeline, same sound are present. More detail gets added — strokes per frame, in-betweens, cleaner linework. The storyboard never dies. It gets more real. No export. No rebuild. No retiming.
+
+**Still open within Storyboarding:**
+- Whether `Animatic` is its own mode button or just Board-with-play-pressed.
+- Exact hotkey for "add new panel" (the single most common operation — needs to be one key).
+- Whether the panel strip lives at the bottom of the canvas or docked to the right *above* the storyboard outliner. Current call: bottom.
+
+---
+
+### 12.2 2D Animation [LOCKED in principle, pixel-level UI still OPEN]
+
+**What it is.** The stage where storyboard panels become frame-accurate animation. Under the principle that *storyboard IS the first pass of animation,* no data is converted or imported — the same scenes, same Grease Pencil strokes, same timeline, same audio from §12.1 are all still present. What changes is the UI lens and what the user does with the existing data.
+
+**Headline insight — F-curve interpolation driving 2D.** Blender's F-curve system is world-class for 3D (bezier handles, ease-in / ease-out / bounce / constant / linear control). Grease Pencil strokes have point positions; points can be keyframed. Therefore **Blender's F-curve interpolation can drive the tween between Grease Pencil drawings** with full artistic control. Draw five key poses, get 24fps animation with proper easing. This is the thing the rest of the 2D-animation industry (ToonBoom, Moho, CACANi) either doesn't do or does badly. In Blended it's the default workflow, using code Blender is already best at.
+
+**Shared engine, shared settings.** Everything that runs 3D animation — frame rate (24/30/60+), renderer, output resolution, color management, motion blur, all animation engine and properties settings — applies to 2D identically. The engine doesn't care whether it's interpolating object transforms or Grease Pencil stroke points; it's just animating properties. These cross-cutting settings live in the **project-level config** (§11, "Project-level settings"), accessed globally from the launcher — not inside any single Creative section. A 2D animator adjusts framerate, renderer, output using the same UI a 3D animator uses. No duplicated settings, no 2D-specific config — §2's "one engine, two lenses" made literal.
+
+**Mode buttons under the tile:**
+
+- **`Animate`** — keyframe-driven. Draw key poses, adjust F-curves between keys, get smooth tweening with full easing control. The headline mode.
+- **`Frame-by-Frame`** — hand-drawn, no interpolation. For animators who want every frame drawn by hand (the slight wobble, the hand-drawn feel — an artistic choice). Onion skinning and drawing tools, no F-curve interpolation on strokes.
+- **`Paint`** — coloring pass. Bucket fill, color palettes, shading layers. Different enough from linework (different tools, different headspace) to earn its own mode.
+
+Community-extensible per §2 — ship with these three; `Ink` / `Tween` / `Rig` or specialized modes can grow from community workflows.
+
+**Screen layout (Animate mode):**
+
+- **Canvas** — dominant, left ~2/3. Current frame. Draw here.
+- **Frame strip** — bottom of the canvas area. Every tick is a drawable frame, not just key panels. Scroll / jump / scrub.
+- **Timeline with F-curve access** — below the frame strip. Shows keyframes on stroke data and the interpolation curves between them. Tweak a curve → tween reshapes.
+- **Layer panel** — right side. Character / background / effects / annotation layers. Visibility, lock, onion-skin per layer.
+- **Onion skinning** — on by default; previous and next frames ghosted behind the current.
+- **Richer drawing toolbar** — pen, eraser, bucket, shape tools, line smoothing, masking.
+- **"Play Animatic" button** — same button as in Storyboarding, same naming, because it's the same project and the same animatic, just further along.
+
+**Data model — same primitives as Storyboarding. No new datablocks:**
+
+| 2D Animation concept | Existing datablock |
+|---|---|
+| Animation engine settings (framerate, renderer, output) | `ID_SCE` properties (shared with §12.X Animate stage) |
+| Frames | Keyframes on scene timeline |
+| Drawings | `ID_GP` (Grease Pencil) strokes |
+| Stroke interpolation | F-curves on stroke point data (existing animation system) |
+| Layers | Grease Pencil layers on the `ID_GP` datablock |
+| Audio tracks | `ID_SO` datablocks on the scene |
+
+The entire stage is a UI lens over data Storyboarding already created.
+
+**Transition from Storyboarding.** Click **2D Animation** in the launcher. Same scenes, same panels, same audio. UI changes:
+
+- Panel strip → frame strip (every frame drawable)
+- Onion skinning on
+- Layer panel appears
+- Timeline granular (per-frame, not per-panel)
+- Drawing toolbar richer
+- F-curve access on stroke data
+
+Storyboard panels become literal keyframes; in-betweens are either drawn by hand (`Frame-by-Frame`) or generated by F-curve interpolation (`Animate`) with curves the user shapes.
+
+**Transition to next stage:**
+
+- **2D-final project** → Composite / Edit. Final mix, scene transitions applied, export.
+- **3D project using 2D as pre-vis** → Assets → Environments → Animate. 2D strokes become hidden reference layers in 3D scenes, toggle-able from the outliner.
+
+**Still open within 2D Animation:**
+
+- Whether `Frame-by-Frame` is its own mode or just `Animate` with interpolation disabled. Current call: its own mode because the artistic philosophy differs meaningfully.
+- How the F-curve editor integrates visually — dedicated panel, embedded in timeline, or popover. UI detail.
+- Rig as a fourth mode vs living under Assets. Parked.
+
+---
+
+## 13. Document Conventions
 
 - Tag new sections with [LOCKED] / [OPEN] / [REJECTED] / [GUARDRAIL].
 - When reopening a LOCKED section, state why and what new evidence changed the call.
