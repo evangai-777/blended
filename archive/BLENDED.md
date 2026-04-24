@@ -145,31 +145,9 @@ Identified, principles locked, final per-format decisions still being headhunted
 
 ---
 
-## 6. Launcher Architecture [SUPERSEDED by §11 — preserved for history]
+## 6. Launcher Architecture [MOVED]
 
-### Structure
-
-- Splash screen (logo, copyright) → launcher.
-- Launcher greets with something like **"What would you like to blend today?"**
-- **Tier 1:** Substrate choice — 3D or 2D.
-- **Tier 2 (within 3D):** Focused doors. Animator is the **headline door** (larger/central); supporting doors sit under it — Model, Sculpt, View, Edit, Render.
-- **Tier 2 (within 2D):** Doors are more co-equal (small coherent space, no clear headline). Draw, Animate, Ink, Paint, and whatever the community adds.
-
-### Principles
-
-- **Visual hierarchy tells the truth.** Inside 3D, animation is the shaping discipline, so the Animator door is visibly headline. Inside 2D, no single door dominates.
-- **Launcher is a committed router**, not a file-template picker buried in a splash screen.
-- **Each door is a filtered view of the shared project model.** Same `.blended` file, radically different UI per door. The Animator literally cannot see sculpt brushes; the Sculptor literally cannot see the NLA editor.
-- **"Viewing"** is not a workflow door — it is either the implicit default state of the launcher, or a small "drop into viewport without picking a workflow" affordance.
-
-### What each door serves (supporting roles)
-
-- **Sculpt** — asset prep for animation *or* end-use sculpting. Not a ZBrush replacement. Scope: enough to finish a shot.
-- **Model** — geometry creation. Serves animation and also legitimate 3D software use (game asset export, product viz).
-- **Video Edit (VSE)** — cross-substrate post tool. Finishes animation into a final cut. Not a Resolve replacement.
-- **Compositor** — cross-substrate. Finishes shots.
-- **Render** — animation has to output.
-- **Grease Pencil** — primary citizen of 2D substrate. Can optionally appear as a bridging object in 3D scenes.
+The original v1 launcher spec — tier-based door menu (3D vs 2D substrate → focused workspace doors) — was superseded by §11 Pipeline as UX. Full original content preserved in §13 Notes for historical context.
 
 ---
 
@@ -1164,9 +1142,68 @@ Same `.blended` file, same timeline, same data. The back-cycle is a mode switch,
 
 ---
 
-## 13. Document Conventions
+## 13. Notes [HISTORICAL]
+
+This section preserves superseded designs and rename keys for reader orientation. **Not a substitute for git history** — just enough context so a reader who encounters an older name in cross-references, archived discussions, or external chatter can find what it became.
+
+---
+
+### 13.1 Superseded: original Launcher Architecture (was §6)
+
+The v1 launcher was a tier-based door menu: substrate choice (3D vs 2D) at tier 1, focused workspace doors inside each at tier 2. Superseded by §11 Pipeline as UX, which restructured the launcher around production pipeline sections (Storyboarding → 2D Animation → 3D Animation → Game → Design → Finalizing → Compositing → Audio) with mode buttons under each. Original content preserved here verbatim:
+
+#### Structure (original)
+
+- Splash screen (logo, copyright) → launcher.
+- Launcher greets with something like **"What would you like to blend today?"**
+- **Tier 1:** Substrate choice — 3D or 2D.
+- **Tier 2 (within 3D):** Focused doors. Animator is the **headline door** (larger/central); supporting doors sit under it — Model, Sculpt, View, Edit, Render.
+- **Tier 2 (within 2D):** Doors are more co-equal (small coherent space, no clear headline). Draw, Animate, Ink, Paint, and whatever the community adds.
+
+#### Principles (original)
+
+- **Visual hierarchy tells the truth.** Inside 3D, animation is the shaping discipline, so the Animator door is visibly headline. Inside 2D, no single door dominates.
+- **Launcher is a committed router**, not a file-template picker buried in a splash screen.
+- **Each door is a filtered view of the shared project model.** Same `.blended` file, radically different UI per door. The Animator literally cannot see sculpt brushes; the Sculptor literally cannot see the NLA editor.
+- **"Viewing"** is not a workflow door — it is either the implicit default state of the launcher, or a small "drop into viewport without picking a workflow" affordance.
+
+#### What each door served (supporting roles, original)
+
+- **Sculpt** — asset prep for animation *or* end-use sculpting. Not a ZBrush replacement. Scope: enough to finish a shot.
+- **Model** — geometry creation. Serves animation and also legitimate 3D software use (game asset export, product viz).
+- **Video Edit (VSE)** — cross-substrate post tool. Finishes animation into a final cut. Not a Resolve replacement.
+- **Compositor** — cross-substrate. Finishes shots.
+- **Render** — animation has to output.
+- **Grease Pencil** — primary citizen of 2D substrate. Can optionally appear as a bridging object in 3D scenes.
+
+---
+
+### 13.2 Rename log
+
+Names that changed during development. If you encounter the old name in older notes or cross-references, this is where it went:
+
+- **Editing → Finalizing** (§12.6). The section was originally "Editing" (industry-default term for assembly + delivery prep). Renamed to "Finalizing" because *editing* happens in every Creative section when authors adjust their own work; *finalizing* uniquely names the delivery-prep activity that lives there.
+- **Game Design → Game** (§12.4). Renamed for naming consistency with the other one-word headings (Game / Finalizing / Compositing / Audio).
+- **"One engine, two lenses" → "One engine, every content type"** (§2). Originally framed as just 2D-vs-3D substrates sharing the engine. Expanded once we recognized that *every* section's properties are keyframeable, not only the animation sections.
+
+---
+
+### 13.3 Vision C reframe
+
+§3 originally stated *"Blended = A's discipline + B's accessibility, with C explicitly rejected."* Reframed to *"A's discipline + B's accessibility + C's **scope**, with C's **pathology** rejected."* We embrace the industry breadth Vision C reaches for; we reject the feature-parity arms race. See §3 for the current statement and §7 for the in/out-of-scope cash-out.
+
+---
+
+### 13.4 Stage-collapse note
+
+Earlier pipeline drafts had Assets, Environments, VFX, and Animate as standalone top-level pipeline stages. They are now modes inside §12.3 3D Animation. Game Design (now Game) was also briefly nested under 3D Animation before being promoted to its own §12.4 Creative section. If older context mentions "Assets stage" or "Animate stage," that is what it referred to.
+
+---
+
+## 14. Document Conventions
 
 - Tag new sections with [LOCKED] / [OPEN] / [REJECTED] / [GUARDRAIL].
 - When reopening a LOCKED section, state why and what new evidence changed the call.
 - When a decision closes an OPEN question, move it out and summarize in the relevant section.
-- Keep this doc tight. It is a working agreement, not a history. History lives in git.
+- Keep this doc tight. It is a working agreement, not a history; detailed history lives in git. **§13 Notes** preserves only the minimum context (superseded designs, rename keys, structural-evolution markers) that helps a reader orient when encountering older names — never as a substitute for git.
+- When a section is renamed or superseded, leave a one-line stub at its old location pointing to its new home (or to §13 Notes), and add the rename / supersession to §13 with enough context for a confused reader to find their footing.
