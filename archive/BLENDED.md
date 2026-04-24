@@ -669,6 +669,8 @@ Every mode's properties are keyframeable, not just Animate. Sculpt brush pressur
 
 **Division of labor with 3D Animation.** Modeling and animating happen in 3D Animation. Game-readying happens here. The same `ID_ME` can live in both contexts — the section controls which metrics are surfaced and which tools are available. A mesh modeled in 3D Animation > Model can be opened in Game > Asset and immediately show polycount budgets, UV efficiency, and engine-compatibility warnings. No data migration, just a different lens.
 
+**Division of labor with 2D Animation.** Drawing, frame authoring, and animation happen in 2D Animation. Game-readying (sprite sheet packing, frame-count optimization, UI art export, atlas generation) happens here. The same `ID_GP` strokes or `ID_IM` pixel art can live in both contexts — in 2D Animation you see the frame timeline, drawing tools, and F-curve interpolation; in Game > Asset you see sprite atlas metrics, frame counts, and engine-format warnings. Same data, different lens — no migration.
+
 ---
 
 #### Asset
