@@ -498,7 +498,7 @@ Community-extensible per §2 — ship with these three; `Ink` / `Tween` / `Rig` 
 
 | 2D Animation concept | Existing datablock |
 |---|---|
-| Animation engine settings (framerate, renderer, output) | `ID_SCE` properties (shared with §12.X Animate stage) |
+| Animation engine settings (framerate, renderer, output) | `ID_SCE` properties (shared via §11 project-level config) |
 | Frames | Keyframes on scene timeline |
 | Drawings | `ID_GP` (Grease Pencil) strokes |
 | Stroke interpolation | F-curves on stroke point data (existing animation system) |
