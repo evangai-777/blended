@@ -661,6 +661,99 @@ Every mode's properties are keyframeable, not just Animate. Sculpt brush pressur
 
 ---
 
+### 12.4 Game [LOCKED in principle, pixel-level UI still OPEN]
+
+**What it is.** The Creative section for producing assets, levels, and exports destined for game engines — Unity, Unreal, Godot, or custom runtimes. Structurally parallel to 3D Animation but with different quality metrics and output targets. Game assets aren't just "3D models"; they're 3D models that must meet specific performance, memory, and runtime constraints (polycount, UV efficiency, lightmap packing, LOD generation, engine-compatible materials). Giving Game its own section honors those constraints instead of treating them as an afterthought inside 3D Animation.
+
+**Mode buttons:** `Asset` / `Level` / `Bake` / `Export` — industry-expandable (e.g. `Retopo`, `Collision`, `Nav` as future separate modes if usage demands).
+
+**Division of labor with 3D Animation.** Modeling and animating happen in 3D Animation. Game-readying happens here. The same `ID_ME` can live in both contexts — the section controls which metrics are surfaced and which tools are available. A mesh modeled in 3D Animation > Model can be opened in Game > Asset and immediately show polycount budgets, UV efficiency, and engine-compatibility warnings. No data migration, just a different lens.
+
+---
+
+#### Asset
+
+**Primary activity:** building game-ready individual objects (characters, weapons, props, UI art). Game-specific quality metrics surfaced prominently.
+
+**Screen layout:**
+- Dominant viewport with edit-mode overlays
+- **Polycount HUD** — triangle count, vertex count, budget (user-set or preset-driven)
+- **UV efficiency display** — wasted UV space highlighted
+- Material slot count + engine-compatibility flags
+- Compact modeling toolbar (same tools as 3D Animation > Model, different metrics surfaced)
+
+**Data model:** `ID_ME`, `ID_MA`, `ID_IM`. Existing datablocks. Game-specific concerns (polycount budgets, LOD levels, collision flags) exposed as properties on the object, not new datablock types.
+
+**Transitions out:** Level, Bake, 3D Animation > Rig (rig for game animation), 3D Animation > Animate (animate then come back to export).
+
+---
+
+#### Level
+
+**Primary activity:** composing game levels. Placing assets. Setting up collision, occlusion, nav, spawn points.
+
+**Screen layout:**
+- Wide viewport (whole-level framing)
+- Outliner with game-specific properties (collision flag, nav-mesh flag, spawn type)
+- Lightmap UV overview
+- Level streaming / chunk visualization where relevant
+
+**Data model:** `ID_SCE`, `ID_GR`, `ID_OB` (with game-specific properties), `ID_LA`. Same base as Environment in 3D Animation; different concerns surfaced.
+
+**Transitions out:** Bake (lightmaps, nav mesh), Export.
+
+---
+
+#### Bake
+
+**Primary activity:** the optimization pass. Normal maps high-to-low, lightmaps, ambient occlusion, LOD generation, texture atlas compilation.
+
+**Screen layout:**
+- Viewport preview (toggle between high-poly source and low-poly target)
+- Baking queue — multi-asset, batched
+- Settings per bake type (resolution, samples, padding, margin)
+- Progress / cache status
+
+**Data model:** `ID_IM` (baked textures land in image datablocks), `ID_ME` (source and target meshes), modifiers on objects. No new datablocks.
+
+**Transitions out:** Asset (iterate if bake reveals issues), Export.
+
+---
+
+#### Export
+
+**Primary activity:** handoff to the game engine. Format selection with engine-specific presets. Validation before export.
+
+**Screen layout:**
+- Export preset picker — Unity / Unreal / Godot / Custom
+- Per-preset settings (coordinate system, units, animation format, material conversion rules)
+- Validation checklist (polycount over budget, UV overlaps, missing materials, unsupported features flagged)
+- Destination path + batch export options
+
+**Data model:** existing datablocks serialized to `.gltf` / `.fbx` / `.usd` / etc. per §5 format boundaries. Export translates at the boundary; does not deform the internal data model.
+
+**Transitions out:** back to the game engine itself — Game's primary consumer. Also Editing / Compositing / Audio if producing a trailer or cinematic from game content.
+
+---
+
+### Connection to §2 universal keyframe
+
+Sprite transforms, UI opacity, material parameters, particle settings — all keyframeable in Game. Animated game UI, animated sprites, procedurally varying game assets fall out of the same engine. **Frame-by-frame** available for traditional sprite animation (sprite sheets, frame cycles) — though keyframed interpolation is almost always more efficient.
+
+### Transitions out of Game
+
+- **Primary:** export to game engine (Unity / Unreal / Godot / custom runtime).
+- **Secondary:** Editing / Compositing / Audio if producing a trailer, cinematic, or marketing material from game content.
+- **Back-cycle:** 3D Animation > Rig / Animate for game-bound characters. The animation *craft* happens in 3D Animation; game-readying happens here.
+
+### Still open within Game
+
+- Whether `Retopo` deserves its own mode or stays as a tool inside Asset. Current call: tool inside Asset.
+- `Collision` / `Nav` as dedicated modes vs properties on objects within Level. Current call: properties within Level; promote to modes if usage demands.
+- Export preset granularity — how many presets ship by default, how user-extensible. TBD.
+
+---
+
 ## 13. Document Conventions
 
 - Tag new sections with [LOCKED] / [OPEN] / [REJECTED] / [GUARDRAIL].
