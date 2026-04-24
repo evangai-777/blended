@@ -176,18 +176,17 @@ Default rule: **include if it fits 2D or 3D creative work AND doesn't deform the
 - Compositing, video editing, audio mixing (as post-animation finishers)
 - Geometry nodes (procedural rigs, procedural motion, procedural environments)
 - USD / glTF / FBX / OBJ / Alembic at the boundary
-- Illustration workflows *(pending §11 open question)*
+- Illustration, concept art, and graphic design workflows (§11 Design section)
 
 ### Out of scope [REJECTED]
 
 Rejected for specific reasons, not because "Vision C." Scope is embraced; only pathology is rejected (see §3).
 
 - **Runtime game engine inside Blended** (BGE/UPBGE style), gameplay scripting, interactive runtime as an output medium. *Reason: identity/runtime conflict — Blended authors content; it doesn't host runtime gameplay.*
-- **Feature-parity arms race.** Adding features because Maya/Houdini/ZBrush/Premiere/Nuke have them, not because they serve the core. *Reason: C-pathology tell — see §3.*
+- **Feature-parity arms race.** Adding features because Maya/Houdini/ZBrush/Premiere/Nuke/Photoshop/Illustrator have them, not because they serve the core. *Reason: C-pathology tell — see §3.* Scope expansion on its own isn't the pathology; parity-reasoning is.
 - **Core deformation by industry format quirks.** Interchange formats translate at the §5 boundary; they do not reshape internal data models. *Reason: C-pathology tell.*
 - **"Co-equal at identity level"** — animation-and-generalist as twin unreconciled identities. *Reason: this is Blender's current pathology; the substrate split (§2) and Creative/Post grouping (§11) resolve it.*
 - **Legacy/fossil formats** that exist because no one dared delete them (see §5 Groups 2–3, §10 Bucket 6). *Reason: accumulated cruft with no active user base.*
-- **Graphic design / Illustrator-scope work** that doesn't connect to animation or 3D creative pipelines. *Reason: C-pathology risk — scope-creep toward being "everything for everyone."*
 
 ---
 
@@ -327,7 +326,7 @@ The user-facing structure of Blended **is** the production pipeline. Not a menu 
 
 ### The pipeline (canonical order)
 
-> **Creative:** Storyboarding → 2D Animation → 3D Animation → Game Design → *(Illustration, if in scope)*
+> **Creative:** Storyboarding → 2D Animation → 3D Animation → Game → Design
 >
 > **Post:** Editing → Compositing → Audio
 
@@ -354,11 +353,11 @@ Storyboarding
 3D Animation
   [Sculpt] [Model] [Rig] [Environment] [VFX] [Animate]
 
-Game Design
+Game
   [Asset] [Level] [Bake] [Export]        (industry-expandable)
 
-(Illustration, if in scope)
-  [...]
+Design
+  [Graphic] [Illustration] [Concept]     (industry-expandable)
 
 ╌╌ POST ╌╌
 
@@ -394,13 +393,14 @@ Cross-cutting animation engine settings (framerate, renderer, output, color mana
 - **§2 substrate split** made structural: 2D Animation and 3D Animation as parallel Creative sections, each with animation as the shaping discipline.
 - **§10 datablock ownership** — each datablock type belongs to a section/mode, which makes "filtered view per workspace" land cleanly.
 - **Assets / Environments / VFX** are **not** standalone pipeline stages — they're modes *inside* 3D Animation, because they're tools used while doing 3D animation, not discrete production phases.
-- **Game Design is its own Creative section**, not a mode under 3D Animation — game asset creation has genuinely different quality metrics (polycount, UV efficiency, engine-export formats, LODs) that don't belong under "3D Animation."
+- **Game is its own Creative section**, not a mode under 3D Animation — game asset creation has genuinely different quality metrics (polycount, UV efficiency, engine-export formats, LODs) that don't belong under "3D Animation."
+- **Design is its own Creative section**, covering graphic design, illustration, and concept art workflows. These are C-scope (embraced per §3) — Blended is "2D and 3D software tools," plural. The guardrail is against feature-parity pathology (no "we must match every Illustrator feature"), not against the scope itself. Modes stay industry-expandable and pipeline-adjacent when they can be (concept art feeds animation, UI art feeds Game, etc.).
 
 ### Still open
 
-- **Illustration.** Is it in scope (§7)? If yes, its own heading. If no, leave the slot empty. Watch this for Vision C scope-creep.
 - **Editing vs Compositing merge.** Industry keeps them separate; we probably should too. Parked.
 - **Creative / Post visual separators.** Actual UI dividers vs implicit spacing — pixel detail for later.
+- **Design mode expansion.** Initial modes (`Graphic`, `Illustration`, `Concept`) are starters; community- and industry-expandable. Typography / Layout / Print etc. can be added as separate modes when the use case is real, without changing the heading.
 
 ---
 
