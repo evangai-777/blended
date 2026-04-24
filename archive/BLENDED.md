@@ -314,17 +314,18 @@ Animation is the apex because every upstream stage feeds into it and every downs
 
 ### Launcher structure [LOCKED in principle, pixel-level UI still OPEN]
 
-- **Top of launcher:** a single-word prompt — **"Blending?"** — question mark intended. Reads both as status ("what's blending?") and invitation ("want to blend?"). Matches the playful register the project wants to hold.
-- **Body:** vertical tiles, one per pipeline stage, stacked top to bottom. The whole pipeline visible at a glance.
-- **Each stage tile contains:** the stage name, and buttons for the specific modes accessible from that stage.
-  - *Storyboarding* tile → mode buttons for storyboard / annotation workflows
-  - *2D Animation* tile → draw / ink / animate buttons (community-extensible per §2)
-  - *Assets* tile → Sculpt, Model, Rigs buttons
-  - *Environments* tile → environment-specific modes
-  - *VFX + Sound* tile → sim, particle, sound-edit modes
-  - *Animate* tile → timeline / dope sheet / F-curve / NLA entries (the apex)
-  - *Composite / Edit* tile → compositor, VSE
-- **Visual hierarchy:** every stage equally visible; whole pipeline on one screen, no drill-downs. The apex stage may be styled to draw the eye, but nothing is hidden behind a click.
+**The whole launcher is a single vertical scrollable view.** Not a grid of tiles. Not a modal door that expands. Everything visible at once; scroll to see what's below the fold.
+
+- **"Blending?"** — the prompt at the very top. Single word, question mark intended. Reads both as status ("what's blending?") and invitation ("want to blend?"). Sets the playful register.
+- **Below that, each pipeline stage as a bold heading with its mode buttons listed underneath it**, stacked vertically down the page in pipeline order:
+  - **Storyboarding** — `Board` *(and possibly `Animatic`)*
+  - **2D Animation** — `Draw`, `Ink`, `Animate` *(community-extensible per §2)*
+  - **Assets** — `Sculpt`, `Model`, `Rigs`
+  - **Environments** — environment-specific modes
+  - **VFX + Sound** — sim, particle, sound-edit modes
+  - **Animate** — timeline / dope sheet / F-curve / NLA entries *(the apex)*
+  - **Composite / Edit** — compositor, VSE
+- **Scan, scroll, click.** That's the whole interaction. No drill-downs, no hover states, no modal expansions. The apex stage may be styled to draw the eye, but nothing is hidden behind a click.
 
 ### Principles [LOCKED]
 
@@ -348,7 +349,56 @@ Animation is the apex because every upstream stage feeds into it and every downs
 
 ---
 
-## 12. Document Conventions
+## 12. Pipeline Stages — Detailed Specs
+
+This section fills in concrete specs for each pipeline stage from §11 as they get head-hunted. Stages without entries here are placeholders for future work.
+
+---
+
+### 12.1 Storyboarding [LOCKED in principle, pixel-level UI still OPEN]
+
+**What it is.** The earliest form of the project. Rough panels drawn to establish narrative flow. Under the principle *"storyboard IS the first pass of animation,"* storyboard panels literally become the keyframes of the 2D Animation stage and the timing markers of the Animate stage. Nothing is exported, nothing is rebuilt when moving downstream.
+
+**Mode buttons under the tile:** `Board` (and possibly `Animatic` as a playback-focused view; TBD — most likely just `Board`).
+
+**Screen layout (Board mode):**
+
+- **Canvas** — left ~2/3, dominant. The current panel. You draw here with Grease Pencil.
+- **Panel strip** — bottom of the canvas area. Thumbnails of panels in order, scrollable. Click to jump; drag to reorder. Playhead visible as a highlighted thumbnail.
+- **Timeline** — below the panel strip. Thin band showing time, playhead visible. Sound waveform runs along it if scratch audio exists.
+- **Storyboard outliner** — right side (replaces the standard properties/outliner). Tree of narrative scenes (`Scene 1`, `Scene 2`, …), each renameable exactly like entries in the regular outliner. Click a scene to view its panels.
+- **Minimal drawing toolbar** — pen, eraser, color, brush size. That's it. No material editor, no modifier stack, no N-panel.
+- **Play button** — one big one. Plays the animatic with scratch sound.
+
+**Data model — no new datablocks needed.** Everything reuses existing IDs kept in §10:
+
+| Storyboard concept | Existing datablock |
+|---|---|
+| Narrative scene (e.g. "Scene 1") | `ID_SCE` |
+| Panels within a scene | Keyframes on the scene's timeline |
+| Panel drawings | `ID_GP` (Grease Pencil) strokes |
+| Scratch dialogue / music | `ID_SO` (Sound) |
+| Camera arrows, action paths, notes | Grease Pencil strokes on a non-rendering annotation layer |
+
+This uses `ID_SCE` for what it was always supposed to be good at — a narrative section with its own timeline — instead of the current Blender mess where Scenes mean "render-settings containers" more often than "narrative sections."
+
+**The A/B resolution (panel-as-frame vs panel-as-scene) — both, at different UI layers:**
+
+- **Timeline layer:** each panel is a keyframe of one scene. Animation-native. "Storyboard IS the first pass" cashes out literally here.
+- **Outliner layer:** panels are grouped under named narrative scenes shown as a tree. Traditional storyboard structure, narrative-native.
+
+These aren't competing models — they're the same data viewed through two different UI surfaces.
+
+**Transition to the next stage.** When the user moves to **2D Animation**, the same scenes, same Grease Pencil strokes, same timeline, same sound are present. More detail gets added — strokes per frame, in-betweens, cleaner linework. The storyboard never dies. It gets more real. No export. No rebuild. No retiming.
+
+**Still open within Storyboarding:**
+- Whether `Animatic` is its own mode button or just Board-with-play-pressed.
+- Exact hotkey for "add new panel" (the single most common operation — needs to be one key).
+- Whether the panel strip lives at the bottom of the canvas or docked to the right *above* the storyboard outliner. Current call: bottom.
+
+---
+
+## 13. Document Conventions
 
 - Tag new sections with [LOCKED] / [OPEN] / [REJECTED] / [GUARDRAIL].
 - When reopening a LOCKED section, state why and what new evidence changed the call.
