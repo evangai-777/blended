@@ -771,6 +771,91 @@ This is a sweet spot for Blended that the rest of the industry currently solves 
 
 ---
 
+### 12.5 Design [LOCKED in principle, pixel-level UI still OPEN]
+
+**What it is.** The Creative section for graphic design, illustration, and concept art — the 2D visual-design work that isn't specifically animation or games. Posters, logos, editorial illustrations, book covers, character designs, environment concepts, motion graphics source material, promotional art. Per §3, Design is part of C-scope embraced — industry breadth without the pathology of feature-parity chasing.
+
+**Mode buttons:** `Graphic` / `Illustration` / `Concept` — industry-expandable (e.g., `Typography`, `Layout`, `Print`, `UI`, `Paint` if workflow demands promote them to standalone modes).
+
+**Design's dual role.** Unlike most Creative sections, Design work often serves *other sections* as input: concept art feeds 3D Animation > Sculpt/Model; illustration feeds 2D Animation > Animate as reference or keyframe art; game UI art feeds Game > Asset; motion graphics feeds Editing or Compositing. But Design work can also stand alone — a printed poster, a published illustration, a branded logo doesn't need a downstream. Both modes of use are first-class.
+
+---
+
+#### Graphic
+
+**Primary activity:** graphic design — layouts, logos, typography, marketing materials, UI mockups. Vector-based, with raster elements as needed.
+
+**Screen layout:**
+- **Artboard canvas** — defined dimensions (A4, US Letter, 1920×1080, custom), not an infinite 3D space
+- Vector toolbar — pen, shape, text, line, gradient
+- Alignment and snapping tools prominent
+- Color palette panel — swatches, color-theory helpers
+- Layer panel (composition layers, not animation layers)
+- Grid / ruler / guides overlay
+
+**Data model:** `ID_CV` (curves for vector graphics and text), `ID_IM` (raster images), `ID_GP` (Grease Pencil for hand-drawn elements), `ID_NT` (effect node trees). No new datablocks.
+
+**Transitions out:** Editing (motion graphics), Compositing (design elements as comp layers), standalone export (print, web), cross-feed to Game > Asset (UI mockups → game UI).
+
+---
+
+#### Illustration
+
+**Primary activity:** digital painting and illustration — editorial work, book covers, character portraits, finished rendered art.
+
+**Screen layout:**
+- Large canvas, customizable size
+- Drawing toolbar — pen, brush, eraser, bucket, smudge, blur
+- **Brush presets library** — textures, chalk, watercolor, ink, pencil, oil (industry-expandable)
+- Color wheel + swatches
+- Layer panel with blend modes
+- Reference image viewer (drag images in as reference layers)
+
+**Data model:** `ID_GP` (Grease Pencil for vector-ish illustration), `ID_IM` (raster painting, including pixel art), `ID_CV` (curves where needed). No new datablocks.
+
+**Transitions out:** 2D Animation (promote illustration to animated sequence), 3D Animation (illustration as texture or concept reference), standalone export, cross-feed to Graphic (illustration placed inside a poster layout).
+
+---
+
+#### Concept
+
+**Primary activity:** concept art — rough, iterative, exploratory visual development. Character concepts, environment concepts, mood boards, style frames. Speed over polish.
+
+**Screen layout:**
+- Canvas optimized for fast sketching (not pixel-perfect)
+- **Multi-panel / thumbnail view** — iterate many variants at once, compare side-by-side
+- Rough brush presets (loose, gestural — not detail brushes)
+- Quick color-blocking tools
+- Mood board panel — reference imagery drag-drop for inspiration
+- Thumbnail batch export for review
+
+**Data model:** same as Illustration (`ID_GP`, `ID_IM`), plus `ID_GR` (Collections) for organizing concept iterations.
+
+**Transitions out:** 3D Animation > Sculpt / Model (concept → 3D asset), 2D Animation > Animate (concept → animated character or scene), Illustration (promote selected concept into finished art), Game > Asset (concept → game asset).
+
+---
+
+### Connection to §2 universal keyframe
+
+**Motion graphics emerges for free here.** Every property in every mode is keyframeable: stroke position, color, opacity, path deformation, layout element transforms, typography tracking, page positioning — all animatable. Animated logos, kinetic typography, morphing illustrations, scroll-synced design elements fall out of the same engine, not as special cases.
+
+**Frame-by-frame** available for animated illustration (hand-drawn-feel sequences where the artist wants explicit control over every frame) and for fast-cut design animation (discrete design states in sequence).
+
+### Transitions out of Design
+
+- **Standalone output:** print, web, digital publication — export at §5 boundary.
+- **Forward into pipeline:** Editing (motion graphics clips), Compositing (design layers in comp trees), Audio (title-sequence sync, lyric videos).
+- **Cross-feed into other Creative sections:** 2D Animation (illustration → animation), 3D Animation (concept → 3D asset), Game (UI / sprite art → game asset).
+- **Back-cycle:** from any of the above when iteration reveals design changes are needed.
+
+### Still open within Design
+
+- Whether `Typography`, `Layout`, `Print`, `UI`, `Paint` earn standalone modes over time or stay as tool modes within `Graphic` / `Illustration`. Ship with three; expand when usage demands.
+- Raster painting vs vector illustration inside Illustration mode — unified workspace (like Krita / Procreate) or split modes. Current call: unified.
+- Export preset system for common design formats (PDF, PNG, SVG, PSD-compat). Overlaps with §5; TBD.
+
+---
+
 ## 13. Document Conventions
 
 - Tag new sections with [LOCKED] / [OPEN] / [REJECTED] / [GUARDRAIL].
