@@ -304,48 +304,84 @@ Blender itself has marked these for replacement. Blended finishes the job.
 
 ## 11. Pipeline as UX [LOCKED, supersedes §6]
 
-The user-facing structure of Blended **is** the production pipeline. Not a menu of workspaces. Not a grid of tool doors. A visible flow through animation production, with animation as the apex and everything else feeding into or out from it.
+The user-facing structure of Blended **is** the production pipeline. Not a menu of workspaces. Not a grid of tool doors. A visible flow through creative work, grouped into **Creative (authoring)** and **Post (finishing)**, with animation as the shaping discipline of both the 2D and 3D authoring sections.
 
 ### The pipeline (canonical order)
 
-> Storyboard / Annotation → 2D Animation *(pre-vis or final)* → Assets *(Sculpt / Model / Rigs)* → Environments → VFX + Sound → **KEYFRAMES / TIMELINES [apex]** → Compositing / Video Editing
+> **Creative:** Storyboarding → 2D Animation → 3D Animation → Game Design → *(Illustration, if in scope)*
+>
+> **Post:** Editing → Compositing → Audio
 
-Animation is the apex because every upstream stage feeds into it and every downstream stage serves it. This replaces §6's "Animator is the headline door because we said so" with something structurally honest: the pipeline shows *why* animation sits at the center.
+Animation is the **shaping discipline** of the Creative section (2D Animation and 3D Animation each have their own internal `Animate` mode as the apex within their section). Post stages serve the animation output.
 
 ### Launcher structure [LOCKED in principle, pixel-level UI still OPEN]
 
 **The whole launcher is a single vertical scrollable view.** Not a grid of tiles. Not a modal door that expands. Everything visible at once; scroll to see what's below the fold.
 
 - **"Blending?"** — the prompt at the very top. Single word, question mark intended. Reads both as status ("what's blending?") and invitation ("want to blend?"). Sets the playful register.
-- **Below that, each pipeline stage as a bold heading with its mode buttons listed underneath it**, stacked vertically down the page in pipeline order:
-  - **Storyboarding** — `Board` *(and possibly `Animatic`)*
-  - **2D Animation** — `Draw`, `Ink`, `Animate` *(community-extensible per §2)*
-  - **Assets** — `Sculpt`, `Model`, `Rigs`
-  - **Environments** — environment-specific modes
-  - **VFX + Sound** — sim, particle, sound-edit modes
-  - **Animate** — timeline / dope sheet / F-curve / NLA entries *(the apex)*
-  - **Composite / Edit** — compositor, VSE
-- **Scan, scroll, click.** That's the whole interaction. No drill-downs, no hover states, no modal expansions. The apex stage may be styled to draw the eye, but nothing is hidden behind a click.
+- **Below that, each pipeline section as a bold heading with its mode buttons listed underneath it**, stacked vertically into two groups:
+
+```
+"Blending?"
+
+╌╌ CREATIVE ╌╌
+
+Storyboarding
+  [Board]
+
+2D Animation
+  [Animate] [Frame-by-Frame] [Paint]
+
+3D Animation
+  [Sculpt] [Model] [Rig] [Environment] [VFX] [Animate]
+
+Game Design
+  [Asset] [Level] [Bake] [Export]        (industry-expandable)
+
+(Illustration, if in scope)
+  [...]
+
+╌╌ POST ╌╌
+
+Editing
+  [Video] [Sketch] [Polish]              (industry-expandable)
+
+Compositing
+  [Composite]                            (industry-expandable)
+
+Audio
+  [Mix] [Score]
+```
+
+- `╌╌ CREATIVE ╌╌` and `╌╌ POST ╌╌` may be literal visual separators or just implicit spacing — UI detail.
+- Most headings ship with a placeholder/starter mode set; industry-specific modes can be added as adjacent buttons without changing the section structure.
+- **Scan, scroll, click.** That's the whole interaction. No drill-downs, no hover states, no modal expansions.
 
 ### Principles [LOCKED]
 
-- **Freely jumpable.** Enter any stage at any time, regardless of project state. Pipeline is the organizing metaphor, not a forced sequence.
-- **Directly enterable.** A sculptor who just wants to sculpt clicks Sculpt under Assets and is there. No pipeline-walk required.
-- **Project state reflected back.** The launcher shows *where the current project has content* — stages with data look different from empty stages. First-time new user sees all stages neutral/inviting.
+- **Freely jumpable.** Enter any section / mode at any time, regardless of project state. Pipeline is the organizing metaphor, not a forced sequence.
+- **Directly enterable.** A sculptor who just wants to sculpt clicks `Sculpt` under 3D Animation and is there. No pipeline-walk required.
+- **Project state reflected back.** The launcher shows *where the current project has content* — sections with data look different from empty ones. First-time new user sees all sections neutral/inviting.
 - **Pipeline is the default view, not mandatory.** Re-enterable from any workspace via a global hotkey or equivalent.
-- **Each stage button opens a filtered view of the same project.** The `.blended` file is one file; the mode controls what's visible. (This is why §10's UI-state datablock removals are load-bearing — once SCR/WM/WS are not project data, the launcher becomes the canonical workspace system.)
+- **Each mode button opens a filtered view of the same project.** The `.blended` file is one file; the mode controls what's visible. (This is why §10's UI-state datablock removals are load-bearing — once SCR/WM/WS are not project data, the launcher becomes the canonical workspace system.)
+
+### Project-level settings [LOCKED]
+
+Cross-cutting animation engine settings (framerate, renderer, output, color management, motion blur) apply to both 2D Animation and 3D Animation. They live in a **project-level config** accessible globally from the launcher (gear icon or a "Project" row at the top of the scroll), **not inside any one section.** Changing framerate affects both 2D and 3D content — one engine, one config, two content types. §2's "one engine, two lenses" made literal.
 
 ### What this settles
 
 - **§6 Launcher** is superseded by this section. Preserved there for history.
-- **§2 substrate split** is still true but more nuanced inside the pipeline: 2D is early/optional at the front (Storyboard, 2D Animation); 3D is mid-pipeline (Assets, Environments); Animation and post are substrate-agnostic.
-- **§10 datablock ownership** gets natural homes — each datablock type belongs to a stage, which helps "filtered view per workspace" land cleanly.
+- **§2 substrate split** made structural: 2D Animation and 3D Animation as parallel Creative sections, each with animation as the shaping discipline.
+- **§10 datablock ownership** — each datablock type belongs to a section/mode, which makes "filtered view per workspace" land cleanly.
+- **Assets / Environments / VFX** are **not** standalone pipeline stages — they're modes *inside* 3D Animation, because they're tools used while doing 3D animation, not discrete production phases.
+- **Game Design is its own Creative section**, not a mode under 3D Animation — game asset creation has genuinely different quality metrics (polycount, UV efficiency, engine-export formats, LODs) that don't belong under "3D Animation."
 
 ### Still open
 
-- **VFX placement.** Pre-animation VFX (particles, sims, assets-that-move) vs post-animation VFX (compositing-style). Both exist; may need two tiles or one with sub-differentiation. Parked.
-- **Stage granularity.** Assets = Sculpt + Model + Rigs as one stage with three mode buttons (current plan) vs three sibling stages. Current plan: one stage.
-- **Project state visualization.** How "where you are in your project" renders on the pipeline — progress indicators, filled tiles, content markers — all UI detail for later.
+- **Illustration.** Is it in scope (§7)? If yes, its own heading. If no, leave the slot empty. Watch this for Vision C scope-creep.
+- **Editing vs Compositing merge.** Industry keeps them separate; we probably should too. Parked.
+- **Creative / Post visual separators.** Actual UI dividers vs implicit spacing — pixel detail for later.
 
 ---
 
@@ -404,7 +440,7 @@ These aren't competing models — they're the same data viewed through two diffe
 
 **Headline insight — F-curve interpolation driving 2D.** Blender's F-curve system is world-class for 3D (bezier handles, ease-in / ease-out / bounce / constant / linear control). Grease Pencil strokes have point positions; points can be keyframed. Therefore **Blender's F-curve interpolation can drive the tween between Grease Pencil drawings** with full artistic control. Draw five key poses, get 24fps animation with proper easing. This is the thing the rest of the 2D-animation industry (ToonBoom, Moho, CACANi) either doesn't do or does badly. In Blended it's the default workflow, using code Blender is already best at.
 
-**Shared engine, shared settings.** Everything that runs 3D animation — frame rate (24/30/60+), renderer, output resolution, color management, motion blur, all animation engine and properties settings — applies to 2D identically. The engine doesn't care whether it's interpolating object transforms or stroke points; it's just animating properties. These settings live under the **Animate** stage (§12.X — TBD) where all cross-cutting animation engine concerns are configured. A 2D animator adjusts framerate, renderer, output by going to Animate, same UI a 3D animator would use. No duplicated settings, no 2D-specific config — §2's "one engine, two lenses" becomes literal.
+**Shared engine, shared settings.** Everything that runs 3D animation — frame rate (24/30/60+), renderer, output resolution, color management, motion blur, all animation engine and properties settings — applies to 2D identically. The engine doesn't care whether it's interpolating object transforms or Grease Pencil stroke points; it's just animating properties. These cross-cutting settings live in the **project-level config** (§11, "Project-level settings"), accessed globally from the launcher — not inside any single Creative section. A 2D animator adjusts framerate, renderer, output using the same UI a 3D animator uses. No duplicated settings, no 2D-specific config — §2's "one engine, two lenses" made literal.
 
 **Mode buttons under the tile:**
 
