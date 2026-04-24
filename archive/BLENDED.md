@@ -740,11 +740,26 @@ Every mode's properties are keyframeable, not just Animate. Sculpt brush pressur
 
 Sprite transforms, UI opacity, material parameters, particle settings — all keyframeable in Game. Animated game UI, animated sprites, procedurally varying game assets fall out of the same engine. **Frame-by-frame** available for traditional sprite animation (sprite sheets, frame cycles) — though keyframed interpolation is almost always more efficient.
 
+### 2.5D — the 2D↔3D cross-cycle
+
+Games and media that mix 2D and 3D — 2D characters in 3D environments, 3D models rendered with 2D-style shading, hand-drawn animation composited onto 3D scenes, parallax-scrolled sprites in 3D space — are first-class in Blended. The author works in **both** 2D Animation and 3D Animation freely; assets flow between them without conversion or export; Game (and Editing / Compositing) consume the mixed output without distinction.
+
+This isn't a special mode or section — it's what falls out of §2's "one engine, every content type." The depsgraph doesn't know whether it's evaluating a Grease Pencil stroke, a polygon mesh, or a textured sprite; they're all just keyframeable properties. 2.5D is the natural consequence of using both substrates in the same project.
+
+**Examples in scope:**
+- Hollow Knight-style 2D characters on 3D parallax environments
+- Cuphead-style hand-drawn animation composited onto 3D scenes
+- Motion graphics with Grease Pencil annotations layered on 3D objects
+- Mobile / indie games with 3D models rendered as 2D sprites at runtime
+- Cutout / paper-doll animation rigs in 3D space
+
+This is a sweet spot for Blended that the rest of the industry currently solves with jury-rigged pipelines (Spine + Unity, ToonBoom + Maya, Photoshop + Blender + custom exporters). Blended keeps it all in one project, one file, one engine.
+
 ### Transitions out of Game
 
 - **Primary:** export to game engine (Unity / Unreal / Godot / custom runtime).
 - **Secondary:** Editing / Compositing / Audio if producing a trailer, cinematic, or marketing material from game content.
-- **Back-cycle:** 3D Animation > Rig / Animate for game-bound characters. The animation *craft* happens in 3D Animation; game-readying happens here.
+- **Back-cycle:** 3D Animation > Rig / Animate for 3D game-bound characters; 2D Animation > Animate / Frame-by-Frame / Paint for 2D game sprites, animations, and UI art. The animation *craft* happens in the appropriate Animation section; game-readying happens here.
 
 ### Still open within Game
 
