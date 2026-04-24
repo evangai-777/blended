@@ -526,6 +526,136 @@ Storyboard panels become literal keyframes; in-betweens are either drawn by hand
 
 ---
 
+### 12.3 3D Animation [LOCKED in principle, pixel-level UI still OPEN]
+
+**What it is.** The Creative section where all 3D authoring happens — asset creation, environment composition, simulation, and the animation work that's the apex of the whole pipeline. Collapses what were previously four separate stages (Assets, Environments, VFX+Sound, Animate) into one section with six mode buttons. The honest framing: Sculpt, Model, Rig, Environment, and VFX aren't production phases — they're **tools used while doing 3D animation.** Animate is the convergence point within the section; the other five modes feed into it.
+
+**Mode buttons:** `Sculpt` / `Model` / `Rig` / `Environment` / `VFX` / `Animate`
+
+**Mode switching is fast.** The user doesn't return to the launcher to switch within 3D Animation — modes switch with a single click or hotkey inside the section. Sculpt a form, drop to Model to retopologize, jump to Rig to bind, hit Animate to pose. The section *is* the workflow.
+
+**Animate is the local apex.** The other modes produce the assets and setups that Animate orchestrates over time. Per §2, animation is the shaping discipline of 3D Animation — every design decision inside the section serves the animation work.
+
+---
+
+#### Sculpt
+
+**Primary activity:** high-density mesh manipulation. Form-finding. Clay.
+
+**Screen layout:**
+- Dominant viewport — the sculpture
+- Minimal toolbar: brush picker, size, strength
+- Brush-specific settings on the right panel
+- Masks and stroke layers accessible but unobtrusive
+
+**Data model:** `ID_ME` with multires modifier and/or dyntopo. No new datablocks.
+
+**Transitions out:** Model (retopologize), Rig (skin the sculpt directly), Environment (place as set piece).
+
+---
+
+#### Model
+
+**Primary activity:** polygonal modeling. Hard-surface. Clean topology.
+
+**Screen layout:**
+- Dominant viewport, edit-mode overlays (vertex/edge/face)
+- Modifier stack on the right
+- Compact modeling toolbar (extrude, bevel, inset, loop cut, knife)
+- N-panel minimized by default
+
+**Data model:** `ID_ME`, `ID_CV` (curves for curve-based modeling), modifiers on the object. No new datablocks.
+
+**Transitions out:** Rig (bind to armature), Environment (place in scene), Game (if asset is game-bound).
+
+---
+
+#### Rig
+
+**Primary activity:** armature construction. Skinning. Constraint and controller setup.
+
+**Screen layout:**
+- Viewport with armature overlay and bone orientation visible
+- Bone properties + constraint stack on the right
+- Weight paint accessible as a quick sub-mode
+- IK/FK switching, shape-key hooks, custom controllers
+
+**Data model:** `ID_AR` (Armature), `ID_ME` (deformed geometry), `ID_AC` (Action for rest/bind poses). Existing datablocks only.
+
+**Transitions out:** Animate (use the rig), Model (adjust topology for deformation).
+
+---
+
+#### Environment
+
+**Primary activity:** scene-scale composition. Set dressing. World-building. Lighting. Atmosphere.
+
+**Screen layout:**
+- Wide viewport, framed for whole-scene work
+- Outliner / collections prominent on the right (scene hierarchy)
+- World settings (sky, fog, atmosphere) one click away
+- Light placement and matching tools
+- Instancing and array tools for repeated elements
+
+**Data model:** `ID_SCE`, `ID_GR` (Collection), `ID_WO` (World), `ID_OB` placements, `ID_LA` (Light). Existing datablocks.
+
+**Transitions out:** Animate (scene is the stage), VFX (add sims into the environment).
+
+---
+
+#### VFX
+
+**Primary activity:** simulations, procedural effects, particles.
+
+**Screen layout:**
+- Viewport showing the simulation domain or effect result
+- Geometry Nodes editor visible (procedural effects) or simulation settings (baked sims)
+- Cache controls (bake, free, re-sim) accessible but unobtrusive
+- Force fields and collider setup
+
+**Data model:** `ID_NT` (NodeTree for geo-node effects), `ID_VO` (Volume for smoke/fluids), `ID_PT` (PointCloud), `ID_CV` (hair curves), `ID_ME`. No new datablocks — legacy `ID_PA` particles are cut per §10 Bucket 6; Geometry Nodes is the one path forward.
+
+**Transitions out:** Animate (sim baked into timeline), Environment (drop the effect into a scene).
+
+---
+
+#### Animate [local apex]
+
+**Primary activity:** keyframe work. Posing. Timing. Camera animation. The convergence point where rigs, assets, environments, and effects all get orchestrated over time.
+
+**Screen layout:**
+- Viewport with animation overlays (motion paths, trail visualization)
+- Timeline, dope sheet, and F-curve editor — dockable or popover
+- NLA editor for action mixing
+- Rig controllers visible and selectable directly in the viewport
+- **"Play Animatic" button** carries over — same button across Storyboarding → 2D Animation → 3D Animation, same meaning
+
+**Data model:** `ID_AC` (Action — where keyframes live), `ID_OB` (transforms), `ID_AR` (rigs), `ID_SCE` (timeline), plus everything from other modes that's being animated.
+
+**Frame-by-frame available** per §2 — hand-pose every frame without F-curve interpolation, for stop-motion-style workflows or when an animator wants full manual control.
+
+**Transitions out:** Editing → Compositing → Audio (post pipeline), or Game (if the animation is headed for a game engine export).
+
+---
+
+### Connection to §2 universal keyframe
+
+Every mode's properties are keyframeable, not just Animate. Sculpt brush pressure, Model modifier settings, Rig bone orientations, Environment light intensity, VFX force-field strength — all animatable. Animate is the mode where animation is *the primary activity*; in other modes, animation is the ambient capability from §2.
+
+### Transition out of 3D Animation
+
+- **Animation-final project** → Editing → Compositing → Audio.
+- **Game project** → Game section for game-specific finishing (baking, LODs, export).
+- **Still-frame project** (product viz, arch viz) → Compositing directly, skipping animation if the project is a single frame.
+
+### Still open within 3D Animation
+
+- Whether Sculpt and Model should be one mode with sub-tools (some workflows blur them) or two adjacent modes. Current call: two modes for clarity.
+- VFX sub-modes — geo-node effects vs baked simulations likely deserve different UI affordances. TBD.
+- How tightly Rig integrates with Animate — one-click "use this rig for animation" handoff or explicit scene setup? UX detail.
+
+---
+
 ## 13. Document Conventions
 
 - Tag new sections with [LOCKED] / [OPEN] / [REJECTED] / [GUARDRAIL].
