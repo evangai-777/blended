@@ -994,6 +994,94 @@ Every Finalizing mode's properties are keyframeable — transition timing, color
 
 ---
 
+### 12.7 Compositing [LOCKED in principle, pixel-level UI still OPEN]
+
+**What it is.** The Post section for per-frame image processing. Color grading, layered effects, masking and rotoscoping, image cleanup, look development. Node-based work that sits between Finalizing (assembly + delivery prep) and Audio (mix). Where individual frames and sequences become finished pictures.
+
+**Mode buttons:** `Composite` / `Color` / `Cleanup` — industry-expandable (e.g., `Track`, `Stylize`, `VFX-Comp` if usage demands promote them to standalone modes).
+
+**Division of labor with related sections.**
+- **vs Finalizing > Mixed:** Mixed shows quick color preview during assembly; Compositing > Color does the real grade with scopes, LUTs, and per-shot control.
+- **vs 3D Animation > VFX:** 3D VFX *makes* effects — sims, particles, procedural effects authored in 3D space. Compositing *integrates* rendered effects into the final image — layer combining, plate integration, lens-style effects on top.
+
+---
+
+#### Composite
+
+**Primary activity:** node-based image composition. Combining render layers, applying filter / blend / transform operations, building the final pixel through a graph.
+
+**Screen layout:**
+- **Node graph workspace** — large, dominant. Where the work is.
+- Image preview / viewer — shows the result of the currently-selected node
+- Render layer / pass selector (input passes from §12.3 and other Creative sections auto-available)
+- Backdrop image visualization
+- Common node templates (color correct, blur, mix, transform, filter)
+
+**Data model:** `ID_NT` (NodeTree — the compositor tree), `ID_IM` (image inputs and outputs), `ID_SCE` (compositor config). Masks fold into the NodeTree per §10 Bucket 3 (no separate `ID_MSK`). No new datablocks.
+
+**Transitions out:** Color (grade the composited result), Cleanup (per-frame fixes), Audio (final mix), back to Creative sections if the comp reveals authoring problems.
+
+---
+
+#### Color
+
+**Primary activity:** color grading. Look development. Scope-driven exposure, contrast, and color decisions. Per-shot grade application.
+
+**Screen layout:**
+- **Color-accurate image viewer** (calibrated, large)
+- **Scopes panel** — waveform, vectorscope, RGB parade, histogram (critical for grading)
+- Color wheels — lift/gamma/gain or shadows/midtones/highlights
+- Curves editor
+- LUT loader — industry-standard `.cube` files at the §5 boundary
+- A/B reference frame comparison
+- Per-shot grade timeline (which grade applies to which shot range)
+
+**Data model:** `ID_NT` (color nodes within the compositor tree), `ID_IM` (LUT data or external LUT references through §5 boundary). No new datablocks.
+
+**Transitions out:** Cleanup (if grade reveals visual issues), Audio (final mix), standalone export of graded sequence.
+
+---
+
+#### Cleanup
+
+**Primary activity:** per-frame paint-out. Rotoscoping. Dust-busting. Wire / rig removal. Image-level fixes that can't be done procedurally.
+
+**Screen layout:**
+- Image viewer with brush / paint tools
+- Onion-skin overlays for tracked areas (see context across frames)
+- Mask / roto-spline tools
+- Per-frame paint-over with brush
+- Original / cleaned A/B toggle
+- Track-and-paint workflow — paint once, propagate via motion tracking
+
+**Data model:** `ID_NT` (cleanup nodes including roto masks per §10), `ID_IM` (paint layers stored as image data), `ID_MC` (MovieClip when cleaning imported video). No new datablocks.
+
+**Transitions out:** Composite (re-integrate cleaned frames), Color (grade the cleaned-up result), Audio (final mix).
+
+---
+
+### Connection to §2 universal keyframe
+
+Compositing is one of Blender's most natively-keyframed contexts. Every node value, color-grade parameter, mask vertex, and effect intensity can animate. Per-shot grades are just keyframed grade-node values across time. Effect ramps, transition reveals, growing masks — all keyframes.
+
+**Frame-by-frame** is dominant in Cleanup (rotoscoping and paint-out are inherently per-frame) and available throughout for any per-frame adjustment.
+
+### Transitions out of Compositing
+
+- **Forward in pipeline:** Audio (final mix, sound design, scoring).
+- **Standalone export** for picture-locked deliverables (final image sequences, video without final mix).
+- **Back to Finalizing** if compositing reveals an editing issue (a shot doesn't work, needs replacement or reorder).
+- **Back to Creative sections** if compositing reveals an authoring issue (re-render needed, re-animate a problem shot, fix asset topology).
+
+### Still open within Compositing
+
+- Whether `Color` stays its own mode or merges into Composite as a node-cluster preset. Current call: own mode — scopes/wheels ergonomics differ enough from generic node work.
+- `Track` (camera tracking, match-move) as a fourth mode. Parked; promote when motion-tracking workflows mature.
+- `Stylize` for non-photorealistic look development (painterly, watercolor, etc.). Parked; community interest is real but industry urgency low.
+- Per-shot vs per-sequence grade scope — UX detail in Color.
+
+---
+
 ## 13. Document Conventions
 
 - Tag new sections with [LOCKED] / [OPEN] / [REJECTED] / [GUARDRAIL].
