@@ -32,7 +32,7 @@ Every word in this sentence is load-bearing. Before weakening any of it, read §
 
 ## 2. Identity Structure [LOCKED]
 
-Blended has **three layers** and **two substrates**. Both structures must be honored.
+Blended has **three layers**, **two substrates**, and **one animation engine that powers every content type**. All three structures must be honored.
 
 ### Three layers (vertical)
 
@@ -58,7 +58,17 @@ Co-equal at the **medium** level, not at the **identity** level. This distinctio
 - **3D substrate.** Shaping discipline: animation. Houses the headline launcher doors.
 - **2D substrate.** Grease Pencil, annotation, 2D drawing, 2D animation. Its own top-level door. Community-extensible — the 2D toolset is smaller and less opinionated than 3D; letting it grow organically is honest.
 
-Under the hood: **one engine, two lenses.** The depsgraph, keyframes, timeline, F-curves serve both substrates. 2D animation is still animation.
+### One engine, every content type [LOCKED]
+
+The depsgraph, keyframes, timeline, and F-curves aren't limited to 2D and 3D animation — they power everything Blended authors. **Every property in every section is keyframeable; every time-based mode supports frame-by-frame authoring where it makes sense.** Audio mix levels, video clip transforms, storyboard camera-on-still moves, game asset transforms, design element opacity, compositor node values — all keyframeable, using the same engine that drives 2D and 3D animation.
+
+This is the structural cash-out of the slogan (§1). "Explicit focus on the craft of animation" is only honest if animation is *ambient* — not a mode you enter, a capability the tool has wherever you are. Static work is just animation with one frame. Motion graphics is Design with keyframes. Animated game UI is Game with keyframes. No special cases; everything falls out of the same principle.
+
+**Timeline-format sections — Editing, Mixing, Scoring, and the Storyboard editor — support a toggle between keyframe mode and each format's traditional editing UI** (clips on tracks for video, faders and automation lanes for audio mixing, notes/sequencer for scoring, panel manipulation for storyboard). The underlying representation is always keyframes; the *view* conforms to industry conventions on request. A video editor never has to leave clip-and-track thinking if they don't want to; a mixer never has to leave their faders. But keyframes are one toggle away, on the same data, for anyone who wants the animation-native view.
+
+Per-section specifics of what "keyframe" and "frame-by-frame" mean (and where the toggle lives, and what the traditional UI looks like) live in §12 as each stage's spec gets written.
+
+**UI restraint is load-bearing.** Every section surfacing keyframe controls bluntly would bring Blender's knob-clutter back. Affordances stay subtle: right-click any property → insert keyframe; timelines unfurl when used, hidden when not; the toggle to traditional editing is a single button, not a screen-splitting mode change. Breadth doesn't become clutter.
 
 ---
 
