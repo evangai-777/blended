@@ -64,7 +64,7 @@ The depsgraph, keyframes, timeline, and F-curves aren't limited to 2D and 3D ani
 
 This is the structural cash-out of the slogan (§1). "Explicit focus on the craft of animation" is only honest if animation is *ambient* — not a mode you enter, a capability the tool has wherever you are. Static work is just animation with one frame. Motion graphics is Design with keyframes. Animated game UI is Game with keyframes. No special cases; everything falls out of the same principle.
 
-**Timeline-format sections — Editing, Mixing, Scoring, and the Storyboard editor — support a toggle between keyframe mode and each format's traditional editing UI** (clips on tracks for video, faders and automation lanes for audio mixing, notes/sequencer for scoring, panel manipulation for storyboard). The underlying representation is always keyframes; the *view* conforms to industry conventions on request. A video editor never has to leave clip-and-track thinking if they don't want to; a mixer never has to leave their faders. But keyframes are one toggle away, on the same data, for anyone who wants the animation-native view.
+**Timeline-format sections — Finalizing, Mixing, Scoring, and the Storyboard editor — support a toggle between keyframe mode and each format's traditional editing UI** (clips on tracks for video, faders and automation lanes for audio mixing, notes/sequencer for scoring, panel manipulation for storyboard). The underlying representation is always keyframes; the *view* conforms to industry conventions on request. A video editor never has to leave clip-and-track thinking if they don't want to; a mixer never has to leave their faders. But keyframes are one toggle away, on the same data, for anyone who wants the animation-native view.
 
 Per-section specifics of what "keyframe" and "frame-by-frame" mean (and where the toggle lives, and what the traditional UI looks like) live in §12 as each stage's spec gets written.
 
@@ -89,7 +89,7 @@ Blender carries three stacked, unreconciled visions. Blended blends them.
 
 - **From A** — opinionated discipline. Animation is the shaping discipline; the core is designed around it; decisions are made, not deferred.
 - **From B** — accessibility. The tool is openable by a first-time user. Launcher tells the truth about what Blended is. "Free 2D and 3D software tools" in the slogan means access is real, not rhetorical.
-- **From C — *scope, not pathology*.** Blended commits to the breadth of professional creative work C has always been reaching for: 2D animation, 3D animation, game asset creation, compositing, editing, audio, illustration (when in scope). The pipeline sections in §11 (Storyboarding, 2D Animation, 3D Animation, Game Design, Editing, Compositing, Audio) *are* C's scope, honestly inhabited.
+- **From C — *scope, not pathology*.** Blended commits to the breadth of professional creative work C has always been reaching for: 2D animation, 3D animation, game asset creation, compositing, editing, audio, illustration (when in scope). The pipeline sections in §11 (Storyboarding, 2D Animation, 3D Animation, Game, Design, Finalizing, Compositing, Audio) *are* C's scope, honestly inhabited.
 
 ### What C's *pathology* means, specifically
 
@@ -338,7 +338,7 @@ The user-facing structure of Blended **is** the production pipeline. Not a menu 
 
 > **Creative:** Storyboarding → 2D Animation → 3D Animation → Game → Design
 >
-> **Post:** Editing → Compositing → Audio
+> **Post:** Finalizing → Compositing → Audio
 
 Animation is the **shaping discipline** of the Creative section (2D Animation and 3D Animation each have their own internal `Animate` mode as the apex within their section). Post stages serve the animation output.
 
@@ -371,8 +371,8 @@ Design
 
 ╌╌ POST ╌╌
 
-Editing
-  [Video] [Sketch] [Polish]              (industry-expandable)
+Finalizing
+  [Storyboard] [2D] [3D] [Game] [Design] [Mixed]
 
 Compositing
   [Composite]                            (industry-expandable)
@@ -409,7 +409,7 @@ Cross-cutting animation engine settings (framerate, renderer, output, color mana
 
 ### Still open
 
-- **Editing vs Compositing merge.** Industry keeps them separate; we probably should too. Parked.
+- **Finalizing vs Compositing scope line.** Finalizing = assembly + delivery preparation (timeline-assembly, QC, export-ready cuts). Compositing = per-frame polish (color grading, effects layers, node-based image work). Current call: clean separation; the distinction is clear enough to keep them as separate sections.
 - **Creative / Post visual separators.** Actual UI dividers vs implicit spacing — pixel detail for later.
 - **Design mode expansion.** Initial modes (`Graphic`, `Illustration`, `Concept`) are starters; community- and industry-expandable. Typography / Layout / Print etc. can be added as separate modes when the use case is real, without changing the heading.
 
@@ -639,7 +639,7 @@ Storyboard panels become literal keyframes; in-betweens are either drawn by hand
 
 **Frame-by-frame available** per §2 — hand-pose every frame without F-curve interpolation, for stop-motion-style workflows or when an animator wants full manual control.
 
-**Transitions out:** Editing → Compositing → Audio (post pipeline), or Game (if the animation is headed for a game engine export).
+**Transitions out:** Finalizing → Compositing → Audio (post pipeline), or Game (if the animation is headed for a game engine export).
 
 ---
 
@@ -649,7 +649,7 @@ Every mode's properties are keyframeable, not just Animate. Sculpt brush pressur
 
 ### Transition out of 3D Animation
 
-- **Animation-final project** → Editing → Compositing → Audio.
+- **Animation-final project** → Finalizing → Compositing → Audio.
 - **Game project** → Game section for game-specific finishing (baking, LODs, export).
 - **Still-frame project** (product viz, arch viz) → Compositing directly, skipping animation if the project is a single frame.
 
@@ -734,7 +734,7 @@ Every mode's properties are keyframeable, not just Animate. Sculpt brush pressur
 
 **Data model:** existing datablocks serialized to `.gltf` / `.fbx` / `.usd` / etc. per §5 format boundaries. Export translates at the boundary; does not deform the internal data model.
 
-**Transitions out:** back to the game engine itself — Game's primary consumer. Also Editing / Compositing / Audio if producing a trailer or cinematic from game content.
+**Transitions out:** back to the game engine itself — Game's primary consumer. Also Finalizing / Compositing / Audio if producing a trailer or cinematic from game content.
 
 ---
 
@@ -744,7 +744,7 @@ Sprite transforms, UI opacity, material parameters, particle settings — all ke
 
 ### 2.5D — the 2D↔3D cross-cycle
 
-Games and media that mix 2D and 3D — 2D characters in 3D environments, 3D models rendered with 2D-style shading, hand-drawn animation composited onto 3D scenes, parallax-scrolled sprites in 3D space — are first-class in Blended. The author works in **both** 2D Animation and 3D Animation freely; assets flow between them without conversion or export; Game (and Editing / Compositing) consume the mixed output without distinction.
+Games and media that mix 2D and 3D — 2D characters in 3D environments, 3D models rendered with 2D-style shading, hand-drawn animation composited onto 3D scenes, parallax-scrolled sprites in 3D space — are first-class in Blended. The author works in **both** 2D Animation and 3D Animation freely; assets flow between them without conversion or export; Game (and Finalizing / Compositing) consume the mixed output without distinction.
 
 This isn't a special mode or section — it's what falls out of §2's "one engine, every content type." The depsgraph doesn't know whether it's evaluating a Grease Pencil stroke, a polygon mesh, or a textured sprite; they're all just keyframeable properties. 2.5D is the natural consequence of using both substrates in the same project.
 
@@ -760,7 +760,7 @@ This is a sweet spot for Blended that the rest of the industry currently solves 
 ### Transitions out of Game
 
 - **Primary:** export to game engine (Unity / Unreal / Godot / custom runtime).
-- **Secondary:** Editing / Compositing / Audio if producing a trailer, cinematic, or marketing material from game content.
+- **Secondary:** Finalizing / Compositing / Audio if producing a trailer, cinematic, or marketing material from game content.
 - **Back-cycle:** 3D Animation > Rig / Animate for 3D game-bound characters; 2D Animation > Animate / Frame-by-Frame / Paint for 2D game sprites, animations, and UI art. The animation *craft* happens in the appropriate Animation section; game-readying happens here.
 
 ### Still open within Game
@@ -777,7 +777,7 @@ This is a sweet spot for Blended that the rest of the industry currently solves 
 
 **Mode buttons:** `Graphic` / `Illustration` / `Concept` — industry-expandable (e.g., `Typography`, `Layout`, `Print`, `UI`, `Paint` if workflow demands promote them to standalone modes).
 
-**Design's dual role.** Unlike most Creative sections, Design work often serves *other sections* as input: concept art feeds 3D Animation > Sculpt/Model; illustration feeds 2D Animation > Animate as reference or keyframe art; game UI art feeds Game > Asset; motion graphics feeds Editing or Compositing. But Design work can also stand alone — a printed poster, a published illustration, a branded logo doesn't need a downstream. Both modes of use are first-class.
+**Design's dual role.** Unlike most Creative sections, Design work often serves *other sections* as input: concept art feeds 3D Animation > Sculpt/Model; illustration feeds 2D Animation > Animate as reference or keyframe art; game UI art feeds Game > Asset; motion graphics feeds Finalizing or Compositing. But Design work can also stand alone — a printed poster, a published illustration, a branded logo doesn't need a downstream. Both modes of use are first-class.
 
 ---
 
@@ -795,7 +795,7 @@ This is a sweet spot for Blended that the rest of the industry currently solves 
 
 **Data model:** `ID_CV` (curves for vector graphics and text), `ID_IM` (raster images), `ID_GP` (Grease Pencil for hand-drawn elements), `ID_NT` (effect node trees). No new datablocks.
 
-**Transitions out:** Editing (motion graphics), Compositing (design elements as comp layers), standalone export (print, web), cross-feed to Game > Asset (UI mockups → game UI).
+**Transitions out:** Finalizing (motion graphics), Compositing (design elements as comp layers), standalone export (print, web), cross-feed to Game > Asset (UI mockups → game UI).
 
 ---
 
@@ -844,7 +844,7 @@ This is a sweet spot for Blended that the rest of the industry currently solves 
 ### Transitions out of Design
 
 - **Standalone output:** print, web, digital publication — export at §5 boundary.
-- **Forward into pipeline:** Editing (motion graphics clips), Compositing (design layers in comp trees), Audio (title-sequence sync, lyric videos).
+- **Forward into pipeline:** Finalizing (motion graphics clips), Compositing (design layers in comp trees), Audio (title-sequence sync, lyric videos).
 - **Cross-feed into other Creative sections:** 2D Animation (illustration → animation), 3D Animation (concept → 3D asset), Game (UI / sprite art → game asset).
 - **Back-cycle:** from any of the above when iteration reveals design changes are needed.
 
@@ -853,6 +853,144 @@ This is a sweet spot for Blended that the rest of the industry currently solves 
 - Whether `Typography`, `Layout`, `Print`, `UI`, `Paint` earn standalone modes over time or stay as tool modes within `Graphic` / `Illustration`. Ship with three; expand when usage demands.
 - Raster painting vs vector illustration inside Illustration mode — unified workspace (like Krita / Procreate) or split modes. Current call: unified.
 - Export preset system for common design formats (PDF, PNG, SVG, PSD-compat). Overlaps with §5; TBD.
+
+---
+
+### 12.6 Finalizing [LOCKED in principle, pixel-level UI still OPEN]
+
+**What it is.** The first Post section. Where Creative outputs become finished deliverables. *Authoring* happens in Creative; *finalizing* happens here. The name is deliberate — "Editing" is ambiguous (editing happens in every Creative section when you adjust your own work), but "Finalizing" names the specific activity that lives here: preparing content for delivery, not authoring it.
+
+**Mode buttons:** `Storyboard` / `2D` / `3D` / `Game` / `Design` / `Mixed`
+
+Five modes mirror the five Creative headings (Storyboarding, 2D Animation, 3D Animation, Game, Design) — each tuned to the QC, assembly, and export concerns of that content type. A sixth `Mixed` mode handles blended-content projects and externally-imported footage (live-action, drone, screen recordings, stock video).
+
+**Division of labor with Creative sections.** Creative authors; Finalizing delivers. Same `.blended` file, same scenes, same timeline — different lens. The Finalizing lens surfaces delivery-relevant info (QC warnings, export presets, cut-lock status); the Creative lens surfaces creation-relevant tools. Switching between them is fast intra-section + cross-section with no data migration.
+
+---
+
+#### Storyboard
+
+**Primary activity:** finalize storyboard as a standalone deliverable — pitch decks, director reviews, client previews, production-ready animatic sheets.
+
+**Screen layout:**
+- Large-panel review view (not the authoring canvas)
+- Panel-timing display + scene grouping
+- Review annotations layer (director / client notes, dated)
+- Export preset picker — PDF pitch deck, animatic video, printed storyboard sheet
+- Review-status per panel (approved / revising / blocked)
+
+**Data model:** `ID_SCE`, `ID_GP`, `ID_SO`. Same datablocks as §12.1. No new datablocks.
+
+**Transitions out:** back to Storyboarding > Board (iterate on notes), forward to 2D Animation / 3D Animation (begin detailed work), forward to Mixed Finalizing (if storyboard is one element in a larger piece).
+
+---
+
+#### 2D
+
+**Primary activity:** assemble 2D animation shots into a final sequence. Frame-rate QC, style-consistency check, locked cut.
+
+**Screen layout:**
+- Shot-list panel on the left (all §12.2 sequences)
+- Assembly timeline (sequence-level, not frame-level)
+- Per-shot QC — frame count, frame-rate match, style-consistency warnings (line weight, color palette drift)
+- Locked-cut commit / revert
+- Export preset picker
+
+**Data model:** `ID_SCE`, `ID_GP`, `ID_AC`, `ID_SO`. Existing datablocks.
+
+**Transitions out:** back to 2D Animation (fix shots), forward to Compositing, forward to Audio, forward to Mixed if project blends.
+
+---
+
+#### 3D
+
+**Primary activity:** assemble 3D animation shots into a final sequence. Per-shot render QC, camera continuity, lighting match.
+
+**Screen layout:**
+- Shot-list panel
+- Assembly timeline
+- Per-shot QC — render status (complete / pending / failed), resolution check, camera metadata (lens, focal length), lighting-match across shots
+- Render queue visibility
+- Locked-cut commit
+- Export preset picker
+
+**Data model:** `ID_SCE`, `ID_OB`, `ID_CA`, `ID_LA`, `ID_AC`, `ID_IM`. Existing datablocks.
+
+**Transitions out:** back to 3D Animation > Animate (fix shots), forward to Compositing, forward to Audio, forward to Mixed.
+
+---
+
+#### Game
+
+**Primary activity:** assemble game trailer, cinematic, or promotional sequence. Integrate in-engine capture with authored content.
+
+**Screen layout:**
+- Shot list including game-engine capture clips + Blended-authored shots
+- Brand-asset panel (logos, title cards, end cards)
+- Timeline for trailer / cinematic sequence
+- Export preset picker for marketing deliverables (16:9 master, social crops, vertical, etc.)
+
+**Data model:** `ID_SCE`, `ID_OB`, `ID_MC` (MovieClip for imported game-engine captures). Existing datablocks; external footage enters via §5 import boundary.
+
+**Transitions out:** standalone marketing export, forward to Compositing (polish), forward to Audio (mix), back to Game section for asset changes.
+
+---
+
+#### Design
+
+**Primary activity:** finalize design sequence for delivery. Motion-graphics assembly, animated-design sequencing, design-iteration final version.
+
+**Screen layout:**
+- Sequence panel (motion-graphics beats)
+- Assembly timeline
+- Per-shot QC — resolution, color-space, export-format checks
+- Iteration selector (compare v1 / v2 / v3 variants side-by-side)
+- Export preset picker for design-delivery formats (animated GIF, MP4, WebM, Lottie)
+
+**Data model:** `ID_SCE`, `ID_GP`, `ID_CV`, `ID_IM`, `ID_NT`. Existing datablocks.
+
+**Transitions out:** standalone export (direct delivery), forward to Compositing (per-frame polish), forward to Mixed (if design is one element of a larger piece), back to Design section.
+
+---
+
+#### Mixed
+
+**Primary activity:** traditional NLE workspace for blended-content projects and externally-imported footage. The industry-familiar video-editing workflow.
+
+**Screen layout:**
+- Multi-track timeline (video tracks + audio preview tracks)
+- Transition library — cuts, dissolves, fades, wipes, custom
+- **Clip-aware info panel** — surfaces relevant metadata per clip type: 3D render info, 2D frame-rate, imported video codec, etc.
+- Basic color-grade preview (full grading is Compositing)
+- Audio mix preview (full mixing is Audio)
+- Import panel for external footage — live-action, drone, screen recordings, stock video (through §5 boundary)
+- Export preset picker — industry-standard delivery formats (MP4 H.264, ProRes, DNxHD, WebM, etc.)
+
+**Data model:** `ID_SCE`, `ID_MC` (MovieClip for external video imports — §10 Bucket 2 keeper), `ID_IM`, `ID_SO`, `ID_GP`. Existing datablocks only. External footage imported through §5's video/audio format boundary.
+
+**Transitions out:** forward to Compositing (per-frame polish), forward to Audio (final mix), standalone export.
+
+---
+
+### Connection to §2 universal keyframe
+
+Every Finalizing mode's properties are keyframeable — transition timing, color-grade preview intensity, audio-level previews, shot durations, title animations, clip opacity. "Editing" is largely about *timing*, and timing is keyframes; this is why §2's universal-keyframe principle is felt most directly here.
+
+**Timeline-format toggle** (per §2) applies strongly: Finalizing's primary interface can switch between keyframe mode and traditional clip-on-track editing on the same underlying data. A video editor never has to leave clip-and-track thinking; keyframes are one toggle away for anyone who wants the animation-native view.
+
+**Frame-by-frame** available throughout — per-frame trim, per-frame rotoscope touch-ups, per-frame transition nudging.
+
+### Transitions out of Finalizing
+
+- **Forward in pipeline:** Compositing (per-frame polish, color grading, effects), Audio (final mix, sound design, scoring).
+- **Standalone delivery export** for content types where Finalizing IS the final step (Storyboard pitch decks, Design motion-graphics delivery, quick Mixed edits, simple Game trailers).
+- **Back to Creative sections** when QC reveals issues requiring authoring changes.
+
+### Still open within Finalizing
+
+- Whether export presets live at the project level (§11) with mode-aware defaults, or each mode has its own preset library. Current call: project-level with mode-aware defaults.
+- External-footage import workflow — drag/drop vs dedicated import dialog, thumbnail panel location. UI detail.
+- Depth of color-grade / audio-mix preview inside Mixed mode (preview-only vs limited in-place editing). Current call: preview-only; depth lives downstream in Compositing and Audio.
 
 ---
 
