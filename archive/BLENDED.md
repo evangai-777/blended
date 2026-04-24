@@ -392,6 +392,7 @@ Audio
 - **Project state reflected back.** The launcher shows *where the current project has content* — sections with data look different from empty ones. First-time new user sees all sections neutral/inviting.
 - **Pipeline is the default view, not mandatory.** Re-enterable from any workspace via a global hotkey or equivalent.
 - **Each mode button opens a filtered view of the same project.** The `.blended` file is one file; the mode controls what's visible. (This is why §10's UI-state datablock removals are load-bearing — once SCR/WM/WS are not project data, the launcher becomes the canonical workspace system.)
+- **Fast intra-section mode switching.** Once inside a heading, modes switch with a single click or hotkey — no launcher round-trip required. Move between `Sculpt` / `Model` / `Rig` inside 3D Animation as fluidly as you'd switch tools in any mode. Applies universally: any heading's modes are swap-able inline.
 
 ### Project-level settings [LOCKED]
 
@@ -417,6 +418,8 @@ Cross-cutting animation engine settings (framerate, renderer, output, color mana
 ## 12. Pipeline Stages — Detailed Specs
 
 This section fills in concrete specs for each pipeline stage from §11 as they get head-hunted. Stages without entries here are placeholders for future work.
+
+**Subsection template.** Every §12.x subsection specs the same five things, in this order: *what it is* (one paragraph), *mode buttons*, *screen layout* (per mode if multiple), *data model* (existing datablocks only per §10), *transitions out* (where users go after this section), and a *frame-by-frame note* (per §2 universal keyframe, stated explicitly even when it's implicit in the medium). This keeps sections comparable and makes the pipeline's consistency visible.
 
 ---
 
@@ -456,6 +459,8 @@ These aren't competing models — they're the same data viewed through two diffe
 
 **Transition to the next stage.** When the user moves to **2D Animation**, the same scenes, same Grease Pencil strokes, same timeline, same sound are present. More detail gets added — strokes per frame, in-betweens, cleaner linework. The storyboard never dies. It gets more real. No export. No rebuild. No retiming.
 
+**Frame-by-frame note.** Storyboarding is inherently frame-by-frame — each panel *is* a discrete frame on the timeline. Keyframes (per §2) are also available for camera-on-still moves, scene transition timing, scratch audio cues. Both modalities coexist by default.
+
 **Still open within Storyboarding:**
 - Whether `Animatic` is its own mode button or just Board-with-play-pressed.
 - Exact hotkey for "add new panel" (the single most common operation — needs to be one key).
@@ -487,7 +492,7 @@ Community-extensible per §2 — ship with these three; `Ink` / `Tween` / `Rig` 
 - **Layer panel** — right side. Character / background / effects / annotation layers. Visibility, lock, onion-skin per layer.
 - **Onion skinning** — on by default; previous and next frames ghosted behind the current.
 - **Richer drawing toolbar** — pen, eraser, bucket, shape tools, line smoothing, masking.
-- **"Play Animatic" button** — same button as in Storyboarding, same naming, because it's the same project and the same animatic, just further along.
+- **"Play Animation" button** — renamed from Storyboarding's `Play Animatic` because once you're in 2D Animation with real frames and in-betweens, it's no longer an animatic; it's animation. Same button position, same interaction, same project — name shifts with the substance.
 
 **Data model — same primitives as Storyboarding. No new datablocks:**
 
@@ -628,7 +633,7 @@ Storyboard panels become literal keyframes; in-betweens are either drawn by hand
 - Timeline, dope sheet, and F-curve editor — dockable or popover
 - NLA editor for action mixing
 - Rig controllers visible and selectable directly in the viewport
-- **"Play Animatic" button** carries over — same button across Storyboarding → 2D Animation → 3D Animation, same meaning
+- **"Play Animation" button** — same button position as Storyboarding's `Play Animatic` and 2D Animation's `Play Animation`, same interaction. Name stays `Play Animation` from 2D Animation onward; `Play Animatic` lives only in Storyboarding where it's actually an animatic.
 
 **Data model:** `ID_AC` (Action — where keyframes live), `ID_OB` (transforms), `ID_AR` (rigs), `ID_SCE` (timeline), plus everything from other modes that's being animated.
 
