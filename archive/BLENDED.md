@@ -1082,6 +1082,88 @@ Compositing is one of Blender's most natively-keyframed contexts. Every node val
 
 ---
 
+### 12.8 Audio [LOCKED in principle, pixel-level UI still OPEN]
+
+**What it is.** The final Post section. Multi-track mixing, musical composition / scoring, sound design, final mastering. Where the project's audio becomes finished — dialogue leveled, music scored, SFX layered, and the whole mix mastered for delivery.
+
+**Mode buttons:** `Mix` / `Score` — industry-expandable (e.g., `Sound Design`, `Foley`, `Denoise`, `Dialog`, `Spatial` if usage demands promote them to standalone modes).
+
+**Division of labor with related sections.**
+- **vs Finalizing > Mixed (audio preview):** Mixed shows quick audio preview during assembly; Audio does the real multi-track mix with full automation, mastering, and delivery-format audio.
+- **vs Creative sections (scratch audio):** Storyboarding, 2D Animation, 3D Animation, Design, and Game can all place scratch audio during authoring (reference dialogue, temp music, placeholder SFX). Audio replaces scratch tracks with production-ready sound.
+
+---
+
+#### Mix
+
+**Primary activity:** multi-track audio mixing. Balancing levels, pan, EQ, compression, effects. Final mixdown for delivery.
+
+**Screen layout:**
+- **Multi-track timeline** — one track per audio source (dialogue, music, SFX, ambience, etc.)
+- **Mixing console** — fader per track, pan, mute / solo, send / insert effects
+- **Meters** — peak, RMS, loudness (LUFS for delivery compliance)
+- **Automation lanes** — keyframe-backed per §2; timeline-format toggle between keyframe mode and traditional fader-drawn automation
+- Master bus with final-mix processing
+- Monitoring routing (studio monitors, headphones, phone / laptop speaker preview)
+
+**Data model:** `ID_SO` (Sound — one per audio clip / source), `ID_SCE` (scene-level mix state), `ID_NT` (node-based audio effect chains). No new datablocks.
+
+**Transitions out:** standalone export, forward to delivery (final mix as video-embedded audio or standalone file), back-cycle to Finalizing or Creative sections (see below).
+
+---
+
+#### Score
+
+**Primary activity:** musical composition and scoring. Writing music for the project — sequencing, arranging, recording or synthesizing.
+
+**Screen layout:**
+- **Piano roll / sequencer** — note entry, MIDI editing, pitch / velocity / timing
+- **Score sheet view** (optional) — traditional musical notation for composers who prefer it
+- **Instrument / sample library** — Blended-native synths, SoundFonts, VST/AU at the §5 boundary
+- **Transport** — tempo, time signature, bar markers synced with the project timeline
+- **Scene-sync panel** — current project frame / shot shown alongside musical bar / measure
+- **Arrangement panel** — verse / chorus markers, cue points, hit points matched to scene beats
+
+**Data model:** `ID_SO` (rendered / recorded audio output), `ID_NT` (node-based synth and instrument chains; MIDI data lives inside the NodeTree to avoid a new datablock). No new datablocks.
+
+**Transitions out:** Mix (fold composed music into the full multi-track mix), standalone music export, back-cycle (see below).
+
+---
+
+### Connection to §2 universal keyframe
+
+Audio is explicitly named in §2 as a timeline-format section with the keyframe ↔ traditional editing toggle. Fader levels, pan, effect intensity, EQ parameters, MIDI expression, instrument parameters — all keyframeable. Automation lanes in Mix *are* keyframes rendered as curves; the toggle just changes the presentation.
+
+**Frame-by-frame** (per-sample editing, at the extreme) is edge-case for Audio — unusual enough that v1 scopes it out. Keyframes on mix parameters (volume / pan / effects) are the universal commitment; per-sample editing is aspirational and parked.
+
+### Transitions out of Audio
+
+- **Final delivery:** mastered mixdown exported for the project's target — video render with embedded audio, standalone audio file, broadcast master, game audio assets, streaming-format deliverables.
+- **Standalone export:** music or SFX as isolated audio files (when Audio is the final product, e.g., a music release, a podcast, a sound library).
+
+### Back-cycling from Audio
+
+Audio work often reveals issues in earlier sections. Back-cycling is first-class:
+
+- **Audio ↔ Finalizing:** music or SFX timing exposes edit-rhythm issues — a cue lands wrong, a hit needs the shot to hold longer. Back to Finalizing to re-cut or retime.
+- **Audio ↔ Storyboarding:** scratch dialogue or temp music was misleading; now the real sound is different timing. Back to Storyboarding to re-time panels, or adjust scene transitions.
+- **Audio ↔ 2D Animation / 3D Animation:** real voice-actor takes differ from scratch dialogue; mouth shapes, gestures, or camera moves need adjustment. Back to the Animate mode in either section.
+- **Audio ↔ Design:** title-sequence sync or lyric-video timing needs the design element to move differently. Back to Design (often Design > Graphic or Design > Illustration).
+- **Audio ↔ Compositing:** music hits vs visual cues need synchronized adjustment — a sync sting needs the comp effect to land on the downbeat. Back to Compositing.
+- **Audio ↔ Game:** trailer / cinematic audio reveals pacing issues in the visual edit or game-footage selection. Back to Game > Asset or Game > Level for re-capture.
+
+Same `.blended` file, same timeline, same data. The back-cycle is a mode switch, not an export / re-import.
+
+### Still open within Audio
+
+- `Sound Design` as a standalone mode (distinct from Mix for foley / SFX creation). Parked; could promote when usage demands.
+- `Denoise` / `Dialog` cleanup as specialized modes vs tools within Mix. Current call: tools within Mix.
+- `Spatial` audio (3D positional, binaural, Ambisonic) for VR / XR / game audio. Parked; industry moving this way.
+- VST / AU plugin support at the §5 boundary — how external audio plugins integrate. TBD, overlaps with §5.
+- Per-sample editing vs keyframed mix parameters — scoped out of v1; aspirational.
+
+---
+
 ## 13. Document Conventions
 
 - Tag new sections with [LOCKED] / [OPEN] / [REJECTED] / [GUARDRAIL].
