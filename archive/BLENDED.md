@@ -64,18 +64,32 @@ Under the hood: **one engine, two lenses.** The depsgraph, keyframes, timeline, 
 
 ## 3. Historical Context & Why This Matters [LOCKED]
 
-Blender carries three stacked, unreconciled visions. Blended explicitly reconciles them.
+Blender carries three stacked, unreconciled visions. Blended blends them.
 
 | Era | Blender | Vision |
 |---|---|---|
 | 1993–1998 | NeoGeo in-house tool | **A** — opinionated studio tool |
 | 1998–2002 | NaN / Foundation rescue | **B** — "free 3D software for everyone," access mission, identity undefined |
 | 2003–2018 | Open Movies era | **A-redux** — dogfood-driven, studio-shaped |
-| 2019–today | Industry DCC era | **C** — feature parity with Maya/Houdini/ZBrush/Premiere/Nuke |
+| 2019–today | Industry DCC era | **C** — industry-range creative suite (2D, 3D, games, compositing, editing, audio) |
 
-**Blended = A's discipline + B's accessibility, with C explicitly rejected.**
+### What Blended takes from each, and what it refuses
 
-The substrate split (§2) resolves the secondary tension between "animation tool" (A's origin) and "3D software for everyone" (B's stated mission). Animation is the *shaping discipline*; 2D/3D software is the *scope*.
+**Blended = A's discipline + B's accessibility + C's scope, with C's *pathology* explicitly rejected.**
+
+- **From A** — opinionated discipline. Animation is the shaping discipline; the core is designed around it; decisions are made, not deferred.
+- **From B** — accessibility. The tool is openable by a first-time user. Launcher tells the truth about what Blended is. "Free 2D and 3D software tools" in the slogan means access is real, not rhetorical.
+- **From C — *scope, not pathology*.** Blended commits to the breadth of professional creative work C has always been reaching for: 2D animation, 3D animation, game asset creation, compositing, editing, audio, illustration (when in scope). The pipeline sections in §11 (Storyboarding, 2D Animation, 3D Animation, Game Design, Editing, Compositing, Audio) *are* C's scope, honestly inhabited.
+
+### What C's *pathology* means, specifically
+
+C's failure mode — the one that made Blender feel pathological — is not having broad scope. It's:
+
+1. **Feature-parity arms race** — adding features because Maya / Houdini / ZBrush / Premiere / Nuke have them, not because the feature serves the core.
+2. **Core deformation by industry quirks** — letting FBX, USD, or other interchange-format idiosyncrasies shape the internal data model instead of translating at the boundary (see §5).
+3. **Co-equal unreconciled identities** — "we are also a game engine and a video editor and a CAD tool" without a shaping discipline to resolve the conflicts.
+
+Blended embraces C's *breadth* while rejecting those three failure modes. The substrate split (§2) and the Creative/Post pipeline grouping (§11) are what make breadth coherent instead of pathological. Animation is still the shaping discipline; breadth lives around it, not in place of it.
 
 ---
 
@@ -151,24 +165,29 @@ Identified, principles locked, final per-format decisions still being headhunted
 
 ## 7. What's In Scope [LOCKED]
 
-Default rule: **include if it fits 2D or 3D software AND doesn't deform the animation-shaped core.** Exclude only for genuine identity/runtime conflicts.
+Default rule: **include if it fits 2D or 3D creative work AND doesn't deform the animation-shaped core.** Scope is broad (C's breadth, embraced per §3). Exclude only for genuine identity/runtime conflicts or C-pathology tells.
 
 ### In scope
-- 3D and 2D animation (the core)
-- 3D modeling, sculpting, rendering (supporting, but competent as standalone uses)
-- Rigging and character animation
-- Game asset creation, rigging for game engines, animation export to Unity/Unreal/Godot, sprite sheets, 2D game art
+- 2D and 3D animation (the shaping discipline)
+- 3D modeling, sculpting, rigging, rendering
+- Game asset creation, rigging for game engines, animation export to Unity/Unreal/Godot, sprite sheets, 2D game art, LOD/baking workflows
 - Still-frame renders, product visualization, architectural visualization
 - Grease Pencil (2D) with optional bridging into 3D scenes
-- Compositing, video sequence editing (as post-animation finishers)
-- Geometry nodes (procedural rigs, procedural motion)
+- Compositing, video editing, audio mixing (as post-animation finishers)
+- Geometry nodes (procedural rigs, procedural motion, procedural environments)
 - USD / glTF / FBX / OBJ / Alembic at the boundary
+- Illustration workflows *(pending §11 open question)*
 
 ### Out of scope [REJECTED]
-- **Runtime game engine inside Blended** (BGE/UPBGE style), gameplay scripting, interactive runtime as an output medium
-- **Feature-parity arms race** with Maya/Houdini/ZBrush/Premiere/Nuke (the Vision C trap)
-- **Legacy/fossil formats** that exist because no one dared delete them (see §5 Groups 2–3)
-- **"Co-equal at identity level"** — animation-and-generalist as twin identities. That is Blender's current pathology. See §3.
+
+Rejected for specific reasons, not because "Vision C." Scope is embraced; only pathology is rejected (see §3).
+
+- **Runtime game engine inside Blended** (BGE/UPBGE style), gameplay scripting, interactive runtime as an output medium. *Reason: identity/runtime conflict — Blended authors content; it doesn't host runtime gameplay.*
+- **Feature-parity arms race.** Adding features because Maya/Houdini/ZBrush/Premiere/Nuke have them, not because they serve the core. *Reason: C-pathology tell — see §3.*
+- **Core deformation by industry format quirks.** Interchange formats translate at the §5 boundary; they do not reshape internal data models. *Reason: C-pathology tell.*
+- **"Co-equal at identity level"** — animation-and-generalist as twin unreconciled identities. *Reason: this is Blender's current pathology; the substrate split (§2) and Creative/Post grouping (§11) resolve it.*
+- **Legacy/fossil formats** that exist because no one dared delete them (see §5 Groups 2–3, §10 Bucket 6). *Reason: accumulated cruft with no active user base.*
+- **Graphic design / Illustrator-scope work** that doesn't connect to animation or 3D creative pipelines. *Reason: C-pathology risk — scope-creep toward being "everything for everyone."*
 
 ---
 
@@ -177,11 +196,11 @@ Default rule: **include if it fits 2D or 3D software AND doesn't deform the anim
 Named failure modes. If you catch yourself or a collaborator doing these, push back.
 
 1. **Exclusion bias.** Once the broader substrate frame was agreed, the first instinct was still to *cut* things (Framing A energy). Wrong under our agreed frame. Correct default: **include if it fits the scope and doesn't deform the core.** Claude flagged this bias in-session; it applies to humans too.
-2. **Co-equal trap (Framing C).** "Both X and Y are co-equal identities" is indistinguishable in practice from "we haven't decided." If two ideas sound co-equal, find the structural layer where one is scope and the other is shaping discipline, or find a substrate split (§2). Do not leave identity co-equality unresolved.
+2. **Co-equal identities trap.** "Both X and Y are co-equal identities" is indistinguishable in practice from "we haven't decided." (This is distinct from Vision C in §3 — Vision C is about *scope and pathology*, not identity co-equality.) If two ideas sound co-equal, find the structural layer where one is scope and the other is shaping discipline, or find a substrate split (§2). Do not leave identity co-equality unresolved.
 3. **Implicit priority drift.** Blender's disease is that priorities exist but are never stated. If Blended starts accumulating features justified by implicit priorities, stop and re-read §1.
 4. **UI-first temptation.** UI before data model = the failure mode of the previous attempt. Don't.
 5. **Format-as-shaper.** If an industry format's quirks are deforming the core data model, the boundary is leaking. Fix the boundary, not the core.
-6. **"Feature parity" language.** If someone argues for a feature on the grounds that Maya/Houdini/ZBrush has it, that is a Vision C tell. Evaluate on whether it serves the core + scope, not on parity.
+6. **"Feature parity" language.** If someone argues for a feature on the grounds that Maya/Houdini/ZBrush/Premiere/Nuke has it, that is a **Vision C *pathology*** tell — not a scope argument. C's scope (industry breadth) is embraced per §3; C's pathology (feature-parity arms race) is not. Evaluate every feature on whether it serves the core and the shaping discipline, not on who else has it.
 
 ---
 
