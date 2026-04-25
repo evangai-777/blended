@@ -63,6 +63,7 @@ jobs:
         # LFS objects live upstream on projects.blender.org.
         git remote add lfs-fallback "https://projects.blender.org/blender/blender.git"
         git config "remote.lfs-fallback.pushurl" "no_push"
+        git config lfs.remote.searchall true
         git lfs fetch lfs-fallback
         git lfs checkout
 
