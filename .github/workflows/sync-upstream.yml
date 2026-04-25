@@ -89,12 +89,7 @@ jobs:
         else
           CONFLICT_COUNT=$(wc -l < /tmp/conflicts.txt)
           CONFLICT_MD=$(sed 's/^/- `/' /tmp/conflicts.txt | sed 's/$/`/')
-          MERGE_SECTION="⚠️ **${CONFLICT_COUNT} conflict(s)** — check out the branch locally, resolve the markers, and push.
-
-See \`UPSTREAM_SYNC.md\` for the step-by-step resolution workflow.
-
-**Conflicted files:**
-${CONFLICT_MD}"
+          MERGE_SECTION=$(printf '⚠️ **%s conflict(s)** — check out the branch locally, resolve the markers, and push.\n\nSee `UPSTREAM_SYNC.md` for the step-by-step resolution workflow.\n\n**Conflicted files:**\n%s' "${CONFLICT_COUNT}" "${CONFLICT_MD}")
         fi
 
         cat > /tmp/pr_body.md <<EOF
