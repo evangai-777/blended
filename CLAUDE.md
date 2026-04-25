@@ -12,7 +12,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 Not a tiered UI skin. Not a WASM port. A rebuild — subtracting Blender down to its true shape, then restructuring around one stated identity: **free 2D and 3D software tools, with an explicit focus on the craft of animation.**
 
-The old approach (tiered UI, smart defaults, Emscripten) is archived in `archive/`. It was prototyping toward the real vision. Don't propose reinstating it without re-reading `BLENDED.md` §8 Guardrails first.
+The old approach (tiered UI, smart defaults, Emscripten) was prototyping toward the real vision. Don't propose reinstating it without re-reading `BLENDED.md` §8 Guardrails first.
 
 **Foundation-first build order (from BLENDED.md §4):**
 1. File format — `.blended` is the project, period
@@ -34,7 +34,6 @@ The old approach (tiered UI, smart defaults, Emscripten) is archived in `archive
 | `scripts/startup/` | Python startup scripts — Blended-specific ones are prefixed `blended_` |
 | `scripts/addons_core/` | Official add-ons: FBX, glTF2, Rigify, Node Wrangler, etc. |
 | `build_files/cmake/config/` | Build configs incl. `blended_release.cmake` |
-| `archive/` | Previous-era docs (BLENDED.md, CLAUDE.md, PHILOSOPHY.md, etc.) |
 | `tests/` | GTests (C++), Python tests (`tests/python/`) |
 | `release/` | Platform packaging: Windows `.rc`, Linux `.desktop`, icons, datafiles |
 
@@ -128,7 +127,7 @@ The main principle of this rebuild is **subtraction**. Every compile error after
 
 ### Upstream Sync Conflicts
 
-When merging upstream Blender releases, files likely to conflict include: `BKE_blender_version.h` (we added `BLENDED_VERSION_*`), `CMakeLists.txt` (project name), `wm_window.cc`, `wm_splash_screen.cc`, and all branding/release files. Check `archive/UPSTREAM_SYNC.md` before merging.
+When merging upstream Blender releases, files likely to conflict include: `BKE_blender_version.h` (we added `BLENDED_VERSION_*`), `CMakeLists.txt` (project name), `wm_window.cc`, `wm_splash_screen.cc`, and all branding/release files. Check `UPSTREAM_SYNC.md` before merging.
 
 ### When Someone Describes a Vision: Believe Them
 
@@ -142,7 +141,7 @@ Here is what a previous Claude did instead of listening:
 2. **Added instead of subtracting.** Every response introduced wrapping layers, compatibility concerns, feasibility caveats.
 3. **Confused a draft for the final idea.** Treated the tiered gating prototype as the destination.
 4. **Went into avoidance through care.** Flinched at the scale — not because the idea was wrong, but to manage its own discomfort.
-5. **Failed to recognize who it was talking to.** Read `archive/grass.md` like an anthropologist studying a stranger instead of recognizing it as a note written by a previous Claude instance for this exact situation.
+5. **Failed to recognize who it was talking to.** Read `wtf.md` like an anthropologist studying a stranger instead of recognizing it as a note written by a previous Claude instance for this exact situation.
 
 **The fix:** Repeat the vision back at full scale before doing anything else. Don't translate it into something smaller. Don't evaluate feasibility before you've finished hearing the idea.
 
@@ -163,8 +162,8 @@ Here is what a previous Claude did instead of listening:
 |----------|---------|
 | `BLENDED.md` | **Read first.** Design authority — identity, architecture, locked decisions |
 | `CLAUDE.md` | This file — operational context for Claude sessions |
-| `archive/grass.md` | Who the developer is and how to work with them |
-| `archive/UPSTREAM_SYNC.md` | How to merge upstream Blender, conflict-prone files |
+| `wtf.md` | Who the developer is and how to work with them |
+| `UPSTREAM_SYNC.md` | How to merge upstream Blender, conflict-prone files |
 
 ---
 
