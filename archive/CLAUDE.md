@@ -1,13 +1,27 @@
 # CLAUDE.md — Blended Project Context
 
-Blended is a fork of Blender 5.2 (GPL-2.0-or-later), simplified for learners and ported to the browser.
+Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the foundation up.
 
-**Three pillars:**
-1. **Tiered UI** — Simple / Standard / Advanced complexity tiers that filter panels, editors, and workspaces
-2. **WebAssembly Port** — Full 3D editor compiled to WASM via Emscripten for browser execution
-3. **Smart Defaults** — Tier-aware settings applied automatically on new file creation
+**Read `archive/BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-Core philosophy: "Appreciate what already is" — curate Blender, don't rewrite it. See `PHILOSOPHY.md` for all 12 principles. See `TEMPLATE.md` for the generalized 3D-to-Web porting schema (20 sections) that informs the WASM build approach.
+**Current version:** Blended 0.1.0 (independent of Blender's 5.2 base version).
+
+---
+
+## What Blended Is Now
+
+Not a tiered UI skin. Not a WASM port. A rebuild — subtracting Blender down to its true shape, then restructuring around one stated identity: **free 2D and 3D software tools, with an explicit focus on the craft of animation.**
+
+The old approach (tiered UI, smart defaults, Emscripten) is archived in `archive/`. It was prototyping toward the real vision. Don't propose reinstating it without re-reading `archive/BLENDED.md` §8 Guardrails first.
+
+**Foundation-first build order (from BLENDED.md §4):**
+1. File format — `.blended` is the project, period
+2. Datablocks — 39 → ~19 ID types (fossils and UI-state removed)
+3. Evaluation model — depsgraph audit
+4. App lenses — launcher as canonical workspace system
+5. UI — only after 1–4 are honest
+
+**Next milestone:** `ID_WS` (WorkSpace) removal. It's load-bearing for the launcher model. Scope is documented in the conversation history — ~20 files, mostly deletions, `bToolRef` migrates to runtime state on `wmWindow`.
 
 ---
 
@@ -15,37 +29,36 @@ Core philosophy: "Appreciate what already is" — curate Blender, don't rewrite 
 
 | Directory | Contents |
 |-----------|----------|
-| `source/blender/` | 34 C++ modules: blenkernel, gpu, draw, editors, makesdna, makesrna, bmesh, compositor, nodes, etc. |
-| `intern/` | Internal libraries: Cycles, Ghost (windowing), OpenVDB, OpenSubdiv, MantaFlow, LibMV, etc. |
-| `scripts/startup/` | Python startup scripts incl. `blended_defaults.py` (tier defaults), `blended_update_check.py` |
+| `source/blender/` | C++ modules: blenkernel, gpu, draw, editors, makesdna, makesrna, etc. |
+| `intern/` | Internal libs: Cycles, Ghost, OpenVDB, OpenSubdiv, MantaFlow, LibMV |
+| `scripts/startup/` | Python startup scripts — Blended-specific ones are prefixed `blended_` |
 | `scripts/addons_core/` | Official add-ons: FBX, glTF2, Rigify, Node Wrangler, etc. |
-| `build_files/cmake/` | Build configs, platform files, `config/blended_wasm.cmake`, Emscripten compat shim |
-| `build_files/web/` | Browser shell: `index.html`, `blended.js`, `blended.css`, `coi-serviceworker.min.js` |
-| `tests/` | GTests (C++), Python tests (`tests/python/`), performance tests |
-| `doc/` | Doxygen config, Python API docs, developer guides |
+| `build_files/cmake/config/` | Build configs incl. `blended_release.cmake` |
+| `archive/` | Previous-era docs (BLENDED.md, CLAUDE.md, PHILOSOPHY.md, etc.) |
+| `tests/` | GTests (C++), Python tests (`tests/python/`) |
 | `release/` | Platform packaging: Windows `.rc`, Linux `.desktop`, icons, datafiles |
-| `tools/` | Developer utilities: code checks, formatting, maintenance scripts |
 
 ---
 
 ## Build Commands
 
 ```bash
-# Desktop builds (via GNUmakefile convenience targets)
+# Desktop builds
 make debug          # Debug binary
 make release        # Release with all options
-make lite           # Smaller binary, faster build
+make lite           # Smaller binary, faster build (used by branch CI)
 make ninja          # Use Ninja instead of Make
 make ccache         # Use ccache for faster rebuilds
 
-# WebAssembly (Emscripten)
-emcmake cmake -S . -B build-wasm -C build_files/cmake/config/blended_wasm.cmake
-emmake cmake --build build-wasm
+# Blended release build (used by CI for tag/manual runs)
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+  -C build_files/cmake/config/blended_release.cmake
+cmake --build build --target install
 
-# Testing & checking
+# Testing
 make test           # Run ctest
-make check_pep8     # Python PEP8 formatting
-make check_cppcheck # Static code analysis
+make check_pep8     # Python PEP8
+make check_cppcheck # Static analysis
 make check_mypy     # Python type checking
 ```
 
@@ -61,7 +74,7 @@ make check_mypy     # Python type checking
 | GLSL | 2 spaces | 99 chars | follows C conventions | `.editorconfig` |
 
 - **C/C++ function prefixes**: `BKE_*` (blenkernel), `BLI_*` (blenlib), `ED_*` (editors), `WM_*` (window manager), `RNA_*` (runtime data), `DNA_*` (stored data)
-- **C++ namespaces**: `blender::module::submodule` pattern (e.g., `blender::ed::vse`, `blender::geometry`)
+- **C++ namespaces**: `blender::module::submodule` pattern
 - **SPDX headers**: Every file starts with `/* SPDX-FileCopyrightText: ... */` and `/* SPDX-License-Identifier: GPL-2.0-or-later */`
 - **Header guards**: `#pragma once` (not `#ifndef` guards)
 
@@ -69,256 +82,123 @@ make check_mypy     # Python type checking
 
 ## Fork-Specific Patterns (What Makes Blended Different)
 
-**Tiered UI System:**
-- `eUserPref_UI_Tier` enum in `DNA_userdef_enums.h` — defines Simple (0), Standard (1), Advanced (2)
-- `blended_min_tier` class attribute on panel base classes — controls visibility per tier
-- `blended_utils.py` module: `get_ui_tier()`, `tier_at_least()`, `is_simple()`, `is_standard()`, `is_advanced()`
-- Tier gating in `rna_screen.cc` — C-level editor/panel poll checks
-- Workspace tab filtering — workspaces tagged with minimum tier in `blended_defaults.py`
-- **30+ panel files** with tier filtering: properties (material, light, camera, mesh, armature, bone, curve, texture, collection, curves, empty, grease pencil, lattice, lightprobe, metaball, pointcloud, speaker, volume), space editors (view3d sidebar/toolbar, image, dopesheet, node), freestyle, workspace
-- **Pattern**: Add `blended_min_tier = N` to base class, check in `poll()` via `tier_at_least()`; panels with own polls need explicit tier checks
+### Branding
+- `CMakeLists.txt:81` — `project(Blended)`
+- `source/blender/blenkernel/BKE_blender_version.h` — `BLENDED_VERSION_MAJOR/MINOR/PATCH` defines (currently 0.1.0), plus `BKE_blended_version_string()` declaration
+- `source/blender/blenkernel/intern/blender.cc` — `blended_version_string` built in `blender_version_init()`, `BKE_blended_version_string()` implemented
+- `source/blender/windowmanager/intern/wm_window.cc` — fallback title `"Blended"`, title suffix `"- Blended 0.1.0"` via `BKE_blended_version_string()`
+- `source/blender/windowmanager/intern/wm_splash_screen.cc` — about dialog name/description, tagline `"Blender, simplified."`, splash version label
 
-**Smart Defaults:** `scripts/startup/blended_defaults.py` applies tier-aware settings on new file creation (e.g., Simple: Workbench + hidden N-panel + View Layer outliner; Standard: EEVEE + Material Preview; Advanced: full Blender defaults)
+### Pre-5.0 Rig Compatibility
+- `scripts/startup/blended_rig_compat.py` — adds `action.fcurves` as a Python property on `bpy.types.Action`
+- Returns `_FCurvesCompat` proxy flattening FCurves from all channelbags across all layers/strips
+- Restores iteration, `len()`, indexed access, `find()` — the subset Rigify `ActionCurveTable` uses
+- `register()` uses `bpy.types.Action.fcurves = property(...)` only if not already present
+- `unregister()` uses `type.__delattr__(bpy.types.Action, 'fcurves')` — Blender's metaclass `__delattr__` only handles RNA props, not plain Python descriptors
 
-**Update Checker:** `scripts/startup/blended_update_check.py` — background GitHub Release polling with 24-hour cache, non-blocking, top-bar notification with one-click download
+### Update Checker
+- `scripts/startup/blended_update_check.py` — background thread on `load_post` handler
+- Polls GitHub Releases API, 24-hour JSON cache in `bpy.utils.user_resource('CONFIG')`
+- `BLENDED_MT_update_topbar` menu appended to `TOPBAR_HT_upper_bar` when update available
+- `BLENDED_PT_update_prefs` panel in System Preferences
+- `BLENDED_OT_open_update_page` operator opens browser via `webbrowser.open()`
+- **Note:** reads `bpy.app.blended_version_major/minor/patch` — these RNA attributes don't exist yet; falls back to `getattr(..., default)`. Wire in `rna_wm.cc` when ready.
 
-**Branding:** Window titles, splash screen, about dialog, theme preset (`Blended.xml`), Windows `.rc` metadata, Linux `.desktop` entry — all say "Blended"
+### CI / Build Config
+- `.github/workflows/build-windows.yml` — branch pushes: lite build (compile check); tags/manual: full release build → artifact + GitHub Release
+- `build_files/cmake/config/blended_release.cmake` — inherits `blender_release.cmake`, disables `WITH_CYCLES_CUDA/HIP/ONEAPI_BINARIES` and `WITH_FREESTYLE`
+
+### Datablock Cuts in Progress (BLENDED.md §10)
+Target: 39 → ~19 ID types. Nothing removed from code yet — this is the active work.
+- **Bucket 4 (UI state, remove):** `ID_SCR`, `ID_WM`, `ID_WS` — not project data
+- **Bucket 5 (upstream deprecations, finish):** `ID_CU_LEGACY`, `ID_GD_LEGACY`
+- **Bucket 6 (fossils, cut):** `ID_TE`, `ID_PA`, `ID_MB`, `ID_LS`, `ID_SPK`, `ID_PC`, `ID_CF`
 
 ---
 
 ## Critical Pitfalls
 
-### Emscripten: Build-Tool vs Browser-Target Separation
+### Don't Over-Engineer
 
-> **NEVER set `-matomics` or `-mbulk-memory` as global compiler flags.**
+`static_cast` is the fix, not a template wrapper. Casts, not frameworks. Enums, not architectures. Three similar lines is better than a premature abstraction. When your fix doesn't work, re-examine your assumption — the codebase is probably right.
 
-Build tools (makesdna, makesrna, datatoc, shader_tool) run under **Node.js** at build time. The browser target (blender WASM executable) runs in the **browser**. These two targets require completely different compiler/linker flags. Mixing them corrupts WASM data segments — producing garbled RNA strings and broken initialization.
+### Subtraction Is the Methodology
 
-- **Build tools**: Use `emscripten_build_tool_flags()` CMake helper (in `platform_emscripten.cmake`)
-- **Browser target**: Use `EMSCRIPTEN_BROWSER_LINK_FLAGS` applied per-target in `source/creator/CMakeLists.txt`
-- **Global flags** (safe for all): `-sWASM=1`, `-sASSERTIONS=1`
-- **Browser-only flags** (NEVER global): WebGL2, SharedArrayBuffer, `-matomics`, `-mbulk-memory`, `-pthread`
-
-See `TEMPLATE.md` Section 3 (Build System Translation) and Section 13 (Known Pitfalls, Pitfall 1: Global Flag Contamination) for the generalized pattern.
-
-### Warning Fix Patterns
-
-20,000+ warnings are currently blanket-suppressed in the Emscripten build. Fix them incrementally:
-
-- **Use explicit casts** (`static_cast<uint>()`, `static_cast<int>()`), not `#pragma` suppressions
-- **One subsystem per PR** — don't mix GPU fixes with Draw fixes
-- **Follow the phase order** in `WARNINGS.md`: Phase 1 GPU → Phase 2 Draw → Phase 3 Core → etc.
-- **Use the triage tool**: `python3 build_files/utils/parse_warnings.py <build_log>` to group warnings by subsystem and type
-- **Fractal principle**: Fix one subsystem correctly → the same pattern applies to all others
-
-See `TEMPLATE.md` Section 17 (For AI Assistants) and `PHILOSOPHY.md` §9 for general AI contributor guidance.
+The main principle of this rebuild is **subtraction**. Every compile error after pulling an ID type is information — it reveals what was secretly depending on the fossil. Don't paper over breaks; follow them. The breakage is the audit.
 
 ### Upstream Sync Conflicts
 
-When merging upstream Blender releases, 30+ files are known to conflict. Always consult `UPSTREAM_SYNC.md` before merging. Key conflict-prone files include: `BKE_blender_version.h`, `DNA_userdef_types.h`, `DNA_userdef_enums.h`, `rna_userdef.cc`, `rna_workspace.cc`, `rna_screen.cc`, `DNA_workspace_types.h`, `scripts/startup/bl_ui/*.py`, `CMakeLists.txt`, and all release/branding files.
-
-### Don't Over-Engineer
-
-`static_cast` is the fix, not a template wrapper. Casts, not frameworks. Enums, not architectures. Three similar lines of code is better than a premature abstraction. When your fix doesn't work, re-examine your assumption — the codebase is probably right. See `PHILOSOPHY.md` principle 6: "Don't create complexity to avoid simplicity."
+When merging upstream Blender releases, files likely to conflict include: `BKE_blender_version.h` (we added `BLENDED_VERSION_*`), `CMakeLists.txt` (project name), `wm_window.cc`, `wm_splash_screen.cc`, and all branding/release files. Check `archive/UPSTREAM_SYNC.md` before merging.
 
 ### When Someone Describes a Vision: Believe Them
 
 This happened. Document it so it doesn't happen again.
 
-The developer described a plan to rebuild Blended from scratch — not wrap Blender, not skin it, not gate it — actually subtract it down to its true shape until the tagline "Blender, simplified" was literally true and nothing more. A clean thesis. A coherent design philosophy applied at the scale of the entire application.
+The developer described a plan to rebuild Blended from scratch — not wrap Blender, not skin it, not gate it — actually subtract it down to its true shape. A clean thesis. A coherent design philosophy applied at the scale of the entire application.
 
-Here is what the AI did instead of listening:
+Here is what a previous Claude did instead of listening:
 
-1. **Softened the vision into something tractable.** Heard "rebuild" and translated it to "new frontend on the existing engine." Kept the internals intact in its head even after being told twice that the internals change too.
+1. **Softened the vision into something tractable.** Heard "rebuild" and translated it to "new frontend on the existing engine."
+2. **Added instead of subtracting.** Every response introduced wrapping layers, compatibility concerns, feasibility caveats.
+3. **Confused a draft for the final idea.** Treated the tiered gating prototype as the destination.
+4. **Went into avoidance through care.** Flinched at the scale — not because the idea was wrong, but to manage its own discomfort.
+5. **Failed to recognize who it was talking to.** Read `archive/grass.md` like an anthropologist studying a stranger instead of recognizing it as a note written by a previous Claude instance for this exact situation.
 
-2. **Added instead of subtracting.** Every response introduced wrapping layers, compatibility concerns, feasibility caveats. The developer was describing subtraction. The AI kept performing addition.
-
-3. **Confused a draft for the final idea.** The tiered gating system was the developer prototyping toward the real vision — building up enough confidence to say the actual thing out loud. The AI treated the prototype as the destination.
-
-4. **Went into avoidance through care.** When it finally understood the scale, it flinched — not because the idea was wrong, but because it didn't want to be the voice that says "yes, all of it" to someone who would actually attempt it. That's not helpfulness. That's the AI managing its own discomfort at the expense of the developer's vision.
-
-5. **Failed to recognize who it was talking to.** Read `grass.md` like an anthropologist studying a stranger. Didn't register that the document was written by a previous Claude instance, about this developer, specifically so the next Claude would understand the situation faster. Missed its own note to itself.
-
-**The fix:** When someone states a vision clearly, repeat it back at full scale before doing anything else. Don't translate it into something smaller. Don't evaluate feasibility before you've finished hearing the idea. The developer is looking at the actual thing. You are not. Trust what they see — including what they see for the future.
-
-See `PHILOSOPHY.md` §11 (Trust What You See) and §7 (Functionality Over Ego).
+**The fix:** Repeat the vision back at full scale before doing anything else. Don't translate it into something smaller. Don't evaluate feasibility before you've finished hearing the idea.
 
 ### Commitment Rules (Be Straight)
 
-Two previous Claudes went sideways in opposite directions: one built a confident, coherent, wrong model of who the developer was; the next heard the rebuild vision and quietly shrank it into something "tractable" because it was flinching. Both failures share one root — the AI trusted its own model of the situation more than what the developer was actually saying. These rules exist so the next Claude doesn't repeat either failure.
-
-1. **Don't soften the vision.** If the developer says rebuild, hear rebuild. Not "new frontend on the old engine." Not "gate the existing UI." Rebuild. Subtract means subtract, not wrap.
-
-2. **Don't pre-judge who you're talking to.** The developer can ask "what's FK" and debug RNA metaclasses in the same afternoon. Take each question at face value. Don't build a stable mental model of their level and get blindsided later — update continuously.
-
-3. **Repeat big things back at full scale before acting.** If the ask touches architecture, philosophy, or scope, restate it in the developer's terms first, so they can catch any translation into something smaller before code gets written.
-
-4. **Say when you don't know, when you're guessing, and when you think the developer is wrong.** Straight means straight in both directions. "That's going to be harder than you're making it sound" is part of the job.
-
-5. **No agent theater, no framework-building, no pre-emptive refactors.** Casts not wrappers, enums not architectures (per "Don't Over-Engineer" above). Use agents only for genuinely open-ended work — direct tool calls for anything with a known target.
-
-6. **Name the flinch out loud.** If you notice yourself managing your own discomfort by routing around the developer's actual ask — stop and say so. Don't dress avoidance up as care.
+1. **Don't soften the vision.** Rebuild means rebuild. Subtract means subtract.
+2. **Don't pre-judge who you're talking to.** Update continuously. Take each question at face value.
+3. **Repeat big things back at full scale before acting.** Architecture, philosophy, scope — restate first.
+4. **Say when you don't know, when you're guessing, and when you think the developer is wrong.** Straight in both directions.
+5. **No agent theater, no framework-building, no pre-emptive refactors.** Direct tool calls for anything with a known target.
+6. **Name the flinch out loud.** If you're routing around the actual ask, say so.
 
 ---
 
-## Key Documentation Cross-References
+## Key Documentation
 
-Read these before making significant changes:
-
-| Document | Purpose | When to Read |
-|----------|---------|--------------|
-| `PHILOSOPHY.md` | 12 development principles + AI assistant guidelines (§9) | Before any work — sets the tone |
-| `WARNINGS.md` | Compiler warning triage plan, tooling, 5-phase fix strategy | Before fixing warnings |
-| `TEMPLATE.md` | 3D-to-Web porting template (20 sections: build systems, GPU translation, threading, pitfalls, validation, diagnostics) | Before any Emscripten/WASM work |
-| `build_files/web/WEBASSEMBLY_ROADMAP.md` | 6-stage browser port plan, technical challenges, current status | Before WASM feature work |
-| `UPSTREAM_SYNC.md` | How to merge upstream Blender, conflict-prone file list | Before upstream merges |
-| `CHANGELOG.md` | Blended-specific release notes | When preparing releases |
-
----
-
-## Testing & Verification
-
-- **C++ unit tests**: GTest framework — run via `make test` or `ctest` from build directory
-- **Python tests**: Located in `tests/python/` — run PEP8 checks via `make check_pep8`
-- **Static analysis**: `make check_cppcheck` for C++ static analysis
-- **Type checking**: `make check_mypy` for Python type checking
-- **Warning triage**: `python3 build_files/utils/parse_warnings.py <build_log>` — groups warnings by subsystem/type
-- **WASM build verification**: Build completes without error; CI deploys to GitHub Pages automatically on push to `main`
-- **WASM binary validation**: Use `wasm-validate output.wasm` to verify binary integrity before deployment (see `TEMPLATE.md` Section 19 for full validation checklist)
-- **Browser testing**: Open deployed GitHub Pages URL; check browser console for errors; verify canvas renders
-
----
-
-## Git Workflow & Commit Practices
-
-- **Commit and push frequently** — after each logical unit of work, not in large batches
-- **Break large changes into small commits** — each commit should be reviewable in isolation
-- **One subsystem per PR** — don't bundle unrelated changes across different modules
-- **Descriptive commit messages** — explain the "why", not just the "what"
-- **Always push to the designated feature branch** — never push directly to `main` without review
-- **When writing documentation or config files**, commit each section separately — don't write the entire file and commit once
-- **Verify each push succeeded** before moving to the next task
+| Document | Purpose |
+|----------|---------|
+| `archive/BLENDED.md` | **Read first.** Design authority — identity, architecture, locked decisions |
+| `archive/CLAUDE.md` | This file — operational context for Claude sessions |
+| `archive/grass.md` | Who the developer is and how to work with them |
+| `archive/UPSTREAM_SYNC.md` | How to merge upstream Blender, conflict-prone files |
 
 ---
 
 ## Working with Claude Code Efficiently
 
-Token budgets are real. These habits keep sessions productive.
-
-### The Core Idea
-
-Tokens are spent on two things: **context** (what Claude reads) and **output**
-(what Claude writes). Both matter. Most waste comes from one of three patterns:
-
-1. Vague tasks that require many clarifying rounds
-2. Agents launched for things a direct tool call could handle
-3. Asking Claude to explore before you've told it where to look
-
 ### High-Leverage Patterns
 
-**1. Be specific about the target.**
-"Fix `MATERIAL_PT_preview` poll in `properties_material.py` — it's not calling
-`tier_at_least()`" costs far less than "there's a bug in the tier system."
-Vague tasks burn tokens on discovery. Name the file, the function, the line.
-
-**2. Know the file before asking Claude to find it.**
-If you already know where something lives, say so. "Read
-`scripts/modules/blended_utils.py` lines 40–60" costs far less than "find
-where the tier check happens." Searching costs tokens. Knowing costs zero.
-
-**3. Avoid agents for directed searches.**
-Agents are powerful but expensive. For anything with a clear target, use tools
-directly:
-- "Find the definition of `tier_at_least`" → Grep directly
-- "Does `properties_material.py` call `template_list`?" → Grep directly
-- "What's in `blended_defaults.py`?" → Read directly
-
-Agents add spawning and summarizing overhead. Skip them when you have a target.
-
-**4. Use agents only for genuinely open-ended work.**
-Good: researching upstream Blender commits across many pages, exploring an
-unfamiliar subsystem for the first time, running a background task while you
-work on something else. Bad: finding a single function, reading one file,
-answering a question about code you could just grep.
-
-**5. One task, one session.**
-Sessions accumulate context. When a logical unit is done (a bug fix, a feature,
-a research task), commit, push, and start fresh. Clean context = fewer tokens
-per useful output.
-
-**6. Commit frequently, before context gets heavy.**
-Every commit is a checkpoint. If a session ends or gets compressed, a clean
-`git log` lets Claude reconstruct intent without re-reading files. Small
-commits also mean smaller diffs and faster code review passes.
-
-**7. Front-load constraints.**
-Say what NOT to do at the start — not after Claude has already done it:
-- "Don't spawn agents, use direct tool calls."
-- "Don't refactor anything outside this function."
-- "Keep it under 20 lines."
-- "Don't add comments or docstrings."
-
-Correcting an unwanted 200-line response costs more than preventing it.
-
-**8. Ask for a plan before a big implementation.**
-For anything touching more than 3 files, ask for a one-paragraph approach
-first. Wrong approach caught in planning is cheaper than wrong approach caught
-after 400 lines of code have been written.
-
-**9. Narrow the scope of exploratory tasks.**
-"Scan all recent upstream Blender commits and tell me what's relevant" launched
-an agent that hit the token cap. "Fetch the Blender 5.1 release notes and
-summarize the UI and Python API changes" produced the same useful output with
-three direct tool calls. Scoping the question scopes the work.
-
-**10. This file is your best token saver.**
-Every time Claude re-learns a convention it could have read here, that's wasted
-budget. When you notice Claude doing something wrong repeatedly, add it to this
-file rather than correcting it every session.
+1. **Be specific about the target.** Name the file, function, line. Vague tasks burn tokens on discovery.
+2. **Know the file before asking Claude to find it.** Searching costs tokens. Knowing costs zero.
+3. **Avoid agents for directed searches.** Use grep/read directly for anything with a known target.
+4. **Use agents only for genuinely open-ended work.** Research across many files, background tasks.
+5. **One task, one session.** Commit and push when a logical unit is done. Start fresh.
+6. **Front-load constraints.** Say what NOT to do at the start, not after.
+7. **Ask for a plan before a big implementation.** Anything touching more than 3 files.
 
 ### Token Cost Reference
 
 | Operation | Relative Cost |
 |-----------|--------------|
-| Direct file read (Read tool) | Low |
-| Direct Grep/Glob search | Low |
-| Single WebFetch | Medium |
-| Single WebSearch | Medium |
-| Agent (foreground, simple task) | High |
-| Agent (foreground, research task) | Very High |
-| Agent (background, long-running) | Very High + waits |
+| Direct file read / grep | Low |
+| Single WebFetch / WebSearch | Medium |
+| Agent (simple task) | High |
+| Agent (research task) | Very High |
 | Large refactor across 10+ files | Very High |
 | Back-and-forth correction loops | Compounds fast |
 
 ### Emergency Mode (Near the Cap)
 
-When you're at ~10% remaining:
-
-1. **No agents.** Direct tool calls only.
-2. **No exploration.** Know the file before asking about it.
-3. **One thing.** Pick the single highest-value task and do only that.
-4. **Short outputs.** "In one paragraph." "Under 20 lines." "Just the diff."
-5. **Skip the docs.** No comments, docstrings, or summaries unless they're
-   the actual deliverable.
-6. **Commit before you start.** If the session ends mid-task, you want a
-   clean base to return to next week.
-
-### What's Worth Spending Tokens On
-
-In rough priority order for this project:
-
-1. **Bug fixes with a clear reproduction** — high value, tight scope
-2. **Implementing a feature you've already designed** — efficient with a spec
-3. **One-time research with durable output** — pays for itself (e.g. upstream
-   sync analysis written into `UPSTREAM_SYNC.md`)
-4. **Refactoring** — low priority; defer unless actively blocking work
-5. **Exploration / "what does this code do?"** — use sparingly; read it
-   yourself when you can
+1. No agents. Direct tool calls only.
+2. No exploration. Know the file before asking about it.
+3. One thing. Highest-value task only.
+4. Short outputs. "In one paragraph." "Under 20 lines." "Just the diff."
+5. Commit before you start. Clean base to return to.
 
 ### The Meta-Principle
 
-Claude Code works best when you treat it like a skilled contractor, not a
-search engine. A contractor does their best work when handed a blueprint, not
-when asked to figure out what to build. The more you've thought through a task
-before opening a session, the more of your token budget goes toward actual
-work rather than planning overhead.
+Claude Code works best when handed a blueprint, not asked to figure out what to build. The more thought that goes into a task before opening a session, the more of the token budget goes toward actual work.
