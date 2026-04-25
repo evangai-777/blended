@@ -6,6 +6,10 @@ foundation layer from the build order in BLENDED.md §4. Patch releases
 repairs. 1.0.0 ships when all five foundation layers are honest and basic
 pipeline navigation works.
 
+In-flight work lives in the *Unreleased* section below. Design rationale
+lives in BLENDED.md. Session instructions live in CLAUDE.md. The README
+carries a one-liner status per active item.
+
 **Build order → version map**
 
 | Version | Foundation layer |

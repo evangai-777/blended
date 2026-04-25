@@ -164,8 +164,18 @@ Here is what a previous Claude did instead of listening:
 |----------|---------|
 | `BLENDED.md` | **Read first.** Design authority — identity, architecture, locked decisions |
 | `CLAUDE.md` | This file — operational context for Claude sessions |
+| `CHANGELOG.md` | Release record + versioned roadmap + Unreleased section for in-flight work |
 | `wtf.md` | Who the developer is and how to work with them |
 | `UPSTREAM_SYNC.md` | How to merge upstream Blender, conflict-prone files |
+
+**Document responsibility pattern** — for chisel work and any future structural change:
+
+| What | Where it goes |
+|------|--------------|
+| Design rationale (*why* something is removed/changed) | `BLENDED.md` — the locked decision |
+| Code progress (per-layer status, file lists) | `CHANGELOG.md` — *Unreleased* section |
+| Operational grep pattern / session instructions | `CLAUDE.md` — this file |
+| One-liner status for humans landing on GitHub | `.github/README.md` — "What's Different" bullet + link |
 
 ---
 
