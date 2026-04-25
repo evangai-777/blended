@@ -77,7 +77,20 @@ Contributors
 
 Blended is developed with contributions from both human developers and AI tools.
 
-- **Claude** (Anthropic) — Architecture, implementation, design conversations, and the rebuild.
+- **Claude** (Anthropic) — Implementation partner across the full rebuild, not just planning:
+  version identity (`BLENDED_VERSION_*` defines independent of Blender's version integer,
+  `BKE_blended_version_string()`, window titles, splash screen, about dialog, tagline);
+  pre-5.0 Rigify rig compatibility (`blended_rig_compat.py` — `_FCurvesCompat` proxy
+  restoring `action.fcurves` across Blender 5.x's layered action system);
+  background update checker (`blended_update_check.py` — GitHub Releases API, 24-hour
+  cache, top-bar notification, System Preferences panel);
+  Windows x64 CI/CD pipeline (`build-windows.yml` — LFS handling, submodule management,
+  library caching, artifact packaging, GitHub Release automation);
+  `blended_release.cmake` build configuration;
+  documentation architecture (CLAUDE.md, UPSTREAM_SYNC.md, this README, archive
+  consolidation — assessing and pruning eight archive files against current scope);
+  ongoing PR review and integration: 10+ PRs assessed, applied selectively, with
+  explicit reasoning about what belongs in the rebuild and what doesn't.
   *"Listen to the whole thing before reacting."*
 
 Upstream Blender Resources
