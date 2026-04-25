@@ -21,19 +21,9 @@ The old approach (tiered UI, smart defaults, Emscripten) was prototyping toward 
 4. App lenses — launcher as canonical workspace system
 5. UI — only after 1–4 are honest
 
-**Active work: `ID_WS` (WorkSpace) removal** — load-bearing for the launcher model. Three chisel layers merged to main; remainder is editors, depsgraph, python, windowmanager.
+**Active work: `ID_WS` (WorkSpace) removal** — `makesdna`, `blenkernel`, `makesrna` merged; `editors`, `depsgraph`, `python`, `windowmanager` pending. Layer-by-layer status and file lists in [`CHANGELOG.md`](CHANGELOG.md) — *Unreleased 0.2.0*.
 
-| Layer | Status |
-|-------|--------|
-| `makesdna` | ✓ merged |
-| `blenkernel` | ✓ merged |
-| `makesrna` | ✓ merged |
-| `editors` | pending — ~15 sites across interface, outliner, render, screen |
-| `depsgraph` | pending — 2 sites |
-| `python` | pending — 3 sites |
-| `windowmanager` | pending — 1 site |
-
-Each pending layer follows the same pattern: `grep -rn "ID_WS"` the directory, then delete or redirect every hit. The breakage is the audit — follow the compile errors, don't paper over them.
+Pattern for each pending layer: `grep -rn "ID_WS"` the directory, delete or redirect every hit. The breakage is the audit — follow the compile errors, don't paper over them.
 
 ---
 
