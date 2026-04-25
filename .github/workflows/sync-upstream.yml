@@ -92,39 +92,29 @@ jobs:
           MERGE_SECTION=$(printf '⚠️ **%s conflict(s)** — check out the branch locally, resolve the markers, and push.\n\nSee `UPSTREAM_SYNC.md` for the step-by-step resolution workflow.\n\n**Conflicted files:**\n%s' "${CONFLICT_COUNT}" "${CONFLICT_MD}")
         fi
 
-        cat > /tmp/pr_body.md <<EOF
-Upstream sync from \`${UPSTREAM_REF}\` on projects.blender.org.
-Upstream SHA: \`$UPSTREAM_SHA\`
-
-${MERGE_SECTION}
-
----
-
-## Conflict-prone files
-
-These Blended-modified files are most likely to need manual attention even on a clean merge.
-Full table and guidance in [\`UPSTREAM_SYNC.md\`](../UPSTREAM_SYNC.md).
-
-| File | Blended change |
-|------|----------------|
-| \`source/blender/blenkernel/BKE_blender_version.h\` | \`BLENDED_VERSION_*\` defines |
-| \`source/blender/blenkernel/intern/blender.cc\` | \`BKE_blended_version_string()\` |
-| \`source/blender/windowmanager/intern/wm_window.cc\` | Blended window title |
-| \`source/blender/windowmanager/intern/wm_splash_screen.cc\` | Splash branding and tagline |
-| \`CMakeLists.txt\` | \`project(Blended)\` |
-| \`build_files/cmake/macros.cmake\` | \`BLENDED_VERSION_*\` extraction |
-| \`release/windows/icons/winblender.rc\` | Windows file metadata |
-| \`release/freedesktop/blender.desktop\` | Linux desktop entry |
-
-## Post-merge checklist
-
-- [ ] \`BLENDER_VERSION\` integer updated to match new upstream
-- [ ] \`BLENDED_VERSION_*\` bumped if appropriate
-- [ ] \`.github/README.md\` upstream base version updated
-- [ ] \`CHANGELOG.md\` entry added
-- [ ] Build passes — trigger **Build Blended (Windows x64)** on this branch
-- [ ] Window title and splash still show Blended branding correctly
-EOF
+        {
+          printf 'Upstream sync from `%s` on projects.blender.org.\nUpstream SHA: `%s`\n\n%s\n\n---\n\n' \
+            "${UPSTREAM_REF}" "${UPSTREAM_SHA}" "${MERGE_SECTION}"
+          printf '## Conflict-prone files\n\n'
+          printf 'These Blended-modified files are most likely to need manual attention even on a clean merge.\n'
+          printf 'Full table and guidance in [`UPSTREAM_SYNC.md`](../UPSTREAM_SYNC.md).\n\n'
+          printf '| File | Blended change |\n|------|----------------|\n'
+          printf '| `source/blender/blenkernel/BKE_blender_version.h` | `BLENDED_VERSION_*` defines |\n'
+          printf '| `source/blender/blenkernel/intern/blender.cc` | `BKE_blended_version_string()` |\n'
+          printf '| `source/blender/windowmanager/intern/wm_window.cc` | Blended window title |\n'
+          printf '| `source/blender/windowmanager/intern/wm_splash_screen.cc` | Splash branding and tagline |\n'
+          printf '| `CMakeLists.txt` | `project(Blended)` |\n'
+          printf '| `build_files/cmake/macros.cmake` | `BLENDED_VERSION_*` extraction |\n'
+          printf '| `release/windows/icons/winblender.rc` | Windows file metadata |\n'
+          printf '| `release/freedesktop/blender.desktop` | Linux desktop entry |\n\n'
+          printf '## Post-merge checklist\n\n'
+          printf '- [ ] `BLENDER_VERSION` integer updated to match new upstream\n'
+          printf '- [ ] `BLENDED_VERSION_*` bumped if appropriate\n'
+          printf '- [ ] `.github/README.md` upstream base version updated\n'
+          printf '- [ ] `CHANGELOG.md` entry added\n'
+          printf '- [ ] Build passes — trigger **Build Blended (Windows x64)** on this branch\n'
+          printf '- [ ] Window title and splash still show Blended branding correctly\n'
+        } > /tmp/pr_body.md
 
     - name: Open draft PR
       env:
