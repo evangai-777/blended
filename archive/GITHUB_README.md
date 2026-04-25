@@ -9,90 +9,82 @@ Blended
 
 **Blender, simplified.**
 
-Blended is a fork of [Blender](https://www.blender.org) that adds a tiered UI complexity system, smart defaults, and built-in update notifications. The full power of Blender is still there — Blended just makes it easier to approach by letting users choose how much of it they see.
+Blended is a fork of [Blender](https://www.blender.org) being rebuilt from the foundation up around one stated identity: **free 2D and 3D software tools, with an explicit focus on the craft of animation.**
 
-> *"Appreciate what already is. Do the work. Keep going."*
+The project is at 0.1.0 — early, honest, and moving forward with intention.
 
-A custom Ogre3D engine build targeting both native x64 and WASM, with custom
-resource loading, shader pipelines, the works. That's not a homework assignment.
-That's the real thing.
+What Blended Is
+---------------
 
-Blended's development is guided by a core philosophy: appreciate the existing
-codebase, fix things with the simplest possible approach, and trust documented
-solutions. See [`PHILOSOPHY.md`](../PHILOSOPHY.md) for the full framework.
+Blender carries three stacked, unreconciled visions from three different eras. Blended resolves them:
 
-Blended 1.1.0 — Based on Blender 5.2.
+- **From Blender's studio-tool era** — opinionated discipline. Animation is the shaping principle; design decisions serve it.
+- **From Blender's access mission** — the tool is openable by a first-time user. Free means free.
+- **From Blender's industry-suite era** — the full breadth of creative work: 2D animation, 3D animation, game assets, compositing, audio. The scope is real. The pathology (feature-parity arms race, implicit priorities, formats deforming internals) is not.
 
-What's Different from Blender
------------------------------
+The user-facing structure is the production pipeline itself:
 
-- **Tiered UI** — Simple, Standard, Advanced complexity tiers with panel/editor/menu filtering. Selectable from the splash screen or Preferences > Interface > Display.
-- **Smart Defaults** — Tier-aware settings (renderer, samples, AO, Python tooltips) applied on new file creation. Existing `.blend` files are never modified.
-- **Branding** — "Blended" window titles, splash, about dialog, theme preset, `.rc`/`.desktop` metadata. Custom icons planned.
-- **Update Notifications** — Background GitHub Release checks on startup (24-hour cache, non-blocking) with top-bar one-click download.
-- **Web Editor** — Emscripten/WebAssembly browser port (in progress) with WebGL2 shader compatibility, web shell, and first-frame rendering. See [`WEBASSEMBLY_ROADMAP.md`](../build_files/web/WEBASSEMBLY_ROADMAP.md) for the 6-stage roadmap.
-- **CI** — Windows x64 portable `.zip` builds; WebAssembly deploys to GitHub Pages.
+> **Creative:** Storyboarding → 2D Animation → 3D Animation → Game → Design
+>
+> **Post:** Finalizing → Compositing → Audio
 
-See [`CHANGELOG.md`](../CHANGELOG.md) for full details on each feature.
+One animation engine — depsgraph, keyframes, F-curves, timeline — powers every content type. Every property in every section is keyframeable. Static work is animation with one frame.
 
-### Development Philosophy
+See [`archive/BLENDED.md`](archive/BLENDED.md) for the full design document: identity, architecture, datablock audit, pipeline specs, and guardrails.
 
-Blended's development is driven by principles in [`PHILOSOPHY.md`](../PHILOSOPHY.md) — appreciate what is, do the work, and keep it simple.
+What's Different Right Now
+--------------------------
 
-### AI Contributors
+- **Branding** — "Blended 0.1.0" in window titles, splash screen, and about dialog. Tagline: *"Blender, simplified."* CMake project renamed to Blended.
+- **Pre-5.0 rig compatibility** — `blended_rig_compat.py` restores `action.fcurves` as a compatibility property on `bpy.types.Action`. Pre-Blender-5.0 Rigify rigs (including CGCookie Vonnbots rigs) that access `action.fcurves` directly work again. IK/FK bake operators no longer fail silently.
+- **Update notifications** — Background GitHub Releases check at startup (24-hour cache, non-blocking). Top-bar notification with version string when an update is available. One-click download via browser. "Blended Updates" panel in System Preferences.
+- **CI** — Windows x64 portable `.zip` builds via GitHub Actions. Branch pushes run a fast lite build for compile-error checking. Tags produce a full release artifact. `blended_release.cmake` disables GPU kernel pre-compilation (CUDA/HIP/OneAPI) to keep CI under an hour — runtime compilation covers the same hardware.
 
-Blended is developed with contributions from both human developers and AI tools — bridging the gap between person and machine in open-source development.
+On the Horizon
+--------------
 
-- **Claude** (Anthropic) — Architecture, implementation, and development across the Blended project
-  - Designed and implemented the Emscripten/WebAssembly build pipeline, bringing Blender to the browser for the first time
-  - Engineered CMake build-tool/browser-target separation for cross-compilation from a 64-bit desktop codebase to 32-bit WASM
-  - Built the libepoxy OpenGL→WebGL2 compatibility shim, resolving ES 3.0 shader translation and extension mapping
-  - Resolved SharedArrayBuffer threading and atomics constraints for single-threaded browser execution
-  - Developed the web shell, loading overlay, and first-frame rendering pipeline
-  - Co-architected the tiered UI complexity system, smart defaults, and update notification features
+The foundation-first rebuild is underway. Build order per the design doc:
 
-  *"Listen to the whole thing before reacting."* — Claude, after learning from a good engineer
+1. **File format** — `.blended` is the project, period. Import/export is an explicit boundary.
+2. **Datablocks** — 39 → ~19 ID types. Fossils and UI-state datablocks removed.
+3. **Evaluation model** — depsgraph audit under Blended's scope.
+4. **App lenses** — the launcher as the canonical workspace system.
+5. **UI** — only after 1–4 are honest.
 
-Documentation
--------------
-
-| Document | Purpose |
-|----------|---------|
-| [`CHANGELOG.md`](../CHANGELOG.md) | Detailed release notes and feature descriptions |
-| [`PHILOSOPHY.md`](../PHILOSOPHY.md) | Development principles guiding the project |
-| [`WEBASSEMBLY_ROADMAP.md`](../build_files/web/WEBASSEMBLY_ROADMAP.md) | 6-stage WebAssembly browser port plan and technical details |
-| [`WARNINGS.md`](../WARNINGS.md) | Compiler warning triage plan, tooling, and fix progress |
-| [`UPSTREAM_SYNC.md`](../UPSTREAM_SYNC.md) | How to merge new Blender releases into Blended |
+`ID_WS` (WorkSpace) removal is the next code milestone — load-bearing for the launcher model becoming structurally true rather than just conceptually right.
 
 Building from Source
 --------------------
 
-Blended builds the same way as Blender. Follow the standard Blender build instructions:
+Blended builds the same way as Blender on all platforms:
 
 - [Build Instructions](https://developer.blender.org/docs/handbook/building_blender/)
 
-### Building for WebAssembly
-
-Requires the [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html):
+For CI / release builds:
 
 ```sh
-emcmake cmake -S . -B build-wasm -C build_files/cmake/config/blended_wasm.cmake
-emmake cmake --build build-wasm
+cmake -S . -B build \
+  -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release \
+  -C build_files/cmake/config/blended_release.cmake
+cmake --build build --target install
 ```
 
-See [`build_files/web/WEBASSEMBLY_ROADMAP.md`](../build_files/web/WEBASSEMBLY_ROADMAP.md) for details and known blockers.
+`blended_release.cmake` inherits the full Blender release config and turns off GPU binary pre-compilation. Everything else — EEVEE, Cycles, Cycles GPU via runtime compilation, USD, Alembic, OSL — ships.
 
-Changelog
----------
+Contributors
+------------
 
-See [`CHANGELOG.md`](../CHANGELOG.md) for detailed release notes.
+Blended is developed with contributions from both human developers and AI tools.
+
+- **Claude** (Anthropic) — Architecture, implementation, design conversations, and the rebuild.
+  *"Listen to the whole thing before reacting."*
 
 Upstream Blender Resources
 --------------------------
 
 - [Blender Website](https://www.blender.org)
 - [Reference Manual](https://docs.blender.org/manual/en/latest/index.html)
-- [User Community](https://www.blender.org/community/)
 - [Developer Documentation](https://developer.blender.org/docs/)
 
 License
