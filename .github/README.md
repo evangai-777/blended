@@ -39,18 +39,12 @@ What's Different Right Now
 - **Pre-5.0 rig compatibility** — `blended_rig_compat.py` restores `action.fcurves` as a compatibility property on `bpy.types.Action`. Pre-Blender-5.0 Rigify rigs (including CGCookie Vonnbots rigs) that access `action.fcurves` directly work again. IK/FK bake operators no longer fail silently.
 - **Update notifications** — Background GitHub Releases check at startup (24-hour cache, non-blocking). Top-bar notification with version string when an update is available. One-click download via browser. "Blended Updates" panel in System Preferences.
 - **CI** — Windows x64 portable `.zip` builds via GitHub Actions. Branch pushes run a fast lite build for compile-error checking. Tags produce a full release artifact. `blended_release.cmake` disables GPU kernel pre-compilation (CUDA/HIP/OneAPI) to keep CI under an hour — runtime compilation covers the same hardware.
-- **`ID_WS` (WorkSpace) removal — in progress.** The first three chisel layers are merged: `makesdna`, `blenkernel`, `makesrna`. `WorkSpace` is no longer a DNA ID type, `Main::workspaces` is gone, and all RNA registration has been cut. Remaining sites: `editors`, `depsgraph`, `python`, `windowmanager`. Each layer follows the same pattern — compile errors enumerate the dependencies; follow them.
+- **`ID_WS` (WorkSpace) removal — in progress** (target: 0.2.0). Three of seven compilation layers merged; `editors`, `depsgraph`, `python`, `windowmanager` pending. See [`CHANGELOG.md`](../CHANGELOG.md) for the per-layer status.
 
 On the Horizon
 --------------
 
-The foundation-first rebuild is underway. Build order per the design doc:
-
-1. **File format** — `.blended` is the project, period. Import/export is an explicit boundary.
-2. **Datablocks** — 39 → ~19 ID types. Fossils and UI-state datablocks removed. `ID_WS` removal active (see above).
-3. **Evaluation model** — depsgraph audit under Blended's scope.
-4. **App lenses** — the launcher as the canonical workspace system. Becomes structurally true once `ID_WS` is fully out.
-5. **UI** — only after 1–4 are honest.
+Five foundation layers to go — one minor version each, 1.0 when all five are honest. Full roadmap with per-milestone scope in [`CHANGELOG.md`](../CHANGELOG.md).
 
 Changelog
 ---------
