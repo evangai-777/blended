@@ -1,23 +1,9 @@
 name: Build Blended (Windows x64)
 
-# Two build modes:
-#
-#   branch push  → lite build (blender_lite.cmake) on windows-2022
-#                  fast compile-error check, no artifact
-#
-#   tag push     → release build (blender_release.cmake) on windows-2022
-#                  produces a portable Blended-<version>-windows-x64.zip
-#                  uploaded as artifact AND as a GitHub Release
-#
-#   workflow_dispatch → choose Release or RelWithDebInfo, runs full build
+# Manual-only — press "Run workflow" in the GitHub Actions UI.
+# Produces a portable Blended-<version>-windows-x64.zip uploaded as an artifact.
 
 on:
-  push:
-    branches:
-      - main
-      - 'claude/**'
-    tags:
-      - 'v*'
   workflow_dispatch:
     inputs:
       build_type:
@@ -114,21 +100,7 @@ jobs:
       run: choco install ninja --yes --no-progress
 
     # ── Configure ─────────────────────────────────────────────
-    # Branch pushes use blender_lite.cmake for fast error-checking.
-    # Tag pushes and manual triggers use blender_release.cmake.
-    - name: CMake configure (lite — branch CI)
-      if: ${{ !startsWith(github.ref, 'refs/tags/') && github.event_name == 'push' }}
-      shell: cmd
-      run: >
-        cmake
-        -S %SRC_DIR%
-        -B %BUILD_DIR%
-        -G Ninja
-        -DCMAKE_BUILD_TYPE=Release
-        -C "%SRC_DIR%/build_files/cmake/config/blender_lite.cmake"
-
-    - name: CMake configure (release — tag / manual)
-      if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
+    - name: CMake configure
       shell: cmd
       run: >
         cmake
@@ -143,10 +115,9 @@ jobs:
       shell: cmd
       run: cmake --build %BUILD_DIR% --target install --parallel %NUMBER_OF_PROCESSORS%
 
-    # ── Package (release / manual only) ───────────────────────
+    # ── Package ───────────────────────────────────────────────
     - name: Read version and package
       id: package
-      if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
       shell: pwsh
       run: |
         $ErrorActionPreference = 'Stop'
@@ -191,20 +162,9 @@ jobs:
 
     # ── Upload artifact ───────────────────────────────────────
     - name: Upload artifact
-      if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
       uses: actions/upload-artifact@v4
       with:
         name: ${{ env.PACKAGE_NAME }}
         path: ${{ env.PACKAGE_PATH }}
         retention-days: 90
         compression-level: 0  # already a .zip
-
-    # ── GitHub Release (tags only) ────────────────────────────
-    - name: Create GitHub Release
-      if: startsWith(github.ref, 'refs/tags/v')
-      uses: softprops/action-gh-release@v2
-      with:
-        name: Blended ${{ env.VERSION }}
-        files: ${{ env.PACKAGE_PATH }}
-        generate_release_notes: true
-        draft: false
