@@ -96,6 +96,8 @@ void BKE_blender_free()
 /** \name Blender Version Access
  * \{ */
 
+static char blended_version_string[16] = "";
+
 static char blender_version_string[48] = "";
 
 /* Only includes patch if non-zero. */
@@ -103,6 +105,12 @@ static char blender_version_string_compact[48] = "";
 
 static void blender_version_init()
 {
+  SNPRINTF_UTF8(blended_version_string,
+                "%d.%d.%d",
+                BLENDED_VERSION_MAJOR,
+                BLENDED_VERSION_MINOR,
+                BLENDED_VERSION_PATCH);
+
   const char *version_cycle = "";
   const char *version_cycle_compact = "";
   if (STREQ(STRINGIFY(BLENDER_VERSION_CYCLE), "alpha")) {
@@ -141,6 +149,11 @@ static void blender_version_init()
                 BLENDER_VERSION % 100,
                 BLENDER_VERSION_PATCH,
                 version_cycle_compact);
+}
+
+const char *BKE_blended_version_string()
+{
+  return blended_version_string;
 }
 
 const char *BKE_blender_version_string()

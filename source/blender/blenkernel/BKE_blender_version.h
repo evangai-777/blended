@@ -47,6 +47,9 @@ namespace blender {
 #define BLENDER_FILE_MIN_VERSION 405
 #define BLENDER_FILE_MIN_SUBVERSION 85
 
+/** Blended user-facing version string, e.g. "0.1.0". */
+const char *BKE_blended_version_string();
+
 /** User readable version string. */
 const char *BKE_blender_version_string();
 
