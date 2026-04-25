@@ -66,7 +66,6 @@ const EnumPropertyItem rna_enum_id_type_items[] = {
     {ID_TE, "TEXTURE", ICON_TEXTURE_DATA, "Texture", ""},
     {ID_VO, "VOLUME", ICON_VOLUME_DATA, "Volume", ""},
     {ID_WM, "WINDOWMANAGER", ICON_WINDOW, "Window Manager", ""},
-    {ID_WS, "WORKSPACE", ICON_WORKSPACE, "Workspace", ""},
     {ID_WO, "WORLD", ICON_WORLD_DATA, "World", ""},
     {0, nullptr, 0, nullptr, nullptr},
 };
@@ -195,11 +194,6 @@ const IDFilterEnumPropertyItem rna_enum_id_type_filter_items[] = {
     {FILTER_ID_VF, "filter_font", ICON_FONT_DATA, "Fonts", "Show Font data-blocks"},
     {FILTER_ID_VO, "filter_volume", ICON_VOLUME_DATA, "Volumes", "Show/hide Volume data-blocks"},
     {FILTER_ID_WO, "filter_world", ICON_WORLD_DATA, "Worlds", "Show World data-blocks"},
-    {FILTER_ID_WS,
-     "filter_work_space",
-     ICON_WORKSPACE,
-     "Workspaces",
-     "Show workspace data-blocks"},
     {0, nullptr, 0, nullptr, nullptr},
 };
 
@@ -485,9 +479,6 @@ short RNA_type_to_ID_code(const StructRNA *type)
   if (base_type == RNA_Volume) {
     return ID_VO;
   }
-  if (base_type == RNA_WorkSpace) {
-    return ID_WS;
-  }
   if (base_type == RNA_World) {
     return ID_WO;
   }
@@ -579,8 +570,6 @@ StructRNA *ID_code_to_RNA_type(short idcode)
       return RNA_WindowManager;
     case ID_WO:
       return RNA_World;
-    case ID_WS:
-      return RNA_WorkSpace;
   }
 
   return RNA_ID;
