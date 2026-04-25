@@ -87,7 +87,10 @@ jobs:
         git config submodule."$LIB_DIR".update checkout
         GIT_LFS_SKIP_SMUDGE=1 git submodule update --init --progress $LIB_DIR
         cd "$LIB_DIR"
-        git lfs pull origin
+        git remote add lfs-fallback "https://projects.blender.org/blender/lib-windows_x64.git"
+        git config "remote.lfs-fallback.pushurl" "no_push"
+        git config lfs.remote.searchall true
+        git lfs pull
 
     # ── Toolchain ─────────────────────────────────────────────
     - name: Setup MSVC 2022
