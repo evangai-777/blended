@@ -27,7 +27,6 @@
 #include "DNA_collection_types.h"
 #include "DNA_key_types.h"
 #include "DNA_node_types.h"
-#include "DNA_workspace_types.h"
 
 #include "BLI_listbase.h"
 #include "BLI_utildefines.h"
@@ -665,7 +664,7 @@ static int id_copy_libmanagement_cb(LibraryIDLinkCallbackData *cb_data)
 
 bool BKE_id_copy_is_allowed(const ID *id)
 {
-#define LIB_ID_TYPES_NOCOPY ID_LI, ID_SCR, ID_WM, ID_WS /* Not supported */
+#define LIB_ID_TYPES_NOCOPY ID_LI, ID_SCR, ID_WM /* Not supported */
 
   return !ID_TYPE_IS_DEPRECATED(GS(id->name)) && !ELEM(GS(id->name), LIB_ID_TYPES_NOCOPY);
 
@@ -1396,7 +1395,7 @@ void *BKE_libblock_alloc_in_lib(Main *bmain,
     if ((flag & LIB_ID_CREATE_NO_MAIN) == 0) {
       /* Note that 2.8x versioning has tested not to cause conflicts. Node trees are
        * skipped in this check to allow adding a geometry node tree for versioning. */
-      BLI_assert(bmain->is_locked_for_linking == false || ELEM(type, ID_WS, ID_GR, ID_NT));
+      BLI_assert(bmain->is_locked_for_linking == false || ELEM(type, ID_GR, ID_NT));
       ListBaseT<ID> *lb = which_libbase(bmain, type);
 
       /* This is important in "read-file do-version after lib-link" context mainly, but is a good
@@ -2061,7 +2060,7 @@ void BKE_main_id_refcount_recompute(Main *bmain, const bool do_linked_only)
       id->tag &= ~(ID_TAG_EXTRAUSER | ID_TAG_EXTRAUSER_SET);
       id_us_ensure_real(id);
     }
-    if (ELEM(GS(id->name), ID_SCE, ID_WM, ID_WS)) {
+    if (ELEM(GS(id->name), ID_SCE, ID_WM)) {
       /* These IDs should always have a 'virtual' user. */
       id_us_ensure_real(id);
     }
@@ -2550,15 +2549,9 @@ bool BKE_id_can_use_id(const ID &id_from, const ID &id_to)
 
 /************************* Datablock order in UI **************************/
 
-static int *id_order_get(ID *id)
+static int *id_order_get(ID * /*id*/)
 {
-  /* Only for workspace tabs currently. */
-  switch (GS(id->name)) {
-    case ID_WS:
-      return &(id_cast<WorkSpace *>(id))->order;
-    default:
-      return nullptr;
-  }
+  return nullptr;
 }
 
 static bool id_order_compare(ID *a, ID *b)

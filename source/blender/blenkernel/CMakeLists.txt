@@ -311,7 +311,6 @@ set(SRC
   intern/volume_render.cc
   intern/volume_to_mesh.cc
   intern/wm_runtime.cc
-  intern/workspace.cc
   intern/world.cc
 
   BKE_action.hh
