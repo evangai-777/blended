@@ -1,10 +1,10 @@
-name: Sync from upstream Blender
+name: Sync Upstream
 
 # Fetches an upstream Blender branch or tag, creates a sync branch,
 # attempts the merge, and opens a draft PR for review and conflict resolution.
 #
 # Usage:
-#   1. Go to Actions → Sync from upstream Blender → Run workflow
+#   1. Go to Actions → Sync Upstream → Run workflow
 #   2. Enter the upstream ref (branch: blender-v5.3-release  or  tag: v5.3.0)
 #   3. Review the draft PR — if conflicts are present, check the branch out
 #      locally, resolve the markers, and push. See UPSTREAM_SYNC.md.
@@ -68,9 +68,11 @@ jobs:
           # Stage everything including conflict markers so the branch is pushable.
           # Developer resolves markers locally after checking out the branch.
           git add -A
-          git commit -m "WIP: upstream ${{ inputs.upstream_ref }} — $(wc -l < /tmp/conflicts.txt) conflicts need resolution
-
-$(cat /tmp/conflicts.txt)"
+          CONFLICT_COUNT=$(wc -l < /tmp/conflicts.txt)
+          printf 'WIP: upstream %s — %s conflicts need resolution\n\n%s\n' \
+            "${{ inputs.upstream_ref }}" "$CONFLICT_COUNT" "$(cat /tmp/conflicts.txt)" \
+            > /tmp/commit_msg.txt
+          git commit -F /tmp/commit_msg.txt
         fi
 
     # ── Push sync branch ──────────────────────────────────────
