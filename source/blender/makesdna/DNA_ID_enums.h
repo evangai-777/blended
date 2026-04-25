@@ -159,7 +159,6 @@ enum ID_Type {
   ID_PAL = MAKE_ID2('P', 'L'),       /* Palette */
   ID_PC = MAKE_ID2('P', 'C'),        /* PaintCurve */
   ID_CF = MAKE_ID2('C', 'F'),        /* CacheFile */
-  ID_WS = MAKE_ID2('W', 'S'),        /* WorkSpace */
   ID_LP = MAKE_ID2('L', 'P'),        /* LightProbe */
   ID_CV = MAKE_ID2('C', 'V'),        /* Curves */
   ID_PT = MAKE_ID2('P', 'T'),        /* PointCloud */

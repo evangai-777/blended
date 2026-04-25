@@ -632,7 +632,7 @@ struct PreviewImage {
  */
 #define ID_REFCOUNTING_USERS(id) (ID_REAL_USERS(id) - ID_EXTRA_REAL_USERS(id))
 
-#define ID_CHECK_UNDO(id) (!ELEM(GS((id)->name), ID_SCR, ID_WM, ID_WS, ID_BR))
+#define ID_CHECK_UNDO(id) (!ELEM(GS((id)->name), ID_SCR, ID_WM, ID_BR))
 
 #define ID_BLEND_PATH(_bmain, _id) \
   ((_id)->lib ? BKE_main_blendfile_path_from_library(*(_id)->lib) : \
@@ -692,7 +692,7 @@ struct PreviewImage {
 
 /* Check whether datablock type is covered by copy-on-evaluation. */
 #define ID_TYPE_USE_COPY_ON_EVAL(_id_type) \
-  (!ELEM(_id_type, ID_LI, ID_SCR, ID_VF, ID_BR, ID_WM, ID_PAL, ID_PC, ID_WS, ID_IM))
+  (!ELEM(_id_type, ID_LI, ID_SCR, ID_VF, ID_BR, ID_WM, ID_PAL, ID_PC, ID_IM))
 
 /* Check whether data-block type requires copy-on-evaluation from #ID_RECALC_PARAMETERS.
  * Keep in sync with #BKE_id_eval_properties_copy. */
@@ -1183,7 +1183,6 @@ enum IDRecalcFlag {
 #define FILTER_ID_WO (1ULL << 26)
 #define FILTER_ID_PA (1ULL << 27)
 #define FILTER_ID_CF (1ULL << 28)
-#define FILTER_ID_WS (1ULL << 29)
 #define FILTER_ID_LP (1ULL << 31)
 #define FILTER_ID_CV (1ULL << 32)
 #define FILTER_ID_PT (1ULL << 33)
@@ -1202,7 +1201,7 @@ enum IDRecalcFlag {
    FILTER_ID_LT | FILTER_ID_MA | FILTER_ID_MB | FILTER_ID_MC | FILTER_ID_ME | FILTER_ID_MSK | \
    FILTER_ID_NT | FILTER_ID_OB | FILTER_ID_PA | FILTER_ID_PAL | FILTER_ID_PC | FILTER_ID_SCE | \
    FILTER_ID_SPK | FILTER_ID_SO | FILTER_ID_TE | FILTER_ID_TXT | FILTER_ID_VF | FILTER_ID_WO | \
-   FILTER_ID_CF | FILTER_ID_WS | FILTER_ID_LP | FILTER_ID_CV | FILTER_ID_PT | FILTER_ID_VO | \
+   FILTER_ID_CF | FILTER_ID_LP | FILTER_ID_CV | FILTER_ID_PT | FILTER_ID_VO | \
    FILTER_ID_SIM | FILTER_ID_KE | FILTER_ID_SCR | FILTER_ID_WM | FILTER_ID_LI | FILTER_ID_GP | \
    FILTER_ID_IP)
 
@@ -1310,7 +1309,6 @@ enum eID_Index {
 
   /* UI-related types, should never be used by any other data type. */
   INDEX_ID_SCR,
-  INDEX_ID_WS,
   INDEX_ID_WM,
 
   /* Special values, keep last. */
