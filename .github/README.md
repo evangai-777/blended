@@ -30,7 +30,7 @@ The user-facing structure is the production pipeline itself:
 
 One animation engine — depsgraph, keyframes, F-curves, timeline — powers every content type. Every property in every section is keyframeable. Static work is animation with one frame.
 
-See [`BLENDED.md`](../BLENDED.md) for the full design document: identity, architecture, datablock audit, pipeline specs, and guardrails.
+See [`BLENDED.md`](../BLENDED.md) for the full design document: identity, architecture, datablock audit, full pipeline specs for all eight pipeline sections, and guardrails.
 
 What's Different Right Now
 --------------------------
@@ -39,6 +39,7 @@ What's Different Right Now
 - **Pre-5.0 rig compatibility** — `blended_rig_compat.py` restores `action.fcurves` as a compatibility property on `bpy.types.Action`. Pre-Blender-5.0 Rigify rigs (including CGCookie Vonnbots rigs) that access `action.fcurves` directly work again. IK/FK bake operators no longer fail silently.
 - **Update notifications** — Background GitHub Releases check at startup (24-hour cache, non-blocking). Top-bar notification with version string when an update is available. One-click download via browser. "Blended Updates" panel in System Preferences.
 - **CI** — Windows x64 portable `.zip` builds via GitHub Actions. Branch pushes run a fast lite build for compile-error checking. Tags produce a full release artifact. `blended_release.cmake` disables GPU kernel pre-compilation (CUDA/HIP/OneAPI) to keep CI under an hour — runtime compilation covers the same hardware.
+- **`ID_WS` (WorkSpace) removal — in progress.** The first three chisel layers are merged: `makesdna`, `blenkernel`, `makesrna`. `WorkSpace` is no longer a DNA ID type, `Main::workspaces` is gone, and all RNA registration has been cut. Remaining sites: `editors`, `depsgraph`, `python`, `windowmanager`. Each layer follows the same pattern — compile errors enumerate the dependencies; follow them.
 
 On the Horizon
 --------------
@@ -46,12 +47,10 @@ On the Horizon
 The foundation-first rebuild is underway. Build order per the design doc:
 
 1. **File format** — `.blended` is the project, period. Import/export is an explicit boundary.
-2. **Datablocks** — 39 → ~19 ID types. Fossils and UI-state datablocks removed.
+2. **Datablocks** — 39 → ~19 ID types. Fossils and UI-state datablocks removed. `ID_WS` removal active (see above).
 3. **Evaluation model** — depsgraph audit under Blended's scope.
-4. **App lenses** — the launcher as the canonical workspace system.
+4. **App lenses** — the launcher as the canonical workspace system. Becomes structurally true once `ID_WS` is fully out.
 5. **UI** — only after 1–4 are honest.
-
-`ID_WS` (WorkSpace) removal is the next code milestone — load-bearing for the launcher model becoming structurally true rather than just conceptually right.
 
 Changelog
 ---------
@@ -92,10 +91,12 @@ Blended is developed with contributions from both human developers and AI tools.
   Windows x64 CI/CD pipeline (`build-windows.yml` — LFS handling, submodule management,
   library caching, artifact packaging, GitHub Release automation);
   `blended_release.cmake` build configuration;
-  documentation architecture (CLAUDE.md, UPSTREAM_SYNC.md, this README, archive
-  consolidation — assessing and pruning eight archive files against current scope);
-  ongoing PR review and integration: 10+ PRs assessed, applied selectively, with
-  explicit reasoning about what belongs in the rebuild and what doesn't.
+  documentation architecture (CLAUDE.md, UPSTREAM_SYNC.md, this README, archive consolidation);
+  `ID_WS` (WorkSpace) removal — three chisel layers merged (`makesdna`, `blenkernel`,
+  `makesrna`); `WorkSpace` excised from DNA, `Main::workspaces` removed, full RNA
+  registration deleted across `rna_ID.cc`, `rna_space.cc`, `rna_main.cc`,
+  `rna_main_api.cc`, `rna_internal.hh`;
+  ongoing PR review and integration: 10+ PRs assessed, applied selectively.
   *"Listen to the whole thing before reacting."*
 
 Upstream Blender Resources

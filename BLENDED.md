@@ -1,7 +1,6 @@
 # BLENDED — Identity & Design Agreements
 
 **Status:** Living document. Working agreements from the rebuild conversation.
-**Branch:** `claude/rebuild-blender-simplified-GNIWm`
 **Purpose:** So any future session, contributor, or Claude instance can pick up without re-litigating what's already been decided. Read this first before proposing changes to scope, identity, or architecture.
 
 ---
@@ -267,6 +266,18 @@ Property bags pretending to be first-class entities:
 | `ID_WS` | WorkSpace | **Replaced by the launcher model (§6).** Workspaces as a datablock go away. |
 
 **Load-bearing for §6:** once Workspace is not project data, the launcher becomes the canonical workspace system and `.blended` files travel cleanly between users.
+
+**Code removal in progress (ID_WS chisel log):**
+
+| Layer | Status |
+|-------|--------|
+| `makesdna` — `DNA_ID_enums.h`, `DNA_ID.h`, `DNA_workspace_types.h` | ✓ done |
+| `blenkernel` — `workspace.cc` deleted, `BKE_main.hh`, `idtype.cc`, `main.cc`, `lib_id.cc`, `lib_override.cc`, `blendfile.cc` | ✓ done |
+| `makesrna` — `rna_ID.cc`, `rna_space.cc`, `rna_main.cc`, `rna_main_api.cc`, `rna_internal.hh` | ✓ done |
+| `editors` — `interface_template_id.cc`, `ed_util_ops.cc`, `interface_icons.cc`, `workspace_edit.cc`, `render_opengl.cc`, `outliner_*`, etc. | pending |
+| `depsgraph` — `deg_builder_relations.cc`, `deg_builder_nodes.cc` | pending |
+| `python` — `bpy_rna.cc`, `bpy_library_load.cc` | pending |
+| `windowmanager` — `wm.cc` | pending |
 
 ### Bucket 5 — Finish upstream's already-marked deprecations [LOCKED]
 
