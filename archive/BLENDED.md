@@ -66,7 +66,7 @@ This is the structural cash-out of the slogan (§1). "Explicit focus on the craf
 
 **Timeline-format sections — Finalizing, Mixing, Scoring, and the Storyboard editor — support a toggle between keyframe mode and each format's traditional editing UI** (clips on tracks for video, faders and automation lanes for audio mixing, notes/sequencer for scoring, panel manipulation for storyboard). The underlying representation is always keyframes; the *view* conforms to industry conventions on request. A video editor never has to leave clip-and-track thinking if they don't want to; a mixer never has to leave their faders. But keyframes are one toggle away, on the same data, for anyone who wants the animation-native view.
 
-Per-section specifics of what "keyframe" and "frame-by-frame" mean (and where the toggle lives, and what the traditional UI looks like) live in §12 as each stage's spec gets written.
+Per-section specifics of what "keyframe" and "frame-by-frame" mean (and where the toggle lives, and what the traditional UI looks like) live in §12 as each section's spec gets written.
 
 **UI restraint is load-bearing.** Every section surfacing keyframe controls bluntly would bring Blender's knob-clutter back. Affordances stay subtle: right-click any property → insert keyframe; timelines unfurl when used, hidden when not; the toggle to traditional editing is a single button, not a screen-splitting mode change. Breadth doesn't become clutter.
 
@@ -395,7 +395,7 @@ Cross-cutting animation engine settings (framerate, renderer, output, color mana
 
 ## 12. Pipeline Stages — Detailed Specs
 
-This section fills in concrete specs for each pipeline stage from §11 as they get head-hunted. Stages without entries here are placeholders for future work.
+This section fills in concrete specs for each pipeline section from §11 as they get head-hunted. Sections without entries here are placeholders for future work.
 
 **Subsection template.** Every §12.x subsection specs the same five things, in this order: *what it is* (one paragraph), *mode buttons*, *screen layout* (per mode if multiple), *data model* (existing datablocks only per §10), *transitions out* (where users go after this section), and a *frame-by-frame note* (per §2 universal keyframe, stated explicitly even when it's implicit in the medium). This keeps sections comparable and makes the pipeline's consistency visible.
 
@@ -403,7 +403,7 @@ This section fills in concrete specs for each pipeline stage from §11 as they g
 
 ### 12.1 Storyboarding [LOCKED in principle, pixel-level UI still OPEN]
 
-**What it is.** The earliest form of the project. Rough panels drawn to establish narrative flow. Under the principle *"storyboard IS the first pass of animation,"* storyboard panels literally become the keyframes of the 2D Animation stage and the timing markers of the Animate stage. Nothing is exported, nothing is rebuilt when moving downstream.
+**What it is.** The earliest form of the project. Rough panels drawn to establish narrative flow. Under the principle *"storyboard IS the first pass of animation,"* storyboard panels literally become the keyframes of the 2D Animation section and the timing markers inside 3D Animation > Animate. Nothing is exported, nothing is rebuilt when moving downstream.
 
 **Mode buttons under the tile:** `Board` (and possibly `Animatic` as a playback-focused view; TBD — most likely just `Board`).
 
@@ -435,7 +435,7 @@ This uses `ID_SCE` for what it was always supposed to be good at — a narrative
 
 These aren't competing models — they're the same data viewed through two different UI surfaces.
 
-**Transition to the next stage.** When the user moves to **2D Animation**, the same scenes, same Grease Pencil strokes, same timeline, same sound are present. More detail gets added — strokes per frame, in-betweens, cleaner linework. The storyboard never dies. It gets more real. No export. No rebuild. No retiming.
+**Transition to the next section.** When the user moves to **2D Animation**, the same scenes, same Grease Pencil strokes, same timeline, same sound are present. More detail gets added — strokes per frame, in-betweens, cleaner linework. The storyboard never dies. It gets more real. No export. No rebuild. No retiming.
 
 **Frame-by-frame note.** Storyboarding is inherently frame-by-frame — each panel *is* a discrete frame on the timeline. Keyframes (per §2) are also available for camera-on-still moves, scene transition timing, scratch audio cues. Both modalities coexist by default.
 
@@ -448,7 +448,7 @@ These aren't competing models — they're the same data viewed through two diffe
 
 ### 12.2 2D Animation [LOCKED in principle, pixel-level UI still OPEN]
 
-**What it is.** The stage where storyboard panels become frame-accurate animation. Under the principle that *storyboard IS the first pass of animation,* no data is converted or imported — the same scenes, same Grease Pencil strokes, same timeline, same audio from §12.1 are all still present. What changes is the UI lens and what the user does with the existing data.
+**What it is.** The section where storyboard panels become frame-accurate animation. Under the principle that *storyboard IS the first pass of animation,* no data is converted or imported — the same scenes, same Grease Pencil strokes, same timeline, same audio from §12.1 are all still present. What changes is the UI lens and what the user does with the existing data.
 
 **Headline insight — F-curve interpolation driving 2D.** Blender's F-curve system is world-class for 3D (bezier handles, ease-in / ease-out / bounce / constant / linear control). Grease Pencil strokes have point positions; points can be keyframed. Therefore **Blender's F-curve interpolation can drive the tween between Grease Pencil drawings** with full artistic control. Draw five key poses, get 24fps animation with proper easing. This is the thing the rest of the 2D-animation industry (ToonBoom, Moho, CACANi) either doesn't do or does badly. In Blended it's the default workflow, using code Blender is already best at.
 
@@ -483,7 +483,7 @@ Community-extensible per §2 — ship with these three; `Ink` / `Tween` / `Rig` 
 | Layers | Grease Pencil layers on the `ID_GP` datablock |
 | Audio tracks | `ID_SO` datablocks on the scene |
 
-The entire stage is a UI lens over data Storyboarding already created.
+The entire section is a UI lens over data Storyboarding already created.
 
 **Transition from Storyboarding.** Click **2D Animation** in the launcher. Same scenes, same panels, same audio. UI changes:
 
@@ -496,10 +496,10 @@ The entire stage is a UI lens over data Storyboarding already created.
 
 Storyboard panels become literal keyframes; in-betweens are either drawn by hand (`Frame-by-Frame`) or generated by F-curve interpolation (`Animate`) with curves the user shapes.
 
-**Transition to next stage:**
+**Transition to next section:**
 
-- **2D-final project** → Composite / Edit. Final mix, scene transitions applied, export.
-- **3D project using 2D as pre-vis** → Assets → Environments → Animate. 2D strokes become hidden reference layers in 3D scenes, toggle-able from the outliner.
+- **2D-final project** → Finalizing → Compositing → Audio. Locked cut, color, mix, export.
+- **3D project using 2D as pre-vis** → 3D Animation (Sculpt / Model for assets, Environment for environments, Animate for shot animation). 2D strokes become hidden reference layers in 3D scenes, toggle-able from the outliner.
 
 **Still open within 2D Animation:**
 
