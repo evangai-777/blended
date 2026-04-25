@@ -2,7 +2,7 @@
 
 Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the foundation up.
 
-**Read `archive/BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
+**Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
 **Current version:** Blended 0.1.0 (independent of Blender's 5.2 base version).
 
@@ -12,7 +12,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 Not a tiered UI skin. Not a WASM port. A rebuild — subtracting Blender down to its true shape, then restructuring around one stated identity: **free 2D and 3D software tools, with an explicit focus on the craft of animation.**
 
-The old approach (tiered UI, smart defaults, Emscripten) is archived in `archive/`. It was prototyping toward the real vision. Don't propose reinstating it without re-reading `archive/BLENDED.md` §8 Guardrails first.
+The old approach (tiered UI, smart defaults, Emscripten) is archived in `archive/`. It was prototyping toward the real vision. Don't propose reinstating it without re-reading `BLENDED.md` §8 Guardrails first.
 
 **Foundation-first build order (from BLENDED.md §4):**
 1. File format — `.blended` is the project, period
@@ -161,8 +161,8 @@ Here is what a previous Claude did instead of listening:
 
 | Document | Purpose |
 |----------|---------|
-| `archive/BLENDED.md` | **Read first.** Design authority — identity, architecture, locked decisions |
-| `archive/CLAUDE.md` | This file — operational context for Claude sessions |
+| `BLENDED.md` | **Read first.** Design authority — identity, architecture, locked decisions |
+| `CLAUDE.md` | This file — operational context for Claude sessions |
 | `archive/grass.md` | Who the developer is and how to work with them |
 | `archive/UPSTREAM_SYNC.md` | How to merge upstream Blender, conflict-prone files |
 
