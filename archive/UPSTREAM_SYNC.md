@@ -139,3 +139,28 @@ git cherry-pick <commit-sha>
 If the cherry-pick conflicts with a Blended-modified file, resolve by keeping
 the Blended addition and integrating the upstream change around it — same
 strategy as a full merge conflict. See "Conflict-Prone Files" above.
+
+---
+
+## Lightweight Triage via Screenshots
+
+Don't want to run the sync workflow or set up the upstream remote? Just take
+screenshots of the upstream commit log and hand them to Claude.
+
+**How:**
+
+1. Go to `https://projects.blender.org/blender/blender/commits/branch/blender-v5.3-release`
+2. Screenshot the commit list — one or more pages, however far back you need
+3. Open a Claude Code session and drop the screenshots in
+4. Say something like: *"here are the upstream commits since our last sync — sort through these and tell me what's worth cherry-picking for Blended"*
+
+Claude will go through each commit, flag what's relevant to Blended's current
+scope (animation, depsgraph, branding files, rig system, Python API, dependency
+updates), and skip what isn't (WASM, platform-specific subsystems we don't ship,
+features in Bucket 6 fossils, etc.). For anything worth pulling, it'll either
+apply the cherry-pick directly or give you the SHA and rationale so you can
+decide.
+
+This works well for keeping up with upstream between full merges — catching bug
+fixes and small improvements without the overhead of a full sync branch.
+
