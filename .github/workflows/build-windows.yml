@@ -1,9 +1,14 @@
 name: Build Blended (Windows x64)
 
-# Manual-only — press "Run workflow" in the GitHub Actions UI.
-# Produces a portable Blended-<version>-windows-x64.zip uploaded as an artifact.
+# Two build modes:
+#
+#   tag push (v*)       → full release build → artifact + GitHub Release
+#   workflow_dispatch   → choose build type, produces artifact only
 
 on:
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       build_type:
@@ -169,3 +174,13 @@ jobs:
         path: ${{ env.PACKAGE_PATH }}
         retention-days: 90
         compression-level: 0  # already a .zip
+
+    # ── GitHub Release (tags only) ────────────────────────────
+    - name: Create GitHub Release
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v2
+      with:
+        name: Blended ${{ env.VERSION }}
+        files: ${{ env.PACKAGE_PATH }}
+        generate_release_notes: true
+        draft: false

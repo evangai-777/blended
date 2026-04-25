@@ -1,4 +1,10 @@
 
+  Blended is a derivative work based on Blender, the free and open source 3D creation suite.
+  Blended is developed and maintained at https://github.com/EvangAI-777/Blended.
+  It is subject to the GNU GPL license, which is part of this download.
+
+  ----
+
   This version of Blender has been originally released at www.blender.org.
   It is subject to the GNU GPL license, which is part of this download.
 
