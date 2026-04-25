@@ -964,6 +964,12 @@ function(get_blender_version)
   # - BLENDER_VERSION_MINOR
   # - BLENDER_VERSION_PATCH
   # - BLENDER_VERSION_CYCLE (alpha, beta, rc, release)
+  #
+  # Blended-specific (independent versioning starting at 0.x):
+  # - BLENDED_VERSION (major.minor.patch)
+  # - BLENDED_VERSION_MAJOR
+  # - BLENDED_VERSION_MINOR
+  # - BLENDED_VERSION_PATCH
 
   # So CMAKE depends on `BKE_blender_version.h`, beware of infinite-loops!
   configure_file(
@@ -1010,6 +1016,31 @@ function(get_blender_version)
   set(BLENDER_VERSION_MINOR "${_out_version_minor}" PARENT_SCOPE)
   set(BLENDER_VERSION_PATCH "${_out_version_patch}" PARENT_SCOPE)
   set(BLENDER_VERSION_CYCLE "${_out_version_cycle}" PARENT_SCOPE)
+
+  # BLENDED_VERSION_* — independent Blended versioning (starts at 0.x).
+  # Separate file(STRINGS) call because BLENDED_ ≠ BLENDER_ and the regex above won't match.
+  file(
+    STRINGS ${CMAKE_SOURCE_DIR}/source/blender/blenkernel/BKE_blender_version.h
+    _blended_contents REGEX "^#define[ \t]+BLENDED_.*$"
+  )
+
+  string(
+    REGEX REPLACE ".*#define[ \t]+BLENDED_VERSION_MAJOR[ \t]+([0-9]+).*" "\\1"
+    _out_blended_major "${_blended_contents}"
+  )
+  string(
+    REGEX REPLACE ".*#define[ \t]+BLENDED_VERSION_MINOR[ \t]+([0-9]+).*" "\\1"
+    _out_blended_minor "${_blended_contents}"
+  )
+  string(
+    REGEX REPLACE ".*#define[ \t]+BLENDED_VERSION_PATCH[ \t]+([0-9]+).*" "\\1"
+    _out_blended_patch "${_blended_contents}"
+  )
+
+  set(BLENDED_VERSION "${_out_blended_major}.${_out_blended_minor}.${_out_blended_patch}" PARENT_SCOPE)
+  set(BLENDED_VERSION_MAJOR "${_out_blended_major}" PARENT_SCOPE)
+  set(BLENDED_VERSION_MINOR "${_out_blended_minor}" PARENT_SCOPE)
+  set(BLENDED_VERSION_PATCH "${_out_blended_patch}" PARENT_SCOPE)
 
 endfunction()
 

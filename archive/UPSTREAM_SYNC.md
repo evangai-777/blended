@@ -86,9 +86,12 @@ For each, keep the Blended additions and integrate new upstream changes around t
 | `build_files/cmake/config/blended_release.cmake` | Blended-only file — won't conflict, just preserve |
 | `scripts/startup/blended_rig_compat.py` | Blended-only file — won't conflict, just preserve |
 | `scripts/startup/blended_update_check.py` | Blended-only file — won't conflict, just preserve |
+| `release/windows/icons/winblender.rc` | `CompanyName`, `FileDescription`, `LegalCopyright`, `ProductName` updated to Blended |
+| `release/freedesktop/blender.desktop` | `Name`, `Comment`, `StartupWMClass`, `Keywords` updated to Blended identity |
 | `.github/` | Workflows, README — Blended-only, won't conflict with upstream |
 | `BLENDED.md` | Blended-only file |
 | `CLAUDE.md` | Blended-only file |
+| `CHANGELOG.md` | Blended-only file |
 
 ## After Syncing: Version Bump Checklist
 

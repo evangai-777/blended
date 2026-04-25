@@ -1,9 +1,14 @@
 name: Build Blended (Windows x64)
 
-# Manual-only — press "Run workflow" in the GitHub Actions UI.
-# Produces a portable Blended-<version>-windows-x64.zip uploaded as an artifact.
+# Two build modes:
+#
+#   tag push (v*)       → full release build → artifact + GitHub Release
+#   workflow_dispatch   → choose build type, produces artifact only
 
 on:
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       build_type:
@@ -61,6 +66,7 @@ jobs:
         set -e
         # Checkout used lfs:false for speed; pull now.
         # LFS objects live upstream on projects.blender.org.
+        # GitHub fork doesn't host LFS objects; fetch from projects.blender.org directly.
         git remote add lfs-fallback "https://projects.blender.org/blender/blender.git"
         git config "remote.lfs-fallback.pushurl" "no_push"
         git lfs fetch lfs-fallback
@@ -87,6 +93,7 @@ jobs:
         git config submodule."$LIB_DIR".update checkout
         GIT_LFS_SKIP_SMUDGE=1 git submodule update --init --progress $LIB_DIR
         cd "$LIB_DIR"
+        # origin is already projects.blender.org/blender/lib-windows_x64.git — pull directly.
         git lfs pull origin
 
     # ── Toolchain ─────────────────────────────────────────────
@@ -96,8 +103,7 @@ jobs:
         arch: x64
 
     - name: Install Ninja
-      shell: cmd
-      run: choco install ninja --yes --no-progress
+      uses: seanmiddleditch/gha-setup-ninja@v5
 
     # ── Configure ─────────────────────────────────────────────
     - name: CMake configure
@@ -168,3 +174,13 @@ jobs:
         path: ${{ env.PACKAGE_PATH }}
         retention-days: 90
         compression-level: 0  # already a .zip
+
+    # ── GitHub Release (tags only) ────────────────────────────
+    - name: Create GitHub Release
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v2
+      with:
+        name: Blended ${{ env.VERSION }}
+        files: ${{ env.PACKAGE_PATH }}
+        generate_release_notes: true
+        draft: false
