@@ -3981,7 +3981,7 @@ static IDFilterEnumPropertyItem rna_enum_space_file_id_filter_categories[] = {
      "Environment",
      "Show worlds, lights, cameras and speakers"},
     {FILTER_ID_BR | FILTER_ID_GD_LEGACY | FILTER_ID_PA | FILTER_ID_PAL | FILTER_ID_PC |
-         FILTER_ID_TXT | FILTER_ID_VF | FILTER_ID_CF | FILTER_ID_WS,
+         FILTER_ID_TXT | FILTER_ID_VF | FILTER_ID_CF,
      "category_misc",
      ICON_GREASEPENCIL,
      "Miscellaneous",

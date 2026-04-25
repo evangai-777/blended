@@ -184,7 +184,6 @@ RNA_MAIN_LISTBASE_FUNCS_DEF(texts)
 RNA_MAIN_LISTBASE_FUNCS_DEF(textures)
 RNA_MAIN_LISTBASE_FUNCS_DEF(volumes)
 RNA_MAIN_LISTBASE_FUNCS_DEF(wm)
-RNA_MAIN_LISTBASE_FUNCS_DEF(workspaces)
 RNA_MAIN_LISTBASE_FUNCS_DEF(worlds)
 
 #  undef RNA_MAIN_LISTBASE_FUNCS_DEF
@@ -512,12 +511,6 @@ void RNA_def_main(BlenderRNA *brna)
        "Paint Curves",
        "Paint Curves data-blocks",
        RNA_def_main_paintcurves},
-      {"workspaces",
-       "WorkSpace",
-       "rna_Main_workspaces_begin",
-       "Workspaces",
-       "Workspace data-blocks",
-       RNA_def_main_workspaces},
       {"lightprobes",
        "LightProbe",
        "rna_Main_lightprobes_begin",
