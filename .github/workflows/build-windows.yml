@@ -136,7 +136,7 @@ jobs:
         -B %BUILD_DIR%
         -G Ninja
         -DCMAKE_BUILD_TYPE=%BUILD_TYPE%
-        -C "%SRC_DIR%/build_files/cmake/config/blender_release.cmake"
+        -C "%SRC_DIR%/build_files/cmake/config/blended_release.cmake"
 
     # ── Build ─────────────────────────────────────────────────
     - name: Build
