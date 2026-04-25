@@ -30,7 +30,7 @@ The user-facing structure is the production pipeline itself:
 
 One animation engine — depsgraph, keyframes, F-curves, timeline — powers every content type. Every property in every section is keyframeable. Static work is animation with one frame.
 
-See [`archive/BLENDED.md`](archive/BLENDED.md) for the full design document: identity, architecture, datablock audit, pipeline specs, and guardrails.
+See [`BLENDED.md`](../BLENDED.md) for the full design document: identity, architecture, datablock audit, pipeline specs, and guardrails.
 
 What's Different Right Now
 --------------------------
