@@ -989,7 +989,7 @@ static void setup_app_data(bContext *C,
                                      reuse_editable_asset_needed(&reuse_data);
 
   if (mode != LOAD_UNDO) {
-    const short ui_id_codes[]{ID_WS, ID_SCR};
+    const short ui_id_codes[]{ID_SCR};
 
     /* WM needs special complex handling, regardless of whether UI is kept or loaded from file. */
     swap_wm_data_for_blendfile(&reuse_data, mode == LOAD_UI);
@@ -1430,7 +1430,7 @@ void BKE_blendfile_read_make_empty(bContext *C)
 
   FOREACH_MAIN_LISTBASE_BEGIN (bmain, lb) {
     FOREACH_MAIN_LISTBASE_ID_BEGIN (lb, id) {
-      if (ELEM(GS(id->name), ID_SCE, ID_SCR, ID_WM, ID_WS)) {
+      if (ELEM(GS(id->name), ID_SCE, ID_SCR, ID_WM)) {
         break;
       }
       BKE_id_delete(bmain, id);
@@ -1747,12 +1747,6 @@ WorkspaceConfigFileData *BKE_blendfile_workspace_config_read(const char *filepat
   if (bfd) {
     workspace_config = MEM_new_zeroed<WorkspaceConfigFileData>(__func__);
     workspace_config->main = bfd->main;
-
-    /* Only 2.80+ files have actual workspaces, don't try to use screens
-     * from older versions. */
-    if (bfd->main->versionfile >= 280) {
-      workspace_config->workspaces = bfd->main->workspaces;
-    }
 
     MEM_delete(bfd);
   }

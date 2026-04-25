@@ -402,7 +402,6 @@ struct Main : NonCopyable, NonMovable {
   ListBaseT<Mask> masks = {};
   ListBaseT<FreestyleLineStyle> linestyles = {};
   ListBaseT<CacheFile> cachefiles = {};
-  ListBaseT<WorkSpace> workspaces = {};
   /**
    * \note The name `hair_curves` is chosen to be different than `curves`,
    * but they are generic curve data-blocks, not just for hair.

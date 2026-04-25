@@ -163,7 +163,6 @@ void BKE_main_clear(Main &bmain)
         CASE_ID_INDEX(INDEX_ID_BR);
         CASE_ID_INDEX(INDEX_ID_SCE);
         CASE_ID_INDEX(INDEX_ID_SCR);
-        CASE_ID_INDEX(INDEX_ID_WS);
         CASE_ID_INDEX(INDEX_ID_WM);
         case INDEX_ID_NULL: {
           BLI_assert_unreachable();
@@ -1054,8 +1053,6 @@ ListBaseT<ID> *which_libbase(Main *bmain, short type)
       return &(bmain->paintcurves.cast<ID>());
     case ID_CF:
       return &(bmain->cachefiles.cast<ID>());
-    case ID_WS:
-      return &(bmain->workspaces.cast<ID>());
     case ID_CV:
       return &(bmain->hair_curves.cast<ID>());
     case ID_PT:
@@ -1124,8 +1121,6 @@ MainListsArray BKE_main_lists_get(Main &bmain)
   /* referenced by scenes */
   lb[INDEX_ID_LS] = &(bmain.linestyles.cast<ID>());
   lb[INDEX_ID_SCE] = &(bmain.scenes.cast<ID>());
-  /* before wm, so it's freed after it! */
-  lb[INDEX_ID_WS] = &(bmain.workspaces.cast<ID>());
   lb[INDEX_ID_WM] = &(bmain.wm.cast<ID>());
   lb[INDEX_ID_MSK] = &(bmain.masks.cast<ID>());
 
