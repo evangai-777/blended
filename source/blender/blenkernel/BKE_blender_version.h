@@ -19,6 +19,11 @@ namespace blender {
  * \note Use #STRINGIFY() rather than defining with quotes.
  */
 
+/** Blended product version — independent of the upstream Blender base. */
+#define BLENDED_VERSION_MAJOR 0
+#define BLENDED_VERSION_MINOR 1
+#define BLENDED_VERSION_PATCH 0
+
 /** Blender major and minor version. */
 #define BLENDER_VERSION 502
 /** Blender patch version for bug-fix releases. */
@@ -41,6 +46,9 @@ namespace blender {
  * for details. */
 #define BLENDER_FILE_MIN_VERSION 405
 #define BLENDER_FILE_MIN_SUBVERSION 85
+
+/** Blended user-facing version string, e.g. "0.1.0". */
+const char *BKE_blended_version_string();
 
 /** User readable version string. */
 const char *BKE_blender_version_string();

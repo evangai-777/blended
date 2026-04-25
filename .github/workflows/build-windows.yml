@@ -1,0 +1,210 @@
+name: Build Blended (Windows x64)
+
+# Two build modes:
+#
+#   branch push  → lite build (blender_lite.cmake) on windows-2022
+#                  fast compile-error check, no artifact
+#
+#   tag push     → release build (blender_release.cmake) on windows-2022
+#                  produces a portable Blended-<version>-windows-x64.zip
+#                  uploaded as artifact AND as a GitHub Release
+#
+#   workflow_dispatch → choose Release or RelWithDebInfo, runs full build
+
+on:
+  push:
+    branches:
+      - main
+      - 'claude/**'
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'CMake build type'
+        required: false
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - RelWithDebInfo
+
+jobs:
+  build-windows-x64:
+    name: Windows x64
+    runs-on: windows-2022
+    timeout-minutes: 360
+
+    env:
+      BUILD_TYPE: ${{ inputs.build_type || 'Release' }}
+      # Short paths to dodge Windows MAX_PATH limit
+      SRC_DIR: D:\s
+      BUILD_DIR: D:\b
+      LIB_DIR: lib/windows_x64
+
+    steps:
+    # ── Checkout ──────────────────────────────────────────────
+    - name: Checkout source
+      uses: actions/checkout@v4
+      with:
+        path: src
+        fetch-depth: 1
+        lfs: false
+        submodules: false
+
+    - name: Compute submodule hash
+      id: submod-hash
+      shell: bash
+      run: echo "hash=$(sha256sum src/.gitmodules | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+    - name: Move source to short path
+      shell: cmd
+      run: move src %SRC_DIR%
+
+    # ── LFS ───────────────────────────────────────────────────
+    - name: Setup Git LFS
+      shell: cmd
+      run: |
+        git lfs install
+        git lfs version
+
+    - name: Pull source LFS files
+      shell: bash
+      working-directory: ${{ env.SRC_DIR }}
+      run: |
+        set -e
+        # Checkout used lfs:false for speed; pull now.
+        # LFS objects live upstream on projects.blender.org.
+        git remote add lfs-fallback "https://projects.blender.org/blender/blender.git"
+        git config "remote.lfs-fallback.pushurl" "no_push"
+        git lfs fetch lfs-fallback
+        git lfs checkout
+
+    # ── Precompiled libraries ─────────────────────────────────
+    - name: Restore library cache
+      id: cache-libs
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.SRC_DIR }}/lib/windows_x64
+        key: blender-libs-win-x64-${{ steps.submod-hash.outputs.hash }}
+        restore-keys: blender-libs-win-x64-
+      continue-on-error: true
+
+    - name: Fetch precompiled libraries
+      if: steps.cache-libs.outputs.cache-hit != 'true'
+      shell: bash
+      working-directory: ${{ env.SRC_DIR }}
+      run: |
+        set -e
+        # .gitmodules sets update=none so make_update.py can manage manually.
+        # Override for CI so submodule update actually clones.
+        git config submodule."$LIB_DIR".update checkout
+        GIT_LFS_SKIP_SMUDGE=1 git submodule update --init --progress $LIB_DIR
+        cd "$LIB_DIR"
+        git lfs pull origin
+
+    # ── Toolchain ─────────────────────────────────────────────
+    - name: Setup MSVC 2022
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
+
+    - name: Install Ninja
+      shell: cmd
+      run: choco install ninja --yes --no-progress
+
+    # ── Configure ─────────────────────────────────────────────
+    # Branch pushes use blender_lite.cmake for fast error-checking.
+    # Tag pushes and manual triggers use blender_release.cmake.
+    - name: CMake configure (lite — branch CI)
+      if: ${{ !startsWith(github.ref, 'refs/tags/') && github.event_name == 'push' }}
+      shell: cmd
+      run: >
+        cmake
+        -S %SRC_DIR%
+        -B %BUILD_DIR%
+        -G Ninja
+        -DCMAKE_BUILD_TYPE=Release
+        -C "%SRC_DIR%/build_files/cmake/config/blender_lite.cmake"
+
+    - name: CMake configure (release — tag / manual)
+      if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
+      shell: cmd
+      run: >
+        cmake
+        -S %SRC_DIR%
+        -B %BUILD_DIR%
+        -G Ninja
+        -DCMAKE_BUILD_TYPE=%BUILD_TYPE%
+        -C "%SRC_DIR%/build_files/cmake/config/blended_release.cmake"
+
+    # ── Build ─────────────────────────────────────────────────
+    - name: Build
+      shell: cmd
+      run: cmake --build %BUILD_DIR% --target install --parallel %NUMBER_OF_PROCESSORS%
+
+    # ── Package (release / manual only) ───────────────────────
+    - name: Read version and package
+      id: package
+      if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+
+        # Blended uses its own BLENDED_VERSION_* defines, independent of the
+        # upstream BLENDER_VERSION integer. Versioning starts at 0.x.
+        $header = Get-Content "$env:SRC_DIR/source/blender/blenkernel/BKE_blender_version.h" -Raw
+
+        $majorMatch = [regex]::Match($header, '#define BLENDED_VERSION_MAJOR\s+(\d+)')
+        $minorMatch = [regex]::Match($header, '#define BLENDED_VERSION_MINOR\s+(\d+)')
+        $patchMatch = [regex]::Match($header, '#define BLENDED_VERSION_PATCH\s+(\d+)')
+
+        if (-not $majorMatch.Success) {
+          Write-Error "Could not parse BLENDED_VERSION_MAJOR from version header"
+          exit 1
+        }
+
+        $major = $majorMatch.Groups[1].Value
+        $minor = if ($minorMatch.Success) { $minorMatch.Groups[1].Value } else { "0" }
+        $patch = if ($patchMatch.Success) { $patchMatch.Groups[1].Value } else { "0" }
+
+        $version = "$major.$minor.$patch"
+        $name    = "Blended-$version-windows-x64"
+        $zip     = "$name.zip"
+
+        Write-Host "Version: $version"
+
+        $installDir = "$env:BUILD_DIR\bin"
+        if (-not (Test-Path $installDir)) {
+          Write-Error "Install directory not found: $installDir"
+          exit 1
+        }
+
+        Rename-Item $installDir $name
+        Compress-Archive -Path "$env:BUILD_DIR\$name" -DestinationPath "$env:BUILD_DIR\$zip"
+
+        "PACKAGE_NAME=$zip"              | Out-File -Append $env:GITHUB_ENV
+        "PACKAGE_PATH=$env:BUILD_DIR\$zip" | Out-File -Append $env:GITHUB_ENV
+        "VERSION=$version"               | Out-File -Append $env:GITHUB_ENV
+
+        Write-Host "Packaged: $zip"
+
+    # ── Upload artifact ───────────────────────────────────────
+    - name: Upload artifact
+      if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.PACKAGE_NAME }}
+        path: ${{ env.PACKAGE_PATH }}
+        retention-days: 90
+        compression-level: 0  # already a .zip
+
+    # ── GitHub Release (tags only) ────────────────────────────
+    - name: Create GitHub Release
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v2
+      with:
+        name: Blended ${{ env.VERSION }}
+        files: ${{ env.PACKAGE_PATH }}
+        generate_release_notes: true
+        draft: false
