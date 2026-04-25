@@ -7,7 +7,7 @@ name: Sync from upstream Blender
 #   1. Go to Actions → Sync from upstream Blender → Run workflow
 #   2. Enter the upstream ref (branch: blender-v5.3-release  or  tag: v5.3.0)
 #   3. Review the draft PR — if conflicts are present, check the branch out
-#      locally, resolve the markers, and push. See archive/UPSTREAM_SYNC.md.
+#      locally, resolve the markers, and push. See UPSTREAM_SYNC.md.
 
 on:
   workflow_dispatch:
@@ -89,7 +89,7 @@ $(cat /tmp/conflicts.txt)"
           CONFLICT_MD=$(sed 's/^/- `/' /tmp/conflicts.txt | sed 's/$/`/')
           MERGE_SECTION="⚠️ **${CONFLICT_COUNT} conflict(s)** — check out the branch locally, resolve the markers, and push.
 
-See \`archive/UPSTREAM_SYNC.md\` for the step-by-step resolution workflow.
+See \`UPSTREAM_SYNC.md\` for the step-by-step resolution workflow.
 
 **Conflicted files:**
 ${CONFLICT_MD}"
@@ -106,7 +106,7 @@ ${MERGE_SECTION}
 ## Conflict-prone files
 
 These Blended-modified files are most likely to need manual attention even on a clean merge.
-Full table and guidance in [\`archive/UPSTREAM_SYNC.md\`](../archive/UPSTREAM_SYNC.md).
+Full table and guidance in [\`UPSTREAM_SYNC.md\`](../UPSTREAM_SYNC.md).
 
 | File | Blended change |
 |------|----------------|

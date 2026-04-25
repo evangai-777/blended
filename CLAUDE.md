@@ -128,7 +128,7 @@ The main principle of this rebuild is **subtraction**. Every compile error after
 
 ### Upstream Sync Conflicts
 
-When merging upstream Blender releases, files likely to conflict include: `BKE_blender_version.h` (we added `BLENDED_VERSION_*`), `CMakeLists.txt` (project name), `wm_window.cc`, `wm_splash_screen.cc`, and all branding/release files. Check `archive/UPSTREAM_SYNC.md` before merging.
+When merging upstream Blender releases, files likely to conflict include: `BKE_blender_version.h` (we added `BLENDED_VERSION_*`), `CMakeLists.txt` (project name), `wm_window.cc`, `wm_splash_screen.cc`, and all branding/release files. Check `UPSTREAM_SYNC.md` before merging.
 
 ### When Someone Describes a Vision: Believe Them
 
@@ -164,7 +164,7 @@ Here is what a previous Claude did instead of listening:
 | `BLENDED.md` | **Read first.** Design authority — identity, architecture, locked decisions |
 | `CLAUDE.md` | This file — operational context for Claude sessions |
 | `archive/grass.md` | Who the developer is and how to work with them |
-| `archive/UPSTREAM_SYNC.md` | How to merge upstream Blender, conflict-prone files |
+| `UPSTREAM_SYNC.md` | How to merge upstream Blender, conflict-prone files |
 
 ---
 
