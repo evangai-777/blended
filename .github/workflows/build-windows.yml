@@ -96,8 +96,7 @@ jobs:
         arch: x64
 
     - name: Install Ninja
-      shell: cmd
-      run: choco install ninja --yes --no-progress
+      uses: seanmiddleditch/gha-setup-ninja@v5
 
     # ── Configure ─────────────────────────────────────────────
     - name: CMake configure
