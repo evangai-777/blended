@@ -53,6 +53,11 @@ The foundation-first rebuild is underway. Build order per the design doc:
 
 `ID_WS` (WorkSpace) removal is the next code milestone — load-bearing for the launcher model becoming structurally true rather than just conceptually right.
 
+Changelog
+---------
+
+See [`CHANGELOG.md`](../CHANGELOG.md) for a full list of changes per release.
+
 Building from Source
 --------------------
 
