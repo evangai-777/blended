@@ -151,21 +151,21 @@ jobs:
       run: |
         $ErrorActionPreference = 'Stop'
 
-        # BKE_blender_version.h uses a single BLENDER_VERSION integer (e.g. 502 = 5.2)
-        # and a separate BLENDER_VERSION_PATCH.
+        # Blended uses its own BLENDED_VERSION_* defines, independent of the
+        # upstream BLENDER_VERSION integer. Versioning starts at 0.x.
         $header = Get-Content "$env:SRC_DIR/source/blender/blenkernel/BKE_blender_version.h" -Raw
 
-        $verMatch   = [regex]::Match($header, '#define BLENDER_VERSION\s+(\d+)')
-        $patchMatch = [regex]::Match($header, '#define BLENDER_VERSION_PATCH\s+(\d+)')
+        $majorMatch = [regex]::Match($header, '#define BLENDED_VERSION_MAJOR\s+(\d+)')
+        $minorMatch = [regex]::Match($header, '#define BLENDED_VERSION_MINOR\s+(\d+)')
+        $patchMatch = [regex]::Match($header, '#define BLENDED_VERSION_PATCH\s+(\d+)')
 
-        if (-not $verMatch.Success) {
-          Write-Error "Could not parse BLENDER_VERSION from version header"
+        if (-not $majorMatch.Success) {
+          Write-Error "Could not parse BLENDED_VERSION_MAJOR from version header"
           exit 1
         }
 
-        $ver   = [int]$verMatch.Groups[1].Value   # e.g. 502
-        $major = [Math]::Floor($ver / 100)         # 5
-        $minor = $ver % 100                        # 2
+        $major = $majorMatch.Groups[1].Value
+        $minor = if ($minorMatch.Success) { $minorMatch.Groups[1].Value } else { "0" }
         $patch = if ($patchMatch.Success) { $patchMatch.Groups[1].Value } else { "0" }
 
         $version = "$major.$minor.$patch"
