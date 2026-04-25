@@ -866,7 +866,6 @@ RNA_MAIN_ID_TAG_FUNCS_DEF(masks, masks, ID_MSK)
 RNA_MAIN_ID_TAG_FUNCS_DEF(linestyle, linestyles, ID_LS)
 RNA_MAIN_ID_TAG_FUNCS_DEF(cachefiles, cachefiles, ID_CF)
 RNA_MAIN_ID_TAG_FUNCS_DEF(paintcurves, paintcurves, ID_PC)
-RNA_MAIN_ID_TAG_FUNCS_DEF(workspaces, workspaces, ID_WS)
 RNA_MAIN_ID_TAG_FUNCS_DEF(lightprobes, lightprobes, ID_LP)
 RNA_MAIN_ID_TAG_FUNCS_DEF(hair_curves, hair_curves, ID_CV)
 RNA_MAIN_ID_TAG_FUNCS_DEF(pointclouds, pointclouds, ID_PT)
@@ -2270,22 +2269,6 @@ void RNA_def_main_linestyles(BlenderRNA *brna, PropertyRNA *cprop)
                   "Decrement user counter of all data-blocks used by this line style");
   RNA_def_boolean(
       func, "do_ui_user", true, "", "Make sure interface does not reference this line style");
-}
-
-void RNA_def_main_workspaces(BlenderRNA *brna, PropertyRNA *cprop)
-{
-  StructRNA *srna;
-  FunctionRNA *func;
-  PropertyRNA *parm;
-
-  RNA_def_property_srna(cprop, "BlendDataWorkSpaces");
-  srna = RNA_def_struct(brna, "BlendDataWorkSpaces", nullptr);
-  RNA_def_struct_sdna(srna, "Main");
-  RNA_def_struct_ui_text(srna, "Main Workspaces", "Collection of workspaces");
-
-  func = RNA_def_function(srna, "tag", "rna_Main_workspaces_tag");
-  parm = RNA_def_boolean(func, "value", false, "Value", "");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
 }
 
 void RNA_def_main_lightprobes(BlenderRNA *brna, PropertyRNA *cprop)
