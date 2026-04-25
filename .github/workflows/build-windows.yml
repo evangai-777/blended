@@ -61,9 +61,9 @@ jobs:
         set -e
         # Checkout used lfs:false for speed; pull now.
         # LFS objects live upstream on projects.blender.org.
+        # GitHub fork doesn't host LFS objects; fetch from projects.blender.org directly.
         git remote add lfs-fallback "https://projects.blender.org/blender/blender.git"
         git config "remote.lfs-fallback.pushurl" "no_push"
-        git config lfs.remote.searchall true
         git lfs fetch lfs-fallback
         git lfs checkout
 
@@ -88,10 +88,8 @@ jobs:
         git config submodule."$LIB_DIR".update checkout
         GIT_LFS_SKIP_SMUDGE=1 git submodule update --init --progress $LIB_DIR
         cd "$LIB_DIR"
-        git remote add lfs-fallback "https://projects.blender.org/blender/lib-windows_x64.git"
-        git config "remote.lfs-fallback.pushurl" "no_push"
-        git config lfs.remote.searchall true
-        git lfs pull
+        # origin is already projects.blender.org/blender/lib-windows_x64.git — pull directly.
+        git lfs pull origin
 
     # ── Toolchain ─────────────────────────────────────────────
     - name: Setup MSVC 2022
