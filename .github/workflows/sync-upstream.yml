@@ -1,0 +1,141 @@
+name: Sync from upstream Blender
+
+# Fetches an upstream Blender branch or tag, creates a sync branch,
+# attempts the merge, and opens a draft PR for review and conflict resolution.
+#
+# Usage:
+#   1. Go to Actions → Sync from upstream Blender → Run workflow
+#   2. Enter the upstream ref (branch: blender-v5.3-release  or  tag: v5.3.0)
+#   3. Review the draft PR — if conflicts are present, check the branch out
+#      locally, resolve the markers, and push. See archive/UPSTREAM_SYNC.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      upstream_ref:
+        description: 'Upstream branch or tag (e.g. blender-v5.3-release or v5.3.0)'
+        required: true
+        default: 'blender-v5.3-release'
+
+jobs:
+  sync:
+    name: Create sync branch and draft PR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+    # ── Checkout ──────────────────────────────────────────────
+    - name: Checkout Blended main
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0   # full history so git can find the merge base
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Configure git identity
+      run: |
+        git config user.name  "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+    # ── Fetch upstream ────────────────────────────────────────
+    - name: Fetch upstream ref
+      run: |
+        git remote add upstream https://projects.blender.org/blender/blender.git
+        # No --depth: we need the common ancestor to merge cleanly.
+        git fetch upstream "${{ inputs.upstream_ref }}" --no-tags
+        echo "UPSTREAM_SHA=$(git rev-parse FETCH_HEAD)" >> "$GITHUB_ENV"
+
+    # ── Create sync branch ────────────────────────────────────
+    - name: Create sync branch
+      run: |
+        BRANCH="sync/${{ inputs.upstream_ref }}"
+        git checkout -b "$BRANCH"
+        echo "SYNC_BRANCH=$BRANCH" >> "$GITHUB_ENV"
+
+    # ── Attempt merge ─────────────────────────────────────────
+    - name: Merge upstream
+      run: |
+        if git merge FETCH_HEAD --no-ff -m "Merge upstream ${{ inputs.upstream_ref }}"; then
+          echo "MERGE_STATUS=clean" >> "$GITHUB_ENV"
+          # Empty file so later steps can safely cat it
+          touch /tmp/conflicts.txt
+        else
+          echo "MERGE_STATUS=conflicts" >> "$GITHUB_ENV"
+          git diff --name-only --diff-filter=U > /tmp/conflicts.txt
+          echo "Conflicted files:"
+          cat /tmp/conflicts.txt
+          # Stage everything including conflict markers so the branch is pushable.
+          # Developer resolves markers locally after checking out the branch.
+          git add -A
+          git commit -m "WIP: upstream ${{ inputs.upstream_ref }} — $(wc -l < /tmp/conflicts.txt) conflicts need resolution
+
+$(cat /tmp/conflicts.txt)"
+        fi
+
+    # ── Push sync branch ──────────────────────────────────────
+    - name: Push sync branch
+      run: git push origin "$SYNC_BRANCH"
+
+    # ── Build PR body and open draft PR ──────────────────────
+    - name: Build PR body
+      run: |
+        UPSTREAM_REF="${{ inputs.upstream_ref }}"
+
+        if [ "$MERGE_STATUS" = "clean" ]; then
+          MERGE_SECTION="Merge applied cleanly. Review the diff, run a build, and merge when ready."
+        else
+          CONFLICT_COUNT=$(wc -l < /tmp/conflicts.txt)
+          CONFLICT_MD=$(sed 's/^/- `/' /tmp/conflicts.txt | sed 's/$/`/')
+          MERGE_SECTION="⚠️ **${CONFLICT_COUNT} conflict(s)** — check out the branch locally, resolve the markers, and push.
+
+See \`archive/UPSTREAM_SYNC.md\` for the step-by-step resolution workflow.
+
+**Conflicted files:**
+${CONFLICT_MD}"
+        fi
+
+        cat > /tmp/pr_body.md <<EOF
+Upstream sync from \`${UPSTREAM_REF}\` on projects.blender.org.
+Upstream SHA: \`$UPSTREAM_SHA\`
+
+${MERGE_SECTION}
+
+---
+
+## Conflict-prone files
+
+These Blended-modified files are most likely to need manual attention even on a clean merge.
+Full table and guidance in [\`archive/UPSTREAM_SYNC.md\`](../archive/UPSTREAM_SYNC.md).
+
+| File | Blended change |
+|------|----------------|
+| \`source/blender/blenkernel/BKE_blender_version.h\` | \`BLENDED_VERSION_*\` defines |
+| \`source/blender/blenkernel/intern/blender.cc\` | \`BKE_blended_version_string()\` |
+| \`source/blender/windowmanager/intern/wm_window.cc\` | Blended window title |
+| \`source/blender/windowmanager/intern/wm_splash_screen.cc\` | Splash branding and tagline |
+| \`CMakeLists.txt\` | \`project(Blended)\` |
+| \`build_files/cmake/macros.cmake\` | \`BLENDED_VERSION_*\` extraction |
+| \`release/windows/icons/winblender.rc\` | Windows file metadata |
+| \`release/freedesktop/blender.desktop\` | Linux desktop entry |
+
+## Post-merge checklist
+
+- [ ] \`BLENDER_VERSION\` integer updated to match new upstream
+- [ ] \`BLENDED_VERSION_*\` bumped if appropriate
+- [ ] \`.github/README.md\` upstream base version updated
+- [ ] \`CHANGELOG.md\` entry added
+- [ ] Build passes — trigger **Build Blended (Windows x64)** on this branch
+- [ ] Window title and splash still show Blended branding correctly
+EOF
+
+    - name: Open draft PR
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh pr create \
+          --title "sync: upstream ${{ inputs.upstream_ref }}" \
+          --body-file /tmp/pr_body.md \
+          --draft \
+          --head "$SYNC_BRANCH" \
+          --base main
