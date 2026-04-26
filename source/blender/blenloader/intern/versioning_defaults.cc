@@ -572,10 +572,7 @@ static void blo_update_defaults_scene(Main *bmain, Scene *scene)
 
 void BLO_update_defaults_startup_blend(Main *bmain, const char *app_template)
 {
-  /* For all app templates. */
-  for (WorkSpace &workspace : bmain->workspaces) {
-    BLO_update_defaults_workspace(&workspace, app_template);
-  }
+  /* WorkSpace list removed from Main — per-workspace defaults skipped. */
 
   /* Grease pencil materials and paint modes setup. */
   {
@@ -687,23 +684,21 @@ void BLO_update_defaults_startup_blend(Main *bmain, const char *app_template)
     blo_update_defaults_windowmanager(&wm);
 
     for (wmWindow &win : wm.windows) {
-      for (WorkSpace &workspace : bmain->workspaces) {
-        WorkSpaceLayout *layout = BKE_workspace_active_layout_for_workspace_get(win.workspace_hook,
-                                                                                &workspace);
-        /* Name all screens by their workspaces (avoids 'Default.###' names). */
-        /* Default only has one window. */
-        if (layout->screen) {
-          bScreen *screen = layout->screen;
-          if (!STREQ(screen->id.name + 2, workspace.id.name + 2)) {
-            BKE_libblock_rename(*bmain, screen->id, workspace.id.name + 2);
-          }
+      WorkSpace *workspace = BKE_workspace_active_get(win.workspace_hook);
+      if (!workspace) {
+        continue;
+      }
+      WorkSpaceLayout *layout = BKE_workspace_active_layout_get(win.workspace_hook);
+      if (layout && layout->screen) {
+        bScreen *screen = layout->screen;
+        if (!STREQ(screen->id.name + 2, workspace->id.name + 2)) {
+          BKE_libblock_rename(*bmain, screen->id, workspace->id.name + 2);
         }
-
-        /* For some reason we have unused screens, needed until re-saving.
-         * Clear unused layouts because they're visible in the outliner & Python API. */
-        for (WorkSpaceLayout &layout_iter : workspace.layouts.items_mutable()) {
+      }
+      if (layout) {
+        for (WorkSpaceLayout &layout_iter : workspace->layouts.items_mutable()) {
           if (layout != &layout_iter) {
-            BKE_workspace_layout_remove(bmain, &workspace, &layout_iter);
+            BKE_workspace_layout_remove(bmain, workspace, &layout_iter);
           }
         }
       }

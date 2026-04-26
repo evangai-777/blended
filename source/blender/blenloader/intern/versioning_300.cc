@@ -2406,14 +2406,6 @@ void blo_do_versions_300(FileData *fd, Library * /*lib*/, Main *bmain)
     }
 
     if (!DNA_struct_member_exists(
-            fd->filesdna, "WorkSpace", "AssetLibraryReference", "asset_library"))
-    {
-      for (WorkSpace &workspace : bmain->workspaces) {
-        BKE_asset_library_reference_init_default(&workspace.asset_library_ref);
-      }
-    }
-
-    if (!DNA_struct_member_exists(
             fd->filesdna, "FileAssetSelectParams", "AssetLibraryReference", "asset_library_ref"))
     {
       for (bScreen &screen : bmain->screens) {
@@ -2532,14 +2524,6 @@ void blo_do_versions_300(FileData *fd, Library * /*lib*/, Main *bmain)
   }
 
   if (!MAIN_VERSION_FILE_ATLEAST(bmain, 300, 18)) {
-    if (!DNA_struct_member_exists(
-            fd->filesdna, "WorkSpace", "AssetLibraryReference", "asset_library_ref"))
-    {
-      for (WorkSpace &workspace : bmain->workspaces) {
-        BKE_asset_library_reference_init_default(&workspace.asset_library_ref);
-      }
-    }
-
     if (!DNA_struct_member_exists(
             fd->filesdna, "FileAssetSelectParams", "AssetLibraryReference", "asset_library_ref"))
     {
@@ -4168,14 +4152,6 @@ void blo_do_versions_300(FileData *fd, Library * /*lib*/, Main *bmain)
           {"smooth", "Comb"},
           {"slide", "Slide"},
       };
-      for (WorkSpace &workspace : bmain->workspaces) {
-        BKE_workspace_tool_id_replace_table(&workspace,
-                                            SPACE_VIEW3D,
-                                            CTX_MODE_SCULPT_CURVES,
-                                            "builtin_brush.",
-                                            tool_replace_table,
-                                            ARRAY_SIZE(tool_replace_table));
-      }
     }
 
     /* Rename Grease Pencil weight draw brush. */

@@ -842,11 +842,6 @@ void ED_screens_init(bContext *C, Main *bmain, wmWindowManager *wm)
     /* Region polls may need window/screen context. */
     CTX_wm_window_set(C, &win);
 
-    if (BKE_workspace_active_get(win.workspace_hook) == nullptr) {
-      BKE_workspace_active_set(win.workspace_hook,
-                               static_cast<WorkSpace *>(bmain->workspaces.first));
-    }
-
     ED_screen_refresh(C, wm, &win);
     if (win.runtime->eventstate) {
       ED_screen_set_active_region(nullptr, &win, win.runtime->eventstate->xy);

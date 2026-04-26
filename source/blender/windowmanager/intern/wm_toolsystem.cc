@@ -710,9 +710,13 @@ void WM_toolsystem_init(const bContext *C)
 
   BLI_assert(CTX_wm_window(C) == nullptr);
 
-  for (WorkSpace &workspace : bmain->workspaces) {
-    for (bToolRef &tref : workspace.tools) {
-      MEM_SAFE_DELETE(tref.runtime);
+  for (wmWindowManager &wm : bmain->wm) {
+    for (wmWindow &win : wm.windows) {
+      if (WorkSpace *workspace = BKE_workspace_active_get(win.workspace_hook)) {
+        for (bToolRef &tref : workspace->tools) {
+          MEM_SAFE_DELETE(tref.runtime);
+        }
+      }
     }
   }
 
@@ -851,14 +855,14 @@ void WM_toolsystem_refresh_active(bContext *C)
 
   BKE_workspace_id_tag_all_visible(bmain, ID_TAG_DOIT);
 
-  for (WorkSpace &workspace : bmain->workspaces) {
-    if (workspace.id.tag & ID_TAG_DOIT) {
-      workspace.id.tag &= ~ID_TAG_DOIT;
-      /* Refresh to ensure data is initialized.
-       * This is needed because undo can load a state which no longer has the underlying DNA data
-       * needed for the tool (un-initialized paint-slots for eg), see: #64339. */
-      for (bToolRef &tref : workspace.tools) {
-        toolsystem_refresh_ref(C, &workspace, &tref);
+  for (wmWindowManager &wm_iter : bmain->wm) {
+    for (wmWindow &win : wm_iter.windows) {
+      WorkSpace *workspace = BKE_workspace_active_get(win.workspace_hook);
+      if (workspace && (workspace->id.tag & ID_TAG_DOIT)) {
+        workspace->id.tag &= ~ID_TAG_DOIT;
+        for (bToolRef &tref : workspace->tools) {
+          toolsystem_refresh_ref(C, workspace, &tref);
+        }
       }
     }
   }

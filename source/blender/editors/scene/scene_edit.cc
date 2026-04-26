@@ -22,6 +22,7 @@
 #include "BKE_node.hh"
 #include "BKE_report.hh"
 #include "BKE_scene.hh"
+#include "BKE_workspace.hh"
 
 #include "DEG_depsgraph.hh"
 #include "DEG_depsgraph_build.hh"
@@ -143,10 +144,12 @@ bool ED_scene_replace_active_for_deletion(bContext &C, Main &bmain, Scene &scene
   }
 
   /* Update scenes used by the sequencer. */
-  for (WorkSpace &workspace : bmain.workspaces) {
-    if (workspace.sequencer_scene == &scene) {
-      workspace.sequencer_scene = scene_new;
-      WM_event_add_notifier(&C, NC_WINDOW, nullptr);
+  for (wmWindow &win2 : wm->windows) {
+    if (WorkSpace *workspace = BKE_workspace_active_get(win2.workspace_hook)) {
+      if (workspace->sequencer_scene == &scene) {
+        workspace->sequencer_scene = scene_new;
+        WM_event_add_notifier(&C, NC_WINDOW, nullptr);
+      }
     }
   }
 
