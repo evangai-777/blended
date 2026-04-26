@@ -79,7 +79,6 @@ std::unique_ptr<TreeElementID> TreeElementID::create_from_id(TreeElement &legacy
     case ID_MC:
     case ID_MSK:
     case ID_LP:
-    case ID_WS:
     case ID_CV:
     case ID_PT:
     case ID_VO:

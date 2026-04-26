@@ -601,17 +601,7 @@ static bool id_delete_tag(bContext *C,
                 id->name);
     return false;
   }
-  if (te->idcode == ID_WS) {
-    BKE_workspace_id_tag_all_visible(bmain, ID_TAG_PRE_EXISTING);
-    if (id->tag & ID_TAG_PRE_EXISTING) {
-      BKE_reportf(
-          reports, RPT_WARNING, "Cannot delete currently visible workspace id '%s'", id->name);
-      BKE_main_id_tag_idcode(bmain, ID_WS, ID_TAG_PRE_EXISTING, false);
-      return false;
-    }
-    BKE_main_id_tag_idcode(bmain, ID_WS, ID_TAG_PRE_EXISTING, false);
-  }
-  else if (te->idcode == ID_SCE) {
+  if (te->idcode == ID_SCE) {
     /* Get the scene currently expected to become the active scene. */
     scene_curr = scene_replace_data.active_scene_get(C);
     if (&scene_curr->id == id) {
