@@ -123,22 +123,18 @@ Wounds from actual combat. Each one happened. Each one cost a session.
 
 ### Scar 1: Over-Deleting a File (workspace.cc)
 
-**What happened:** When removing `ID_WS`, commit `f437b86a` deleted `workspace.cc` entirely. The file contained two categories of code: (1) `IDTypeInfo` registration and `Main::workspaces`-dependent functions that *should* go, and (2) runtime workspace management — instance hooks, layout accessors, getters/setters — that *must stay*. Deleting the whole file nuked category 2. The linker would have screamed about 22 missing `BKE_workspace_*` symbols. Then a cascade: 26 usages of `bmain->workspaces` across 13 files, all needing bespoke fixes, spanning two sessions.
+**What actually happened:** The session that deleted `workspace.cc` had read the file. It knew what was in there. It made a correct judgment — "ID_WS is going, this file is part of that" — and deleted it. The failure wasn't negligence. It was **compacted context producing overconfident simplification.**
 
-**The rule: When a file contains both ID-system glue and runtime logic, separate them. Delete the glue. Keep the runtime.** Read the file before deleting it. A file named `workspace.cc` in blenkernel almost certainly has runtime accessors that callers depend on. Grep for callers of every public function before touching the file.
+Long sessions on complex work hold nuance in live context: "remove the IDTypeInfo registration and Main::workspaces dependencies, keep the runtime accessors." When that context compacts into a summary, the nuance compacts with it. What was a precise surgical instruction becomes "workspace.cc is part of the ID_WS removal." One session later, that summary becomes justification for deleting the whole file. The runtime accessors — 22 `BKE_workspace_*` functions — went with it.
 
-**How to avoid it:** Before deleting any `blenkernel/intern/*.cc`:
-```bash
-# What public functions does this file implement?
-grep -n "^[A-Za-z].*BKE_" the_file.cc
+The cascade: 26 usages of `bmain->workspaces` across 13 files, each a different flavor of broken, each requiring reading context to know whether to stub, window-iterate, or kill. Two sessions to clean up. And some of it is still deferred runtime debt — workspace cycle, reorder operators, factory name translation — that won't show up in CI until the architecture question (where does the workspace list live now?) gets answered.
 
-# Who calls them?
-grep -rn "BKE_workspace_active_get\|BKE_workspace_layout" source/blender/
-```
-If callers exist outside blenkernel, the file has runtime surface. Split, don't delete.
+**The deeper rule: compaction is lossy, and the loss is always in the nuance.** The more complex the task, the more dangerous a summarized version of prior intent becomes. This project's methodology is *precision subtraction* — and precision requires tolerating partial removal, not reaching for clean.
+
+**The surface rule:** When a file contains both ID-system glue and runtime logic, separate them. Delete the glue. Keep the runtime. The pull toward "nuke it cleanly" is exactly the wrong instinct here.
 
 **Specific anatomy of workspace.cc — what to keep vs. remove:**
-- **Remove:** `IDTypeInfo IDType_ID_WS`, `BKE_workspace_add`, blend read/write callbacks, anything iterating `bmain->workspaces`
+- **Remove:** `IDTypeInfo IDType_ID_WS`, blend read/write callbacks, anything iterating `bmain->workspaces`
 - **Keep:** `BKE_workspace_instance_hook_create/free`, `BKE_workspace_layout_add/remove/find`, `BKE_workspace_active_get/set`, `BKE_workspace_active_layout_*`, `BKE_workspace_active_screen_*`, `BKE_workspace_relations_free`, `BKE_workspace_tool_*`, `BKE_workspace_id_tag_all_visible` (rewritten to iterate windows), `BKE_workspace_status_clear`
 
 ---
