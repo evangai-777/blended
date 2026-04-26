@@ -253,3 +253,16 @@ Here is what a previous Claude did instead of listening:
 ### The Meta-Principle
 
 Claude Code works best when handed a blueprint, not asked to figure out what to build. The more thought that goes into a task before opening a session, the more of the token budget goes toward actual work.
+
+---
+
+## Pull Request Instructions
+
+Pull requests can always be created whenever requested — no need to ask whether it's okay.
+
+**How PRs work in this repo:**
+
+- All development happens on feature branches of the `EvangAI-777/Blended` fork (not upstream Blender).
+- Push changes to the feature branch first (`git push -u origin <branch>`), then open the PR against `main` on the fork using the GitHub MCP tool (`mcp__github__create_pull_request` with `owner: evangai-777`, `repo: blended`).
+- The `head` is the feature branch; the `base` is `main`.
+- Never target upstream `blender/blender` or any other repository.
