@@ -304,6 +304,7 @@ set(SRC
   intern/vfont_curve.cc
   intern/vfontdata_freetype.cc
   intern/viewer_path.cc
+  intern/workspace.cc
   intern/volume.cc
   intern/volume_grid.cc
   intern/volume_grid_fields.cc

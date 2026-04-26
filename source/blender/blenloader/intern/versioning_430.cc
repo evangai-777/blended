@@ -58,36 +58,7 @@ static void update_paint_modes_for_brush_assets(Main &bmain)
     BKE_paint_brushes_set_default_references(scene.toolsettings);
   }
 
-  /* Replace persistent tool references with the new single builtin brush tool. */
-  for (WorkSpace &workspace : bmain.workspaces) {
-    for (bToolRef &tref : workspace.tools) {
-      if (tref.space_type == SPACE_IMAGE && tref.mode == SI_MODE_PAINT) {
-        STRNCPY_UTF8(tref.idname, "builtin.brush");
-        continue;
-      }
-      if (tref.space_type != SPACE_VIEW3D) {
-        continue;
-      }
-      if (!ELEM(tref.mode,
-                CTX_MODE_SCULPT,
-                CTX_MODE_PAINT_VERTEX,
-                CTX_MODE_PAINT_WEIGHT,
-                CTX_MODE_PAINT_TEXTURE,
-                CTX_MODE_PAINT_GPENCIL_LEGACY,
-                CTX_MODE_PAINT_GREASE_PENCIL,
-                CTX_MODE_SCULPT_GPENCIL_LEGACY,
-                CTX_MODE_SCULPT_GREASE_PENCIL,
-                CTX_MODE_WEIGHT_GPENCIL_LEGACY,
-                CTX_MODE_WEIGHT_GREASE_PENCIL,
-                CTX_MODE_VERTEX_GREASE_PENCIL,
-                CTX_MODE_VERTEX_GPENCIL_LEGACY,
-                CTX_MODE_SCULPT_CURVES))
-      {
-        continue;
-      }
-      STRNCPY_UTF8(tref.idname, "builtin.brush");
-    }
-  }
+  /* WorkSpace list removed from Main — tool reference update skipped. */
 }
 
 /**
@@ -506,16 +477,7 @@ void blo_do_versions_430(FileData * /*fd*/, Library * /*lib*/, Main *bmain)
     }
   }
 
-  if (!MAIN_VERSION_FILE_ATLEAST(bmain, 403, 31)) {
-    for (WorkSpace &workspace : bmain->workspaces) {
-      for (bToolRef &tref : workspace.tools) {
-        if (tref.space_type != SPACE_SEQ) {
-          continue;
-        }
-        STRNCPY_UTF8(tref.idname, "builtin.select_box");
-      }
-    }
-  }
+  /* WorkSpace list removed from Main — sequencer tool reset skipped. */
 }
 
 }  // namespace blender

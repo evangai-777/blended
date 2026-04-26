@@ -1322,32 +1322,7 @@ void blo_do_versions_290(FileData *fd, Library * /*lib*/, Main *bmain)
   }
 
   if (!MAIN_VERSION_FILE_ATLEAST(bmain, 291, 8)) {
-    if (!DNA_struct_member_exists(fd->filesdna, "WorkSpaceDataRelation", "int", "parentid")) {
-      for (WorkSpace &workspace : bmain->workspaces) {
-        for (WorkSpaceDataRelation &relation : workspace.hook_layout_relations.items_mutable()) {
-          relation.parent = blo_read_get_new_globaldata_address(fd, relation.parent);
-          BLI_assert(relation.parentid == 0);
-          if (relation.parent != nullptr) {
-            for (wmWindowManager &wm : bmain->wm) {
-              wmWindow *win = static_cast<wmWindow *>(
-                  BLI_findptr(&wm.windows, relation.parent, offsetof(wmWindow, workspace_hook)));
-              if (win != nullptr) {
-                relation.parentid = win->winid;
-                break;
-              }
-            }
-            if (relation.parentid == 0) {
-              BLI_assert_msg(
-                  false,
-                  "Found a valid parent for workspace data relation, but no valid parent id.");
-            }
-          }
-          if (relation.parentid == 0) {
-            BLI_freelinkN(&workspace.hook_layout_relations, &relation);
-          }
-        }
-      }
-    }
+    /* WorkSpaceDataRelation parentid versioning skipped — WorkSpace list removed from Main. */
 
     /* UV/Image show overlay option. */
     if (!DNA_struct_exists(fd->filesdna, "SpaceImageOverlay")) {

@@ -7412,34 +7412,9 @@ static wmOperatorStatus space_workspace_cycle_invoke(bContext *C,
     return OPERATOR_CANCELLED;
   }
 
-  Main *bmain = CTX_data_main(C);
-  const eScreenCycle direction = eScreenCycle(RNA_enum_get(op->ptr, "direction"));
-  WorkSpace *workspace_src = WM_window_get_active_workspace(win);
-
-  Vector<ID *> ordered = BKE_id_ordered_list(&bmain->workspaces.cast<ID>());
-  if (ordered.size() == 1) {
-    return OPERATOR_CANCELLED;
-  }
-
-  const int index = ordered.first_index_of(&workspace_src->id);
-
-  WorkSpace *workspace_dst = nullptr;
-  switch (direction) {
-    case SPACE_CONTEXT_CYCLE_PREV:
-      workspace_dst = reinterpret_cast<WorkSpace *>(index == 0 ? ordered.last() :
-                                                                 ordered[index - 1]);
-      break;
-    case SPACE_CONTEXT_CYCLE_NEXT:
-      workspace_dst = reinterpret_cast<WorkSpace *>(
-          index == ordered.index_range().last() ? ordered.first() : ordered[index + 1]);
-      break;
-  }
-
-  win->workspace_hook->temp_workspace_store = workspace_dst;
-  WM_event_add_notifier(C, NC_SCREEN | ND_WORKSPACE_SET, workspace_dst);
-  win->workspace_hook->temp_workspace_store = nullptr;
-
-  return OPERATOR_FINISHED;
+  /* WorkSpace list no longer accessible from Main — operator disabled. */
+  UNUSED_VARS(op);
+  return OPERATOR_CANCELLED;
 }
 
 static void SCREEN_OT_workspace_cycle(wmOperatorType *ot)

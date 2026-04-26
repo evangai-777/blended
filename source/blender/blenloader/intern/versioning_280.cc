@@ -134,33 +134,9 @@ static bScreen *screen_parent_find(const bScreen *screen)
   return nullptr;
 }
 
-static void do_version_workspaces_create_from_screens(Main *bmain)
+static void do_version_workspaces_create_from_screens(Main * /*bmain*/)
 {
-  bmain->is_locked_for_linking = false;
-
-  for (bScreen &screen : bmain->screens) {
-    const bScreen *screen_parent = screen_parent_find(&screen);
-    WorkSpace *workspace;
-    if (screen.temp) {
-      continue;
-    }
-
-    if (screen_parent) {
-      /* Full-screen with "Back to Previous" option, don't create
-       * a new workspace, add layout workspace containing parent. */
-      workspace = static_cast<WorkSpace *>(
-          BLI_findstring(&bmain->workspaces, screen_parent->id.name + 2, offsetof(ID, name) + 2));
-    }
-    else {
-      workspace = BKE_workspace_add(bmain, screen.id.name + 2);
-    }
-    if (workspace == nullptr) {
-      continue; /* Not much we can do. */
-    }
-    BKE_workspace_layout_add(bmain, *workspace, screen, screen.id.name + 2);
-  }
-
-  bmain->is_locked_for_linking = true;
+  /* WorkSpace list removed from Main — pre-2.80 workspace creation skipped. */
 }
 
 static void do_version_area_change_space_to_space_action(ScrArea *area, const Scene *scene)
@@ -205,8 +181,6 @@ static void do_version_area_change_space_to_space_action(ScrArea *area, const Sc
  */
 static void do_version_workspaces_after_lib_link(Main *bmain)
 {
-  BLI_assert(BLI_listbase_is_empty(&bmain->workspaces));
-
   do_version_workspaces_create_from_screens(bmain);
 
   for (wmWindowManager &wm : bmain->wm) {
@@ -214,26 +188,13 @@ static void do_version_workspaces_after_lib_link(Main *bmain)
       bScreen *screen_parent = screen_parent_find(win.screen);
       bScreen *screen = screen_parent ? screen_parent : win.screen;
 
+      win.workspace_hook = BKE_workspace_instance_hook_create(bmain, win.winid);
+
       if (screen->temp) {
-        /* We do not generate a new workspace for those screens...
-         * still need to set some data in win. */
-        win.workspace_hook = BKE_workspace_instance_hook_create(bmain, win.winid);
         win.scene = screen->scene;
-        /* Deprecated from now on! */
         win.screen = nullptr;
         continue;
       }
-
-      WorkSpace *workspace = static_cast<WorkSpace *>(
-          BLI_findstring(&bmain->workspaces, screen->id.name + 2, offsetof(ID, name) + 2));
-      BLI_assert(workspace != nullptr);
-      WorkSpaceLayout *layout = BKE_workspace_layout_find(workspace, win.screen);
-      BLI_assert(layout != nullptr);
-
-      win.workspace_hook = BKE_workspace_instance_hook_create(bmain, win.winid);
-
-      BKE_workspace_active_set(win.workspace_hook, workspace);
-      BKE_workspace_active_layout_set(win.workspace_hook, win.winid, workspace, layout);
 
       /* Move scene and view layer to window. */
       Scene *scene = screen->scene;
@@ -245,14 +206,11 @@ static void do_version_workspaces_after_lib_link(Main *bmain)
 
       win.scene = scene;
       STRNCPY_UTF8(win.view_layer_name, layer->name);
-
-      /* Deprecated from now on! */
       win.screen = nullptr;
     }
   }
 
   for (bScreen &screen : bmain->screens) {
-    /* Deprecated from now on! */
     BLI_freelistN(&screen.scene->transform_spaces);
     screen.scene = nullptr;
   }
@@ -4836,12 +4794,7 @@ void blo_do_versions_280(FileData *fd, Library * /*lib*/, Main *bmain)
   }
 
   if (!MAIN_VERSION_FILE_ATLEAST(bmain, 280, 49)) {
-    /* All tool names changed, reset to defaults. */
-    for (WorkSpace &workspace : bmain->workspaces) {
-      while (!BLI_listbase_is_empty(&workspace.tools)) {
-        BKE_workspace_tool_remove(&workspace, static_cast<bToolRef *>(workspace.tools.first));
-      }
-    }
+    /* Tool name reset skipped — WorkSpace list removed from Main. */
   }
 
   if (!MAIN_VERSION_FILE_ATLEAST(bmain, 280, 52)) {

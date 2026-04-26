@@ -824,17 +824,7 @@ void blo_do_versions_440(FileData *fd, Library * /*lib*/, Main *bmain)
     FOREACH_MAIN_ID_END;
   }
 
-  if (!MAIN_VERSION_FILE_ATLEAST(bmain, 404, 11)) {
-    /* #update_paint_modes_for_brush_assets() didn't handle image editor tools for some time. 4.3
-     * files saved during that period could have invalid tool references stored. */
-    for (WorkSpace &workspace : bmain->workspaces) {
-      for (bToolRef &tref : workspace.tools) {
-        if (tref.space_type == SPACE_IMAGE && tref.mode == SI_MODE_PAINT) {
-          STRNCPY_UTF8(tref.idname, "builtin.brush");
-        }
-      }
-    }
-  }
+  /* WorkSpace list removed from Main — image editor tool fix skipped (404, 11). */
 
   if (!MAIN_VERSION_FILE_ATLEAST(bmain, 404, 12)) {
     FOREACH_NODETREE_BEGIN (bmain, ntree, id) {

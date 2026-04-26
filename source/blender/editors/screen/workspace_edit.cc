@@ -257,16 +257,18 @@ WorkSpace *ED_workspace_duplicate(WorkSpace *workspace_old, Main *bmain, wmWindo
 
 bool ED_workspace_delete(WorkSpace *workspace, Main *bmain, bContext *C, wmWindowManager *wm)
 {
-  if (BLI_listbase_is_single(&bmain->workspaces)) {
+  /* Find a replacement workspace from another window. */
+  WorkSpace *new_active = nullptr;
+  for (wmWindow &win : wm->windows) {
+    WorkSpace *ws = BKE_workspace_active_get(win.workspace_hook);
+    if (ws && ws != workspace) {
+      new_active = ws;
+      break;
+    }
+  }
+  if (new_active == nullptr) {
     return false;
   }
-
-  Vector<ID *> ordered = BKE_id_ordered_list(
-      reinterpret_cast<const ListBaseT<ID> *>(&bmain->workspaces));
-  const int index = ordered.first_index_of(&workspace->id);
-
-  WorkSpace *new_active = reinterpret_cast<WorkSpace *>(index == 0 ? ordered[1] :
-                                                                     ordered[index - 1]);
 
   for (wmWindow &win : wm->windows) {
     WorkSpace *workspace_active = WM_window_get_active_workspace(&win);
@@ -353,19 +355,10 @@ static void WORKSPACE_OT_delete(wmOperatorType *ot)
   ot->exec = workspace_delete_exec;
 }
 
-static wmOperatorStatus workspace_delete_all_others_exec(bContext *C, wmOperator * /*op*/)
+static wmOperatorStatus workspace_delete_all_others_exec(bContext * /*C*/, wmOperator * /*op*/)
 {
-  Main *bmain = CTX_data_main(C);
-  WorkSpace *workspace = workspace_context_get(C);
-
-  for (WorkSpace &ws : bmain->workspaces) {
-    if (&ws != workspace) {
-      WM_event_add_notifier(C, NC_SCREEN | ND_WORKSPACE_DELETE, &ws);
-      WM_event_add_notifier(C, NC_WINDOW, nullptr);
-    }
-  }
-
-  return OPERATOR_FINISHED;
+  /* WorkSpace list no longer accessible from Main — operator disabled. */
+  return OPERATOR_CANCELLED;
 }
 
 static void WORKSPACE_OT_delete_all_others(wmOperatorType *ot)
@@ -394,55 +387,25 @@ static wmOperatorStatus workspace_append_activate_exec(bContext *C, wmOperator *
   RNA_string_get(op->ptr, "filepath", filepath);
 
   WorkSpace *appended_workspace = nullptr;
-  /* NOTE: Need to check `filepath`, in the rare case where the usual source of work-spaces
-   * (the startup blend-file) is the one currently open (see #144305). */
-  const char *blendfile_path = BKE_main_blendfile_path(bmain);
-  if ((blendfile_path[0] != '\0') && (BLI_path_cmp(blendfile_path, filepath) == 0)) {
-    LISTBASE_FOREACH(WorkSpace *, ws, &bmain->workspaces) {
+  WorkspaceConfigFileData *config = BKE_blendfile_workspace_config_read(
+      filepath, nullptr, 0, op->reports);
+  if (config) {
+    LISTBASE_FOREACH(WorkSpace *, ws, &config->workspaces) {
       if (STREQ(ws->id.name + 2, idname)) {
-        appended_workspace = ws;
+        appended_workspace = ED_workspace_duplicate(ws, bmain, CTX_wm_window(C));
         break;
       }
     }
-    if (appended_workspace) {
-      /* Copy, to mimic behavior when appending from another file (which always creates a new copy
-       * of the data). */
-      appended_workspace = ED_workspace_duplicate(appended_workspace, bmain, CTX_wm_window(C));
-    }
-  }
-  else {
-    WorkspaceConfigFileData *config = BKE_blendfile_workspace_config_read(
-        filepath, nullptr, 0, op->reports);
-    if (config) {
-      LISTBASE_FOREACH(WorkSpace *, ws, &config->workspaces) {
-        if (STREQ(ws->id.name + 2, idname)) {
-          appended_workspace = ED_workspace_duplicate(ws, bmain, CTX_wm_window(C));
-          break;
-        }
-      }
-      BKE_blendfile_workspace_config_data_free(config);
-    }
+    BKE_blendfile_workspace_config_data_free(config);
   }
 
   if (appended_workspace) {
-    /* Translate workspace name, unless it was taken from current blendfile. */
     if (BLT_translate_new_dataname()) {
       BKE_libblock_rename(
           *bmain, appended_workspace->id, CTX_DATA_(BLT_I18NCONTEXT_ID_WORKSPACE, idname));
     }
-
-    /* Set defaults. */
     BLO_update_defaults_workspace(appended_workspace, nullptr);
-
-    /* Reorder to last position. */
-    BKE_id_reorder(reinterpret_cast<const ListBaseT<ID> *>(&bmain->workspaces),
-                   &appended_workspace->id,
-                   nullptr,
-                   true);
-
-    /* Changing workspace changes context. Do delayed! */
     WM_event_add_notifier(C, NC_SCREEN | ND_WORKSPACE_SET, appended_workspace);
-
     return OPERATOR_FINISHED;
   }
 
@@ -651,13 +614,7 @@ static void WORKSPACE_OT_add(wmOperatorType *ot)
 
 static wmOperatorStatus workspace_reorder_to_back_exec(bContext *C, wmOperator * /*op*/)
 {
-  Main *bmain = CTX_data_main(C);
-  WorkSpace *workspace = workspace_context_get(C);
-
-  BKE_id_reorder(
-      reinterpret_cast<const ListBaseT<ID> *>(&bmain->workspaces), &workspace->id, nullptr, true);
   WM_event_add_notifier(C, NC_WINDOW, nullptr);
-
   return OPERATOR_INTERFACE;
 }
 
@@ -675,13 +632,7 @@ static void WORKSPACE_OT_reorder_to_back(wmOperatorType *ot)
 
 static wmOperatorStatus workspace_reorder_to_front_exec(bContext *C, wmOperator * /*op*/)
 {
-  Main *bmain = CTX_data_main(C);
-  WorkSpace *workspace = workspace_context_get(C);
-
-  BKE_id_reorder(
-      reinterpret_cast<const ListBaseT<ID> *>(&bmain->workspaces), &workspace->id, nullptr, false);
   WM_event_add_notifier(C, NC_WINDOW, nullptr);
-
   return OPERATOR_INTERFACE;
 }
 
