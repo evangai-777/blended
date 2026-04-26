@@ -117,6 +117,32 @@ Target: 39 → ~19 ID types. Nothing removed from code yet — this is the activ
 
 ---
 
+## Battle Scars
+
+Wounds from actual combat. Each one happened. Each one cost a session.
+
+### Scar 1: Over-Deleting a File (workspace.cc)
+
+**What happened:** When removing `ID_WS`, commit `f437b86a` deleted `workspace.cc` entirely. The file contained two categories of code: (1) `IDTypeInfo` registration and `Main::workspaces`-dependent functions that *should* go, and (2) runtime workspace management — instance hooks, layout accessors, getters/setters — that *must stay*. Deleting the whole file nuked category 2. The linker would have screamed about 22 missing `BKE_workspace_*` symbols. Then a cascade: 26 usages of `bmain->workspaces` across 13 files, all needing bespoke fixes, spanning two sessions.
+
+**The rule: When a file contains both ID-system glue and runtime logic, separate them. Delete the glue. Keep the runtime.** Read the file before deleting it. A file named `workspace.cc` in blenkernel almost certainly has runtime accessors that callers depend on. Grep for callers of every public function before touching the file.
+
+**How to avoid it:** Before deleting any `blenkernel/intern/*.cc`:
+```bash
+# What public functions does this file implement?
+grep -n "^[A-Za-z].*BKE_" the_file.cc
+
+# Who calls them?
+grep -rn "BKE_workspace_active_get\|BKE_workspace_layout" source/blender/
+```
+If callers exist outside blenkernel, the file has runtime surface. Split, don't delete.
+
+**Specific anatomy of workspace.cc — what to keep vs. remove:**
+- **Remove:** `IDTypeInfo IDType_ID_WS`, `BKE_workspace_add`, blend read/write callbacks, anything iterating `bmain->workspaces`
+- **Keep:** `BKE_workspace_instance_hook_create/free`, `BKE_workspace_layout_add/remove/find`, `BKE_workspace_active_get/set`, `BKE_workspace_active_layout_*`, `BKE_workspace_active_screen_*`, `BKE_workspace_relations_free`, `BKE_workspace_tool_*`, `BKE_workspace_id_tag_all_visible` (rewritten to iterate windows), `BKE_workspace_status_clear`
+
+---
+
 ## Critical Pitfalls
 
 ### Don't Over-Engineer
