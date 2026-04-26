@@ -2118,8 +2118,6 @@ int icon_from_idcode(const int idcode)
       return ICON_VOLUME_DATA;
     case ID_WO:
       return ICON_WORLD_DATA;
-    case ID_WS:
-      return ICON_WORKSPACE;
     case ID_GP:
       return ICON_OUTLINER_DATA_GREASEPENCIL;
     case ID_KE:
