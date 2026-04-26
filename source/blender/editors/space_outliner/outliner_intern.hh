@@ -171,7 +171,6 @@ struct TreeElementIcon {
         ID_CF, \
         ID_PAL, \
         ID_MC, \
-        ID_WS, \
         ID_MSK, \
         ID_PC))
 

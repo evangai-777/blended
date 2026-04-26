@@ -299,11 +299,6 @@ void ED_workspace_scene_data_sync(WorkSpaceInstanceHook *hook, Scene *scene)
 
 static WorkSpace *workspace_context_get(bContext *C)
 {
-  ID *id = ui::context_active_but_get_tab_ID(C);
-  if (id && GS(id->name) == ID_WS) {
-    return id_cast<WorkSpace *>(id);
-  }
-
   return CTX_wm_workspace(C);
 }
 
@@ -403,8 +398,12 @@ static wmOperatorStatus workspace_append_activate_exec(bContext *C, wmOperator *
    * (the startup blend-file) is the one currently open (see #144305). */
   const char *blendfile_path = BKE_main_blendfile_path(bmain);
   if ((blendfile_path[0] != '\0') && (BLI_path_cmp(blendfile_path, filepath) == 0)) {
-    appended_workspace = reinterpret_cast<WorkSpace *>(
-        BKE_libblock_find_name(bmain, ID_WS, idname, nullptr));
+    LISTBASE_FOREACH(WorkSpace *, ws, &bmain->workspaces) {
+      if (STREQ(ws->id.name + 2, idname)) {
+        appended_workspace = ws;
+        break;
+      }
+    }
     if (appended_workspace) {
       /* Copy, to mimic behavior when appending from another file (which always creates a new copy
        * of the data). */
@@ -412,15 +411,17 @@ static wmOperatorStatus workspace_append_activate_exec(bContext *C, wmOperator *
     }
   }
   else {
-    appended_workspace = reinterpret_cast<WorkSpace *>(
-        WM_file_append_datablock(bmain,
-                                 CTX_data_scene(C),
-                                 CTX_data_view_layer(C),
-                                 CTX_wm_view3d(C),
-                                 filepath,
-                                 ID_WS,
-                                 idname,
-                                 BLO_LIBLINK_APPEND_RECURSIVE));
+    WorkspaceConfigFileData *config = BKE_blendfile_workspace_config_read(
+        filepath, nullptr, 0, op->reports);
+    if (config) {
+      LISTBASE_FOREACH(WorkSpace *, ws, &config->workspaces) {
+        if (STREQ(ws->id.name + 2, idname)) {
+          appended_workspace = ED_workspace_duplicate(ws, bmain, CTX_wm_window(C));
+          break;
+        }
+      }
+      BKE_blendfile_workspace_config_data_free(config);
+    }
   }
 
   if (appended_workspace) {

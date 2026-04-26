@@ -904,8 +904,6 @@ static StringRef template_id_browse_tip(const StructRNA *type)
         return N_("Browse Paint Curve Data to be linked");
       case ID_CF:
         return N_("Browse Cache Files to be linked");
-      case ID_WS:
-        return N_("Browse Workspace to be linked");
       case ID_LP:
         return N_("Browse LightProbe to be linked");
       case ID_CV:
@@ -1319,7 +1317,7 @@ static void template_ID(const bContext *C,
                       UI_UNIT_Y,
                       std::nullopt);
       }
-      else if (!ELEM(GS(id->name), ID_GR, ID_SCE, ID_SCR, ID_OB, ID_WS) && (hide_buttons == false))
+      else if (!ELEM(GS(id->name), ID_GR, ID_SCE, ID_SCR, ID_OB) && (hide_buttons == false))
       {
         uiDefIconButR(block,
                       ButtonType::IconToggle,

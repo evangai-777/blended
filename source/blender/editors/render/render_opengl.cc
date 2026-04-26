@@ -644,7 +644,6 @@ static int gather_frames_to_render_for_id(LibraryIDLinkCallbackData *cb_data)
     case ID_PAL: /* Palette */
     case ID_PC:  /* PaintCurve */
     case ID_CF:  /* CacheFile */
-    case ID_WS:  /* WorkSpace */
       /* Only follow pointers to specific datablocks, to avoid ending up in
        * unrelated datablocks and exploding the number of blocks we follow. If the
        * frames of the animation of certain objects should be taken into account,
