@@ -390,9 +390,9 @@ static wmOperatorStatus workspace_append_activate_exec(bContext *C, wmOperator *
   WorkspaceConfigFileData *config = BKE_blendfile_workspace_config_read(
       filepath, nullptr, 0, op->reports);
   if (config) {
-    for (WorkSpace *ws : config->workspaces) {
-      if (STREQ(ws->id.name + 2, idname)) {
-        appended_workspace = ED_workspace_duplicate(ws, bmain, CTX_wm_window(C));
+    for (WorkSpace &ws : config->workspaces) {
+      if (STREQ(ws.id.name + 2, idname)) {
+        appended_workspace = ED_workspace_duplicate(&ws, bmain, CTX_wm_window(C));
         break;
       }
     }
