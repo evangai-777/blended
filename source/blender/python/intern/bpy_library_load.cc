@@ -766,7 +766,7 @@ static PyObject *bpy_lib_exit(BPy_Library *self, PyObject * /*args*/)
   int idcode_step = 0;
   short idcode;
   while ((idcode = BKE_idtype_idcode_iter_step(&idcode_step))) {
-    if (!BKE_idtype_idcode_is_linkable(idcode) || (idcode == ID_WS && !do_append)) {
+    if (!BKE_idtype_idcode_is_linkable(idcode)) {
       continue;
     }
 
@@ -830,7 +830,7 @@ static PyObject *bpy_lib_exit(BPy_Library *self, PyObject * /*args*/)
 #ifdef USE_RNA_DATABLOCKS
   idcode_step = 0;
   while ((idcode = BKE_idtype_idcode_iter_step(&idcode_step))) {
-    if (!BKE_idtype_idcode_is_linkable(idcode) || (idcode == ID_WS && !do_append)) {
+    if (!BKE_idtype_idcode_is_linkable(idcode)) {
       continue;
     }
     const char *name_plural = BKE_idtype_idcode_to_name_plural(idcode);
