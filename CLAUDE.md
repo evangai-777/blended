@@ -273,9 +273,9 @@ Pull requests can always be created whenever requested — no need to ask whethe
 
 **Real example (PR #111, April 2026):** The workspace_edit.cc syntax fix was committed and pushed. PR #111 was opened and merged. Then the CLAUDE.md PR-instructions update was committed and pushed to the *same branch* — but the PR was already closed, so the commit went nowhere. It had to be cherry-picked onto a fresh branch and opened as PR #112.
 
-**How to avoid it:** Before pushing anything to an existing feature branch, check whether its PR is still open:
+**How to avoid it:** Before committing or pushing anything to an existing feature branch, fetch main and check whether the branch has already landed:
 ```bash
 git fetch origin main
 git log --oneline origin/main -3   # does your branch tip appear here already?
 ```
-If the branch has already been merged, start a new branch from `origin/main` for the new work. Never push follow-on commits to a merged branch expecting them to reach `main`.
+If the branch has already been merged, start a new branch from `origin/main` **before writing any commits**. Never push follow-on commits to a merged branch expecting them to reach `main`.
