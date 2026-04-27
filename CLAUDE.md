@@ -266,6 +266,7 @@ Pull requests can always be created whenever requested — no need to ask whethe
 - Push changes to the feature branch first (`git push -u origin <branch>`), then open the PR against `main` on the fork using the GitHub MCP tool (`mcp__github__create_pull_request` with `owner: evangai-777`, `repo: blended`).
 - The `head` is the feature branch; the `base` is `main`.
 - Never target upstream `blender/blender` or any other repository.
+- **If there is already an open PR on a feature branch, keep committing to that same branch.** All commits on an open branch are included in the PR automatically — the developer reviews and merges PRs themselves, so batching related work into one PR is preferred over opening multiple small ones. This also preserves continuity in the git log: one merge commit per logical unit of work rather than a fragmented trail of micro-PRs.
 
 ### The Orphaned-Commit Trap
 
