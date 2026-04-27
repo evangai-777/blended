@@ -368,7 +368,6 @@ int BKE_idtype_idcode_to_index(const short idcode)
     CASE_IDINDEX(VO);
     CASE_IDINDEX(WM);
     CASE_IDINDEX(WO);
-    CASE_IDINDEX(WS);
   }
 
   /* Special naughty boy... */
@@ -426,7 +425,6 @@ int BKE_idtype_idfilter_to_index(const uint64_t id_filter)
     CASE_IDINDEX(VO);
     CASE_IDINDEX(WM);
     CASE_IDINDEX(WO);
-    CASE_IDINDEX(WS);
   }
 
   /* No handling of #ID_LINK_PLACEHOLDER or #INDEX_ID_NULL here. */
