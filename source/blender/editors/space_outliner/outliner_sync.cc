@@ -20,6 +20,7 @@
 #include "BKE_context.hh"
 #include "BKE_layer.hh"
 #include "BKE_main.hh"
+#include "BKE_workspace.hh"
 
 #include "DEG_depsgraph.hh"
 
@@ -78,12 +79,13 @@ bool ED_outliner_select_sync_is_dirty(const bContext *C)
 
 void ED_outliner_select_sync_flag_outliners(const bContext *C)
 {
-  Main *bmain = CTX_data_main(C);
   wmWindowManager *wm = CTX_wm_manager(C);
 
-  for (bScreen *screen = static_cast<bScreen *>(bmain->screens.first); screen;
-       screen = static_cast<bScreen *>(screen->id.next))
-  {
+  for (wmWindow &win : wm->windows) {
+    bScreen *screen = BKE_workspace_active_screen_get(win.workspace_hook);
+    if (!screen) {
+      continue;
+    }
     for (ScrArea &area : screen->areabase) {
       for (SpaceLink &sl : area.spacedata) {
         if (sl.spacetype == SPACE_OUTLINER) {

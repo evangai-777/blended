@@ -12,6 +12,7 @@
 #include "BLI_utildefines.h"
 
 #include "DNA_screen_types.h"
+#include "DNA_windowmanager_types.h"
 #include "DNA_workspace_types.h"
 
 #include "BKE_context.hh"
@@ -130,11 +131,18 @@ static bool workspace_change_find_new_layout_cb(const WorkSpaceLayout *layout, v
 
 static bScreen *screen_fullscreen_find_associated_normal_screen(const Main *bmain, bScreen *screen)
 {
-  for (bScreen &screen_iter : bmain->screens) {
-    if ((&screen_iter != screen) && ELEM(screen_iter.state, SCREENMAXIMIZED, SCREENFULL)) {
-      ScrArea *area = static_cast<ScrArea *>(screen_iter.areabase.first);
-      if (area && area->full == screen) {
-        return &screen_iter;
+  wmWindowManager *wm = static_cast<wmWindowManager *>(bmain->wm.first);
+  if (wm) {
+    for (wmWindow &win : wm->windows) {
+      bScreen *screen_iter = BKE_workspace_active_screen_get(win.workspace_hook);
+      if (!screen_iter) {
+        continue;
+      }
+      if ((screen_iter != screen) && ELEM(screen_iter->state, SCREENMAXIMIZED, SCREENFULL)) {
+        ScrArea *area = static_cast<ScrArea *>(screen_iter->areabase.first);
+        if (area && area->full == screen) {
+          return screen_iter;
+        }
       }
     }
   }

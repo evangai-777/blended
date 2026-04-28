@@ -76,7 +76,7 @@ static void rna_MovieClipUser_proxy_render_settings_update(Main *bmain,
    * clear cache for clip, so all the memory is available
    * for new render settings
    */
-  if (GS(id->name) == ID_SCR) {
+  if (GS(id->name) == ID_SCR_LEGACY) {
     bScreen *screen = id_cast<bScreen *>(id);
     ScrArea *area;
     SpaceLink *sl;

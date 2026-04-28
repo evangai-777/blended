@@ -31,6 +31,7 @@
 #include "BKE_scene.hh"
 #include "BKE_screen.hh"
 #include "BKE_undo_system.hh"
+#include "BKE_workspace.hh"
 
 #include "DEG_depsgraph.hh"
 
@@ -85,13 +86,20 @@ void ED_editors_init_for_undo(Main *bmain)
 
     /* UI Updates. */
     /* Flag local View3D's to check and exit if they are empty. */
-    for (bScreen &screen : bmain->screens) {
-      for (ScrArea &area : screen.areabase) {
-        for (SpaceLink &sl : area.spacedata) {
-          if (sl.spacetype == SPACE_VIEW3D) {
-            View3D *v3d = reinterpret_cast<View3D *>(&sl);
-            if (v3d->localvd) {
-              v3d->localvd->runtime.flag |= V3D_RUNTIME_LOCAL_MAYBE_EMPTY;
+    wmWindowManager *wm_iter = static_cast<wmWindowManager *>(bmain->wm.first);
+    if (wm_iter) {
+      for (wmWindow &win : wm_iter->windows) {
+        bScreen *screen = BKE_workspace_active_screen_get(win.workspace_hook);
+        if (!screen) {
+          continue;
+        }
+        for (ScrArea &area : screen->areabase) {
+          for (SpaceLink &sl : area.spacedata) {
+            if (sl.spacetype == SPACE_VIEW3D) {
+              View3D *v3d = reinterpret_cast<View3D *>(&sl);
+              if (v3d->localvd) {
+                v3d->localvd->runtime.flag |= V3D_RUNTIME_LOCAL_MAYBE_EMPTY;
+              }
             }
           }
         }

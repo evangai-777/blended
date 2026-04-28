@@ -775,22 +775,6 @@ void blo_do_versions_440(FileData *fd, Library * /*lib*/, Main *bmain)
     }
   }
 
-  if (!MAIN_VERSION_FILE_ATLEAST(bmain, 404, 4)) {
-    for (bScreen &screen : bmain->screens) {
-      for (ScrArea &area : screen.areabase) {
-        for (SpaceLink &sl : area.spacedata) {
-          if (sl.spacetype != SPACE_FILE) {
-            continue;
-          }
-          SpaceFile *sfile = reinterpret_cast<SpaceFile *>(&sl);
-          if (sfile->asset_params) {
-            sfile->asset_params->base_params.sort = FILE_SORT_ASSET_CATALOG;
-          }
-        }
-      }
-    }
-  }
-
   if (!MAIN_VERSION_FILE_ATLEAST(bmain, 404, 6)) {
     add_subsurf_node_limit_surface_option(*bmain);
   }
@@ -969,23 +953,6 @@ void blo_do_versions_440(FileData *fd, Library * /*lib*/, Main *bmain)
     }
   }
 
-  if (!MAIN_VERSION_FILE_ATLEAST(bmain, 404, 30)) {
-    for (bScreen &screen : bmain->screens) {
-      for (ScrArea &area : screen.areabase) {
-        for (SpaceLink &sl : area.spacedata) {
-          if (ELEM(sl.spacetype, SPACE_ACTION, SPACE_INFO, SPACE_CONSOLE)) {
-            ListBaseT<ARegion> *regionbase = (&sl == area.spacedata.first) ? &area.regionbase :
-                                                                             &sl.regionbase;
-            for (ARegion &region : *regionbase) {
-              if (region.regiontype == RGN_TYPE_WINDOW) {
-                region.v2d.scroll |= V2D_SCROLL_RIGHT | V2D_SCROLL_VERTICAL_HIDE;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
 }
 
 }  // namespace blender

@@ -168,13 +168,7 @@ static void get_element_operation_type(
       case ID_GP:
         is_standard_id = true;
         break;
-      case ID_WM:
-      case ID_SCR:
-        /* Those are ignored here. */
-        /* NOTE: while Screens should be manageable here, deleting a screen used by a workspace
-         * will cause crashes when trying to use that workspace, so for now let's play minimal,
-         * safe change. */
-        break;
+      /* ID_SCR and ID_WM are no longer project data — nothing to manage here. */
     }
     if (idcode == ID_NLA) {
       /* Fake one, not an actual ID type... */

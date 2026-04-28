@@ -140,7 +140,6 @@ enum ID_Type {
   ID_CA = MAKE_ID2('C', 'A'),        /* Camera */
   ID_KE = MAKE_ID2('K', 'E'),        /* Key (shape key) */
   ID_WO = MAKE_ID2('W', 'O'),        /* World */
-  ID_SCR = MAKE_ID2('S', 'R'),       /* bScreen */
   ID_VF = MAKE_ID2('V', 'F'),        /* VFont (Vector Font) */
   ID_TXT = MAKE_ID2('T', 'X'),       /* Text */
   ID_SPK = MAKE_ID2('S', 'K'),       /* Speaker */
@@ -152,7 +151,6 @@ enum ID_Type {
   ID_BR = MAKE_ID2('B', 'R'),        /* Brush */
   ID_PA = MAKE_ID2('P', 'A'),        /* ParticleSettings */
   ID_GD_LEGACY = MAKE_ID2('G', 'D'), /* bGPdata, (legacy Grease Pencil) */
-  ID_WM = MAKE_ID2('W', 'M'),        /* wmWindowManager */
   ID_MC = MAKE_ID2('M', 'C'),        /* MovieClip */
   ID_MSK = MAKE_ID2('M', 'S'),       /* Mask */
   ID_LS = MAKE_ID2('L', 'S'),        /* FreestyleLineStyle */
@@ -169,8 +167,10 @@ enum ID_Type {
 /* Only used as 'placeholder' in .blend files for directly linked data-blocks. */
 #define ID_LINK_PLACEHOLDER MAKE_ID2('I', 'D') /* (internal use only) */
 
-/* Deprecated. */
+/* Deprecated (removed ID types, kept for .blend file read-skip). */
 #define ID_SCRN MAKE_ID2('S', 'N')
+#define ID_SCR_LEGACY MAKE_ID2('S', 'R')
+#define ID_WM_LEGACY MAKE_ID2('W', 'M')
 
 /* NOTE: Fake IDs, needed for `g.sipo->blocktype` or outliner. */
 #define ID_SEQ MAKE_ID2('S', 'Q')

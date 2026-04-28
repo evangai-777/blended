@@ -69,6 +69,7 @@
 #include "BKE_screen.hh"
 #include "BKE_texture.h"
 #include "BKE_world.h"
+#include "BKE_workspace.hh"
 
 #include "BLI_math_vector.h"
 
@@ -781,12 +782,19 @@ void ED_preview_draw(
 
 void ED_previews_tag_dirty_by_id(const Main &bmain, const ID &id)
 {
-  for (const bScreen &screen : bmain.screens) {
-    for (const ScrArea &area : screen.areabase) {
-      for (const ARegion &region : area.regionbase) {
-        for (uiPreview &preview : region.ui_previews) {
-          if (preview.id_session_uid == id.session_uid) {
-            preview.tag |= UI_PREVIEW_TAG_DIRTY;
+  wmWindowManager *wm = static_cast<wmWindowManager *>(bmain.wm.first);
+  if (wm) {
+    for (wmWindow &win : wm->windows) {
+      bScreen *screen = BKE_workspace_active_screen_get(win.workspace_hook);
+      if (!screen) {
+        continue;
+      }
+      for (const ScrArea &area : screen->areabase) {
+        for (const ARegion &region : area.regionbase) {
+          for (uiPreview &preview : region.ui_previews) {
+            if (preview.id_session_uid == id.session_uid) {
+              preview.tag |= UI_PREVIEW_TAG_DIRTY;
+            }
           }
         }
       }

@@ -662,7 +662,7 @@ namespace blender {
 
 static wmOperator *rna_OperatorProperties_find_operator(PointerRNA *ptr)
 {
-  if (ptr->owner_id == nullptr || GS(ptr->owner_id->name) != ID_WM) {
+  if (ptr->owner_id == nullptr || GS(ptr->owner_id->name) != ID_WM_LEGACY) {
     return nullptr;
   }
 

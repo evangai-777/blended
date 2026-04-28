@@ -59,13 +59,11 @@ const EnumPropertyItem rna_enum_id_type_items[] = {
     {ID_PA, "PARTICLE", ICON_PARTICLE_DATA, "Particle", ""},
     {ID_PT, "POINTCLOUD", ICON_POINTCLOUD_DATA, "Point Cloud", ""},
     {ID_SCE, "SCENE", ICON_SCENE_DATA, "Scene", ""},
-    {ID_SCR, "SCREEN", ICON_WORKSPACE, "Screen", ""},
     {ID_SO, "SOUND", ICON_SOUND, "Sound", ""},
     {ID_SPK, "SPEAKER", ICON_SPEAKER, "Speaker", ""},
     {ID_TXT, "TEXT", ICON_TEXT, "Text", ""},
     {ID_TE, "TEXTURE", ICON_TEXTURE_DATA, "Texture", ""},
     {ID_VO, "VOLUME", ICON_VOLUME_DATA, "Volume", ""},
-    {ID_WM, "WINDOWMANAGER", ICON_WINDOW, "Window Manager", ""},
     {ID_WO, "WORLD", ICON_WORLD_DATA, "World", ""},
     {0, nullptr, 0, nullptr, nullptr},
 };
@@ -458,9 +456,6 @@ short RNA_type_to_ID_code(const StructRNA *type)
   if (base_type == RNA_Scene) {
     return ID_SCE;
   }
-  if (base_type == RNA_Screen) {
-    return ID_SCR;
-  }
   if (base_type == RNA_Sound) {
     return ID_SO;
   }
@@ -482,10 +477,6 @@ short RNA_type_to_ID_code(const StructRNA *type)
   if (base_type == RNA_World) {
     return ID_WO;
   }
-  if (base_type == RNA_WindowManager) {
-    return ID_WM;
-  }
-
   return 0;
 }
 
@@ -552,8 +543,6 @@ StructRNA *ID_code_to_RNA_type(short idcode)
       return RNA_LightProbe;
     case ID_SCE:
       return RNA_Scene;
-    case ID_SCR:
-      return RNA_Screen;
     case ID_SO:
       return RNA_Sound;
     case ID_SPK:
@@ -566,8 +555,6 @@ StructRNA *ID_code_to_RNA_type(short idcode)
       return RNA_VectorFont;
     case ID_VO:
       return RNA_Volume;
-    case ID_WM:
-      return RNA_WindowManager;
     case ID_WO:
       return RNA_World;
   }

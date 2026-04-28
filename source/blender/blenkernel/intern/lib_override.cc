@@ -961,7 +961,7 @@ static bool lib_override_hierarchy_dependencies_skip_check(ID *owner_id,
    *           objects), scenes should really not be considered as part of a hierarchy. If there
    *           are dependencies from other overridden IDs to a scene, this is considered as not
    *           supported (see also #121410). */
-#define HIERARCHY_BREAKING_ID_TYPES ID_SCE, ID_LI, ID_SCR, ID_WM
+#define HIERARCHY_BREAKING_ID_TYPES ID_SCE, ID_LI
   if (ELEM(GS(other_id->name), HIERARCHY_BREAKING_ID_TYPES) &&
       !ELEM(GS(owner_id->name), HIERARCHY_BREAKING_ID_TYPES))
   {

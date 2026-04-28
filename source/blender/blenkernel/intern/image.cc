@@ -2922,7 +2922,7 @@ static void image_walk_id_all_users(
       }
       break;
     }
-    case ID_WM: {
+    case ID_WM_LEGACY: {
       wmWindowManager *wm = id_cast<wmWindowManager *>(id);
       for (wmWindow &win : wm->windows) {
         const bScreen *screen = BKE_workspace_active_screen_get(win.workspace_hook);

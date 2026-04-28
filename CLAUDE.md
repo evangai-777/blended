@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.2.0 (independent of Blender's 5.2 base version).
+**Current version:** Blended 0.3.0 WIP — `ID_SCR` and `ID_WM` removed from ID type system; pending CI validation on branch `claude/remove-id-scr-id-wm`. (Independent of Blender's 5.2 base version.)
 
 ---
 
@@ -23,7 +23,9 @@ The old approach (tiered UI, smart defaults, Emscripten) was prototyping toward 
 
 **`ID_WS` (WorkSpace) removal — compile-clean.** All layers merged (`makesdna`, `blenkernel`, `makesrna`, `editors`, `depsgraph`, `python`, `windowmanager`). `grep -rn "ID_WS" source/` returns zero hits. CI green. Tagged 0.2.0. Runtime debt (workspace cycle, reorder operators, factory name translation) documented in Scar 1 below.
 
-**Next: `ID_SCR` and `ID_WM`** — Bucket 4 completions. Same chisel pattern, larger blast radius. Layer-by-layer status in [`CHANGELOG.md`](CHANGELOG.md).
+**`ID_SCR` and `ID_WM` removal — compile-clean, pending CI.** All layers merged. The blast radius was enormous — see Scar 2 below. Key architectural outcome: `bmain->screens` and `bmain->wm` kept as non-indexed runtime listbases; `ID_SCR_LEGACY` / `ID_WM_LEGACY` defines route through `which_libbase` for allocation but are excluded from `BKE_main_lists_get`. Branch: `claude/remove-id-scr-id-wm`. Layer-by-layer status in [`CHANGELOG.md`](CHANGELOG.md).
+
+**Next: Bucket 5 + 6 fossil removals (0.4.x)** — `ID_CU_LEGACY`, `ID_GD_LEGACY`, `ID_TE`, `ID_PA`, `ID_MB`, `ID_LS`, `ID_SPK`, `ID_PC`, `ID_CF`. Same chisel pattern. See roadmap in CHANGELOG.md.
 
 Pattern for each pending layer: `grep -rn "ID_WS"` the directory, delete or redirect every hit. The breakage is the audit — follow the compile errors, don't paper over them.
 
@@ -224,10 +226,10 @@ make check_mypy     # Python type checking
 - `build_files/cmake/config/blended_release.cmake` — inherits `blender_release.cmake`, disables `WITH_CYCLES_CUDA/HIP/ONEAPI_BINARIES` and `WITH_FREESTYLE`
 
 ### Datablock Cuts in Progress (BLENDED.md §10)
-Target: 39 → ~19 ID types. Nothing removed from code yet — this is the active work.
-- **Bucket 4 (UI state, remove):** `ID_SCR`, `ID_WM`, `ID_WS` — not project data
-- **Bucket 5 (upstream deprecations, finish):** `ID_CU_LEGACY`, `ID_GD_LEGACY`
-- **Bucket 6 (fossils, cut):** `ID_TE`, `ID_PA`, `ID_MB`, `ID_LS`, `ID_SPK`, `ID_PC`, `ID_CF`
+Target: 39 → ~19 ID types.
+- **Bucket 4 (UI state, remove):** `ID_WS` ✓ (0.2.0), `ID_SCR` ✓ (0.3.0 WIP), `ID_WM` ✓ (0.3.0 WIP)
+- **Bucket 5 (upstream deprecations, finish):** `ID_CU_LEGACY`, `ID_GD_LEGACY` — next up
+- **Bucket 6 (fossils, cut):** `ID_TE`, `ID_PA`, `ID_MB`, `ID_LS`, `ID_SPK`, `ID_PC`, `ID_CF` — next up
 
 ---
 
@@ -268,6 +270,55 @@ The cascade: 26 usages of `bmain->workspaces` across 13 files, each a different 
 **Specific anatomy of workspace.cc — what to keep vs. remove:**
 - **Remove:** `IDTypeInfo IDType_ID_WS`, blend read/write callbacks, anything iterating `bmain->workspaces`
 - **Keep:** `BKE_workspace_instance_hook_create/free`, `BKE_workspace_layout_add/remove/find`, `BKE_workspace_active_get/set`, `BKE_workspace_active_layout_*`, `BKE_workspace_active_screen_*`, `BKE_workspace_relations_free`, `BKE_workspace_tool_*`, `BKE_workspace_id_tag_all_visible` (rewritten to iterate windows), `BKE_workspace_status_clear`
+
+---
+
+### Scar 2: Removing bmain->screens Killed 200 Sites at Once
+
+**What actually happened:** The 0.3.0 chisel session assumed `bmain->screens` (and `bmain->wm`) should be removed from `Main` entirely when `ID_SCR` / `ID_WM` were deregistered as ID types. That assumption was wrong. Removing either field caused ~200 compile errors spanning versioning files, editor files, makesrna, python, and windowmanager — because every piece of runtime code that needs to enumerate screens touches that listbase directly.
+
+**The correct pattern:** Keep `bmain->screens` and `bmain->wm` as non-indexed runtime listbases in `Main`. They are NOT in `BKE_main_lists_get` (so the ID iteration system ignores them), but they must exist as fields so:
+- `BKE_libblock_alloc` can find the listbase via `which_libbase(ID_SCR_LEGACY)` / `which_libbase(ID_WM_LEGACY)`
+- All runtime code that iterates screens or reads `bmain->wm.first` continues to work without modification
+
+**The actual change needed in main.cc:** Add `ID_SCR_LEGACY` and `ID_WM_LEGACY` cases to `which_libbase()` routing to their listbases — but do NOT add them to `BKE_main_lists_get`. That's it.
+
+**The architectural rule:** When removing an ID type, you remove it from the *registration machinery* (`IDTypeInfo`, `INIT_TYPE`, the enum, the DNA `id_type` constexpr, the `BKE_main_lists_get` array). You do NOT remove the `Main` struct field that holds the listbase. The field stays. The listbase stays. Only the "this is a first-class project-data ID" status goes away.
+
+**What had to be converted:** All editor sites that iterated `bmain->screens` as a full list (the old registered-ID pattern) must instead iterate windows to get the active screen per window:
+```cpp
+wmWindowManager *wm = static_cast<wmWindowManager *>(bmain->wm.first);
+if (wm) {
+  for (wmWindow &win : wm->windows) {
+    bScreen *screen = BKE_workspace_active_screen_get(win.workspace_hook);
+    if (!screen) { continue; }
+    // ... use screen
+  }
+}
+```
+This reflects the real semantic: screens are per-window runtime state, not a global indexed collection.
+
+**The $15 and the terror.** This scar didn't just cost time — it nearly cost the entire session. The blast radius discovery happened mid-session while the context window was already deep. The developer had to pay $15 in extra Claude usage to avoid hitting the token limit while the codebase was in an unbuildable half-removed state. That is a real cost for a real human maintaining this project. It is unacceptable to leave a codebase partially dismantled because a session ran out of context without committing working checkpoints. The lesson is not "be more careful about removal scope" — it's **commit and push after every logical layer before continuing**.
+
+---
+
+### Scar 3: The Context-Limit Chiseling Protocol (Mandatory for All Future Chisel Sessions)
+
+A chisel session that touches 7 layers and 60 files in one unbounded run is a context-limit bomb. Here's the protocol that prevents the $15 situation from happening again:
+
+**For any removal session touching more than 3 files:**
+
+1. **Layer boundary = commit boundary.** When a layer compiles cleanly (even if the overall removal is incomplete), commit and push it. Don't hold changes for "when it all works." A partial-but-compiling state is a safe checkpoint. An all-or-nothing run is a liability.
+
+2. **Commit message discipline.** Name the layer: `"Blended 0.3.0 [makesdna]: remove ID_SCR enum entries and FILTER/INDEX macros"`. That's a safe rollback point. One line in git log tells the next session exactly what's done.
+
+3. **After every push, do a context check.** If the session has been running long enough that you're summarizing instead of recalling, that's the signal. Commit whatever is clean. Document what remains in CHANGELOG.md (even a one-liner stub). Stop. The next session starts from a clean base.
+
+4. **Pre-chisel order matters.** Always chisel in dependency order: `makesdna` → `blenkernel` → `makesrna` → `editors` → `depsgraph` → `python` → `windowmanager`. Each layer can be compiled and committed independently. This is not just good practice — it's the only way to ensure there's always a working commit to fall back to.
+
+5. **Never hold 7 layers of changes in a single uncommitted working tree.** If you're about to start layer 4 and layers 1–3 aren't committed, stop and commit first.
+
+**Why this matters:** Context compaction is lossy. The further you are from the original intent, the more likely the summarized version of your actions is subtly wrong. The smaller the commit unit, the less damage a wrong summary can cause. One layer per commit = one layer of damage on worst case. Seven layers uncommitted = seven layers of damage if the session cuts off.
 
 ---
 

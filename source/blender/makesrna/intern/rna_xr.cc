@@ -43,7 +43,7 @@ static wmXrData *rna_XrSession_wm_xr_data_get(PointerRNA *ptr)
   BLI_assert(ELEM(ptr->type, RNA_XrSessionSettings, RNA_XrSessionState));
 
   wmWindowManager *wm = (wmWindowManager *)ptr->owner_id;
-  BLI_assert(wm && (GS(wm->id.name) == ID_WM));
+  BLI_assert(wm && (GS(wm->id.name) == ID_WM_LEGACY));
 
   return &wm->xr;
 }

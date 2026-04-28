@@ -5373,15 +5373,22 @@ static wmOperatorStatus spacedata_cleanup_exec(bContext *C, wmOperator *op)
   Main *bmain = CTX_data_main(C);
   int tot = 0;
 
-  for (bScreen &screen : bmain->screens) {
-    for (ScrArea &area : screen.areabase) {
-      if (area.spacedata.first != area.spacedata.last) {
-        SpaceLink *sl = static_cast<SpaceLink *>(area.spacedata.first);
+  wmWindowManager *wm_iter = static_cast<wmWindowManager *>(bmain->wm.first);
+  if (wm_iter) {
+    for (wmWindow &win : wm_iter->windows) {
+      bScreen *screen = BKE_workspace_active_screen_get(win.workspace_hook);
+      if (!screen) {
+        continue;
+      }
+      for (ScrArea &area : screen->areabase) {
+        if (area.spacedata.first != area.spacedata.last) {
+          SpaceLink *sl = static_cast<SpaceLink *>(area.spacedata.first);
 
-        BLI_remlink(&area.spacedata, sl);
-        tot += BLI_listbase_count(&area.spacedata);
-        BKE_spacedata_freelist(&area.spacedata);
-        BLI_addtail(&area.spacedata, sl);
+          BLI_remlink(&area.spacedata, sl);
+          tot += BLI_listbase_count(&area.spacedata);
+          BKE_spacedata_freelist(&area.spacedata);
+          BLI_addtail(&area.spacedata, sl);
+        }
       }
     }
   }

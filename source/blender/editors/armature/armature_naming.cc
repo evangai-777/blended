@@ -15,6 +15,7 @@
 #include "DNA_camera_types.h"
 #include "DNA_constraint_types.h"
 #include "DNA_object_types.h"
+#include "DNA_windowmanager_types.h"
 
 #include "BLI_ghash.h"
 #include "BLI_listbase_wrapper.hh"
@@ -35,6 +36,7 @@
 #include "BKE_layer.hh"
 #include "BKE_main.hh"
 #include "BKE_modifier.hh"
+#include "BKE_workspace.hh"
 
 #include "DEG_depsgraph.hh"
 
@@ -371,18 +373,22 @@ void ED_armature_bone_rename(Main *bmain,
 
     /* correct view locking */
     {
-      bScreen *screen;
-      for (screen = static_cast<bScreen *>(bmain->screens.first); screen;
-           screen = static_cast<bScreen *>(screen->id.next))
-      {
-        /* add regions */
-        for (ScrArea &area : screen->areabase) {
-          for (SpaceLink &sl : area.spacedata) {
-            if (sl.spacetype == SPACE_VIEW3D) {
-              View3D *v3d = reinterpret_cast<View3D *>(&sl);
-              if (v3d->ob_center && v3d->ob_center->data == id_cast<const ID *>(arm)) {
-                if (STREQ(v3d->ob_center_bone, oldname)) {
-                  STRNCPY_UTF8(v3d->ob_center_bone, newname);
+      wmWindowManager *wm = static_cast<wmWindowManager *>(bmain->wm.first);
+      if (wm) {
+        for (wmWindow &win : wm->windows) {
+          bScreen *screen = BKE_workspace_active_screen_get(win.workspace_hook);
+          if (!screen) {
+            continue;
+          }
+          /* add regions */
+          for (ScrArea &area : screen->areabase) {
+            for (SpaceLink &sl : area.spacedata) {
+              if (sl.spacetype == SPACE_VIEW3D) {
+                View3D *v3d = reinterpret_cast<View3D *>(&sl);
+                if (v3d->ob_center && v3d->ob_center->data == id_cast<const ID *>(arm)) {
+                  if (STREQ(v3d->ob_center_bone, oldname)) {
+                    STRNCPY_UTF8(v3d->ob_center_bone, newname);
+                  }
                 }
               }
             }

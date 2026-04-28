@@ -1173,7 +1173,7 @@ static void rna_Action_show_errors_update(bContext *C, PointerRNA * /*ptr*/)
 
 static std::optional<std::string> rna_DopeSheet_path(const PointerRNA *ptr)
 {
-  if (GS(ptr->owner_id->name) == ID_SCR) {
+  if (GS(ptr->owner_id->name) == ID_SCR_LEGACY) {
     const bScreen *screen = reinterpret_cast<bScreen *>(ptr->owner_id);
     const bDopeSheet *ads = static_cast<bDopeSheet *>(ptr->data);
 

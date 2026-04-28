@@ -34,6 +34,7 @@
 #include "BKE_node_legacy_types.hh"
 #include "BKE_node_runtime.hh"
 #include "BKE_object.hh"
+#include "BKE_workspace.hh"
 
 #include "DNA_ID.h"
 #include "DNA_collection_types.h"
@@ -1881,15 +1882,22 @@ bool BKE_layer_collection_local_sync_all(const Main *bmain)
   bool is_all_resynced = true;
   for (Scene &scene : bmain->scenes) {
     for (ViewLayer &view_layer : scene.view_layers) {
-      for (bScreen &screen : bmain->screens) {
-        for (ScrArea &area : screen.areabase) {
-          if (area.spacetype != SPACE_VIEW3D) {
+      wmWindowManager *wm = static_cast<wmWindowManager *>(bmain->wm.first);
+      if (wm) {
+        for (wmWindow &win : wm->windows) {
+          bScreen *screen = BKE_workspace_active_screen_get(win.workspace_hook);
+          if (!screen) {
             continue;
           }
-          View3D *v3d = static_cast<View3D *>(area.spacedata.first);
-          if (v3d->flag & V3D_LOCAL_COLLECTIONS) {
-            if (!BKE_layer_collection_local_sync(*bmain, &scene, &view_layer, v3d)) {
-              is_all_resynced = false;
+          for (ScrArea &area : screen->areabase) {
+            if (area.spacetype != SPACE_VIEW3D) {
+              continue;
+            }
+            View3D *v3d = static_cast<View3D *>(area.spacedata.first);
+            if (v3d->flag & V3D_LOCAL_COLLECTIONS) {
+              if (!BKE_layer_collection_local_sync(*bmain, &scene, &view_layer, v3d)) {
+                is_all_resynced = false;
+              }
             }
           }
         }

@@ -23,6 +23,7 @@
 #include "BKE_idtype.hh"
 #include "BKE_main.hh"
 #include "BKE_screen.hh"
+#include "BKE_workspace.hh"
 
 #include "BLT_translation.hh"
 
@@ -947,29 +948,36 @@ void types_register(ARegionType *region_type, const int space_type)
 
 void type_unlink(const Main &bmain, const AssetShelfType &shelf_type)
 {
-  for (bScreen &screen : bmain.screens) {
-    for (ScrArea &area : screen.areabase) {
-      for (SpaceLink &sl : area.spacedata) {
-        ListBaseT<ARegion> *regionbase = (&sl == area.spacedata.first) ? &area.regionbase :
-                                                                         &sl.regionbase;
-        for (ARegion &region : *regionbase) {
-          if (region.regiontype != RGN_TYPE_ASSET_SHELF) {
-            continue;
-          }
-
-          RegionAssetShelf *shelf_regiondata = RegionAssetShelf::get_from_asset_shelf_region(
-              region);
-          if (!shelf_regiondata) {
-            continue;
-          }
-          for (AssetShelf &shelf : shelf_regiondata->shelves) {
-            if (shelf.type == &shelf_type) {
-              shelf.type = nullptr;
+  wmWindowManager *wm = static_cast<wmWindowManager *>(bmain.wm.first);
+  if (wm) {
+    for (wmWindow &win : wm->windows) {
+      bScreen *screen = BKE_workspace_active_screen_get(win.workspace_hook);
+      if (!screen) {
+        continue;
+      }
+      for (ScrArea &area : screen->areabase) {
+        for (SpaceLink &sl : area.spacedata) {
+          ListBaseT<ARegion> *regionbase = (&sl == area.spacedata.first) ? &area.regionbase :
+                                                                           &sl.regionbase;
+          for (ARegion &region : *regionbase) {
+            if (region.regiontype != RGN_TYPE_ASSET_SHELF) {
+              continue;
             }
-          }
 
-          BLI_assert((shelf_regiondata->active_shelf == nullptr) ||
-                     (shelf_regiondata->active_shelf->type != &shelf_type));
+            RegionAssetShelf *shelf_regiondata = RegionAssetShelf::get_from_asset_shelf_region(
+                region);
+            if (!shelf_regiondata) {
+              continue;
+            }
+            for (AssetShelf &shelf : shelf_regiondata->shelves) {
+              if (shelf.type == &shelf_type) {
+                shelf.type = nullptr;
+              }
+            }
+
+            BLI_assert((shelf_regiondata->active_shelf == nullptr) ||
+                       (shelf_regiondata->active_shelf->type != &shelf_type));
+          }
         }
       }
     }

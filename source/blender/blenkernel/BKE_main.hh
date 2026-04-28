@@ -379,7 +379,6 @@ struct Main : NonCopyable, NonMovable {
   ListBaseT<Camera> cameras = {};
   ListBaseT<Key> shapekeys = {};
   ListBaseT<World> worlds = {};
-  ListBaseT<bScreen> screens = {};
   ListBaseT<VFont> fonts = {};
   ListBaseT<Text> texts = {};
   ListBaseT<Speaker> speakers = {};
@@ -393,6 +392,8 @@ struct Main : NonCopyable, NonMovable {
   ListBaseT<ParticleSettings> particles = {};
   ListBaseT<Palette> palettes = {};
   ListBaseT<PaintCurve> paintcurves = {};
+  /** Runtime window state — not project data. */
+  ListBaseT<bScreen> screens = {};
   /** Singleton (exception). */
   ListBaseT<wmWindowManager> wm = {};
   /** Legacy Grease Pencil. */

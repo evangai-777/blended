@@ -1540,7 +1540,7 @@ static std::optional<std::string> but_event_property_operator_string(const bCont
   if (ptr->owner_id) {
     ID *id = ptr->owner_id;
 
-    if (GS(id->name) == ID_SCR) {
+    if (GS(id->name) == ID_SCR_LEGACY) {
       if (RNA_struct_is_a(ptr->type, RNA_Area)) {
         /* data should be directly on here... */
         const char *prop_id = RNA_property_identifier(prop);

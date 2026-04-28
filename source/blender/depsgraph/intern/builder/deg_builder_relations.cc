@@ -605,9 +605,7 @@ void DepsgraphRelationBuilder::build_id(ID *id)
       break;
 
     case ID_LI:
-    case ID_SCR:
     case ID_BR:
-    case ID_WM:
     case ID_PAL:
     case ID_PC:
       BLI_assert(!deg_eval_copy_is_needed(id_type));

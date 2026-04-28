@@ -82,7 +82,7 @@ void template_add_button_search_menu(const bContext *C,
     const bool use_big_size = (region->regiontype != RGN_TYPE_TOOL_HEADER);
     /* Ugly exception for screens here,
      * drawing their preview in icon size looks ugly/useless */
-    const bool use_preview_icon = use_big_size || (id && (GS(id->name) != ID_SCR));
+    const bool use_preview_icon = use_big_size || (id && (GS(id->name) != ID_SCR_LEGACY));
     const short width = UI_UNIT_X * (use_big_size ? 6 : 1.6f);
     const short height = UI_UNIT_Y * (use_big_size ? 6 : 1);
     Layout *col = nullptr;

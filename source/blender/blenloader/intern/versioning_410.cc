@@ -894,22 +894,6 @@ void blo_do_versions_410(FileData *fd, Library * /*lib*/, Main *bmain)
       }
     }
 
-    for (bScreen &screen : bmain->screens) {
-      for (ScrArea &area : screen.areabase) {
-        for (SpaceLink &sl : area.spacedata) {
-          const ListBaseT<ARegion> *regionbase = (&sl == area.spacedata.first) ? &area.regionbase :
-                                                                                 &sl.regionbase;
-          for (ARegion &region : *regionbase) {
-            if (region.regiontype != RGN_TYPE_ASSET_SHELF_HEADER) {
-              continue;
-            }
-            region.alignment &= ~RGN_SPLIT_PREV;
-            region.alignment |= RGN_ALIGN_HIDE_WITH_PREV;
-          }
-        }
-      }
-    }
-
     if (!DNA_struct_member_exists(fd->filesdna, "SceneEEVEE", "float", "gtao_thickness")) {
       SceneEEVEE default_eevee;
       for (Scene &scene : bmain->scenes) {

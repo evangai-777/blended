@@ -194,7 +194,7 @@ ScrArea *area_split(const wmWindow *win,
 
 bScreen *screen_add(Main *bmain, const char *name, const rcti *rect)
 {
-  bScreen *screen = BKE_id_new<bScreen>(bmain, name);
+  bScreen *screen = static_cast<bScreen *>(BKE_libblock_alloc(bmain, ID_SCR_LEGACY, name, 0));
 
   ScrVert *sv1 = screen_geom_vertex_add(screen, rect->xmin, rect->ymin);
   ScrVert *sv2 = screen_geom_vertex_add(screen, rect->xmin, rect->ymax - 1);
@@ -849,8 +849,15 @@ void ED_screens_init(bContext *C, Main *bmain, wmWindowManager *wm)
   }
 
   if (U.uiflag & USER_HEADER_FROM_PREF) {
-    for (bScreen &screen : bmain->screens) {
-      BKE_screen_header_alignment_reset(&screen);
+    wmWindowManager *wm_iter = static_cast<wmWindowManager *>(bmain->wm.first);
+    if (wm_iter) {
+      for (wmWindow &win_iter : wm_iter->windows) {
+        bScreen *screen = BKE_workspace_active_screen_get(win_iter.workspace_hook);
+        if (!screen) {
+          continue;
+        }
+        BKE_screen_header_alignment_reset(screen);
+      }
     }
   }
 }
@@ -1343,7 +1350,6 @@ void screen_change_prepare(
     bScreen *screen_old, bScreen *screen_new, Main *bmain, bContext *C, wmWindow *win)
 {
   UNUSED_VARS_NDEBUG(bmain);
-  BLI_assert(BLI_findindex(&bmain->screens, screen_new) != -1);
 
   if (screen_old != screen_new) {
     wmTimer *wt = screen_old->animtimer;
@@ -2019,8 +2025,15 @@ void ED_update_for_newframe(Main *bmain, Depsgraph *depsgraph)
   if (camera && scene->camera != camera) {
     scene->camera = static_cast<Object *>(camera);
     /* are there cameras in the views that are not in the scene? */
-    for (bScreen &screen : bmain->screens) {
-      BKE_screen_view3d_scene_sync(&screen, scene);
+    wmWindowManager *wm_sync = static_cast<wmWindowManager *>(bmain->wm.first);
+    if (wm_sync) {
+      for (wmWindow &win_sync : wm_sync->windows) {
+        bScreen *screen = BKE_workspace_active_screen_get(win_sync.workspace_hook);
+        if (!screen) {
+          continue;
+        }
+        BKE_screen_view3d_scene_sync(screen, scene);
+      }
     }
     DEG_id_tag_update(&scene->id, ID_RECALC_SYNC_TO_EVAL | ID_RECALC_PARAMETERS);
   }
