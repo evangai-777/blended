@@ -27,6 +27,118 @@ The old approach (tiered UI, smart defaults, Emscripten) was prototyping toward 
 
 Pattern for each pending layer: `grep -rn "ID_WS"` the directory, delete or redirect every hit. The breakage is the audit — follow the compile errors, don't paper over them.
 
+### ID_SCR and ID_WM Blast Radius Audit (pre-chisel)
+
+Grepped 2026-04-28 before starting the removal. Use this as the checklist.
+
+**ID_SCR — 64 hits, 39 files**
+
+Core definition:
+- `makesdna/DNA_ID_enums.h:143` — enum entry `ID_SCR = MAKE_ID2('S', 'R')`
+- `makesdna/DNA_ID.h` — `FILTER_ID_SCR`, `INDEX_ID_SCR`, `ID_CHECK_UNDO`, `ID_SCRN` alias, `FILTER_ID_ALL`
+- `makesdna/DNA_screen_types.h:95` — `static constexpr ID_Type id_type = ID_SCR` inside `bScreen` struct
+- `blenkernel/intern/screen.cc:246` — `IDTypeInfo IDType_ID_SCR = {...}` — main definition (the workspace.cc analogue)
+- `blenkernel/BKE_idtype.hh:316` — `extern IDTypeInfo IDType_ID_SCR`
+- `blenkernel/intern/idtype.cc:153` — `INIT_TYPE(ID_SCR)`
+- `blenkernel/intern/main.cc` — `bmain.screens` listbase wiring (lines 1014, 1119, 165)
+- `blenkernel/intern/blendfile.cc:992` — `const short ui_id_codes[]{ID_SCR}` array
+- `blenkernel/intern/blendfile.cc:1433` — `ELEM(GS(id->name), ID_SCE, ID_SCR, ID_WM)` (shared with WM)
+- `blenkernel/intern/lib_id.cc:667` — `LIB_ID_TYPES_NOCOPY ID_LI, ID_SCR, ID_WM` (shared macro)
+- `blenkernel/intern/lib_override.cc:964` — `HIERARCHY_BREAKING_ID_TYPES ID_SCE, ID_LI, ID_SCR, ID_WM` (shared)
+- `blenkernel/intern/lib_query.cc:507` — `GS(owner_id->name) == ID_SCR` (SCR-specific lib-link logic)
+- `blenkernel/intern/preview_image.cc:225` — `ID_PRV_CASE(ID_SCR, bScreen)`
+
+blenloader/readfile.cc (3 hits — SCR-specific legacy compat):
+- Lines 4267–4269, 4971–4972 — `ID_SCRN → ID_SCR` conversion for old `.blend` files. On removal: skip these blocks rather than crash.
+- Line 2752 — switch case
+
+makesrna (7 files):
+- `rna_ID.cc:62` — RNA enum entry; `:462` and `:555` — GS switch cases
+- `rna_action.cc:1176`, `rna_image.cc:297`, `rna_movieclip.cc:79`, `rna_space.cc:1395,1817` — GS checks
+- `rna_main_api.cc:843` — `RNA_MAIN_ID_TAG_FUNCS_DEF(screens, screens, ID_SCR)`
+- `rna_wm.cc:2806` — `BLT_I18NCONTEXT_ID_SCREEN` translation context
+
+editors (10 files):
+- `interface.cc:1543`, `interface_icons.cc:1220,1950,2128`, `interface_template_id.cc:877,1007,1320`, `interface_templates.cc:85` — icon/template GS checks
+- `render_opengl.cc:638` — switch case
+- `screen_ops.cc:5075` — `BLT_I18NCONTEXT_ID_SCREEN` usage
+- `outliner_draw.cc:2574`, `outliner_intern.hh:166` (macro), `outliner_tools.cc:172`, `tree_element_id.cc:73` — outliner switch/macro
+- `ed_util_ops.cc:432` — ELEM check
+
+depsgraph (2 files):
+- `deg_builder_nodes.cc:661`, `deg_builder_relations.cc:608` — switch cases
+
+blentranslation:
+- `BLT_translation.hh:138,216` — `BLT_I18NCONTEXT_ID_SCREEN` define and context list
+
+python:
+- `bpy_rna.cc:459` — `!ELEM(idcode, ID_WM, ID_SCR)` (shared with WM; both go at once)
+
+windowmanager:
+- `wm_operators.cc:571` — switch case
+
+---
+
+**ID_WM — 46 hits, 27 files**
+
+Core definition:
+- `makesdna/DNA_ID_enums.h:155` — enum entry `ID_WM = MAKE_ID2('W', 'M')`
+- `makesdna/DNA_ID.h` — `FILTER_ID_WM`, `INDEX_ID_WM`, `ID_CHECK_UNDO`, `FILTER_ID_ALL`
+- `makesdna/DNA_windowmanager_types.h:111` — `static constexpr ID_Type id_type = ID_WM` inside `wmWindowManager`
+- `windowmanager/intern/wm.cc:218` — `IDTypeInfo IDType_ID_WM = {...}` — main definition
+- `windowmanager/intern/wm.cc:532` — `BKE_libblock_alloc(bmain, ID_WM, "WinMan", 0)` — WM creation (needs rethink: allocate as plain struct, not libblock)
+- `blenkernel/BKE_idtype.hh:328` — `extern IDTypeInfo IDType_ID_WM`
+- `blenkernel/intern/idtype.cc:165` — `INIT_TYPE(ID_WM)`
+- `blenkernel/intern/main.cc` — `bmain.wm` listbase wiring (lines 1038, 1124, 166)
+
+blenkernel (WM-specific property handling):
+- `lib_id.cc:2643–2649` — WM `id->properties` and `id->system_properties` already excluded from .blend writes. The code already treats WM as runtime-only — removal finishes what it believes.
+- `lib_id.cc:2063` — `ELEM(GS(id->name), ID_SCE, ID_WM)` check
+- `lib_id.cc:667` — `LIB_ID_TYPES_NOCOPY` (shared with SCR)
+- `lib_override.cc:964` — `HIERARCHY_BREAKING_ID_TYPES` (shared with SCR)
+- `image.cc:2925` — switch case
+
+blendfile.cc — load-critical WM handling:
+- `blendfile.cc:710` — `swap_old_bmain_data_for_blendfile(reuse_data, ID_WM)` — WM "survive file open" mechanism
+- `blendfile.cc:1008` — `swap_old_bmain_data_dependencies_process(&reuse_data, ID_WM)` — same mechanism
+- `blendfile.cc:1433` — shared ELEM check with SCR
+
+blenloader:
+- `readfile.cc:1996` — `BLI_assert((GS(id->name) != ID_WM) || id->properties == nullptr)` — assertion, not a load branch
+
+makesrna (5 files):
+- `rna_ID.cc:68,486,569` — RNA enum entry and GS switch cases
+- `rna_main_api.cc:844` — `RNA_MAIN_ID_TAG_FUNCS_DEF(window_managers, wm, ID_WM)`
+- `rna_space.cc:1433,1451` — GS checks
+- `rna_wm.cc:665` — `GS(ptr->owner_id->name) != ID_WM`
+- `rna_xr.cc:46` — `BLI_assert(wm && (GS(wm->id.name) == ID_WM))` — XR/VR type-safety assertion
+
+editors (5 files):
+- `interface_handlers.cc:772`, `interface_icons.cc:2129`, `interface_template_id.cc:923`, `render_opengl.cc:642` — switch/GS checks
+- `outliner_intern.hh:167` (macro), `outliner_tools.cc:171`, `tree_element_id.cc:85` — outliner
+
+depsgraph:
+- `deg_builder_nodes.cc:663`, `deg_builder_relations.cc:610` — switch cases (adjacent to SCR cases)
+
+python:
+- `bpy_rna.cc:459` — shared ELEM check with SCR
+
+---
+
+**Key notes for the chisel session:**
+
+1. **bScreen and wmWindowManager stay as runtime structs.** Only ID-type registration is removed. They stop living in `bmain->screens` / `bmain->wm` but the structs themselves remain — the window system runs through them.
+
+2. **ID_WM is already half-detached.** `lib_id.cc:2643–2649` already excludes WM properties from .blend writes. Removal finishes what the code believes.
+
+3. **blendfile.cc swap calls (WM lines 710, 1008) are load-critical.** They implement "WM survives file open." When WM stops being an ID type, this mechanism needs to be rethought — or WM simply never touches the load path at all.
+
+4. **ID_SCRN legacy compat in readfile.cc** (lines 4267–4269, 4971–4972) must become skip/ignore handlers, not crashes.
+
+5. **Shared macros and ELEM checks** (`LIB_ID_TYPES_NOCOPY`, `HIERARCHY_BREAKING_ID_TYPES`, `ID_CHECK_UNDO`, `FILTER_ID_ALL`, `bpy_rna.cc:459`) contain both SCR and WM. Edit them together — do both in one pass rather than two.
+
+6. **Suggested order:** SCR first (more complex, has readfile compat), WM second. Can be same PR or back-to-back depending on blast radius at compile time.
+
 ---
 
 ## Repository Layout
