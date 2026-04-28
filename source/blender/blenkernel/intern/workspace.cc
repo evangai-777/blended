@@ -118,7 +118,7 @@ WorkSpace *BKE_workspace_add(Main * /*bmain*/, const char *name)
 {
   WorkSpace *workspace = MEM_new<WorkSpace>(__func__);
   workspace->runtime = MEM_new<bke::WorkSpaceRuntime>(__func__);
-  STRNCPY(workspace->id.name + 2, name);
+  BLI_strncpy(workspace->id.name + 2, name, sizeof(workspace->id.name) - 2);
   return workspace;
 }
 

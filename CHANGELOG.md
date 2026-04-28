@@ -41,12 +41,17 @@ Chisel log — each layer merged when its layer's compile errors are clean:
 | `makesdna` | `DNA_ID_enums.h`, `DNA_ID.h`, `DNA_workspace_types.h` | ✓ merged |
 | `blenkernel` | `workspace.cc` deleted; `BKE_main.hh`, `idtype.cc`, `main.cc`, `lib_id.cc`, `lib_override.cc`, `blendfile.cc` | ✓ merged |
 | `makesrna` | `rna_ID.cc`, `rna_space.cc`, `rna_main.cc`, `rna_main_api.cc`, `rna_internal.hh` | ✓ merged |
-| `editors` | `interface_template_id.cc`, `ed_util_ops.cc`, `interface_icons.cc`, `workspace_edit.cc`, `render_opengl.cc`, `outliner_edit.cc`, `outliner_draw.cc`, `outliner_tools.cc`, `tree_element_id.cc` | pending |
-| `depsgraph` | `deg_builder_relations.cc`, `deg_builder_nodes.cc` | pending |
-| `python` | `bpy_rna.cc`, `bpy_library_load.cc` | pending |
-| `windowmanager` | `wm.cc` | pending |
+| `editors` | `interface_template_id.cc`, `ed_util_ops.cc`, `interface_icons.cc`, `workspace_edit.cc`, `render_opengl.cc`, `outliner_edit.cc`, `outliner_draw.cc`, `outliner_tools.cc`, `tree_element_id.cc` | ✓ merged |
+| `depsgraph` | `deg_builder_relations.cc`, `deg_builder_nodes.cc` | ✓ merged |
+| `python` | `bpy_rna.cc`, `bpy_library_load.cc` | ✓ merged |
+| `windowmanager` | `wm.cc` | ✓ merged |
 
-When the build is clean across all layers, 0.2.0 ships.
+`grep -rn "ID_WS" source/` returns zero hits. Awaiting CI green to tag 0.2.0.
+
+**Deferred runtime debt:** workspace cycle, reorder operators, and factory name
+translation were left as compile-clean stubs. These won't surface in CI until
+the architecture question — where does the workspace list live now that
+`bmain->workspaces` is gone? — is answered. Documented in CLAUDE.md Scar 1.
 
 ---
 

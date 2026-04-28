@@ -21,7 +21,9 @@ The old approach (tiered UI, smart defaults, Emscripten) was prototyping toward 
 4. App lenses — launcher as canonical workspace system
 5. UI — only after 1–4 are honest
 
-**Active work: `ID_WS` (WorkSpace) removal** — `makesdna`, `blenkernel`, `makesrna` merged; `editors`, `depsgraph`, `python`, `windowmanager` pending. Layer-by-layer status and file lists in [`CHANGELOG.md`](CHANGELOG.md) — *Unreleased 0.2.0*.
+**`ID_WS` (WorkSpace) removal — compile-clean.** All layers merged (`makesdna`, `blenkernel`, `makesrna`, `editors`, `depsgraph`, `python`, `windowmanager`). `grep -rn "ID_WS" source/` returns zero hits. Awaiting CI green to tag 0.2.0. Runtime debt (workspace cycle, reorder operators, factory name translation) documented in Scar 1 below.
+
+**Next: `ID_SCR` and `ID_WM`** — Bucket 4 completions. Same chisel pattern, larger blast radius. Layer-by-layer status in [`CHANGELOG.md`](CHANGELOG.md).
 
 Pattern for each pending layer: `grep -rn "ID_WS"` the directory, delete or redirect every hit. The breakage is the audit — follow the compile errors, don't paper over them.
 
