@@ -21,7 +21,7 @@ namespace blender {
 
 /** Blended product version — independent of the upstream Blender base. */
 #define BLENDED_VERSION_MAJOR 0
-#define BLENDED_VERSION_MINOR 1
+#define BLENDED_VERSION_MINOR 2
 #define BLENDED_VERSION_PATCH 0
 
 /** Blender major and minor version. */

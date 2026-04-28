@@ -25,28 +25,32 @@ carries a one-liner status per active item.
 
 ---
 
-## Unreleased — 0.2.0
+## Unreleased — 0.3.0
 
-Target: `ID_WS` (WorkSpace) fully removed from every compilation unit. The
-first concrete structural delta from Blender's data model — WorkSpace goes
-from a first-class ID type to nothing. Load-bearing for the launcher model
-(BLENDED.md §11) becoming structurally true rather than just conceptually right.
+Next target: `ID_SCR` and `ID_WM` — Bucket 4 completions. Same chisel pattern as ID_WS, larger blast radius. Each gets its own point release.
+
+---
+
+## 0.2.0 — 2026-04-28
+
+`ID_WS` (WorkSpace) fully removed from every compilation unit. First concrete
+structural delta from Blender's data model — WorkSpace goes from a first-class
+ID type to nothing. Load-bearing for the launcher model (BLENDED.md §11)
+becoming structurally true rather than just conceptually right.
 
 ### ID_WS Removal
 
-Chisel log — each layer merged when its layer's compile errors are clean:
-
 | Layer | Files touched | Status |
 |-------|--------------|--------|
-| `makesdna` | `DNA_ID_enums.h`, `DNA_ID.h`, `DNA_workspace_types.h` | ✓ merged |
-| `blenkernel` | `workspace.cc` deleted; `BKE_main.hh`, `idtype.cc`, `main.cc`, `lib_id.cc`, `lib_override.cc`, `blendfile.cc` | ✓ merged |
-| `makesrna` | `rna_ID.cc`, `rna_space.cc`, `rna_main.cc`, `rna_main_api.cc`, `rna_internal.hh` | ✓ merged |
-| `editors` | `interface_template_id.cc`, `ed_util_ops.cc`, `interface_icons.cc`, `workspace_edit.cc`, `render_opengl.cc`, `outliner_edit.cc`, `outliner_draw.cc`, `outliner_tools.cc`, `tree_element_id.cc` | ✓ merged |
-| `depsgraph` | `deg_builder_relations.cc`, `deg_builder_nodes.cc` | ✓ merged |
-| `python` | `bpy_rna.cc`, `bpy_library_load.cc` | ✓ merged |
-| `windowmanager` | `wm.cc` | ✓ merged |
+| `makesdna` | `DNA_ID_enums.h`, `DNA_ID.h`, `DNA_workspace_types.h` | ✓ |
+| `blenkernel` | `workspace.cc` deleted; `BKE_main.hh`, `idtype.cc`, `main.cc`, `lib_id.cc`, `lib_override.cc`, `blendfile.cc` | ✓ |
+| `makesrna` | `rna_ID.cc`, `rna_space.cc`, `rna_main.cc`, `rna_main_api.cc`, `rna_internal.hh` | ✓ |
+| `editors` | `interface_template_id.cc`, `ed_util_ops.cc`, `interface_icons.cc`, `workspace_edit.cc`, `render_opengl.cc`, `outliner_edit.cc`, `outliner_draw.cc`, `outliner_tools.cc`, `tree_element_id.cc` | ✓ |
+| `depsgraph` | `deg_builder_relations.cc`, `deg_builder_nodes.cc` | ✓ |
+| `python` | `bpy_rna.cc`, `bpy_library_load.cc` | ✓ |
+| `windowmanager` | `wm.cc` | ✓ |
 
-`grep -rn "ID_WS" source/` returns zero hits. Awaiting CI green to tag 0.2.0.
+CI green (Windows x64, build #45). `grep -rn "ID_WS" source/` returns zero hits.
 
 **Deferred runtime debt:** workspace cycle, reorder operators, and factory name
 translation were left as compile-clean stubs. These won't surface in CI until
