@@ -1217,7 +1217,7 @@ void icon_ensure_deferred(const bContext *C, const int icon_id, const bool big)
                                static_cast<PreviewImage *>(icon->obj);
       /* Using jobs for screen previews crashes due to off-screen rendering.
        * XXX: would be nicer if #PreviewImage could store if it supports jobs. */
-      const bool use_jobs = !id || (GS(id->name) != ID_SCR);
+      const bool use_jobs = !id || (GS(id->name) != ID_SCR_LEGACY);
 
       if (prv) {
         const int size = big ? ICON_SIZE_PREVIEW : ICON_SIZE_ICON;
@@ -1923,15 +1923,6 @@ static void id_icon_render(const bContext *C, ID *id, bool use_jobs)
   }
 }
 
-static int id_screen_get_icon(const bContext *C, ID *id)
-{
-  BKE_icon_id_ensure(id);
-  /* Don't use jobs here, off-screen rendering doesn't like this and crashes. */
-  id_icon_render(C, id, false);
-
-  return id->icon_id;
-}
-
 int id_icon_get(const bContext *C, ID *id, const bool big)
 {
   int iconid = 0;
@@ -1946,9 +1937,6 @@ int id_icon_get(const bContext *C, ID *id, const bool big)
       iconid = BKE_icon_id_ensure(id);
       /* checks if not exists, or changed */
       icon_render_id(C, nullptr, id, big ? ICON_SIZE_PREVIEW : ICON_SIZE_ICON, true);
-      break;
-    case ID_SCR:
-      iconid = id_screen_get_icon(C, id);
       break;
     case ID_OB:
       iconid = icon_from_object_type(id_cast<Object *>(id));
@@ -2125,8 +2113,6 @@ int icon_from_idcode(const int idcode)
 
     /* No icons for these ID-types. */
     case ID_LI:
-    case ID_SCR:
-    case ID_WM:
       break;
   }
   return ICON_NONE;

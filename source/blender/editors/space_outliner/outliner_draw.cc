@@ -2571,8 +2571,6 @@ static BIFIconID tree_element_get_icon_from_id(const ID *id)
     }
     case ID_BR:
       return ICON_BRUSH_DATA;
-    case ID_SCR:
-      return ICON_WORKSPACE;
     case ID_MSK:
       return ICON_MOD_MASK;
     case ID_NT: {

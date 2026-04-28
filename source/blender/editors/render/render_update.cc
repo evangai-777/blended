@@ -38,6 +38,7 @@
 #include "BKE_node_tree_update.hh"
 #include "BKE_paint.hh"
 #include "BKE_scene.hh"
+#include "BKE_workspace.hh"
 
 #include "RE_engine.h"
 #include "RE_pipeline.h"
@@ -162,11 +163,16 @@ void ED_render_engine_area_exit(Main *bmain, ScrArea *area)
 void ED_render_engine_changed(Main *bmain, const bool update_scene_data)
 {
   /* on changing the render engine type, clear all running render engines */
-  for (bScreen *screen = static_cast<bScreen *>(bmain->screens.first); screen;
-       screen = static_cast<bScreen *>(screen->id.next))
-  {
-    for (ScrArea &area : screen->areabase) {
-      ED_render_engine_area_exit(bmain, &area);
+  wmWindowManager *wm_iter = static_cast<wmWindowManager *>(bmain->wm.first);
+  if (wm_iter) {
+    for (wmWindow &win : wm_iter->windows) {
+      bScreen *screen = BKE_workspace_active_screen_get(win.workspace_hook);
+      if (!screen) {
+        continue;
+      }
+      for (ScrArea &area : screen->areabase) {
+        ED_render_engine_area_exit(bmain, &area);
+      }
     }
   }
   /* Stop and invalidate all shader previews. */

@@ -230,28 +230,6 @@ static void do_version_constraints_stretch_to_limits(ListBaseT<bConstraint> *lb)
   }
 }
 
-static void do_version_action_editor_properties_region(ListBaseT<ARegion> *regionbase)
-{
-  for (ARegion &region : *regionbase) {
-    if (region.regiontype == RGN_TYPE_UI) {
-      /* already exists */
-      return;
-    }
-    if (region.regiontype == RGN_TYPE_WINDOW) {
-      /* add new region here */
-      ARegion *region_new = BKE_area_region_new();
-
-      BLI_insertlinkbefore(regionbase, &region, region_new);
-
-      region_new->regiontype = RGN_TYPE_UI;
-      region_new->alignment = RGN_ALIGN_RIGHT;
-      region_new->flag = RGN_FLAG_HIDDEN;
-
-      return;
-    }
-  }
-}
-
 static void do_version_bones_super_bbone(ListBaseT<Bone> *lb)
 {
   for (Bone &bone : *lb) {
@@ -531,19 +509,6 @@ void blo_do_versions_270(FileData *fd, Library * /*lib*/, Main *bmain)
     }
     FOREACH_NODETREE_END;
 
-    for (bScreen &screen : bmain->screens) {
-      for (ScrArea &area : screen.areabase) {
-        for (SpaceLink &space_link : area.spacedata) {
-          if (space_link.spacetype == SPACE_CLIP) {
-            SpaceClip *space_clip = reinterpret_cast<SpaceClip *>(&space_link);
-            if (space_clip->mode != SC_MODE_MASKEDIT) {
-              space_clip->mode = SC_MODE_TRACKING;
-            }
-          }
-        }
-      }
-    }
-
     if (!DNA_struct_member_exists(
             fd->filesdna, "MovieTrackingSettings", "float", "default_weight"))
     {
@@ -587,17 +552,6 @@ void blo_do_versions_270(FileData *fd, Library * /*lib*/, Main *bmain)
      * leading to corrupted files (see #39847).
      * This will always reset situation to a valid state.
      */
-    for (bScreen &screen : bmain->screens) {
-      for (ScrArea &area : screen.areabase) {
-        for (SpaceLink &sl : area.spacedata) {
-          ListBaseT<ARegion> *lb = (&sl == area.spacedata.first) ? &area.regionbase :
-                                                                   &sl.regionbase;
-          for (ARegion &region : *lb) {
-            BLI_listbase_clear(&region.ui_previews);
-          }
-        }
-      }
-    }
   }
 
   if (!MAIN_VERSION_FILE_ATLEAST(bmain, 270, 5)) {
@@ -864,22 +818,6 @@ void blo_do_versions_270(FileData *fd, Library * /*lib*/, Main *bmain)
 
   if (!MAIN_VERSION_FILE_ATLEAST(bmain, 273, 9)) {
     /* Make sure sequencer preview area limits zoom */
-    for (bScreen &screen : bmain->screens) {
-      for (ScrArea &area : screen.areabase) {
-        for (SpaceLink &sl : area.spacedata) {
-          if (sl.spacetype == SPACE_SEQ) {
-            for (ARegion &region : sl.regionbase) {
-              if (region.regiontype == RGN_TYPE_PREVIEW) {
-                region.v2d.keepzoom |= V2D_LIMITZOOM;
-                region.v2d.minzoom = 0.001f;
-                region.v2d.maxzoom = 1000.0f;
-                break;
-              }
-            }
-          }
-        }
-      }
-    }
   }
 
   if (!MAIN_VERSION_FILE_ATLEAST(bmain, 274, 1)) {
@@ -910,28 +848,6 @@ void blo_do_versions_270(FileData *fd, Library * /*lib*/, Main *bmain)
       }
     }
 
-    for (bScreen &screen : bmain->screens) {
-      for (ScrArea &area : screen.areabase) {
-        for (SpaceLink &sl : area.spacedata) {
-          switch (sl.spacetype) {
-            case SPACE_VIEW3D: {
-              View3D *v3d = reinterpret_cast<View3D *>(&sl);
-              v3d->stereo3d_camera = STEREO_3D_ID;
-              v3d->stereo3d_flag |= V3D_S3D_DISPPLANE;
-              v3d->stereo3d_convergence_alpha = 0.15f;
-              v3d->stereo3d_volume_alpha = 0.05f;
-              break;
-            }
-            case SPACE_IMAGE: {
-              SpaceImage *sima = reinterpret_cast<SpaceImage *>(&sl);
-              sima->iuser.flag |= IMA_SHOW_STEREO;
-              break;
-            }
-          }
-        }
-      }
-    }
-
     for (Camera &cam : bmain->cameras) {
       cam.stereo.interocular_distance = 0.065f;
       cam.stereo.convergence_distance = 30.0f * 0.065f;
@@ -956,23 +872,6 @@ void blo_do_versions_270(FileData *fd, Library * /*lib*/, Main *bmain)
       }
     }
   }
-
-  if (!MAIN_VERSION_FILE_ATLEAST(bmain, 274, 6)) {
-    if (!DNA_struct_member_exists(fd->filesdna, "FileSelectParams", "int", "thumbnail_size")) {
-      for (bScreen &screen : bmain->screens) {
-        for (ScrArea &area : screen.areabase) {
-          for (SpaceLink &sl : area.spacedata) {
-            if (sl.spacetype == SPACE_FILE) {
-              SpaceFile *sfile = reinterpret_cast<SpaceFile *>(&sl);
-
-              if (sfile->params) {
-                sfile->params->thumbnail_size = 128;
-              }
-            }
-          }
-        }
-      }
-    }
 
     if (!DNA_struct_member_exists(fd->filesdna, "RenderData", "short", "simplify_subsurf_render"))
     {
@@ -1015,27 +914,6 @@ void blo_do_versions_270(FileData *fd, Library * /*lib*/, Main *bmain)
     }
 
 #define RV3D_VIEW_PERSPORTHO 7
-    for (bScreen &screen : bmain->screens) {
-      for (ScrArea &area : screen.areabase) {
-        for (SpaceLink &sl : area.spacedata) {
-          if (sl.spacetype == SPACE_VIEW3D) {
-            ListBaseT<ARegion> *lb = (&sl == area.spacedata.first) ? &area.regionbase :
-                                                                     &sl.regionbase;
-            for (ARegion &region : *lb) {
-              if (region.regiontype == RGN_TYPE_WINDOW) {
-                if (region.regiondata) {
-                  RegionView3D *rv3d = static_cast<RegionView3D *>(region.regiondata);
-                  if (rv3d->view == RV3D_VIEW_PERSPORTHO) {
-                    rv3d->view = RV3D_VIEW_USER;
-                  }
-                }
-              }
-            }
-            break;
-          }
-        }
-      }
-    }
 #undef RV3D_VIEW_PERSPORTHO
 
 #define LA_YF_PHOTON 5
@@ -1129,40 +1007,6 @@ void blo_do_versions_270(FileData *fd, Library * /*lib*/, Main *bmain)
       }
     }
 
-    for (bScreen &screen : bmain->screens) {
-      for (ScrArea &area : screen.areabase) {
-        for (SpaceLink &sl : area.spacedata) {
-          ListBaseT<ARegion> *regionbase = (&sl == area.spacedata.first) ? &area.regionbase :
-                                                                           &sl.regionbase;
-          /* Bug: Was possible to add preview region to sequencer view by using AZones. */
-          if (sl.spacetype == SPACE_SEQ) {
-            SpaceSeq *sseq = reinterpret_cast<SpaceSeq *>(&sl);
-            if (sseq->view == SEQ_VIEW_SEQUENCE) {
-              for (ARegion &region : *regionbase) {
-                /* remove preview region for sequencer-only view! */
-                if (region.regiontype == RGN_TYPE_PREVIEW) {
-                  region.flag |= RGN_FLAG_HIDDEN;
-                  region.alignment = RGN_ALIGN_NONE;
-                  break;
-                }
-              }
-            }
-          }
-          /* Remove old deprecated region from file-browsers. */
-          else if (sl.spacetype == SPACE_FILE) {
-            for (ARegion &region : *regionbase) {
-              if (region.regiontype == RGN_TYPE_CHANNELS) {
-                /* Free old deprecated 'channel' region... */
-                BKE_area_region_free(nullptr, &region);
-                BLI_freelinkN(regionbase, &region);
-                break;
-              }
-            }
-          }
-        }
-      }
-    }
-
     for (Scene &scene : bmain->scenes) {
       CurvePaintSettings *cps = &scene.toolsettings->curve_paint_settings;
       if (cps->error_threshold == 0) {
@@ -1181,22 +1025,6 @@ void blo_do_versions_270(FileData *fd, Library * /*lib*/, Main *bmain)
     }
 
     /* Adding "Properties" region to DopeSheet */
-    for (bScreen &screen : bmain->screens) {
-      for (ScrArea &area : screen.areabase) {
-        /* handle pushed-back space data first */
-        for (SpaceLink &sl : area.spacedata) {
-          if (sl.spacetype == SPACE_ACTION) {
-            SpaceAction *saction = reinterpret_cast<SpaceAction *>(&sl);
-            do_version_action_editor_properties_region(&saction->regionbase);
-          }
-        }
-
-        /* active spacedata info must be handled too... */
-        if (area.spacetype == SPACE_ACTION) {
-          do_version_action_editor_properties_region(&area.regionbase);
-        }
-      }
-    }
   }
 
   if (!MAIN_VERSION_FILE_ATLEAST(bmain, 277, 2)) {
@@ -1572,13 +1400,6 @@ void blo_do_versions_270(FileData *fd, Library * /*lib*/, Main *bmain)
 
   if (!MAIN_VERSION_FILE_ATLEAST(bmain, 279, 4)) {
     /* Fix for invalid state of screen due to bug in older versions. */
-    for (bScreen &screen : bmain->screens) {
-      for (ScrArea &area : screen.areabase) {
-        if (area.full && screen.state == SCREENNORMAL) {
-          area.full = nullptr;
-        }
-      }
-    }
 
     if (!DNA_struct_member_exists(fd->filesdna, "Brush", "float", "falloff_angle")) {
       for (Brush &br : bmain->brushes) {

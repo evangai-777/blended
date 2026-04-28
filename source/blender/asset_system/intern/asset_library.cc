@@ -16,6 +16,7 @@
 #include "BKE_lib_remap.hh"
 #include "BKE_main.hh"
 #include "BKE_preferences.h"
+#include "BKE_workspace.hh"
 
 #include "BLI_listbase.h"  // IWYU pragma: keep
 #include "BLI_path_utils.hh"
@@ -181,24 +182,31 @@ static void update_import_method_for_user_libraries()
 
 static void update_import_method_for_asset_browsers(Main &bmain)
 {
-  for (bScreen &screen : bmain.screens) {
-    for (ScrArea &area : screen.areabase) {
-      for (SpaceLink &sl : area.spacedata) {
-        if (sl.spacetype != SPACE_FILE) {
-          continue;
-        }
-        SpaceFile *sfile = reinterpret_cast<SpaceFile *>(&sl);
-        if (!sfile->asset_params) {
-          continue;
-        }
-        if (U.experimental.no_data_block_packing) {
-          if (sfile->asset_params->import_method == FILE_ASSET_IMPORT_PACK) {
-            sfile->asset_params->import_method = FILE_ASSET_IMPORT_APPEND_REUSE;
+  wmWindowManager *wm = static_cast<wmWindowManager *>(bmain.wm.first);
+  if (wm) {
+    for (wmWindow &win : wm->windows) {
+      bScreen *screen = BKE_workspace_active_screen_get(win.workspace_hook);
+      if (!screen) {
+        continue;
+      }
+      for (ScrArea &area : screen->areabase) {
+        for (SpaceLink &sl : area.spacedata) {
+          if (sl.spacetype != SPACE_FILE) {
+            continue;
           }
-        }
-        else {
-          if (sfile->asset_params->import_method == FILE_ASSET_IMPORT_APPEND_REUSE) {
-            sfile->asset_params->import_method = FILE_ASSET_IMPORT_PACK;
+          SpaceFile *sfile = reinterpret_cast<SpaceFile *>(&sl);
+          if (!sfile->asset_params) {
+            continue;
+          }
+          if (U.experimental.no_data_block_packing) {
+            if (sfile->asset_params->import_method == FILE_ASSET_IMPORT_PACK) {
+              sfile->asset_params->import_method = FILE_ASSET_IMPORT_APPEND_REUSE;
+            }
+          }
+          else {
+            if (sfile->asset_params->import_method == FILE_ASSET_IMPORT_APPEND_REUSE) {
+              sfile->asset_params->import_method = FILE_ASSET_IMPORT_PACK;
+            }
           }
         }
       }

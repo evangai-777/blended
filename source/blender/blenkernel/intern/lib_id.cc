@@ -664,7 +664,7 @@ static int id_copy_libmanagement_cb(LibraryIDLinkCallbackData *cb_data)
 
 bool BKE_id_copy_is_allowed(const ID *id)
 {
-#define LIB_ID_TYPES_NOCOPY ID_LI, ID_SCR, ID_WM /* Not supported */
+#define LIB_ID_TYPES_NOCOPY ID_LI /* Not supported */
 
   return !ID_TYPE_IS_DEPRECATED(GS(id->name)) && !ELEM(GS(id->name), LIB_ID_TYPES_NOCOPY);
 
@@ -2060,7 +2060,7 @@ void BKE_main_id_refcount_recompute(Main *bmain, const bool do_linked_only)
       id->tag &= ~(ID_TAG_EXTRAUSER | ID_TAG_EXTRAUSER_SET);
       id_us_ensure_real(id);
     }
-    if (ELEM(GS(id->name), ID_SCE, ID_WM)) {
+    if (ELEM(GS(id->name), ID_SCE)) {
       /* These IDs should always have a 'virtual' user. */
       id_us_ensure_real(id);
     }
@@ -2640,13 +2640,10 @@ void BKE_id_blend_write(BlendWriter *writer, ID *id)
     writer->write_struct(id->library_weak_reference);
   }
 
-  /* ID_WM's id->properties are considered runtime only, and never written in .blend file. */
-  if (id->properties && !ELEM(GS(id->name), ID_WM)) {
+  if (id->properties) {
     IDP_BlendWrite(writer, id->properties);
   }
-  /* ID_WM's id->system_properties are considered runtime only, and never written in .blend file.
-   */
-  if (id->system_properties && !ELEM(GS(id->name), ID_WM)) {
+  if (id->system_properties) {
     IDP_BlendWrite(writer, id->system_properties);
   }
 

@@ -17,6 +17,7 @@
 
 #include "BKE_action.hh"
 #include "BKE_context.hh"
+#include "BKE_workspace.hh"
 #ifdef WITH_XR_OPENXR
 #  include "BKE_idprop.hh"
 #endif
@@ -180,46 +181,54 @@ static void sync_viewport_camera_smoothview(bContext *C,
                                             const int smooth_viewtx)
 {
   Main *bmain = CTX_data_main(C);
-  for (bScreen &screen : bmain->screens) {
-    for (ScrArea &area : screen.areabase) {
-      for (SpaceLink &space_link : area.spacedata) {
-        if (space_link.spacetype == SPACE_VIEW3D) {
-          View3D *other_v3d = reinterpret_cast<View3D *>(&space_link);
-          if (other_v3d == v3d) {
-            continue;
-          }
-          if (other_v3d->camera == ob) {
-            continue;
-          }
-          /* Checking the other view is needed to prevent local cameras being modified. */
-          if (v3d->scenelock && other_v3d->scenelock) {
-            ListBaseT<ARegion> *lb = (&space_link == area.spacedata.first) ?
-                                         &area.regionbase :
-                                         &space_link.regionbase;
-            for (ARegion &other_region : *lb) {
-              if (other_region.regiontype == RGN_TYPE_WINDOW) {
-                if (other_region.regiondata) {
-                  RegionView3D *other_rv3d = static_cast<RegionView3D *>(other_region.regiondata);
-                  if (other_rv3d->persp == RV3D_CAMOB) {
-                    Object *other_camera_old = other_v3d->camera;
-                    other_v3d->camera = ob;
+  wmWindowManager *wm = static_cast<wmWindowManager *>(bmain->wm.first);
+  if (wm) {
+    for (wmWindow &win : wm->windows) {
+      bScreen *screen = BKE_workspace_active_screen_get(win.workspace_hook);
+      if (!screen) {
+        continue;
+      }
+      for (ScrArea &area : screen->areabase) {
+        for (SpaceLink &space_link : area.spacedata) {
+          if (space_link.spacetype == SPACE_VIEW3D) {
+            View3D *other_v3d = reinterpret_cast<View3D *>(&space_link);
+            if (other_v3d == v3d) {
+              continue;
+            }
+            if (other_v3d->camera == ob) {
+              continue;
+            }
+            /* Checking the other view is needed to prevent local cameras being modified. */
+            if (v3d->scenelock && other_v3d->scenelock) {
+              ListBaseT<ARegion> *lb = (&space_link == area.spacedata.first) ?
+                                           &area.regionbase :
+                                           &space_link.regionbase;
+              for (ARegion &other_region : *lb) {
+                if (other_region.regiontype == RGN_TYPE_WINDOW) {
+                  if (other_region.regiondata) {
+                    RegionView3D *other_rv3d = static_cast<RegionView3D *>(
+                        other_region.regiondata);
+                    if (other_rv3d->persp == RV3D_CAMOB) {
+                      Object *other_camera_old = other_v3d->camera;
+                      other_v3d->camera = ob;
 
-                    V3D_SmoothParams sview_params = {};
-                    sview_params.camera_old = other_camera_old;
-                    sview_params.camera = other_v3d->camera;
-                    sview_params.ofs = other_rv3d->ofs;
-                    sview_params.quat = other_rv3d->viewquat;
-                    sview_params.dist = &other_rv3d->dist;
-                    sview_params.lens = &other_v3d->lens;
-                    /* No undo because this switches cameras. */
-                    sview_params.undo_str = nullptr;
+                      V3D_SmoothParams sview_params = {};
+                      sview_params.camera_old = other_camera_old;
+                      sview_params.camera = other_v3d->camera;
+                      sview_params.ofs = other_rv3d->ofs;
+                      sview_params.quat = other_rv3d->viewquat;
+                      sview_params.dist = &other_rv3d->dist;
+                      sview_params.lens = &other_v3d->lens;
+                      /* No undo because this switches cameras. */
+                      sview_params.undo_str = nullptr;
 
-                    ED_view3d_lastview_store(other_rv3d);
-                    ED_view3d_smooth_view(
-                        C, other_v3d, &other_region, smooth_viewtx, &sview_params);
-                  }
-                  else {
-                    other_v3d->camera = ob;
+                      ED_view3d_lastview_store(other_rv3d);
+                      ED_view3d_smooth_view(
+                          C, other_v3d, &other_region, smooth_viewtx, &sview_params);
+                    }
+                    else {
+                      other_v3d->camera = ob;
+                    }
                   }
                 }
               }
@@ -806,14 +815,21 @@ static uint free_localview_bit(Main *bmain)
 
   /* Sometimes we lose a local-view: when an area is closed.
    * Check all areas: which local-views are in use? */
-  for (bScreen &screen : bmain->screens) {
-    for (ScrArea &area : screen.areabase) {
-      SpaceLink *sl = static_cast<SpaceLink *>(area.spacedata.first);
-      for (; sl; sl = sl->next) {
-        if (sl->spacetype == SPACE_VIEW3D) {
-          View3D *v3d = reinterpret_cast<View3D *>(sl);
-          if (v3d->localvd) {
-            local_view_bits |= v3d->local_view_uid;
+  wmWindowManager *wm = static_cast<wmWindowManager *>(bmain->wm.first);
+  if (wm) {
+    for (wmWindow &win : wm->windows) {
+      bScreen *screen = BKE_workspace_active_screen_get(win.workspace_hook);
+      if (!screen) {
+        continue;
+      }
+      for (ScrArea &area : screen->areabase) {
+        SpaceLink *sl = static_cast<SpaceLink *>(area.spacedata.first);
+        for (; sl; sl = sl->next) {
+          if (sl->spacetype == SPACE_VIEW3D) {
+            View3D *v3d = reinterpret_cast<View3D *>(sl);
+            if (v3d->localvd) {
+              local_view_bits |= v3d->local_view_uid;
+            }
           }
         }
       }
@@ -1233,13 +1249,20 @@ static uint free_localcollection_bit(const Main *bmain,
   ushort local_view_bits = 0;
 
   /* Check all areas: which local-views are in use? */
-  for (bScreen &screen : bmain->screens) {
-    for (ScrArea &area : screen.areabase) {
-      for (SpaceLink &sl : area.spacedata) {
-        if (sl.spacetype == SPACE_VIEW3D) {
-          View3D *v3d = reinterpret_cast<View3D *>(&sl);
-          if (v3d->flag & V3D_LOCAL_COLLECTIONS) {
-            local_view_bits |= v3d->local_collections_uid;
+  wmWindowManager *wm_lc = static_cast<wmWindowManager *>(bmain->wm.first);
+  if (wm_lc) {
+    for (wmWindow &win : wm_lc->windows) {
+      bScreen *screen = BKE_workspace_active_screen_get(win.workspace_hook);
+      if (!screen) {
+        continue;
+      }
+      for (ScrArea &area : screen->areabase) {
+        for (SpaceLink &sl : area.spacedata) {
+          if (sl.spacetype == SPACE_VIEW3D) {
+            View3D *v3d = reinterpret_cast<View3D *>(&sl);
+            if (v3d->flag & V3D_LOCAL_COLLECTIONS) {
+              local_view_bits |= v3d->local_collections_uid;
+            }
           }
         }
       }
@@ -1319,17 +1342,24 @@ void ED_view3d_local_collections_reset(const bContext *C, const bool reset_all)
   bool do_reset = false;
 
   /* Reset only the ones that are not in use. */
-  for (bScreen &screen : bmain->screens) {
-    for (ScrArea &area : screen.areabase) {
-      for (SpaceLink &sl : area.spacedata) {
-        if (sl.spacetype == SPACE_VIEW3D) {
-          View3D *v3d = reinterpret_cast<View3D *>(&sl);
-          if (v3d->local_collections_uid) {
-            if (v3d->flag & V3D_LOCAL_COLLECTIONS) {
-              local_view_bit &= ~v3d->local_collections_uid;
-            }
-            else {
-              do_reset = true;
+  wmWindowManager *wm_reset = static_cast<wmWindowManager *>(bmain->wm.first);
+  if (wm_reset) {
+    for (wmWindow &win : wm_reset->windows) {
+      bScreen *screen = BKE_workspace_active_screen_get(win.workspace_hook);
+      if (!screen) {
+        continue;
+      }
+      for (ScrArea &area : screen->areabase) {
+        for (SpaceLink &sl : area.spacedata) {
+          if (sl.spacetype == SPACE_VIEW3D) {
+            View3D *v3d = reinterpret_cast<View3D *>(&sl);
+            if (v3d->local_collections_uid) {
+              if (v3d->flag & V3D_LOCAL_COLLECTIONS) {
+                local_view_bit &= ~v3d->local_collections_uid;
+              }
+              else {
+                do_reset = true;
+              }
             }
           }
         }

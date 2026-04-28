@@ -568,7 +568,7 @@ static const char *wm_context_member_from_ptr(const bContext *C,
         break;
 #  undef ID_CAST_SCENEWORLD
       }
-      case ID_SCR: {
+      case ID_SCR_LEGACY: {
         CTX_TEST_PTR_ID(C, "screen", ptr->owner_id);
 
         TEST_PTR_DATA_TYPE("area", RNA_Area, ptr, CTX_wm_area(C));

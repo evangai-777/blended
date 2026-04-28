@@ -12,11 +12,13 @@
 
 #include "DNA_screen_types.h"
 #include "DNA_view3d_types.h"
+#include "DNA_windowmanager_types.h"
 
 #include "BKE_context.hh"
 #include "BKE_global.hh"
 #include "BKE_main.hh"
 #include "BKE_screen.hh"
+#include "BKE_workspace.hh"
 
 #include "BLI_listbase.h"
 #include "BLI_math_geom.h"
@@ -262,25 +264,30 @@ wmGizmo *gizmo_find_from_properties(const IDProperty *properties,
 {
   /* Based on #rna_GizmoProperties_find_operator. */
 
-  for (bScreen *screen = static_cast<bScreen *>(G_MAIN->screens.first); screen;
-       screen = static_cast<bScreen *>(screen->id.next))
-  {
-    for (ScrArea &area : screen->areabase) {
-      if (!ELEM(spacetype, SPACE_TYPE_ANY, area.spacetype)) {
+  wmWindowManager *wm = static_cast<wmWindowManager *>(G_MAIN->wm.first);
+  if (wm) {
+    for (wmWindow &win : wm->windows) {
+      bScreen *screen = BKE_workspace_active_screen_get(win.workspace_hook);
+      if (!screen) {
         continue;
       }
-      for (ARegion &region : area.regionbase) {
-        if (region.runtime->gizmo_map == nullptr) {
+      for (ScrArea &area : screen->areabase) {
+        if (!ELEM(spacetype, SPACE_TYPE_ANY, area.spacetype)) {
           continue;
         }
-        if (!ELEM(regionid, RGN_TYPE_ANY, region.regiontype)) {
-          continue;
-        }
+        for (ARegion &region : area.regionbase) {
+          if (region.runtime->gizmo_map == nullptr) {
+            continue;
+          }
+          if (!ELEM(regionid, RGN_TYPE_ANY, region.regiontype)) {
+            continue;
+          }
 
-        for (wmGizmoGroup &gzgroup : *WM_gizmomap_group_list(region.runtime->gizmo_map)) {
-          for (wmGizmo &gz : gzgroup.gizmos) {
-            if (gz.properties == properties) {
-              return &gz;
+          for (wmGizmoGroup &gzgroup : *WM_gizmomap_group_list(region.runtime->gizmo_map)) {
+            for (wmGizmo &gz : gzgroup.gizmos) {
+              if (gz.properties == properties) {
+                return &gz;
+              }
             }
           }
         }

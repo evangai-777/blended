@@ -162,8 +162,6 @@ void BKE_main_clear(Main &bmain)
         CASE_ID_INDEX(INDEX_ID_PC);
         CASE_ID_INDEX(INDEX_ID_BR);
         CASE_ID_INDEX(INDEX_ID_SCE);
-        CASE_ID_INDEX(INDEX_ID_SCR);
-        CASE_ID_INDEX(INDEX_ID_WM);
         case INDEX_ID_NULL: {
           BLI_assert_unreachable();
           break;
@@ -1011,8 +1009,6 @@ ListBaseT<ID> *which_libbase(Main *bmain, short type)
       return &(bmain->shapekeys.cast<ID>());
     case ID_WO:
       return &(bmain->worlds.cast<ID>());
-    case ID_SCR:
-      return &(bmain->screens.cast<ID>());
     case ID_VF:
       return &(bmain->fonts.cast<ID>());
     case ID_TXT:
@@ -1035,8 +1031,6 @@ ListBaseT<ID> *which_libbase(Main *bmain, short type)
       return &(bmain->brushes.cast<ID>());
     case ID_PA:
       return &(bmain->particles.cast<ID>());
-    case ID_WM:
-      return &(bmain->wm.cast<ID>());
     case ID_GD_LEGACY:
       return &(bmain->gpencils.cast<ID>());
     case ID_GP:
@@ -1059,6 +1053,11 @@ ListBaseT<ID> *which_libbase(Main *bmain, short type)
       return &(bmain->pointclouds.cast<ID>());
     case ID_VO:
       return &(bmain->volumes.cast<ID>());
+    /* Runtime window state — not project data, not in BKE_main_lists_get. */
+    case ID_SCR_LEGACY:
+      return &(bmain->screens.cast<ID>());
+    case ID_WM_LEGACY:
+      return &(bmain->wm.cast<ID>());
   }
   return nullptr;
 }
@@ -1116,12 +1115,10 @@ MainListsArray BKE_main_lists_get(Main &bmain)
 
   lb[INDEX_ID_WO] = &(bmain.worlds.cast<ID>());
   lb[INDEX_ID_MC] = &(bmain.movieclips.cast<ID>());
-  lb[INDEX_ID_SCR] = &(bmain.screens.cast<ID>());
   lb[INDEX_ID_OB] = &(bmain.objects.cast<ID>());
   /* referenced by scenes */
   lb[INDEX_ID_LS] = &(bmain.linestyles.cast<ID>());
   lb[INDEX_ID_SCE] = &(bmain.scenes.cast<ID>());
-  lb[INDEX_ID_WM] = &(bmain.wm.cast<ID>());
   lb[INDEX_ID_MSK] = &(bmain.masks.cast<ID>());
 
   return lb;

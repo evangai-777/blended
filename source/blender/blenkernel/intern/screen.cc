@@ -63,24 +63,11 @@ namespace blender {
 static CLG_LogRef LOG_BLEND_DOVERSION = {"blend.doversion"};
 
 /* -------------------------------------------------------------------- */
-/** \name ID Type Implementation
+/** \name Screen Lifecycle
  * \{ */
 
-static void screen_init_data(ID *id)
+void BKE_screen_free_data(bScreen *screen)
 {
-  bScreen *screen = id_cast<bScreen *>(id);
-
-  screen->do_draw = true;
-  screen->do_refresh = true;
-  screen->redraws_flag = TIME_ALL_3D_WIN | TIME_ALL_ANIM_WIN;
-}
-
-static void screen_free_data(ID *id)
-{
-  bScreen *screen = id_cast<bScreen *>(id);
-
-  /* No animation-data here. */
-
   for (ARegion &region : screen->regionbase) {
     BKE_area_region_free(nullptr, &region);
   }
@@ -91,34 +78,18 @@ static void screen_free_data(ID *id)
 
   BKE_previewimg_id_free(&screen->id);
 
-  /* Region and timer are freed by the window manager. */
-  /* Cannot use MEM_SAFE_DELETE, as #wmTooltipState type is only defined in `WM_types.hh`, which is
-   * currently not included here. */
   if (screen->tool_tip) {
     MEM_delete_void(static_cast<void *>(screen->tool_tip));
     screen->tool_tip = nullptr;
   }
 }
 
-static void screen_copy_data(Main * /*bmain*/,
-                             std::optional<Library *> owner_library,
-                             ID *id_dst,
-                             const ID *id_src,
-                             int /*flag*/)
+void BKE_screen_copy_data(bScreen *screen_dst, const bScreen *screen_src)
 {
-  /* Workspaces should always be local data currently. */
-  BLI_assert(!owner_library || owner_library == nullptr);
-  UNUSED_VARS_NDEBUG(owner_library);
-
-  bScreen *screen_dst = id_cast<bScreen *>(id_dst);
-  const bScreen *screen_src = id_cast<const bScreen *>(id_src);
-
   screen_dst->do_draw = true;
   screen_dst->do_refresh = true;
   screen_dst->redraws_flag = TIME_ALL_3D_WIN | TIME_ALL_ANIM_WIN;
-
   screen_dst->state = SCREENNORMAL;
-
   screen_dst->flag = screen_src->flag;
 
   BLI_duplicatelist(&screen_dst->vertbase, &screen_src->vertbase);
@@ -158,7 +129,6 @@ static void screen_copy_data(Main * /*bmain*/,
     }
   }
 
-  /* Cleanup: reset temp data. */
   for (ScrVert &sv_src : screen_src->vertbase) {
     sv_src.newv = nullptr;
   }
@@ -175,39 +145,6 @@ void BKE_screen_foreach_id_screen_area(LibraryForeachIDData *data, ScrArea *area
       space_type->foreach_id(&sl, data);
     }
   }
-}
-
-static void screen_foreach_id(ID *id, LibraryForeachIDData *data)
-{
-  bScreen *screen = reinterpret_cast<bScreen *>(id);
-  const int flag = BKE_lib_query_foreachid_process_flags_get(data);
-
-  if (flag & IDWALK_DO_DEPRECATED_POINTERS) {
-    BKE_LIB_FOREACHID_PROCESS_IDSUPER(data, screen->scene, IDWALK_CB_NOP);
-  }
-
-  if (flag & IDWALK_INCLUDE_UI) {
-    for (ScrArea &area : screen->areabase) {
-      BKE_LIB_FOREACHID_PROCESS_FUNCTION_CALL(data,
-                                              BKE_screen_foreach_id_screen_area(data, &area));
-    }
-  }
-}
-
-static void screen_blend_write(BlendWriter *writer, ID *id, const void *id_address)
-{
-  bScreen *screen = id_cast<bScreen *>(id);
-
-  /* write LibData */
-  /* in 2.50+ files, the file identifier for screens is patched, forward compatibility */
-  writer->write_struct_at_address_by_id_with_filecode(
-      ID_SCRN, dna::sdna_struct_id_get<bScreen>(), id_address, screen);
-  BKE_id_blend_write(writer, &screen->id);
-
-  BKE_previewimg_blend_write(writer, screen->preview);
-
-  /* direct data */
-  BKE_screen_area_map_blend_write(writer, AREAMAP_FROM_SCREEN(screen));
 }
 
 bool BKE_screen_blend_read_data(BlendDataReader *reader, bScreen *screen)
@@ -232,50 +169,6 @@ bool BKE_screen_blend_read_data(BlendDataReader *reader, bScreen *screen)
   return success;
 }
 
-/* NOTE: file read without screens option G_FILE_NO_UI;
- * check lib pointers in call below */
-static void screen_blend_read_after_liblink(BlendLibReader *reader, ID *id)
-{
-  bScreen *screen = reinterpret_cast<bScreen *>(id);
-
-  for (ScrArea &area : screen->areabase) {
-    BKE_screen_area_blend_read_after_liblink(reader, &screen->id, &area);
-  }
-}
-
-IDTypeInfo IDType_ID_SCR = {
-    .id_code = bScreen::id_type,
-    .id_filter = FILTER_ID_SCR,
-    /* NOTE: Can actually link to any ID type through UI (e.g. Outliner Editor).
-     * This is handled separately though. */
-    .dependencies_id_types = FILTER_ID_SCE,
-    .main_listbase_index = INDEX_ID_SCR,
-    .struct_size = sizeof(bScreen),
-    .name = "Screen",
-    .name_plural = N_("screens"),
-    .translation_context = BLT_I18NCONTEXT_ID_SCREEN,
-    .flags = IDTYPE_FLAGS_ONLY_APPEND | IDTYPE_FLAGS_NO_ANIMDATA | IDTYPE_FLAGS_NO_MEMFILE_UNDO,
-    .asset_type_info = nullptr,
-
-    .init_data = screen_init_data,
-    .copy_data = screen_copy_data,
-    .free_data = screen_free_data,
-    .make_local = nullptr,
-    .foreach_id = screen_foreach_id,
-    .foreach_cache = nullptr,
-    .foreach_path = nullptr,
-    .foreach_working_space_color = nullptr,
-    .owner_pointer_get = nullptr,
-
-    .blend_write = screen_blend_write,
-    /* Cannot be used yet, because #direct_link_screen has a return value. */
-    .blend_read_data = nullptr,
-    .blend_read_after_liblink = screen_blend_read_after_liblink,
-
-    .blend_read_undo_preserve = nullptr,
-
-    .lib_override_apply_post = nullptr,
-};
 
 /** \} */
 
@@ -1076,7 +969,7 @@ ARegion *BKE_screen_find_region_in_space(const bScreen *screen,
 
 std::optional<std::string> BKE_screen_path_from_screen_to_space(const PointerRNA *ptr)
 {
-  if (GS(ptr->owner_id->name) != ID_SCR) {
+  if (GS(ptr->owner_id->name) != ID_SCR_LEGACY) {
     BLI_assert_unreachable();
     return std::nullopt;
   }
@@ -1095,7 +988,7 @@ std::optional<std::string> BKE_screen_path_from_screen_to_space(const PointerRNA
 
 std::optional<std::string> BKE_screen_path_from_screen_to_area(const PointerRNA *ptr)
 {
-  if (GS(ptr->owner_id->name) != ID_SCR) {
+  if (GS(ptr->owner_id->name) != ID_SCR_LEGACY) {
     BLI_assert_unreachable();
     return std::nullopt;
   }

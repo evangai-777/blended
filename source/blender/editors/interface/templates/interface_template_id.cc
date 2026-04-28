@@ -874,8 +874,6 @@ static StringRef template_id_browse_tip(const StructRNA *type)
         return N_("Browse Camera Data to be linked");
       case ID_WO:
         return N_("Browse World Settings to be linked");
-      case ID_SCR:
-        return N_("Choose Screen layout");
       case ID_TXT:
         return N_("Browse Text to be linked");
       case ID_SPK:
@@ -920,7 +918,6 @@ static StringRef template_id_browse_tip(const StructRNA *type)
       case ID_KE:
       case ID_VF:
       case ID_GR:
-      case ID_WM:
         break;
     }
   }
@@ -1004,7 +1001,6 @@ static Button *template_id_def_new_but(Block *block,
                             BLT_I18NCONTEXT_ID_PARTICLESETTINGS,
                             BLT_I18NCONTEXT_ID_POINTCLOUD,
                             BLT_I18NCONTEXT_ID_SCENE,
-                            BLT_I18NCONTEXT_ID_SCREEN,
                             BLT_I18NCONTEXT_ID_SOUND,
                             BLT_I18NCONTEXT_ID_SPEAKER,
                             BLT_I18NCONTEXT_ID_TEXT,
@@ -1317,7 +1313,7 @@ static void template_ID(const bContext *C,
                       UI_UNIT_Y,
                       std::nullopt);
       }
-      else if (!ELEM(GS(id->name), ID_GR, ID_SCE, ID_SCR, ID_OB) && (hide_buttons == false))
+      else if (!ELEM(GS(id->name), ID_GR, ID_SCE, ID_OB) && (hide_buttons == false))
       {
         uiDefIconButR(block,
                       ButtonType::IconToggle,

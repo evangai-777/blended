@@ -635,11 +635,9 @@ static int gather_frames_to_render_for_id(LibraryIDLinkCallbackData *cb_data)
     case ID_LI:  /* Library */
     case ID_OB:  /* Object */
     case ID_WO:  /* World */
-    case ID_SCR: /* Screen */
     case ID_GR:  /* Group */
     case ID_AC:  /* bAction */
     case ID_BR:  /* Brush */
-    case ID_WM:  /* WindowManager */
     case ID_LS:  /* FreestyleLineStyle */
     case ID_PAL: /* Palette */
     case ID_PC:  /* PaintCurve */

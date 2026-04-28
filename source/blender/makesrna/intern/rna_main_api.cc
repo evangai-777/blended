@@ -840,8 +840,6 @@ RNA_MAIN_ID_TAG_FUNCS_DEF(node_groups, nodetrees, ID_NT)
 RNA_MAIN_ID_TAG_FUNCS_DEF(meshes, meshes, ID_ME)
 RNA_MAIN_ID_TAG_FUNCS_DEF(lights, lights, ID_LA)
 RNA_MAIN_ID_TAG_FUNCS_DEF(libraries, libraries, ID_LI)
-RNA_MAIN_ID_TAG_FUNCS_DEF(screens, screens, ID_SCR)
-RNA_MAIN_ID_TAG_FUNCS_DEF(window_managers, wm, ID_WM)
 RNA_MAIN_ID_TAG_FUNCS_DEF(images, images, ID_IM)
 RNA_MAIN_ID_TAG_FUNCS_DEF(lattices, lattices, ID_LT)
 RNA_MAIN_ID_TAG_FUNCS_DEF(curves, curves, ID_CU_LEGACY)
@@ -870,6 +868,9 @@ RNA_MAIN_ID_TAG_FUNCS_DEF(lightprobes, lightprobes, ID_LP)
 RNA_MAIN_ID_TAG_FUNCS_DEF(hair_curves, hair_curves, ID_CV)
 RNA_MAIN_ID_TAG_FUNCS_DEF(pointclouds, pointclouds, ID_PT)
 RNA_MAIN_ID_TAG_FUNCS_DEF(volumes, volumes, ID_VO)
+/* Runtime only — not project data. id_type param unused by macro. */
+RNA_MAIN_ID_TAG_FUNCS_DEF(screens, screens, ID_SCR_LEGACY)
+RNA_MAIN_ID_TAG_FUNCS_DEF(window_managers, wm, ID_WM_LEGACY)
 
 #  undef RNA_MAIN_ID_TAG_FUNCS_DEF
 

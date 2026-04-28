@@ -31,6 +31,7 @@
 #include "BKE_node_tree_update.hh"
 #include "BKE_object.hh"
 #include "BKE_screen.hh"
+#include "BKE_workspace.hh"
 
 #include "BLO_read_write.hh"
 #include "BLO_readfile.hh"
@@ -58,6 +59,7 @@
 #include "DNA_modifier_types.h"
 #include "DNA_screen_types.h"
 #include "DNA_space_types.h"
+#include "DNA_windowmanager_types.h"
 
 #include "DEG_depsgraph.hh"
 #include "DEG_depsgraph_build.hh"
@@ -2999,9 +3001,15 @@ static void legacy_gpencil_sanitize_annotations(Main &bmain)
     }
   }
 
-  for (bScreen &screen : bmain.screens) {
-    for (ScrArea &area : screen.areabase) {
-      for (SpaceLink &space_link : area.spacedata) {
+  wmWindowManager *wm = static_cast<wmWindowManager *>(bmain.wm.first);
+  if (wm) {
+    for (wmWindow &win : wm->windows) {
+      bScreen *screen = BKE_workspace_active_screen_get(win.workspace_hook);
+      if (!screen) {
+        continue;
+      }
+      for (ScrArea &area : screen->areabase) {
+        for (SpaceLink &space_link : area.spacedata) {
         switch (eSpace_Type(space_link.spacetype)) {
           case SPACE_SEQ: {
             SpaceSeq *space_sequencer = reinterpret_cast<SpaceSeq *>(&space_link);
@@ -3040,6 +3048,7 @@ static void legacy_gpencil_sanitize_annotations(Main &bmain)
         }
       }
     }
+  }
   }
 }
 

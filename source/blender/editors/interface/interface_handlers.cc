@@ -767,22 +767,6 @@ static bool rna_is_userdef(PointerRNA *ptr, PropertyRNA *prop)
   {
     is_userdef = true;
   }
-  else if (ptr->owner_id) {
-    switch (GS(ptr->owner_id->name)) {
-      case ID_WM: {
-        for (const AncestorPointerRNA &ancestor : ptr->ancestors) {
-          if (RNA_struct_is_a(ancestor.type, RNA_KeyConfigPreferences)) {
-            is_userdef = true;
-            break;
-          }
-        }
-        break;
-      }
-      default: {
-        break;
-      }
-    }
-  }
   else if (ptr->owner_id == nullptr) {
     for (const AncestorPointerRNA &ancestor : ptr->ancestors) {
       if (RNA_struct_is_a(ancestor.type, RNA_AddonPreferences)) {

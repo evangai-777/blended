@@ -90,6 +90,9 @@
 #include "BKE_scene_runtime.hh"
 #include "BKE_sound.hh"
 #include "BKE_sound_sample.hh"
+#include "BKE_workspace.hh"
+
+#include "DNA_windowmanager_types.h"
 
 #include "DEG_depsgraph.hh"
 #include "DEG_depsgraph_query.hh"
@@ -1155,12 +1158,14 @@ void BKE_sound_seek_scene(Main *bmain, Scene *scene)
 {
   std::lock_guard lock(g_state.sound_device_mutex);
   bool animation_playing = false;
-  for (bScreen *screen = static_cast<bScreen *>(bmain->screens.first); screen;
-       screen = static_cast<bScreen *>(screen->id.next))
-  {
-    if (screen->animtimer) {
-      animation_playing = true;
-      break;
+  wmWindowManager *wm = static_cast<wmWindowManager *>(bmain->wm.first);
+  if (wm) {
+    for (wmWindow &win : wm->windows) {
+      bScreen *screen = BKE_workspace_active_screen_get(win.workspace_hook);
+      if (screen && screen->animtimer) {
+        animation_playing = true;
+        break;
+      }
     }
   }
 

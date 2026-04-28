@@ -1392,7 +1392,7 @@ static IDProperty **rna_View3DShading_idprops(PointerRNA *ptr)
 static void rna_3DViewShading_type_update(Main *bmain, Scene *scene, PointerRNA *ptr)
 {
   ID *id = ptr->owner_id;
-  if (GS(id->name) != ID_SCR) {
+  if (GS(id->name) != ID_SCR_LEGACY) {
     return;
   }
 
@@ -1430,10 +1430,6 @@ static Scene *rna_3DViewShading_scene(PointerRNA *ptr)
   if (GS(id->name) == ID_SCE) {
     return id_cast<Scene *>(id);
   }
-  else if (GS(id->name) == ID_WM) {
-    /* For XR shading settings. */
-    return nullptr;
-  }
   else {
     bScreen *screen = id_cast<bScreen *>(ptr->owner_id);
     return WM_windows_scene_get_from_screen(static_cast<wmWindowManager *>(G_MAIN->wm.first),
@@ -1446,10 +1442,6 @@ static ViewLayer *rna_3DViewShading_view_layer(PointerRNA *ptr)
   /* Get scene, depends if using 3D view or OpenGL render settings. */
   ID *id = ptr->owner_id;
   if (GS(id->name) == ID_SCE) {
-    return nullptr;
-  }
-  else if (GS(id->name) == ID_WM) {
-    /* For XR shading settings. */
     return nullptr;
   }
   else {
@@ -1814,7 +1806,7 @@ static std::optional<std::string> rna_View3DShading_path(const PointerRNA *ptr)
   if (GS(ptr->owner_id->name) == ID_SCE) {
     return "display.shading";
   }
-  else if (GS(ptr->owner_id->name) == ID_SCR) {
+  else if (GS(ptr->owner_id->name) == ID_SCR_LEGACY) {
     const bScreen *screen = reinterpret_cast<bScreen *>(ptr->owner_id);
     const View3DShading *shading = static_cast<View3DShading *>(ptr->data);
 

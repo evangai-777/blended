@@ -1992,9 +1992,6 @@ static void after_liblink_id_embedded_id_process(BlendLibReader *reader, ID *id)
 
 static void after_liblink_id_process(BlendLibReader *reader, ID *id)
 {
-  /* NOTE: WM IDProperties are never written to file, hence they should always be nullptr here. */
-  BLI_assert((GS(id->name) != ID_WM) || id->properties == nullptr);
-
   after_liblink_id_embedded_id_process(reader, id);
 
   const IDTypeInfo *id_type = BKE_idtype_get_info_from_id(id);
@@ -2749,9 +2746,6 @@ static bool direct_link_id(FileData *fd,
   bool success = true;
 
   switch (GS(id->name)) {
-    case ID_SCR:
-      success = BKE_screen_blend_read_data(&reader, id_cast<bScreen *>(id));
-      break;
     case ID_LI:
       direct_link_library(fd, id_cast<Library *>(id), main);
       break;
@@ -4265,10 +4259,10 @@ BlendFileData *blo_read_file_internal(FileData *fd, const char *filepath)
         bmain_to_read_into = fd->bmain;
         break;
       case ID_SCRN:
-        /* in 2.50+ files, the file identifier for screens is patched, forward compatibility */
-        bhead->code = ID_SCR;
-        /* pass on to default */
-        ATTR_FALLTHROUGH;
+      case ID_SCR_LEGACY:
+        /* Screens are no longer project data — skip these blocks. */
+        bhead = blo_bhead_next(fd, bhead);
+        break;
       default: {
         if ((fd->skip_flags & BLO_READ_SKIP_DATA) != 0 || !blo_bhead_is_id_valid_type(bhead)) {
           bhead = blo_bhead_next(fd, bhead);
@@ -4967,9 +4961,9 @@ static void expand_doit_library(void *fdhandle,
   if (bhead == nullptr) {
     return;
   }
-  /* In 2.50+ file identifier for screens is patched, forward compatibility. */
-  if (bhead->code == ID_SCRN) {
-    bhead->code = ID_SCR;
+  /* Screen blocks (SCRN/SR) are no longer project data — skip. */
+  if (bhead->code == ID_SCRN || bhead->code == ID_SCR_LEGACY) {
+    return;
   }
   if (!blo_bhead_is_id_valid_type(bhead)) {
     return;

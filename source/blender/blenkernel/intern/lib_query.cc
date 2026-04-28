@@ -502,12 +502,6 @@ uint64_t BKE_library_id_can_use_filter_id(const ID *owner_id,
   if (owner_id->system_properties) {
     return FILTER_ID_ALL;
   }
-  /* When including UI data (i.e. editors), Screen UI IDs can also link to virtually any ID
-   * (through e.g. the Outliner). */
-  if (include_ui && GS(owner_id->name) == ID_SCR) {
-    return FILTER_ID_ALL;
-  }
-
   /* Casting to non const.
    * TODO(jbakker): We should introduce a ntree_id_has_tree function as we are actually not
    * interested in the result. */

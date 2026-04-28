@@ -707,7 +707,7 @@ static void swap_wm_data_for_blendfile(ReuseOldBMainData *reuse_data, const bool
   /* Current (old) WM, but no (new) one in file (should only happen when reading pre 2.5 files, no
    * WM back then), or not loading UI: Keep current WM. */
   else {
-    swap_old_bmain_data_for_blendfile(reuse_data, ID_WM);
+    std::swap(*old_wm_list, *new_wm_list);
     old_wm->init_flag &= ~WM_INIT_FLAG_WINDOW;
     reuse_data->wm_setup_data->old_wm = old_wm;
   }
@@ -989,28 +989,13 @@ static void setup_app_data(bContext *C,
                                      reuse_editable_asset_needed(&reuse_data);
 
   if (mode != LOAD_UNDO) {
-    const short ui_id_codes[]{ID_SCR};
-
     /* WM needs special complex handling, regardless of whether UI is kept or loaded from file. */
     swap_wm_data_for_blendfile(&reuse_data, mode == LOAD_UI);
-    if (mode != LOAD_UI) {
-      /* Re-use UI data from `old_bmain` if keeping existing UI. */
-      for (auto id_code : ui_id_codes) {
-        swap_old_bmain_data_for_blendfile(&reuse_data, id_code);
-      }
-    }
 
     /* Needs to happen after all data from `old_bmain` has been moved into new one. */
     BLI_assert(reuse_data.id_map == nullptr);
     reuse_data.id_map = BKE_main_idmap_create(
         reuse_data.new_bmain, true, reuse_data.old_bmain, MAIN_IDMAP_TYPE_NAME);
-
-    swap_old_bmain_data_dependencies_process(&reuse_data, ID_WM);
-    if (mode != LOAD_UI) {
-      for (auto id_code : ui_id_codes) {
-        swap_old_bmain_data_dependencies_process(&reuse_data, id_code);
-      }
-    }
 
     BKE_main_idmap_destroy(reuse_data.id_map);
 
@@ -1028,8 +1013,15 @@ static void setup_app_data(bContext *C,
     }
 
     if (mode != LOAD_UI) {
-      for (bScreen &screen : bfd->main->screens) {
-        BKE_screen_runtime_refresh_for_blendfile(&screen);
+      wmWindowManager *wm_iter = static_cast<wmWindowManager *>(bfd->main->wm.first);
+      if (wm_iter) {
+        for (wmWindow &win : wm_iter->windows) {
+          bScreen *screen = BKE_workspace_active_screen_get(win.workspace_hook);
+          if (!screen) {
+            continue;
+          }
+          BKE_screen_runtime_refresh_for_blendfile(screen);
+        }
       }
     }
   }
@@ -1430,7 +1422,7 @@ void BKE_blendfile_read_make_empty(bContext *C)
 
   FOREACH_MAIN_LISTBASE_BEGIN (bmain, lb) {
     FOREACH_MAIN_LISTBASE_ID_BEGIN (lb, id) {
-      if (ELEM(GS(id->name), ID_SCE, ID_SCR, ID_WM)) {
+      if (ELEM(GS(id->name), ID_SCE)) {
         break;
       }
       BKE_id_delete(bmain, id);

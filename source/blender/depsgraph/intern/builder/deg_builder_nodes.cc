@@ -658,9 +658,7 @@ void DepsgraphNodeBuilder::build_id(ID *id, const bool force_be_visible)
       break;
 
     case ID_LI:
-    case ID_SCR:
     case ID_BR:
-    case ID_WM:
     case ID_PAL:
     case ID_PC:
       BLI_assert(!deg_eval_copy_is_needed(id_type));
