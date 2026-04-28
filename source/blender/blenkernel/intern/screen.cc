@@ -661,16 +661,6 @@ void BKE_screen_area_map_free(ScrAreaMap *area_map)
   BLI_freelistN(&area_map->areabase);
 }
 
-void BKE_screen_free_data(bScreen *screen)
-{
-  screen_free_data(&screen->id);
-}
-
-void BKE_screen_copy_data(bScreen *screen_dst, const bScreen *screen_src)
-{
-  screen_copy_data(nullptr, std::nullopt, &screen_dst->id, &screen_src->id, 0);
-}
-
 /** \} */
 
 /* -------------------------------------------------------------------- */

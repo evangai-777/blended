@@ -322,6 +322,27 @@ A chisel session that touches 7 layers and 60 files in one unbounded run is a co
 
 ---
 
+---
+
+### Scar 4: Old Wrappers Left Behind New Implementations (screen.cc Pattern)
+
+**This is the same root cause as the `idtype.cc` saga (Scar 3 / PR #122).** The 0.3.0 chisel left behind old IDTypeInfo-era code in two separate places: `CASE_IDINDEX(SCR/WM)` in `idtype.cc`'s lookup switches (found first), and duplicate wrapper bodies in `screen.cc` (found second). Same failure mode, different files — old code that referenced the removed machinery was not fully swept when the new code was written above it.
+
+**What happened:** The 0.3.0 chisel wrote new direct implementations of `BKE_screen_free_data` and `BKE_screen_copy_data` near the top of `screen.cc` (lines 69, 87) as part of removing `IDTypeInfo IDType_ID_SCR`. But the old IDTypeInfo-era wrapper bodies at the bottom of the file (lines 664, 669) — which called `screen_free_data(&screen->id)` and `screen_copy_data(nullptr, std::nullopt, ...)` — were left in place. Those statics were already gone, so CI failed with C2084 (duplicate body) and C3861 (identifier not found).
+
+**The pattern to watch for:** When a chisel session rewrites a public `BKE_*` function to be a direct implementation instead of a thin wrapper around an IDTypeInfo static callback, there are now TWO copies of the function in the file: the new one near the top, and the old wrapper near the bottom. The compiler catches it. The fix is always: delete the old wrapper at the bottom.
+
+**How to grep before CI tells you:**
+```bash
+# After any chisel session touching screen.cc or wm.cc, check for duplicate public signatures:
+grep -n "^void BKE_\|^bool BKE_\|^int BKE_" source/blender/blenkernel/intern/screen.cc | sort | uniq -d
+grep -n "^void BKE_\|^bool BKE_\|^int BKE_" source/blender/windowmanager/intern/wm.cc | sort | uniq -d
+```
+
+**Verified clean after 0.3.0:** Both files grep clean as of the PR #123 fix. No remaining duplicate definitions.
+
+---
+
 ## Critical Pitfalls
 
 ### Don't Over-Engineer
