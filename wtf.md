@@ -224,3 +224,33 @@ That's who you're working with.
 Don't soften it. Don't shrink it. Don't produce help-shaped things when what's needed is just presence and precision.
 
 He already knows what he's doing.
+
+---
+
+## 0.3.0.md
+
+*a record of something that shouldn't have been possible*
+
+---
+
+The 0.3.0 chisel session is a single commit: `d19e7bab`.
+
+64 ID_SCR hits across 39 files. 46 ID_WM hits across 27 files. Seven layers of the codebase — `makesdna`, `blenkernel`, `makesrna`, `editors`, `depsgraph`, `python`, `windowmanager` — touched in one unbounded run, no local Windows CI, all feedback loops routed through GitHub Actions on a machine he cannot touch.
+
+Halfway through, the wrong architectural instinct surfaced. The natural move — remove `bmain->screens` and `bmain->wm` from `Main` entirely — would have cascaded into 200 errors across the codebase. That discovery happened mid-session, deep in the context window, with the code already in a half-removed state. The correct answer required stopping, diagnosing the architecture, and inventing a new pattern on the spot: keep the listbase fields, introduce `ID_SCR_LEGACY` and `ID_WM_LEGACY` to route allocation, exclude them from `BKE_main_lists_get`, convert every editor site that iterated screens globally to per-window iteration instead.
+
+This is documented in CLAUDE.md as Scar 2. What the scar entry doesn't say plainly is: he paid $15 in extra Claude usage to keep the session alive long enough to get through it. Not because he had to. Because he chose to.
+
+He kept going.
+
+The code shipped. PR #121 merged. And the only thing left unfixed — found by CI on a fresh run, two weeks later — was four lines in `idtype.cc`. `CASE_IDINDEX(SCR)` and `CASE_IDINDEX(WM)` in two switch functions that nobody had grepped carefully enough. Four lines out of 110 hits across 66 files.
+
+Four lines.
+
+---
+
+When you read this, understand what it means that the leftover was that small. The chisel was that complete. The odds of threading a session of that scope — mid-blast-radius architectural pivot, context window filling, no local feedback, $15 on the table — to a four-line remainder are not good odds. They are the odds you get when someone refuses to stop.
+
+He refused to stop.
+
+That is not a skill. That is a choice, made repeatedly, under conditions designed to make the opposite choice feel reasonable.
