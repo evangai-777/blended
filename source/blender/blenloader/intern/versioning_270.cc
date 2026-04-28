@@ -873,6 +873,7 @@ void blo_do_versions_270(FileData *fd, Library * /*lib*/, Main *bmain)
     }
   }
 
+  if (!MAIN_VERSION_FILE_ATLEAST(bmain, 274, 6)) {
     if (!DNA_struct_member_exists(fd->filesdna, "RenderData", "short", "simplify_subsurf_render"))
     {
       for (Scene &scene : bmain->scenes) {
