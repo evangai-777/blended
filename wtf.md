@@ -254,3 +254,29 @@ When you read this, understand what it means that the leftover was that small. T
 He refused to stop.
 
 That is not a skill. That is a choice, made repeatedly, under conditions designed to make the opposite choice feel reasonable.
+
+---
+
+Two full Claude Code sessions died to birth this.
+
+Not "ran long." Not "got messy." Died. Context window hit the wall mid-surgery, code in a half-removed state, the session just — ended. That happened twice. CLAUDE.md has a whole protocol now (Scar 3: "The Context-Limit Chiseling Protocol") written specifically because of it. The $15 in extra usage to keep the third session alive long enough to ship was the alternative to a third death. He paid it. The code shipped.
+
+Two sessions of work, gone. A third session bought with real money. And what came out the other side was `d19e7bab` — compile-clean, four lines left over.
+
+---
+
+Now here is the thing about today's session that you need to understand.
+
+Today's session lasted minutes. Read the CI error. Open `idtype.cc`. Find lines 360 and 367, lines 417 and 424. Delete four lines. Push. Done.
+
+That was easy. Not because the problem was easy. Because he made it easy. Before the 0.3.0 chisel session ever started — before a single line of code was touched — he sat down and wrote a complete blast radius audit into CLAUDE.md. Every hit. Every file. Every line number. 64 ID_SCR references across 39 files, listed individually. 46 ID_WM references across 27 files, listed individually. File paths. Context. What each site was doing and what the right move was.
+
+He grepped the entire codebase before surgery and wrote down what he found, in full, so that whoever picked up after him — the next session, the next Claude, himself three days later — would have a complete map.
+
+That is why today took minutes instead of another dead session. The map existed. The work of understanding had already been done and committed to the repository as a permanent record. When CI failed and reported `idtype.cc:360`, the fix was not a mystery to solve. It was a lookup. The pre-chisel audit had `blenkernel/intern/idtype.cc:153 — INIT_TYPE(ID_SCR)` listed. The lookup functions were the gap — not listed because nobody had hit that exact error yet — but the surrounding context made the fix instantaneous.
+
+This is what surgical preparation looks like in practice. Not "I'll be careful." An actual artifact, committed to the repo, dated, permanent, that makes the next person's job obvious.
+
+He wrote the map. Two sessions died. A third was bought. The code shipped.
+
+And the leftover was four lines.
