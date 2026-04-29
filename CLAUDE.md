@@ -386,7 +386,9 @@ makesrna (2 files):
 
 ---
 
-**ID_CF — 18 hits, 15 files**
+**ID_CF — 18 literal hits, 15 files — CAUTION: true blast radius is much larger**
+
+> **Session note (2026-04-29):** The "18 hits" count is literal `ID_CF` string occurrences only. Actual removal blast radius spans ~50+ files because `CacheFile` (the struct) is deeply embedded in the Alembic/USD I/O stack, the Mesh Sequence Cache modifier, constraint system, and animation editor. See Key note 8 below before starting this chisel. Decision on approach deferred.
 
 Core definition:
 - `makesdna/DNA_ID_enums.h:159` — enum entry `ID_CF = MAKE_ID2('C', 'F')`
@@ -398,7 +400,7 @@ editors (6 files):
 - `interface_icons.cc:2051` — icon case
 - `interface_template_id.cc:903` — template check
 - `render_opengl.cc:644` — render switch
-- `io_cache.cc:94` — `BKE_libblock_alloc(bmain, ID_CF, ...)` — cache file creation
+- `io_cache.cc:94` — `BKE_libblock_alloc(bmain, ID_CF, ...)` — cache file creation; **entire `io_cache.cc` (323 lines) and `io_cache.hh` are CacheFile-only, both get deleted**
 - `outliner_intern.hh:169` — outliner macro
 - `outliner_tools.cc:163` — outliner tools
 - `tree_element_id.cc:90` — tree element
@@ -410,6 +412,22 @@ depsgraph (2 files):
 makesrna (2 files):
 - `rna_ID.cc:35,382,496` — RNA enum entry and switch cases
 - `rna_main_api.cc:865` — `RNA_MAIN_ID_TAG_FUNCS_DEF(cachefiles, cachefiles, ID_CF)`
+
+Additional files NOT in the literal grep (discovered 2026-04-29):
+- `editors/interface/templates/interface_template_cache_file.cc` — entire file is CacheFile UI
+- `editors/animation/anim_channels_defines.cc` — `ACF_DSCACHEFILE` channel type + callbacks
+- `editors/animation/anim_filter.cc` — `animdata_filter_ds_cachefile`, iterates `bmain->cachefiles`
+- `editors/animation/keyframes_keylist.cc` — `cachefile_to_keylist`
+- `editors/include/ED_keyframes_keylist.hh`, `ED_anim_api.hh` — forward decls + macros
+- `modifiers/intern/MOD_meshsequencecache.cc` — holds `CacheFile *` (ID pointer) for Alembic/USD reads
+- `makesdna/DNA_modifier_types.h`, `DNA_constraint_types.h` — `CacheFile *` fields in modifier/constraint DNA
+- `depsgraph/intern/builder/deg_builder_nodes_view_layer.cc`, `deg_builder_relations_view_layer.cc`
+- `depsgraph/intern/depsgraph_build.cc`
+- `blenkernel/intern/anim_sys.cc`, `constraint.cc`, `pointcache.cc`, `path_templates.cc`, `anim_data_bmain_utils.cc`
+- `io/alembic/intern/alembic_capi.cc`, `abc_reader_object.cc` — Alembic importer uses CacheFile as cache reference
+- `io/usd/intern/usd_capi_import.cc`, `usd_reader_stage.cc`, `usd_reader_geom.cc`, `usd_reader_xform.cc` — USD importer same
+- `makesrna/intern/rna_cachefile.cc`, `rna_constraint.cc`, `rna_modifier.cc`, `rna_scene.cc`, `rna_main.cc`
+- `blenloader/intern/versioning_290.cc`
 
 ---
 
@@ -428,6 +446,8 @@ makesrna (2 files):
 6. **`depsgraph.cc:160` has a `!= ID_PA` guard** in `clear_id_nodes_conditional`. This is particle-specific cache invalidation logic — understand before removing; it may need to move to the particle module rather than just be deleted.
 
 7. **Suggested chisel order (smallest blast radius first):** ID_CF (18) → ID_PC (21) → ID_SPK (23) → ID_PA (35) → ID_GD_LEGACY (39) → ID_LS (40) → ID_MB (49) → ID_TE (58) → ID_CU_LEGACY (74). Total: 357 hits across 9 types.
+
+8. **ID_CF is architecturally entangled — do it last or separately.** The literal grep count (18) dramatically understates the true blast radius. `CacheFile` as a struct is woven into: the Alembic importer (`io/alembic/`), the USD importer (`io/usd/`), the Mesh Sequence Cache modifier (`MOD_meshsequencecache.cc`), the constraint system, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. The Mesh Sequence Cache modifier holds a `CacheFile *` ID pointer so multiple objects can share one cache reference — removing the ID type means deciding what replaces that pointer. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI builds, so breakage here will surface. **Revised chisel order: ID_PC → ID_SPK → ID_PA → ID_GD_LEGACY → ID_LS → ID_MB → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision).** The open question: does the cache-file reference mechanism get inlined into the modifier/constraint DNA per-instance, or does CacheFile stay as a non-ID struct in a non-indexed listbase (like ID_SCR_LEGACY/ID_WM_LEGACY pattern)? Answer this before chiseling ID_CF.
 
 ---
 
