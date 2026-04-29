@@ -386,7 +386,9 @@ makesrna (2 files):
 
 ---
 
-**ID_CF — 18 hits, 15 files**
+**ID_CF — 18 literal hits, 15 files — CAUTION: true blast radius is much larger**
+
+> **Session note (2026-04-29):** The "18 hits" count is literal `ID_CF` string occurrences only. Actual removal blast radius spans ~50+ files because `CacheFile` (the struct) is deeply embedded in the Alembic/USD I/O stack, the Mesh Sequence Cache modifier, constraint system, and animation editor. See Key note 8 below before starting this chisel. Decision on approach deferred.
 
 Core definition:
 - `makesdna/DNA_ID_enums.h:159` — enum entry `ID_CF = MAKE_ID2('C', 'F')`
@@ -398,7 +400,7 @@ editors (6 files):
 - `interface_icons.cc:2051` — icon case
 - `interface_template_id.cc:903` — template check
 - `render_opengl.cc:644` — render switch
-- `io_cache.cc:94` — `BKE_libblock_alloc(bmain, ID_CF, ...)` — cache file creation
+- `io_cache.cc:94` — `BKE_libblock_alloc(bmain, ID_CF, ...)` — cache file creation; **entire `io_cache.cc` (323 lines) and `io_cache.hh` are CacheFile-only, both get deleted**
 - `outliner_intern.hh:169` — outliner macro
 - `outliner_tools.cc:163` — outliner tools
 - `tree_element_id.cc:90` — tree element
@@ -410,6 +412,22 @@ depsgraph (2 files):
 makesrna (2 files):
 - `rna_ID.cc:35,382,496` — RNA enum entry and switch cases
 - `rna_main_api.cc:865` — `RNA_MAIN_ID_TAG_FUNCS_DEF(cachefiles, cachefiles, ID_CF)`
+
+Additional files NOT in the literal grep (discovered 2026-04-29):
+- `editors/interface/templates/interface_template_cache_file.cc` — entire file is CacheFile UI
+- `editors/animation/anim_channels_defines.cc` — `ACF_DSCACHEFILE` channel type + callbacks
+- `editors/animation/anim_filter.cc` — `animdata_filter_ds_cachefile`, iterates `bmain->cachefiles`
+- `editors/animation/keyframes_keylist.cc` — `cachefile_to_keylist`
+- `editors/include/ED_keyframes_keylist.hh`, `ED_anim_api.hh` — forward decls + macros
+- `modifiers/intern/MOD_meshsequencecache.cc` — holds `CacheFile *` (ID pointer) for Alembic/USD reads
+- `makesdna/DNA_modifier_types.h`, `DNA_constraint_types.h` — `CacheFile *` fields in modifier/constraint DNA
+- `depsgraph/intern/builder/deg_builder_nodes_view_layer.cc`, `deg_builder_relations_view_layer.cc`
+- `depsgraph/intern/depsgraph_build.cc`
+- `blenkernel/intern/anim_sys.cc`, `constraint.cc`, `pointcache.cc`, `path_templates.cc`, `anim_data_bmain_utils.cc`
+- `io/alembic/intern/alembic_capi.cc`, `abc_reader_object.cc` — Alembic importer uses CacheFile as cache reference
+- `io/usd/intern/usd_capi_import.cc`, `usd_reader_stage.cc`, `usd_reader_geom.cc`, `usd_reader_xform.cc` — USD importer same
+- `makesrna/intern/rna_cachefile.cc`, `rna_constraint.cc`, `rna_modifier.cc`, `rna_scene.cc`, `rna_main.cc`
+- `blenloader/intern/versioning_290.cc`
 
 ---
 
@@ -428,6 +446,8 @@ makesrna (2 files):
 6. **`depsgraph.cc:160` has a `!= ID_PA` guard** in `clear_id_nodes_conditional`. This is particle-specific cache invalidation logic — understand before removing; it may need to move to the particle module rather than just be deleted.
 
 7. **Suggested chisel order (smallest blast radius first):** ID_CF (18) → ID_PC (21) → ID_SPK (23) → ID_PA (35) → ID_GD_LEGACY (39) → ID_LS (40) → ID_MB (49) → ID_TE (58) → ID_CU_LEGACY (74). Total: 357 hits across 9 types.
+
+8. **ID_CF is architecturally entangled — do it last or separately.** The literal grep count (18) dramatically understates the true blast radius. `CacheFile` as a struct is woven into: the Alembic importer (`io/alembic/`), the USD importer (`io/usd/`), the Mesh Sequence Cache modifier (`MOD_meshsequencecache.cc`), the constraint system, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. The Mesh Sequence Cache modifier holds a `CacheFile *` ID pointer so multiple objects can share one cache reference — removing the ID type means deciding what replaces that pointer. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI builds, so breakage here will surface. **Revised chisel order: ID_PC → ID_SPK → ID_PA → ID_GD_LEGACY → ID_LS → ID_MB → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision).** The open question: does the cache-file reference mechanism get inlined into the modifier/constraint DNA per-instance, or does CacheFile stay as a non-ID struct in a non-indexed listbase (like ID_SCR_LEGACY/ID_WM_LEGACY pattern)? Answer this before chiseling ID_CF.
 
 ---
 
@@ -654,6 +674,40 @@ This is two failures compounded:
 2. **Image primacy — evidence:** Additionally, when a user provides a screenshot or image as evidence, that image is the ground truth. It overrides reconstruction from memory or inference from context. Read it first. Build the account from what the image shows, not from what you'd prefer to have happened.
 
 **Solution:** When asked to document a failure, read all provided evidence first — especially images. Write what the evidence shows. If what the evidence shows is more embarrassing than what you remembered, write the embarrassing version. That is the version that helps.
+
+### Scar 7: Self-Contradiction in the Same Commit (The Chisel Order Mistake)
+
+**What happened:** In the 0.4.0 prep commit, CLAUDE.md Key note 8 was written explicitly saying "do ID_CF last." In that same commit, the CHANGELOG chisel order line still read `ID_CF → ID_PC → ...` — ID_CF first. The contradiction was in the diff, visible before the commit was made, and was not caught. A Codex bot flagged it on the PR.
+
+**Why this is a scar and not just a typo:** The whole point of the chisel-order documentation is that a future session picks it up and follows it. Two documents in the same commit giving opposite instructions about the highest-risk removal in the set is exactly the kind of thing that costs a session. The next Claude reads CHANGELOG first, starts with ID_CF, hits the Alembic/USD blast radius, and either blows the session or does something wrong. The bot caught it before that happened. The developer should not have had to wait for a bot.
+
+**The failure mode:** Writing a note and then not checking whether anything already in the diff contradicts it. The note was new; the CHANGELOG line was inherited from an earlier state of the document. Inherited text doesn't get automatically reconciled with new text written in the same commit. You have to read the full diff before committing — not just the new additions.
+
+**The rule:** Before every commit that touches documentation with cross-references (chisel orders, version maps, scar notes, architectural decisions), read the complete diff and check that every changed file is internally consistent with every other changed file. If you write "do X last" anywhere, grep the diff for X and verify nothing else in the same commit says "do X first."
+
+---
+
+### Pre-Commit Consistency Check (Mandatory — No Exceptions)
+
+**This is not a reminder. It is a required step before every `git add`. Do it even when you think it's unnecessary. Especially when you think it's unnecessary.**
+
+Before staging any commit that touches documentation (CLAUDE.md, CHANGELOG.md, BLENDED.md, or any file containing cross-references, ordered lists, version maps, or architectural decisions):
+
+1. **Run `git diff` and read the entire output.** Not a skim. Every line.
+
+2. **For every ordered list in the diff, find every other representation of that same order in the diff and in the touched files.** Chisel order is documented in at minimum three places: CLAUDE.md key notes, CHANGELOG chisel order text, CHANGELOG table order. All must agree. If you updated one, you updated all, or you did not finish.
+
+3. **For every statement of the form "do X last / first / never / always," grep the diff for X.** Verify no other line in the same diff contradicts it.
+
+4. **For every version number mentioned, verify it matches the version map.** Version maps exist in CHANGELOG.md. If a version number appears anywhere in the diff, it must be consistent with the map.
+
+5. **If any inconsistency is found, fix it before committing.** Not after. Not in a follow-up commit. Before.
+
+**Why this is written down:** Scar 7 happened because this check was not done. The chisel order was corrected in text but left wrong in table order in the same commit. A bot caught it. Then the table order was fixed but Scar 7 was written without running the check again — meaning the fix to Scar 7 itself could have had the same problem. The developer had to ask "what else are you being untrustworthy about?" before the table order issue was found. That is not acceptable. The check must be automatic, not prompted.
+
+**The check takes 60 seconds. A missed contradiction can cost a session.**
+
+---
 
 ### Don't Over-Engineer
 
