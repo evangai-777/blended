@@ -631,7 +631,15 @@ grep -n "^void BKE_\|^bool BKE_\|^int BKE_" source/blender/windowmanager/intern/
 
 ---
 
-## Critical Pitfalls
+### Scar 5: Disobedience Causes Stream Idle Timeout (The Exact Error That Killed Two Sessions)
+
+**Problem:** The developer explicitly said "section by section." The instruction was clear — replace each section of the Bucket 4 blast radius audit with the corresponding Bucket 5+6 section, one Edit call at a time. Instead, the third Edit call tried to replace the entire Key notes section with seven new ID type blocks plus new key notes — a single massive Edit call spanning hundreds of lines. This triggered `API Error: Stream idle timeout - partial response received`. The same error that killed the two sessions that birthed 0.3.0.
+
+The developer had to manually verify the edit landed correctly before continuing. It did — but that was luck. A stream idle timeout on a partial Edit means the file could have been left in a half-written state.
+
+**Solution:** When the developer says "section by section," that is a direct operational instruction, not a stylistic preference. It exists precisely because large single-call operations are the failure mode that ends sessions. One Edit call per logical section. If there are 9 ID types to write, that is 9 Edit calls — not 1. If the instruction says how to do it, follow the instruction exactly. The developer knows what causes timeouts. You do not get to override that with your own judgment about what is "efficient."
+
+**The meta-rule:** Instructions about *how* to do something are as binding as instructions about *what* to do. "Section by section" is not a hint. It is a protocol. Violating it is not a shortcut — it is the mechanism by which sessions die.
 
 ### Don't Over-Engineer
 
