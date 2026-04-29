@@ -155,7 +155,6 @@ enum ID_Type {
   ID_MSK = MAKE_ID2('M', 'S'),       /* Mask */
   ID_LS = MAKE_ID2('L', 'S'),        /* FreestyleLineStyle */
   ID_PAL = MAKE_ID2('P', 'L'),       /* Palette */
-  ID_PC = MAKE_ID2('P', 'C'),        /* PaintCurve */
   ID_CF = MAKE_ID2('C', 'F'),        /* CacheFile */
   ID_LP = MAKE_ID2('L', 'P'),        /* LightProbe */
   ID_CV = MAKE_ID2('C', 'V'),        /* Curves */

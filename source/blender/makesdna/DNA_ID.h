@@ -652,7 +652,7 @@ struct PreviewImage {
 #define ID_IS_PACKED(_id) (ID_IS_LINKED(_id) && ((_id)->flag & ID_FLAG_LINKED_AND_PACKED))
 
 #define ID_TYPE_SUPPORTS_ASSET_EDITABLE(id_type) \
-  ELEM(id_type, ID_BR, ID_TE, ID_NT, ID_IM, ID_PC, ID_MA)
+  ELEM(id_type, ID_BR, ID_TE, ID_NT, ID_IM, ID_MA)
 
 #define ID_IS_EDITABLE(_id) \
   ((id_cast<const ID *>(_id)->lib == NULL) || \
@@ -692,7 +692,7 @@ struct PreviewImage {
 
 /* Check whether datablock type is covered by copy-on-evaluation. */
 #define ID_TYPE_USE_COPY_ON_EVAL(_id_type) \
-  (!ELEM(_id_type, ID_LI, ID_VF, ID_BR, ID_PAL, ID_PC, ID_IM))
+  (!ELEM(_id_type, ID_LI, ID_VF, ID_BR, ID_PAL, ID_IM))
 
 /* Check whether data-block type requires copy-on-evaluation from #ID_RECALC_PARAMETERS.
  * Keep in sync with #BKE_id_eval_properties_copy. */
@@ -1173,7 +1173,6 @@ enum IDRecalcFlag {
 #define FILTER_ID_NT (1ULL << 16)
 #define FILTER_ID_OB (1ULL << 17)
 #define FILTER_ID_PAL (1ULL << 18)
-#define FILTER_ID_PC (1ULL << 19)
 #define FILTER_ID_SCE (1ULL << 20)
 #define FILTER_ID_SPK (1ULL << 21)
 #define FILTER_ID_SO (1ULL << 22)
@@ -1197,7 +1196,7 @@ enum IDRecalcFlag {
   (FILTER_ID_AC | FILTER_ID_AR | FILTER_ID_BR | FILTER_ID_CA | FILTER_ID_CU_LEGACY | \
    FILTER_ID_GD_LEGACY | FILTER_ID_GR | FILTER_ID_IM | FILTER_ID_LA | FILTER_ID_LS | \
    FILTER_ID_LT | FILTER_ID_MA | FILTER_ID_MB | FILTER_ID_MC | FILTER_ID_ME | FILTER_ID_MSK | \
-   FILTER_ID_NT | FILTER_ID_OB | FILTER_ID_PA | FILTER_ID_PAL | FILTER_ID_PC | FILTER_ID_SCE | \
+   FILTER_ID_NT | FILTER_ID_OB | FILTER_ID_PA | FILTER_ID_PAL | FILTER_ID_SCE | \
    FILTER_ID_SPK | FILTER_ID_SO | FILTER_ID_TE | FILTER_ID_TXT | FILTER_ID_VF | FILTER_ID_WO | \
    FILTER_ID_CF | FILTER_ID_LP | FILTER_ID_CV | FILTER_ID_PT | FILTER_ID_VO | \
    FILTER_ID_SIM | FILTER_ID_KE | FILTER_ID_LI | FILTER_ID_GP | \
@@ -1299,7 +1298,6 @@ enum eID_Index {
   /* Preset-like, not-really-data types, can use many other ID types but should never be used by
    * any actual data type (besides Scene, due to tool settings). */
   INDEX_ID_PAL,
-  INDEX_ID_PC,
   INDEX_ID_BR,
 
   /* Scene, after preset-like ID types because of tool settings. */
