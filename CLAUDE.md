@@ -355,34 +355,47 @@ makesrna (2 files):
 
 ---
 
-**ID_PC — 21 hits, 17 files**
+**ID_PC — 21 literal hits, 17 files — CAUTION: true blast radius is ~35 files**
+
+> **Session note (2026-04-29):** The "21 hits" count is literal `ID_PC` string occurrences only. PaintCurve as a struct is woven into `Brush::paint_curve` DNA, three entirely-PaintCurve-specific files to delete, and the paint cursor/stroke rendering path.
 
 Core definition:
-- `makesdna/DNA_ID_enums.h:158` — enum entry `ID_PC = MAKE_ID2('P', 'C')`
-- `makesdna/DNA_brush_types.h:492` — `static constexpr ID_Type id_type = ID_PC`
-- `makesdna/DNA_ID.h:655,695` — shared macro checks
+- `makesdna/DNA_ID_enums.h:158` — enum entry `ID_PC = MAKE_ID2('P', 'C')` *(removed in makesdna layer)*
+- `makesdna/DNA_brush_types.h:192` — `PaintCurve *paint_curve` field on `Brush` struct; `DNA_brush_types.h:482–500` — entire `PaintCurvePoint` and `PaintCurve` struct definitions to delete
+- `makesdna/DNA_ID.h:655,695` — shared macro checks *(removed in makesdna layer)*
 - `blenkernel/intern/idtype.cc:168` — `INIT_TYPE(ID_PC)`
 - `blenkernel/intern/main.cc:1046` — `which_libbase` case
+- `blenkernel/BKE_idtype.hh:331` — `extern IDTypeInfo IDType_ID_PC`
+- `blenkernel/BKE_main.hh:394` — `ListBaseT<PaintCurve> paintcurves` field
+- `blenkernel/BKE_paint.hh:149,262` — `BKE_paint_curve_add` declaration + `BKE_paint_curve_clamp_endpoint_add_index`
+- `blenkernel/BKE_undo_system.hh:50` — `UNDO_REF_ID_TYPE(PaintCurve)`
 
-blenkernel (1 file):
-- `brush_test.cc:64,95` — test fixtures: `BKE_id_new(bmain, ID_PC, ...)` (test-only; delete with type)
+blenkernel (3 files):
+- `paint.cc:185–247` — `IDTypeInfo IDType_ID_PC` + static callbacks (copy, free, blend write, blend read)
+- `brush.cc:229` — `BKE_LIB_FOREACHID_PROCESS_IDSUPER(data, brush->paint_curve, IDWALK_CB_USER)`; `brush.cc:550` — `FILTER_ID_PC` in `dependencies_id_types`
+- `brush_test.cc:64,95` — `BKE_id_new(bmain, ID_PC, ...)` + `brush->paint_curve` accesses (test-only; tests need rewriting)
 
-editors (7 files):
+editors (10 files — 7 literal hits + 3 entire-file deletions):
+- `sculpt_paint/paint_curve.cc` — **entire file**: PaintCurve-specific operators, to delete
+- `sculpt_paint/paint_curve_undo.cc` — **entire file**: PaintCurve-specific undo, to delete
+- `transform/transform_convert_paintcurve.cc` — **entire file**: PaintCurve-specific transform, to delete
+- `sculpt_paint/paint_cursor.cc:877–896` — stroke path rendered via `brush->paint_curve`
+- `sculpt_paint/paint_stroke.cc:1276–1293` — stroke logic via `brush->paint_curve`
 - `interface_icons.cc:2085` — icon case
 - `interface_template_id.cc:901` — template check
 - `render_opengl.cc:643` — render switch
 - `outliner_draw.cc:2583` — outliner draw
-- `outliner_intern.hh:173` — outliner macro
-- `outliner_tools.cc:162` — outliner tools
-- `tree_element_id.cc:89` — tree element
+- `outliner_intern.hh:173` — outliner macro; `outliner_tools.cc:162` — outliner tools; `tree_element_id.cc:89` — tree element
 
 depsgraph (2 files):
 - `deg_builder_relations.cc:610` — relation builder
 - `deg_builder_nodes.cc:663` — node builder
 
-makesrna (2 files):
+makesrna (4 files):
 - `rna_ID.cc:57,448,538` — RNA enum entry and switch cases
 - `rna_main_api.cc:866` — `RNA_MAIN_ID_TAG_FUNCS_DEF(paintcurves, paintcurves, ID_PC)`
+- `rna_brush.cc` — `paint_curve` RNA property on Brush
+- `rna_sculpt_paint.cc` — PaintCurve RNA definitions (7 sites)
 
 ---
 
