@@ -189,7 +189,6 @@ struct Brush {
   PreviewImage *preview = nullptr;
   /** Color gradient. */
   struct ColorBand *gradient = nullptr;
-  struct PaintCurve *paint_curve = nullptr;
 
   float normal_weight = 0.0f;
   /** Rake actual data (not texture), used for sculpt. */
@@ -479,25 +478,5 @@ struct Palette {
   char _pad[4] = {};
 };
 
-struct PaintCurvePoint {
-  /** Bezier handle. */
-  BezTriple bez = {};
-  /** Pressure on that point. */
-  float pressure = 0;
-};
-
-struct PaintCurve {
-#ifdef __cplusplus
-  /** See #ID_Type comment for why this is here. */
-  static constexpr ID_Type id_type = ID_PC;
-#endif
-
-  ID id;
-  /** Points of curve. */
-  PaintCurvePoint *points = nullptr;
-  int tot_points = 0;
-  /** Index where next point will be added. */
-  int add_index = 0;
-};
 
 }  // namespace blender

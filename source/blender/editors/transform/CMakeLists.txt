@@ -35,7 +35,6 @@ set(SRC
   transform_convert_node.cc
   transform_convert_object.cc
   transform_convert_object_texspace.cc
-  transform_convert_paintcurve.cc
   transform_convert_particle.cc
   transform_convert_pointcloud.cc
   transform_convert_sculpt.cc

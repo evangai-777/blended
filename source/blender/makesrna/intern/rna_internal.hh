@@ -554,7 +554,6 @@ void RNA_def_main_movieclips(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_masks(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_linestyles(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_cachefiles(BlenderRNA *brna, PropertyRNA *cprop);
-void RNA_def_main_paintcurves(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_lightprobes(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_hair_curves(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_pointclouds(BlenderRNA *brna, PropertyRNA *cprop);

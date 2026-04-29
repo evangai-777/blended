@@ -545,21 +545,7 @@ static void BRUSH_OT_stencil_reset_transform(wmOperatorType *ot)
 
 /**************************** registration **********************************/
 
-void ED_operatormacros_paint()
-{
-  wmOperatorType *ot;
-  wmOperatorTypeMacro *otmacro;
-
-  ot = WM_operatortype_append_macro("PAINTCURVE_OT_add_point_slide",
-                                    "Add Curve Point and Slide",
-                                    "Add new curve point and slide it",
-                                    OPTYPE_UNDO);
-  ot->description = "Add new curve point and slide it";
-  WM_operatortype_macro_define(ot, "PAINTCURVE_OT_add_point");
-  otmacro = WM_operatortype_macro_define(ot, "PAINTCURVE_OT_slide");
-  RNA_boolean_set(otmacro->ptr, "align", true);
-  RNA_boolean_set(otmacro->ptr, "select", false);
-}
+void ED_operatormacros_paint() {}
 
 void ED_operatortypes_paint()
 {
@@ -574,14 +560,6 @@ void ED_operatortypes_paint()
   WM_operatortype_append(PALETTE_OT_color_move);
   WM_operatortype_append(PALETTE_OT_join);
 
-  /* paint curve */
-  WM_operatortype_append(PAINTCURVE_OT_new);
-  WM_operatortype_append(PAINTCURVE_OT_add_point);
-  WM_operatortype_append(PAINTCURVE_OT_delete_point);
-  WM_operatortype_append(PAINTCURVE_OT_select);
-  WM_operatortype_append(PAINTCURVE_OT_slide);
-  WM_operatortype_append(PAINTCURVE_OT_draw);
-  WM_operatortype_append(PAINTCURVE_OT_cursor);
 
   /* brush */
   WM_operatortype_append(BRUSH_OT_scale_size);
@@ -676,9 +654,6 @@ void ED_keymap_paint(wmKeyConfig *keyconf)
 {
   using namespace blender::ed::sculpt_paint;
   wmKeyMap *keymap;
-
-  keymap = WM_keymap_ensure(keyconf, "Paint Curve", SPACE_EMPTY, RGN_TYPE_WINDOW);
-  keymap->poll = paint_curve_poll;
 
   /* Sculpt mode */
   keymap = WM_keymap_ensure(keyconf, "Sculpt", SPACE_EMPTY, RGN_TYPE_WINDOW);

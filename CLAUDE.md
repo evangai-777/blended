@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.3.0 — `ID_SCR` and `ID_WM` removed from ID type system; CI green (Windows x64, build #49). Next: Bucket 5 + 6 fossil removals (0.4.x).
+**Current version:** Blended 0.3.0 (tagged, CI green). 0.4.0 in progress — Bucket 5 + 6 fossil removals. `ID_PC` (PaintCurve) complete; next: `ID_SPK`.
 
 ---
 
@@ -25,13 +25,27 @@ The old approach (tiered UI, smart defaults, Emscripten) was prototyping toward 
 
 **`ID_SCR` and `ID_WM` removal — compile-clean, pending CI.** All layers merged. The blast radius was enormous — see Scar 2 below. Key architectural outcome: `bmain->screens` and `bmain->wm` kept as non-indexed runtime listbases; `ID_SCR_LEGACY` / `ID_WM_LEGACY` defines route through `which_libbase` for allocation but are excluded from `BKE_main_lists_get`. Branch: `claude/remove-id-scr-id-wm`. Layer-by-layer status in [`CHANGELOG.md`](CHANGELOG.md).
 
-**Next: Bucket 5 + 6 fossil removals (0.4.x)** — `ID_CU_LEGACY`, `ID_GD_LEGACY`, `ID_TE`, `ID_PA`, `ID_MB`, `ID_LS`, `ID_SPK`, `ID_PC`, `ID_CF`. Same chisel pattern. See roadmap in CHANGELOG.md.
+**In progress: Bucket 5 + 6 fossil removals (0.4.x)** — `ID_CU_LEGACY`, `ID_GD_LEGACY`, `ID_TE`, `ID_PA`, `ID_MB`, `ID_LS`, `ID_SPK`, `ID_CF`. `ID_PC` ✓. Next: `ID_SPK`. See roadmap in CHANGELOG.md.
 
 Pattern for each pending layer: `grep -rn "ID_WS"` the directory, delete or redirect every hit. The breakage is the audit — follow the compile errors, don't paper over them.
 
 ### Bucket 5 + 6 Blast Radius Audit (pre-chisel)
 
 Grepped 2026-04-29 before starting the removal. Use this as the checklist.
+
+#### Two-Phase Blast Radius Protocol (mandatory)
+
+Every chisel goes through two audits. They are not the same thing and must not be collapsed into one.
+
+**Phase 1 — Literal audit (pre-chisel, grep only):**
+Run `grep -rn "ID_XX" source/` before touching a single file. Count hits, list files, record line numbers. This is the *lower bound* — the minimum number of sites that reference the token string. It is always an undercount. Write it into CLAUDE.md (here) and CHANGELOG.md before starting.
+
+**Phase 2 — True audit (during editing, as breakage surfaces):**
+Once the editing phase begins, the real blast radius emerges. Struct fields embedded in DNA. Files whose names don't contain the ID token but whose logic is entirely owned by the type. Enum values that were the only consumer of a code path. Undo subsystems. Transform convert types. Translation context macros. These don't show in the grep — they show in the compile errors and in the "what does this function actually do" moment during editing.
+
+When the true blast radius diverges from the literal count, **update the CLAUDE.md entry for that type in place** — replace the literal count header (e.g. `**ID_PC — 21 hits, 15 files**`) with the true one, and add a session note explaining what the grep missed. The CHANGELOG layer rows get the true file lists, not the grep lists.
+
+**The rule:** The pre-chisel grep count is a starting map, not a final answer. The editing phase is always the real audit. Always update the documentation to reflect the true scope — future sessions calibrate their estimates off these numbers. If they're systematically low, every future blast radius estimate will be wrong in the same direction.
 
 **ID_CU_LEGACY — 74 hits, 33 files**
 
@@ -355,34 +369,47 @@ makesrna (2 files):
 
 ---
 
-**ID_PC — 21 hits, 17 files**
+**ID_PC — ✓ COMPLETE (0.4.0)** *(true blast radius was ~35 files vs 21 literal hits)*
+
+> **Session note (2026-04-29):** The "21 hits" count was literal `ID_PC` string occurrences only. PaintCurve as a struct was woven into `Brush::paint_curve` DNA, three entirely-PaintCurve-specific files (deleted), and the paint cursor/stroke rendering path. All layers removed across makesdna, blenkernel, makesrna, editors, depsgraph.
 
 Core definition:
-- `makesdna/DNA_ID_enums.h:158` — enum entry `ID_PC = MAKE_ID2('P', 'C')`
-- `makesdna/DNA_brush_types.h:492` — `static constexpr ID_Type id_type = ID_PC`
-- `makesdna/DNA_ID.h:655,695` — shared macro checks
+- `makesdna/DNA_ID_enums.h:158` — enum entry `ID_PC = MAKE_ID2('P', 'C')` *(removed in makesdna layer)*
+- `makesdna/DNA_brush_types.h:192` — `PaintCurve *paint_curve` field on `Brush` struct; `DNA_brush_types.h:482–500` — entire `PaintCurvePoint` and `PaintCurve` struct definitions to delete
+- `makesdna/DNA_ID.h:655,695` — shared macro checks *(removed in makesdna layer)*
 - `blenkernel/intern/idtype.cc:168` — `INIT_TYPE(ID_PC)`
 - `blenkernel/intern/main.cc:1046` — `which_libbase` case
+- `blenkernel/BKE_idtype.hh:331` — `extern IDTypeInfo IDType_ID_PC`
+- `blenkernel/BKE_main.hh:394` — `ListBaseT<PaintCurve> paintcurves` field
+- `blenkernel/BKE_paint.hh:149,262` — `BKE_paint_curve_add` declaration + `BKE_paint_curve_clamp_endpoint_add_index`
+- `blenkernel/BKE_undo_system.hh:50` — `UNDO_REF_ID_TYPE(PaintCurve)`
 
-blenkernel (1 file):
-- `brush_test.cc:64,95` — test fixtures: `BKE_id_new(bmain, ID_PC, ...)` (test-only; delete with type)
+blenkernel (3 files):
+- `paint.cc:185–247` — `IDTypeInfo IDType_ID_PC` + static callbacks (copy, free, blend write, blend read)
+- `brush.cc:229` — `BKE_LIB_FOREACHID_PROCESS_IDSUPER(data, brush->paint_curve, IDWALK_CB_USER)`; `brush.cc:550` — `FILTER_ID_PC` in `dependencies_id_types`
+- `brush_test.cc:64,95` — `BKE_id_new(bmain, ID_PC, ...)` + `brush->paint_curve` accesses (test-only; tests need rewriting)
 
-editors (7 files):
+editors (10 files — 7 literal hits + 3 entire-file deletions):
+- `sculpt_paint/paint_curve.cc` — **entire file**: PaintCurve-specific operators, to delete
+- `sculpt_paint/paint_curve_undo.cc` — **entire file**: PaintCurve-specific undo, to delete
+- `transform/transform_convert_paintcurve.cc` — **entire file**: PaintCurve-specific transform, to delete
+- `sculpt_paint/paint_cursor.cc:877–896` — stroke path rendered via `brush->paint_curve`
+- `sculpt_paint/paint_stroke.cc:1276–1293` — stroke logic via `brush->paint_curve`
 - `interface_icons.cc:2085` — icon case
 - `interface_template_id.cc:901` — template check
 - `render_opengl.cc:643` — render switch
 - `outliner_draw.cc:2583` — outliner draw
-- `outliner_intern.hh:173` — outliner macro
-- `outliner_tools.cc:162` — outliner tools
-- `tree_element_id.cc:89` — tree element
+- `outliner_intern.hh:173` — outliner macro; `outliner_tools.cc:162` — outliner tools; `tree_element_id.cc:89` — tree element
 
 depsgraph (2 files):
 - `deg_builder_relations.cc:610` — relation builder
 - `deg_builder_nodes.cc:663` — node builder
 
-makesrna (2 files):
+makesrna (4 files):
 - `rna_ID.cc:57,448,538` — RNA enum entry and switch cases
 - `rna_main_api.cc:866` — `RNA_MAIN_ID_TAG_FUNCS_DEF(paintcurves, paintcurves, ID_PC)`
+- `rna_brush.cc` — `paint_curve` RNA property on Brush
+- `rna_sculpt_paint.cc` — PaintCurve RNA definitions (7 sites)
 
 ---
 
@@ -441,13 +468,13 @@ Additional files NOT in the literal grep (discovered 2026-04-29):
 
 4. **Shared switch cases dominate the blast radius.** The depsgraph (`deg_builder_nodes.cc`, `deg_builder_relations.cc`), outliner (`outliner_draw.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc`), and RNA (`rna_ID.cc`, `rna_main_api.cc`) contain cases for many of these types side by side. Batch the removals per file rather than per type.
 
-5. **`brush_test.cc` uses `ID_TE` and `ID_PC` in test fixtures.** Both `BKE_id_new(bmain, ID_TE, ...)` and `BKE_id_new(bmain, ID_PC, ...)` are in unit tests that will need to be deleted or rewritten when those types go.
+5. **`brush_test.cc` uses `ID_TE` in test fixtures.** `BKE_id_new(bmain, ID_TE, ...)` is in a unit test that needs rewriting when ID_TE goes. (ID_PC fixtures were rewritten in 0.4.0 — paint_curve lines stripped, `brush->paint_curve` accesses removed.)
 
 6. **`depsgraph.cc:160` has a `!= ID_PA` guard** in `clear_id_nodes_conditional`. This is particle-specific cache invalidation logic — understand before removing; it may need to move to the particle module rather than just be deleted.
 
-7. **Suggested chisel order (smallest blast radius first):** ID_CF (18) → ID_PC (21) → ID_SPK (23) → ID_PA (35) → ID_GD_LEGACY (39) → ID_LS (40) → ID_MB (49) → ID_TE (58) → ID_CU_LEGACY (74). Total: 357 hits across 9 types.
+7. **Remaining chisel order (smallest blast radius first):** ID_SPK (23) → ID_PA (35) → ID_GD_LEGACY (39) → ID_LS (40) → ID_MB (49) → ID_TE (58) → ID_CU_LEGACY (74) → ID_CF (last, design decision). ~278 hits across 8 types. ID_PC (21) complete in 0.4.0; ID_CF deferred — see note 8.
 
-8. **ID_CF is architecturally entangled — do it last or separately.** The literal grep count (18) dramatically understates the true blast radius. `CacheFile` as a struct is woven into: the Alembic importer (`io/alembic/`), the USD importer (`io/usd/`), the Mesh Sequence Cache modifier (`MOD_meshsequencecache.cc`), the constraint system, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. The Mesh Sequence Cache modifier holds a `CacheFile *` ID pointer so multiple objects can share one cache reference — removing the ID type means deciding what replaces that pointer. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI builds, so breakage here will surface. **Revised chisel order: ID_PC → ID_SPK → ID_PA → ID_GD_LEGACY → ID_LS → ID_MB → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision).** The open question: does the cache-file reference mechanism get inlined into the modifier/constraint DNA per-instance, or does CacheFile stay as a non-ID struct in a non-indexed listbase (like ID_SCR_LEGACY/ID_WM_LEGACY pattern)? Answer this before chiseling ID_CF.
+8. **ID_CF is architecturally entangled — do it last or separately.** The literal grep count (18) dramatically understates the true blast radius. `CacheFile` as a struct is woven into: the Alembic importer (`io/alembic/`), the USD importer (`io/usd/`), the Mesh Sequence Cache modifier (`MOD_meshsequencecache.cc`), the constraint system, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. The Mesh Sequence Cache modifier holds a `CacheFile *` ID pointer so multiple objects can share one cache reference — removing the ID type means deciding what replaces that pointer. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI builds, so breakage here will surface. **Revised chisel order: ID_SPK → ID_PA → ID_GD_LEGACY → ID_LS → ID_MB → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision). ID_PC complete (0.4.0).** The open question: does the cache-file reference mechanism get inlined into the modifier/constraint DNA per-instance, or does CacheFile stay as a non-ID struct in a non-indexed listbase (like ID_SCR_LEGACY/ID_WM_LEGACY pattern)? Answer this before chiseling ID_CF.
 
 ---
 
@@ -537,7 +564,7 @@ make check_mypy     # Python type checking
 Target: 39 → ~19 ID types.
 - **Bucket 4 (UI state, remove):** `ID_WS` ✓ (0.2.0), `ID_SCR` ✓ (0.3.0 WIP), `ID_WM` ✓ (0.3.0 WIP)
 - **Bucket 5 (upstream deprecations, finish):** `ID_CU_LEGACY`, `ID_GD_LEGACY` — next up
-- **Bucket 6 (fossils, cut):** `ID_TE`, `ID_PA`, `ID_MB`, `ID_LS`, `ID_SPK`, `ID_PC`, `ID_CF` — next up
+- **Bucket 6 (fossils, cut):** `ID_TE`, `ID_PA`, `ID_MB`, `ID_LS`, `ID_SPK`, `ID_CF` — in progress; `ID_PC` ✓ (0.4.0)
 
 ---
 

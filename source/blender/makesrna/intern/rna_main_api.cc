@@ -863,7 +863,6 @@ RNA_MAIN_ID_TAG_FUNCS_DEF(movieclips, movieclips, ID_MC)
 RNA_MAIN_ID_TAG_FUNCS_DEF(masks, masks, ID_MSK)
 RNA_MAIN_ID_TAG_FUNCS_DEF(linestyle, linestyles, ID_LS)
 RNA_MAIN_ID_TAG_FUNCS_DEF(cachefiles, cachefiles, ID_CF)
-RNA_MAIN_ID_TAG_FUNCS_DEF(paintcurves, paintcurves, ID_PC)
 RNA_MAIN_ID_TAG_FUNCS_DEF(lightprobes, lightprobes, ID_LP)
 RNA_MAIN_ID_TAG_FUNCS_DEF(hair_curves, hair_curves, ID_CV)
 RNA_MAIN_ID_TAG_FUNCS_DEF(pointclouds, pointclouds, ID_PT)
@@ -2040,21 +2039,6 @@ void RNA_def_main_cachefiles(BlenderRNA *brna, PropertyRNA *cprop)
   RNA_def_struct_ui_text(srna, "Main Cache Files", "Collection of cache files");
 
   func = RNA_def_function(srna, "tag", "rna_Main_cachefiles_tag");
-  parm = RNA_def_boolean(func, "value", false, "Value", "");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-}
-void RNA_def_main_paintcurves(BlenderRNA *brna, PropertyRNA *cprop)
-{
-  StructRNA *srna;
-  FunctionRNA *func;
-  PropertyRNA *parm;
-
-  RNA_def_property_srna(cprop, "BlendDataPaintCurves");
-  srna = RNA_def_struct(brna, "BlendDataPaintCurves", nullptr);
-  RNA_def_struct_sdna(srna, "Main");
-  RNA_def_struct_ui_text(srna, "Main Paint Curves", "Collection of paint curves");
-
-  func = RNA_def_function(srna, "tag", "rna_Main_paintcurves_tag");
   parm = RNA_def_boolean(func, "value", false, "Value", "");
   RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
 }

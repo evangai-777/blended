@@ -68,7 +68,6 @@ struct MDeformVert;
 struct MultiresModifierData;
 struct Object;
 struct Paint;
-struct PaintCurve;
 enum class PaintMode : int8_t;
 struct PaintModeSettings;
 struct Palette;
@@ -144,9 +143,6 @@ void BKE_palette_clear(Palette *palette);
 void BKE_palette_color_set(PaletteColor *color, const float rgb[3]);
 void BKE_palette_color_sync_legacy(PaletteColor *color);
 
-/* Paint curves. */
-
-PaintCurve *BKE_paint_curve_add(Main *bmain, const char *name);
 
 /**
  * Call when entering each respective paint mode.
@@ -259,7 +255,6 @@ bool BKE_paint_eraser_brush_set_essentials(Main *bmain, Paint *paint, const char
 
 Palette *BKE_paint_palette(Paint *paint);
 void BKE_paint_palette_set(Paint *paint, Palette *palette);
-void BKE_paint_curve_clamp_endpoint_add_index(PaintCurve *pc, int add_index);
 
 /**
  * Return true when in vertex/weight/texture paint + face-select mode?

@@ -898,8 +898,6 @@ static StringRef template_id_browse_tip(const StructRNA *type)
         return N_("Browse Mask to be linked");
       case ID_PAL:
         return N_("Browse Palette Data to be linked");
-      case ID_PC:
-        return N_("Browse Paint Curve Data to be linked");
       case ID_CF:
         return N_("Browse Cache Files to be linked");
       case ID_LP:
@@ -996,7 +994,6 @@ static Button *template_id_def_new_but(Block *block,
                             BLT_I18NCONTEXT_ID_METABALL,
                             BLT_I18NCONTEXT_ID_NODETREE,
                             BLT_I18NCONTEXT_ID_OBJECT,
-                            BLT_I18NCONTEXT_ID_PAINTCURVE,
                             BLT_I18NCONTEXT_ID_PALETTE,
                             BLT_I18NCONTEXT_ID_PARTICLESETTINGS,
                             BLT_I18NCONTEXT_ID_POINTCLOUD,

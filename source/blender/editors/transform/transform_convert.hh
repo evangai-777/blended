@@ -399,10 +399,6 @@ extern TransConvertTypeInfo TransConvertType_Object;
 
 extern TransConvertTypeInfo TransConvertType_ObjectTexSpace;
 
-/* `transform_convert_paintcurve.cc` */
-
-extern TransConvertTypeInfo TransConvertType_PaintCurve;
-
 /* `transform_convert_particle.cc` */
 
 extern TransConvertTypeInfo TransConvertType_Particle;

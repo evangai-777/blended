@@ -54,7 +54,6 @@ const EnumPropertyItem rna_enum_id_type_items[] = {
     {ID_MC, "MOVIECLIP", ICON_TRACKER, "Movie Clip", ""},
     {ID_NT, "NODETREE", ICON_NODETREE, "Node Tree", ""},
     {ID_OB, "OBJECT", ICON_OBJECT_DATA, "Object", ""},
-    {ID_PC, "PAINTCURVE", ICON_CURVE_BEZCURVE, "Paint Curve", ""},
     {ID_PAL, "PALETTE", ICON_COLOR, "Palette", ""},
     {ID_PA, "PARTICLE", ICON_PARTICLE_DATA, "Particle", ""},
     {ID_PT, "POINTCLOUD", ICON_POINTCLOUD_DATA, "Point Cloud", ""},
@@ -174,11 +173,6 @@ const IDFilterEnumPropertyItem rna_enum_id_type_filter_items[] = {
      "Particles Settings",
      "Show Particle Settings data-blocks"},
     {FILTER_ID_PAL, "filter_palette", ICON_COLOR, "Palettes", "Show Palette data-blocks"},
-    {FILTER_ID_PC,
-     "filter_paint_curve",
-     ICON_CURVE_BEZCURVE,
-     "Paint Curves",
-     "Show Paint Curve data-blocks"},
     {FILTER_ID_PT,
      "filter_pointcloud",
      ICON_POINTCLOUD_DATA,
@@ -444,9 +438,6 @@ short RNA_type_to_ID_code(const StructRNA *type)
   if (base_type == RNA_Palette) {
     return ID_PAL;
   }
-  if (base_type == RNA_PaintCurve) {
-    return ID_PC;
-  }
   if (base_type == RNA_PointCloud) {
     return ID_PT;
   }
@@ -535,8 +526,6 @@ StructRNA *ID_code_to_RNA_type(short idcode)
       return RNA_ParticleSettings;
     case ID_PAL:
       return RNA_Palette;
-    case ID_PC:
-      return RNA_PaintCurve;
     case ID_PT:
       return RNA_PointCloud;
     case ID_LP:

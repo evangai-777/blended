@@ -171,7 +171,6 @@ RNA_MAIN_LISTBASE_FUNCS_DEF(metaballs)
 RNA_MAIN_LISTBASE_FUNCS_DEF(movieclips)
 RNA_MAIN_LISTBASE_FUNCS_DEF(nodetrees)
 RNA_MAIN_LISTBASE_FUNCS_DEF(objects)
-RNA_MAIN_LISTBASE_FUNCS_DEF(paintcurves)
 RNA_MAIN_LISTBASE_FUNCS_DEF(palettes)
 RNA_MAIN_LISTBASE_FUNCS_DEF(particles)
 RNA_MAIN_LISTBASE_FUNCS_DEF(pointclouds)
@@ -505,12 +504,6 @@ void RNA_def_main(BlenderRNA *brna)
        "Cache Files",
        "Cache Files data-blocks",
        RNA_def_main_cachefiles},
-      {"paint_curves",
-       "PaintCurve",
-       "rna_Main_paintcurves_begin",
-       "Paint Curves",
-       "Paint Curves data-blocks",
-       RNA_def_main_paintcurves},
       {"lightprobes",
        "LightProbe",
        "rna_Main_lightprobes_begin",

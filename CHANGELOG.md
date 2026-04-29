@@ -57,24 +57,24 @@ carries a one-liner status per active item.
 ## Unreleased — 0.4.0
 
 Bucket 5 + 6 fossil removals. 9 ID types, 357 hits, same chisel pattern as 0.3.0.
-Chisel order: ID_PC → ID_SPK → ID_PA → ID_GD_LEGACY → ID_LS → ID_MB → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision — see CLAUDE.md Key note 8).
+Chisel order: **ID_PC ✓** → ID_SPK → ID_PA → ID_GD_LEGACY → ID_LS → ID_MB → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision — see CLAUDE.md Key note 8).
 *(Order corrected in PR #126 fix — initial commit had ID_CF first, contradicting CLAUDE.md Key note 8. Scar 7.)*
 
 **Key notes:**
 - `ID_CU_LEGACY` and `ID_GD_LEGACY` have active migration paths — only the type *registration* goes, not the converters.
 - `ID_LS` is already guarded by `#ifdef WITH_FREESTYLE` (`WITH_FREESTYLE=OFF` in `blended_release.cmake`).
-- `brush_test.cc` uses `ID_TE` and `ID_PC` in test fixtures — those tests get deleted with the types.
+- `brush_test.cc` uses `ID_TE` in test fixtures — those tests get deleted with the type. (ID_PC fixtures rewritten in 0.4.0.)
 - `depsgraph.cc:160` has a `!= ID_PA` guard in `clear_id_nodes_conditional` — particle-specific cache invalidation; audit before removing.
 
-### ID_PC — PaintCurve
+### ID_PC — PaintCurve ✓ complete
 
 | Layer | Files touched | Status |
 |-------|--------------|--------|
-| `makesdna` | `DNA_ID_enums.h`, `DNA_brush_types.h` (id_type constexpr), `DNA_ID.h` (shared macro checks) | ☐ |
-| `blenkernel` | `idtype.cc`, `main.cc`, `brush_test.cc` (test fixtures deleted) | ☐ |
-| `makesrna` | `rna_ID.cc`, `rna_main_api.cc` | ☐ |
-| `editors` | `interface_icons.cc`, `interface_template_id.cc`, `render_opengl.cc`, `outliner_draw.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc` | ☐ |
-| `depsgraph` | `deg_builder_relations.cc`, `deg_builder_nodes.cc` | ☐ |
+| `makesdna` | `DNA_ID_enums.h`, `DNA_brush_types.h` (id_type constexpr, PaintCurvePoint/PaintCurve structs, Brush::paint_curve field), `DNA_ID.h` (shared macro checks) | ✓ |
+| `blenkernel` | `idtype.cc`, `main.cc`, `paint.cc` (IDTypeInfo + callbacks), `brush.cc` (FOREACHID, deps), `brush_test.cc` (test fixtures rewritten); headers: `BKE_idtype.hh`, `BKE_main.hh`, `BKE_paint.hh`, `BKE_undo_system.hh` | ✓ |
+| `makesrna` | `rna_ID.cc`, `rna_main_api.cc`, `rna_main.cc`, `rna_brush.cc`, `rna_sculpt_paint.cc`, `rna_space.cc`, `rna_internal.hh` | ✓ |
+| `editors` | `paint_curve.cc` (deleted), `paint_curve_undo.cc` (deleted), `transform_convert_paintcurve.cc` (deleted); `paint_cursor.cc/hh`, `paint_stroke.cc`, `paint_ops.cc`, `paint_intern.hh`, `transform_convert.cc/hh`, `transform_generics.cc`, `interface_icons.cc`, `interface_template_id.cc`, `render_opengl.cc`, `outliner_draw.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc`, `BLT_translation.hh` | ✓ |
+| `depsgraph` | `deg_builder_relations.cc`, `deg_builder_nodes.cc` | ✓ |
 
 ### ID_SPK — Speaker
 

@@ -1123,15 +1123,6 @@ bool calculateCenterActive(TransInfo *t, bool select_only, float r_center[3])
       return true;
     }
   }
-  else if (t->options & CTX_PAINT_CURVE) {
-    Paint *paint = BKE_paint_get_active(*t->bmain, t->scene, t->view_layer);
-    Brush *br = BKE_paint_brush(paint);
-    PaintCurve *pc = br->paint_curve;
-    copy_v3_v3(r_center, pc->points[pc->add_index - 1].bez.vec[1]);
-    BKE_brush_tag_unsaved_changes(br);
-    r_center[2] = 0.0f;
-    return true;
-  }
   else {
     /* Object mode. */
     BKE_view_layer_synced_ensure(*t->bmain, t->scene, t->view_layer);

@@ -61,7 +61,6 @@ TEST_F(BrushTest, deep_copy)
   id_us_min(&brush->id);
 
   /* Normal Linked Data */
-  brush->paint_curve = static_cast<PaintCurve *>(BKE_id_new(bmain, ID_PC, "UnitTestPaintCurve"));
   brush->mtex.tex = static_cast<Tex *>(BKE_id_new(bmain, ID_TE, "UnitTestTexture"));
   brush->mtex.tex->ima = static_cast<Image *>(BKE_id_new(bmain, ID_IM, "UnitTestImage"));
 
@@ -73,7 +72,6 @@ TEST_F(BrushTest, deep_copy)
       bmain, brush, USER_DUP_OBDATA | USER_DUP_LINKED_ID, LIB_ID_DUPLICATE_IS_ROOT_ID);
 
   check_id_and_name(&brush->id, &duplicated_brush->id);
-  check_id_and_name(&brush->paint_curve->id, &duplicated_brush->paint_curve->id);
   check_id_and_name(&brush->mtex.tex->id, &duplicated_brush->mtex.tex->id);
   check_id_and_name(&brush->mtex.tex->ima->id, &duplicated_brush->mtex.tex->ima->id);
 
@@ -92,7 +90,6 @@ TEST_F(BrushTest, deep_copy_grease_pencil_brush)
   id_us_min(&brush->id);
 
   /* Normal Linked Data */
-  brush->paint_curve = static_cast<PaintCurve *>(BKE_id_new(bmain, ID_PC, "UnitTestPaintCurve"));
   brush->gpencil_settings->material = static_cast<Material *>(
       BKE_id_new(bmain, ID_MA, "UnitTestMaterial"));
   brush->gpencil_settings->material_alt = static_cast<Material *>(
@@ -102,7 +99,6 @@ TEST_F(BrushTest, deep_copy_grease_pencil_brush)
       bmain, brush, USER_DUP_OBDATA | USER_DUP_LINKED_ID, LIB_ID_DUPLICATE_IS_ROOT_ID);
 
   check_id_and_name(&brush->id, &duplicated_brush->id);
-  check_id_and_name(&brush->paint_curve->id, &duplicated_brush->paint_curve->id);
   check_id_and_name(&brush->gpencil_settings->material->id,
                     &duplicated_brush->gpencil_settings->material->id);
   check_id_and_name(&brush->gpencil_settings->material_alt->id,

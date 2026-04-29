@@ -925,12 +925,7 @@ static TransConvertTypeInfo *convert_type_get(const TransInfo *t, Object **r_obj
     if (t->options & CTX_MASK) {
       return &TransConvertType_Mask;
     }
-    if (t->options & CTX_PAINT_CURVE) {
-      if (!ELEM(t->mode, TFM_SHEAR, TFM_SHRINKFATTEN)) {
-        return &TransConvertType_PaintCurve;
-      }
-    }
-    else if (t->obedit_type == OB_MESH) {
+    if (t->obedit_type == OB_MESH) {
       return &TransConvertType_MeshUV;
     }
     return nullptr;
@@ -1015,9 +1010,6 @@ static TransConvertTypeInfo *convert_type_get(const TransInfo *t, Object **r_obj
     return &TransConvertType_Particle;
   }
   if (ob && ((ob->mode & OB_MODE_ALL_PAINT) || (ob->mode & OB_MODE_SCULPT_CURVES))) {
-    if ((t->options & CTX_PAINT_CURVE) && !ELEM(t->mode, TFM_SHEAR, TFM_SHRINKFATTEN)) {
-      return &TransConvertType_PaintCurve;
-    }
     return nullptr;
   }
   if (ob && (ob->mode & OB_MODE_ALL_PAINT_GPENCIL)) {

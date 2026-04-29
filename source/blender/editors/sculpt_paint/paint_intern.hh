@@ -617,7 +617,6 @@ void PAINT_OT_vert_select_loop(wmOperatorType *ot);
 
 bool vert_paint_poll(bContext *C);
 bool mask_paint_poll(bContext *C);
-bool paint_curve_poll(bContext *C);
 
 bool facemask_paint_poll(bContext *C);
 
@@ -662,15 +661,6 @@ inline float3 symmetry_flip(const float3 &src, const ePaintSymmetryFlags symm)
 
 }  // namespace ed::sculpt_paint
 
-/* `paint_curve.cc` */
-
-void PAINTCURVE_OT_new(wmOperatorType *ot);
-void PAINTCURVE_OT_add_point(wmOperatorType *ot);
-void PAINTCURVE_OT_delete_point(wmOperatorType *ot);
-void PAINTCURVE_OT_select(wmOperatorType *ot);
-void PAINTCURVE_OT_slide(wmOperatorType *ot);
-void PAINTCURVE_OT_draw(wmOperatorType *ot);
-void PAINTCURVE_OT_cursor(wmOperatorType *ot);
 
 /* image painting blur kernel */
 struct BlurKernel {
