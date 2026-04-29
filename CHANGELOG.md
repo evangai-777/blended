@@ -15,12 +15,13 @@ carries a one-liner status per active item.
 | Version | Foundation layer |
 |---------|-----------------|
 | 0.1.x | Identity — branding, CI, Python compat, design docs |
-| 0.2.x | Datablock audit — UI-state removals (ID_WS, then ID_SCR, ID_WM) |
-| 0.3.x | Datablock audit — fossil removals (Buckets 5 + 6) |
-| 0.4.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) |
-| 0.5.x | Evaluation model — depsgraph audit |
-| 0.6.x | App lenses — launcher as canonical workspace system |
-| 0.7.x | File format — `.blended` is the project, import/export is the boundary |
+| 0.2.x | Datablock audit — UI-state removal: ID_WS |
+| 0.3.x | Datablock audit — UI-state removals: ID_SCR, ID_WM |
+| 0.4.x | Datablock audit — fossil removals (Buckets 5 + 6): 9 ID types |
+| 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) |
+| 0.6.x | Evaluation model — depsgraph audit |
+| 0.7.x | App lenses — launcher as canonical workspace system |
+| 0.8.x | File format — `.blended` is the project, import/export is the boundary |
 | 1.0.0 | Foundation complete; basic pipeline navigation working |
 
 ---
@@ -55,7 +56,114 @@ carries a one-liner status per active item.
 
 ## Unreleased — 0.4.0
 
-Bucket 5 + 6 fossil removals: `ID_CU_LEGACY`, `ID_GD_LEGACY`, `ID_TE`, `ID_PA`, `ID_MB`, `ID_LS`, `ID_SPK`, `ID_PC`, `ID_CF`. Same chisel pattern as 0.3.0.
+Bucket 5 + 6 fossil removals. 9 ID types, 357 hits, same chisel pattern as 0.3.0.
+Chisel order: ID_CF → ID_PC → ID_SPK → ID_PA → ID_GD_LEGACY → ID_LS → ID_MB → ID_TE → ID_CU_LEGACY.
+
+**Key notes:**
+- `ID_CU_LEGACY` and `ID_GD_LEGACY` have active migration paths — only the type *registration* goes, not the converters.
+- `ID_LS` is already guarded by `#ifdef WITH_FREESTYLE` (`WITH_FREESTYLE=OFF` in `blended_release.cmake`).
+- `brush_test.cc` uses `ID_TE` and `ID_PC` in test fixtures — those tests get deleted with the types.
+- `depsgraph.cc:160` has a `!= ID_PA` guard in `clear_id_nodes_conditional` — particle-specific cache invalidation; audit before removing.
+
+### ID_CF — CacheFile
+
+| Layer | Files touched | Status |
+|-------|--------------|--------|
+| `makesdna` | `DNA_ID_enums.h` (enum entry), `DNA_cachefile_types.h` (id_type constexpr) | ☐ |
+| `blenkernel` | `idtype.cc` (INIT_TYPE), `main.cc` (which_libbase case, BKE_main_lists_get entry) | ☐ |
+| `makesrna` | `rna_ID.cc`, `rna_main_api.cc` | ☐ |
+| `editors` | `interface_icons.cc`, `interface_template_id.cc`, `render_opengl.cc`, `io_cache.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc` | ☐ |
+| `depsgraph` | `deg_builder_relations.cc`, `deg_builder_nodes.cc` | ☐ |
+
+### ID_PC — PaintCurve
+
+| Layer | Files touched | Status |
+|-------|--------------|--------|
+| `makesdna` | `DNA_ID_enums.h`, `DNA_brush_types.h` (id_type constexpr), `DNA_ID.h` (shared macro checks) | ☐ |
+| `blenkernel` | `idtype.cc`, `main.cc`, `brush_test.cc` (test fixtures deleted) | ☐ |
+| `makesrna` | `rna_ID.cc`, `rna_main_api.cc` | ☐ |
+| `editors` | `interface_icons.cc`, `interface_template_id.cc`, `render_opengl.cc`, `outliner_draw.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc` | ☐ |
+| `depsgraph` | `deg_builder_relations.cc`, `deg_builder_nodes.cc` | ☐ |
+
+### ID_SPK — Speaker
+
+| Layer | Files touched | Status |
+|-------|--------------|--------|
+| `makesdna` | `DNA_ID_enums.h`, `DNA_speaker_types.h` (id_type constexpr), `DNA_object_types.h` (macros) | ☐ |
+| `blenkernel` | `idtype.cc`, `main.cc`, `object.cc`, `sound.cc` | ☐ |
+| `makesrna` | `rna_ID.cc`, `rna_main_api.cc` | ☐ |
+| `editors` | `interface_icons.cc`, `interface_template_id.cc`, `render_opengl.cc`, `outliner_draw.cc`, `outliner_select.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc` | ☐ |
+| `depsgraph` | `deg_builder_relations.cc`, `deg_builder_nodes.cc` | ☐ |
+
+### ID_PA — ParticleSettings
+
+| Layer | Files touched | Status |
+|-------|--------------|--------|
+| `makesdna` | `DNA_ID_enums.h`, `DNA_particle_types.h` (id_type constexpr) | ☐ |
+| `blenkernel` | `idtype.cc`, `main.cc`, `texture.cc` | ☐ |
+| `makesrna` | `rna_ID.cc`, `rna_texture.cc`, `rna_particle.cc`, `rna_boid.cc`, `rna_color.cc`, `rna_object_force.cc`, `rna_main_api.cc` | ☐ |
+| `editors` | `buttons_context.cc`, `interface_icons.cc`, `interface_template_id.cc`, `render_shading.cc`, `render_opengl.cc`, `outliner_draw.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc`, `anim_filter.cc`, `anim_channels_defines.cc` | ☐ |
+| `depsgraph` | `depsgraph_tag.cc`, `deg_builder_relations.cc`, `deg_builder_nodes.cc`, `depsgraph.cc` (clear_id_nodes_conditional) | ☐ |
+| `animrig` | `animdata.cc` | ☐ |
+
+### ID_GD_LEGACY — Old Grease Pencil
+
+| Layer | Files touched | Status |
+|-------|--------------|--------|
+| `makesdna` | `DNA_ID_enums.h`, `DNA_gpencil_legacy_types.h` (id_type constexpr), `DNA_object_types.h` (macros) | ☐ |
+| `blenkernel` | `idtype.cc`, `main.cc`, `material.cc`, `deform.cc`, `grease_pencil_convert_legacy.cc` (type-safety asserts only), `blendfile_link_append.cc` | ☐ |
+| `blenloader` | `versioning_250.cc`, `versioning_common.cc` | ☐ |
+| `makesrna` | `rna_ID.cc`, `rna_main_api.cc` | ☐ |
+| `editors` | `interface_icons.cc`, `interface_template_id.cc`, `object_data_transform.cc`, `render_opengl.cc`, `outliner_draw.cc`, `outliner_select.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc`, `space_node.cc` | ☐ |
+| `draw` | `draw_context.cc` | ☐ |
+| `depsgraph` | `depsgraph_tag.cc`, `deg_builder_nodes.cc`, `deg_builder_relations.cc` | ☐ |
+
+### ID_LS — FreestyleLineStyle
+
+| Layer | Files touched | Status |
+|-------|--------------|--------|
+| `makesdna` | `DNA_ID_enums.h`, `DNA_linestyle_types.h` (id_type constexpr) | ☐ |
+| `blenkernel` | `idtype.cc`, `main.cc`, `node.cc`, `texture.cc`, `linestyle.cc` | ☐ |
+| `blenloader` | `versioning_500.cc`, `versioning_450.cc` | ☐ |
+| `makesrna` | `rna_ID.cc`, `rna_texture.cc`, `rna_color.cc`, `rna_main_api.cc` | ☐ |
+| `editors` | `buttons_texture.cc`, `buttons_context.cc`, `interface_icons.cc`, `interface_template_id.cc`, `interface_template_preview.cc`, `render_shading.cc`, `render_opengl.cc`, `outliner_draw.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc` | ☐ |
+| `nodes` | `shader_nodes_inline.cc` | ☐ |
+| `depsgraph` | `deg_eval_copy_on_write.cc`, `deg_builder_relations.cc`, `deg_builder_nodes.cc` | ☐ |
+
+### ID_MB — MetaBall
+
+| Layer | Files touched | Status |
+|-------|--------------|--------|
+| `makesdna` | `DNA_ID_enums.h`, `DNA_meta_types.h` (id_type constexpr), `DNA_object_types.h` (macros shared w/ ID_CU_LEGACY) | ☐ |
+| `blenkernel` | `idtype.cc`, `main.cc`, `material.cc`, `object.cc`, `object_dupli.cc`, `lib_remap.cc` | ☐ |
+| `makesrna` | `rna_ID.cc`, `rna_main_api.cc` | ☐ |
+| `editors` | `interface_icons.cc`, `interface_template_id.cc`, `object_data_transform.cc`, `transform_convert_object_texspace.cc` (shared ELEM w/ CU_LEGACY), `render_opengl.cc`, `outliner_draw.cc`, `outliner_select.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc` | ☐ |
+| `draw` | `overlay_bounds.hh`, `draw_resource.hh` | ☐ |
+| `depsgraph` | `depsgraph_tag.cc`, `deg_eval_copy_on_write.cc`, `deg_builder_relations.cc`, `deg_builder_nodes.cc`, `depsgraph_query_iter.cc` | ☐ |
+
+### ID_TE — Texture
+
+| Layer | Files touched | Status |
+|-------|--------------|--------|
+| `makesdna` | `DNA_ID_enums.h`, `DNA_texture_types.h` (id_type constexpr), `DNA_ID.h` (shared macro) | ☐ |
+| `blenkernel` | `idtype.cc`, `main.cc`, `preview_image.cc`, `image.cc`, `compositor.cc`, `node.cc`, `brush_test.cc` (test fixtures deleted) | ☐ |
+| `blenloader` | `versioning_500.cc`, `versioning_450.cc` | ☐ |
+| `makesrna` | `rna_ID.cc`, `rna_color.cc`, `rna_image.cc`, `rna_space.cc`, `rna_texture.cc`, `rna_main_api.cc` | ☐ |
+| `editors` | `buttons_texture.cc`, `interface_anim.cc`, `interface_icons.cc`, `interface_template_preview.cc`, `interface_template_id.cc`, `node_group_operator.cc`, `render_opengl.cc`, `render_update.cc`, `render_preview.cc`, `anim_filter.cc`, `anim_channels_defines.cc`, `outliner_draw.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc` | ☐ |
+| `depsgraph` | `depsgraph_tag.cc`, `deg_builder_relations.cc`, `deg_builder_nodes.cc`, `deg_eval_copy_on_write.cc` | ☐ |
+| `windowmanager` | `wm_operators.cc` | ☐ |
+| `modifiers` | `MOD_nodes.cc` | ☐ |
+
+### ID_CU_LEGACY — Legacy Curve
+
+| Layer | Files touched | Status |
+|-------|--------------|--------|
+| `makesdna` | `DNA_ID_enums.h`, `DNA_curve_types.h` (id_type constexpr), `DNA_object_types.h` (macros shared w/ ID_MB) | ☐ |
+| `blenkernel` | `idtype.cc`, `main.cc`, `curve.cc`, `key.cc`, `material.cc`, `object.cc`, `mesh_convert.cc`, `lib_remap.cc`, `object_update.cc` | ☐ |
+| `makesrna` | `rna_ID.cc`, `rna_key.cc`, `rna_object.cc`, `rna_main_api.cc` | ☐ |
+| `editors` | `interface_icons.cc`, `interface_template_id.cc`, `object_data_transform.cc`, `object_edit.cc`, `render_opengl.cc`, `transform_convert_object_texspace.cc`, `outliner_draw.cc`, `outliner_select.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc` | ☐ |
+| `draw` | `overlay_bounds.hh`, `draw_resource.hh` | ☐ |
+| `depsgraph` | `depsgraph_tag.cc`, `deg_eval_copy_on_write.cc`, `deg_builder_relations.cc`, `deg_builder_nodes.cc` | ☐ |
 
 ---
 
@@ -89,20 +197,23 @@ the architecture question — where does the workspace list live now that
 
 ## Roadmap
 
-### 0.2.x — Datablock audit: UI-state
+### 0.2.x — Datablock audit: UI-state (ID_WS)
 
 **0.2.0 — ID_WS removed** *(see above)*
 
-**0.2.x — ID_SCR and ID_WM**
+---
 
-`bScreen` and `WindowManager` are also Bucket 4 (BLENDED.md §10) — per-user,
-per-machine state that currently leaks into `.blend` files. Removal scope is
-larger than ID_WS (both are more deeply wired into the window system), so they
-get their own point releases after 0.2.0.
+### 0.3.x — Datablock audit: UI-state (ID_SCR, ID_WM)
+
+**0.3.0 — ID_SCR and ID_WM removed** *(see above)*
+
+`bScreen` and `WindowManager` are Bucket 4 (BLENDED.md §10) — per-user,
+per-machine state that currently leaks into `.blend` files. Removal scope was
+larger than ID_WS (both are more deeply wired into the window system).
 
 ---
 
-### 0.3.x — Datablock audit: fossils
+### 0.4.x — Datablock audit: fossils (Buckets 5 + 6)
 
 Remove Bucket 5 (upstream deprecations Blender itself marked done) and Bucket 6
 (fossils with no active users).
@@ -120,11 +231,12 @@ Remove Bucket 5 (upstream deprecations Blender itself marked done) and Bucket 6
 - `ID_PC` — PaintCurve; niche stroke guide
 - `ID_CF` — CacheFile; external Alembic/USD cache reference — boundary concern, not project data
 
-Each fossil follows the same chisel pattern as ID_WS. The breakage is the audit.
+Each fossil follows the same chisel pattern as ID_WS / ID_SCR / ID_WM.
+The breakage is the audit.
 
 ---
 
-### 0.4.x — Datablock audit: complete
+### 0.5.x — Datablock audit: complete (Bucket 3 fold-downs)
 
 Fold-downs from Bucket 3 — property bags pretending to be first-class IDs:
 
@@ -142,7 +254,7 @@ into Scene properties?), `ID_KE` (survey real projects before collapsing into ge
 
 ---
 
-### 0.5.x — Evaluation model
+### 0.6.x — Evaluation model
 
 Depsgraph audit under Blended's scope. Current depsgraph has had three rewrites
 and carries assumptions from all three eras. Questions:
@@ -151,12 +263,12 @@ and carries assumptions from all three eras. Questions:
 - Which depsgraph node types survive the datablock cuts above?
 - What's kept because it's right vs kept because removing it is hard?
 
-The ID type cuts in 0.2–0.4 will have already removed dead branches from the
+The ID type cuts in 0.2–0.5 will have already removed dead branches from the
 depsgraph. This milestone cleans up what remains.
 
 ---
 
-### 0.6.x — App lenses (launcher)
+### 0.7.x — App lenses (launcher)
 
 The launcher model from BLENDED.md §11 becomes structurally real:
 
@@ -172,7 +284,7 @@ Global hotkey to return from any workspace.
 
 ---
 
-### 0.7.x — File format
+### 0.8.x — File format
 
 `.blended` is the project, period. Import/export is an explicit boundary, not a
 default workflow.
