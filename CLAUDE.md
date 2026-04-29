@@ -33,6 +33,20 @@ Pattern for each pending layer: `grep -rn "ID_WS"` the directory, delete or redi
 
 Grepped 2026-04-29 before starting the removal. Use this as the checklist.
 
+#### Two-Phase Blast Radius Protocol (mandatory)
+
+Every chisel goes through two audits. They are not the same thing and must not be collapsed into one.
+
+**Phase 1 — Literal audit (pre-chisel, grep only):**
+Run `grep -rn "ID_XX" source/` before touching a single file. Count hits, list files, record line numbers. This is the *lower bound* — the minimum number of sites that reference the token string. It is always an undercount. Write it into CLAUDE.md (here) and CHANGELOG.md before starting.
+
+**Phase 2 — True audit (during editing, as breakage surfaces):**
+Once the editing phase begins, the real blast radius emerges. Struct fields embedded in DNA. Files whose names don't contain the ID token but whose logic is entirely owned by the type. Enum values that were the only consumer of a code path. Undo subsystems. Transform convert types. Translation context macros. These don't show in the grep — they show in the compile errors and in the "what does this function actually do" moment during editing.
+
+When the true blast radius diverges from the literal count, **update the CLAUDE.md entry for that type in place** — replace the literal count header (e.g. `**ID_PC — 21 hits, 15 files**`) with the true one, and add a session note explaining what the grep missed. The CHANGELOG layer rows get the true file lists, not the grep lists.
+
+**The rule:** The pre-chisel grep count is a starting map, not a final answer. The editing phase is always the real audit. Always update the documentation to reflect the true scope — future sessions calibrate their estimates off these numbers. If they're systematically low, every future blast radius estimate will be wrong in the same direction.
+
 **ID_CU_LEGACY — 74 hits, 33 files**
 
 Core definition:
