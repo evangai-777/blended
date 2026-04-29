@@ -66,16 +66,6 @@ Chisel order: ID_PC → ID_SPK → ID_PA → ID_GD_LEGACY → ID_LS → ID_MB �
 - `brush_test.cc` uses `ID_TE` and `ID_PC` in test fixtures — those tests get deleted with the types.
 - `depsgraph.cc:160` has a `!= ID_PA` guard in `clear_id_nodes_conditional` — particle-specific cache invalidation; audit before removing.
 
-### ID_CF — CacheFile
-
-| Layer | Files touched | Status |
-|-------|--------------|--------|
-| `makesdna` | `DNA_ID_enums.h` (enum entry), `DNA_cachefile_types.h` (id_type constexpr) | ☐ |
-| `blenkernel` | `idtype.cc` (INIT_TYPE), `main.cc` (which_libbase case, BKE_main_lists_get entry) | ☐ |
-| `makesrna` | `rna_ID.cc`, `rna_main_api.cc` | ☐ |
-| `editors` | `interface_icons.cc`, `interface_template_id.cc`, `render_opengl.cc`, `io_cache.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc` | ☐ |
-| `depsgraph` | `deg_builder_relations.cc`, `deg_builder_nodes.cc` | ☐ |
-
 ### ID_PC — PaintCurve
 
 | Layer | Files touched | Status |
@@ -165,6 +155,16 @@ Chisel order: ID_PC → ID_SPK → ID_PA → ID_GD_LEGACY → ID_LS → ID_MB �
 | `editors` | `interface_icons.cc`, `interface_template_id.cc`, `object_data_transform.cc`, `object_edit.cc`, `render_opengl.cc`, `transform_convert_object_texspace.cc`, `outliner_draw.cc`, `outliner_select.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc` | ☐ |
 | `draw` | `overlay_bounds.hh`, `draw_resource.hh` | ☐ |
 | `depsgraph` | `depsgraph_tag.cc`, `deg_eval_copy_on_write.cc`, `deg_builder_relations.cc`, `deg_builder_nodes.cc` | ☐ |
+
+### ID_CF — CacheFile *(do last — needs design decision, see CLAUDE.md Key note 8)*
+
+| Layer | Files touched | Status |
+|-------|--------------|--------|
+| `makesdna` | `DNA_ID_enums.h` (enum entry), `DNA_cachefile_types.h` (id_type constexpr) | ☐ |
+| `blenkernel` | `idtype.cc` (INIT_TYPE), `main.cc` (which_libbase case, BKE_main_lists_get entry) | ☐ |
+| `makesrna` | `rna_ID.cc`, `rna_main_api.cc` | ☐ |
+| `editors` | `interface_icons.cc`, `interface_template_id.cc`, `render_opengl.cc`, `io_cache.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc` | ☐ |
+| `depsgraph` | `deg_builder_relations.cc`, `deg_builder_nodes.cc` | ☐ |
 
 ---
 
