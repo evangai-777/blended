@@ -685,6 +685,30 @@ This is two failures compounded:
 
 **The rule:** Before every commit that touches documentation with cross-references (chisel orders, version maps, scar notes, architectural decisions), read the complete diff and check that every changed file is internally consistent with every other changed file. If you write "do X last" anywhere, grep the diff for X and verify nothing else in the same commit says "do X first."
 
+---
+
+### Pre-Commit Consistency Check (Mandatory — No Exceptions)
+
+**This is not a reminder. It is a required step before every `git add`. Do it even when you think it's unnecessary. Especially when you think it's unnecessary.**
+
+Before staging any commit that touches documentation (CLAUDE.md, CHANGELOG.md, BLENDED.md, or any file containing cross-references, ordered lists, version maps, or architectural decisions):
+
+1. **Run `git diff` and read the entire output.** Not a skim. Every line.
+
+2. **For every ordered list in the diff, find every other representation of that same order in the diff and in the touched files.** Chisel order is documented in at minimum three places: CLAUDE.md key notes, CHANGELOG chisel order text, CHANGELOG table order. All must agree. If you updated one, you updated all, or you did not finish.
+
+3. **For every statement of the form "do X last / first / never / always," grep the diff for X.** Verify no other line in the same diff contradicts it.
+
+4. **For every version number mentioned, verify it matches the version map.** Version maps exist in CHANGELOG.md. If a version number appears anywhere in the diff, it must be consistent with the map.
+
+5. **If any inconsistency is found, fix it before committing.** Not after. Not in a follow-up commit. Before.
+
+**Why this is written down:** Scar 7 happened because this check was not done. The chisel order was corrected in text but left wrong in table order in the same commit. A bot caught it. Then the table order was fixed but Scar 7 was written without running the check again — meaning the fix to Scar 7 itself could have had the same problem. The developer had to ask "what else are you being untrustworthy about?" before the table order issue was found. That is not acceptable. The check must be automatic, not prompted.
+
+**The check takes 60 seconds. A missed contradiction can cost a session.**
+
+---
+
 ### Don't Over-Engineer
 
 `static_cast` is the fix, not a template wrapper. Casts, not frameworks. Enums, not architectures. Three similar lines is better than a premature abstraction. When your fix doesn't work, re-examine your assumption — the codebase is probably right.
