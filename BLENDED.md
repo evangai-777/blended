@@ -280,15 +280,17 @@ Blender itself has marked these for replacement. Blended finishes the job.
 
 ### Bucket 6 — Fossils [LOCKED cut]
 
-| ID | Name | Why cut |
-|---|---|---|
-| `ID_TE` | Texture | Blender Internal renderer fossil; residual folds into NodeTree |
-| `ID_PA` | ParticleSettings | Replaced by Geometry Nodes (purest example of §5 Group 5 swamp) |
-| `ID_MB` | MetaBall | 1990s implicit surfaces; sculpt/remesh covers it |
-| `ID_LS` | FreestyleLineStyle | Niche NPR renderer; NPR via shader nodes / Grease Pencil |
-| `ID_SPK` | Speaker | 3D positional audio on scene objects; niche. Audio flows through VSE timeline. |
-| `ID_PC` | PaintCurve | Niche stroke guide |
-| `ID_CF` | CacheFile | External Alembic/USD cache reference — boundary concern, not project data |
+| ID | Name | Why cut | Status |
+|---|---|---|---|
+| `ID_TE` | Texture | Blender Internal renderer fossil; residual folds into NodeTree | pending |
+| `ID_PA` | ParticleSettings | Replaced by Geometry Nodes (purest example of §5 Group 5 swamp) | pending |
+| `ID_MB` | MetaBall | 1990s implicit surfaces; sculpt/remesh covers it | pending |
+| `ID_LS` | FreestyleLineStyle | Niche NPR renderer; NPR via shader nodes / Grease Pencil | pending |
+| `ID_SPK` | Speaker | 3D positional audio on scene objects; niche. Audio flows through VSE timeline. | pending |
+| `ID_PC` | PaintCurve | Niche stroke guide | ✓ 0.4.0 |
+| `ID_CF` | CacheFile | External Alembic/USD cache reference — boundary concern, not project data | deferred (design question) |
+
+Removal in progress — 0.4.x. Per-layer file detail in [`CHANGELOG.md`](CHANGELOG.md).
 
 ### Open tensions [OPEN]
 
