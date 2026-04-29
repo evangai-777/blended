@@ -109,7 +109,7 @@ Blended embraces C's *breadth* while rejecting those three failure modes. The su
 UI is a projection of a data model. If the model is wrong, UI either papers over it (complexity) or fights it (workarounds). Both are the Blender disease. So the build order is:
 
 1. **Project file format** — what a Blended project *is*. [Principles locked, per-format decisions OPEN]
-2. **Datablocks** — what primitives live inside a project. [OPEN, next]
+2. **Datablocks** — what primitives live inside a project. [OPEN, in progress — 0.2.x through 0.5.x]
 3. **Evaluation model** — depsgraph, how primitives change when anything changes. [OPEN]
 4. **App lenses** — how a launcher door is technically a filtered view of the model. [OPEN]
 5. **UI** — only after 1–4 are honest. [OPEN, later]
@@ -263,11 +263,11 @@ Property bags pretending to be first-class entities:
 |---|---|---|
 | `ID_SCR` | bScreen | User state |
 | `ID_WM` | WindowManager | User state |
-| `ID_WS` | WorkSpace | **Replaced by the launcher model (§6).** Workspaces as a datablock go away. |
+| `ID_WS` | WorkSpace | **Replaced by the launcher model (§11).** Workspaces as a datablock go away. |
 
-**Load-bearing for §6:** once Workspace is not project data, the launcher becomes the canonical workspace system and `.blended` files travel cleanly between users.
+**Load-bearing for §11:** once Workspace is not project data, the launcher becomes the canonical workspace system and `.blended` files travel cleanly between users.
 
-**Code removal in progress** — `makesdna`, `blenkernel`, `makesrna` done; `editors`, `depsgraph`, `python`, `windowmanager` pending. Per-layer file detail in [`CHANGELOG.md`](CHANGELOG.md) — *Unreleased 0.2.0*.
+**Complete — removed across all layers.** `ID_WS` removed in 0.2.0; `ID_SCR` and `ID_WM` removed in 0.3.0. Per-layer detail in [`CHANGELOG.md`](CHANGELOG.md).
 
 ### Bucket 5 — Finish upstream's already-marked deprecations [LOCKED]
 
@@ -304,7 +304,7 @@ Blender itself has marked these for replacement. Blended finishes the job.
 ### Consequences
 
 1. Removing SCR/WM/WS makes `.blended` files portable between users.
-2. Launcher model (§6) becomes the canonical workspace system — no competing datablock.
+2. Launcher model (§11) becomes the canonical workspace system — no competing datablock.
 3. Compounds with §5 file-format simplification: fewer types to serialize means smaller, simpler files.
 
 ---
