@@ -58,11 +58,6 @@ static const EnumPropertyItem sculpt_stroke_method_items[] = {
      "Anchored",
      "Keep the brush anchored to the initial location"},
     {BRUSH_STROKE_LINE, "LINE", 0, "Line", "Draw a line with dabs separated according to spacing"},
-    {BRUSH_STROKE_CURVE,
-     "CURVE",
-     0,
-     "Curve",
-     "Define the stroke curve with a Bézier curve (dabs are separated according to spacing)"},
     {0, nullptr, 0, nullptr, nullptr},
 };
 
@@ -437,8 +432,7 @@ static bool rna_BrushCapabilities_has_smooth_stroke_get(PointerRNA *ptr)
   return (!(ELEM(br->stroke_method,
                  BRUSH_STROKE_ANCHORED,
                  BRUSH_STROKE_DRAG_DOT,
-                 BRUSH_STROKE_LINE,
-                 BRUSH_STROKE_CURVE)));
+                 BRUSH_STROKE_LINE)));
 }
 
 static bool rna_BrushCapabilities_has_spacing_get(PointerRNA *ptr)
@@ -646,7 +640,7 @@ static bool rna_BrushCapabilitiesImagePaint_has_radius_get(PointerRNA *ptr)
 static bool rna_BrushCapabilitiesImagePaint_has_space_attenuation_get(PointerRNA *ptr)
 {
   Brush *br = static_cast<Brush *>(ptr->data);
-  return (ELEM(br->stroke_method, BRUSH_STROKE_SPACE, BRUSH_STROKE_LINE, BRUSH_STROKE_CURVE)) &&
+  return (ELEM(br->stroke_method, BRUSH_STROKE_SPACE, BRUSH_STROKE_LINE)) &&
          br->image_brush_type != IMAGE_PAINT_BRUSH_TYPE_FILL;
 }
 
@@ -995,11 +989,6 @@ static const EnumPropertyItem *rna_Brush_stroke_itemf(bContext *C,
        0,
        "Line",
        "Draw a line with dabs separated according to spacing"},
-      {BRUSH_STROKE_CURVE,
-       "CURVE",
-       0,
-       "Curve",
-       "Define the stroke curve with a Bézier curve. Dabs are separated according to spacing."},
       {0, nullptr, 0, nullptr, nullptr},
   };
 

@@ -604,7 +604,7 @@ static void convert_brush_flags_to_type(Brush &brush)
   }
   else if (brush.flag & BRUSH_UNUSED_6) {
     brush.flag &= ~BRUSH_UNUSED_6;
-    brush.stroke_method = BRUSH_STROKE_CURVE;
+    brush.stroke_method = BRUSH_STROKE_DOTS;
   }
   else {
     brush.stroke_method = BRUSH_STROKE_DOTS;

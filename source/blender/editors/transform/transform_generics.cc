@@ -274,14 +274,6 @@ void initTransInfo(bContext *C, TransInfo *t, wmOperator *op, const wmEvent *eve
       t->flag |= T_V3D_ALIGN;
     }
 
-    if ((object_mode & OB_MODE_ALL_PAINT) || (object_mode & OB_MODE_SCULPT_CURVES)) {
-      Paint *paint = BKE_paint_get_active_from_context(C);
-      Brush *brush = (paint) ? BKE_paint_brush(paint) : nullptr;
-      if (brush && (brush->stroke_method == BRUSH_STROKE_CURVE)) {
-        t->options |= CTX_PAINT_CURVE;
-      }
-    }
-
     /* Initialize UV transform from. */
     if (op && (prop = RNA_struct_find_property(op->ptr, "correct_uv"))) {
       if (RNA_property_is_set(op->ptr, prop)) {
@@ -306,13 +298,6 @@ void initTransInfo(bContext *C, TransInfo *t, wmOperator *op, const wmEvent *eve
     }
     else if (sima->mode == SI_MODE_MASK) {
       t->options |= CTX_MASK;
-    }
-    else if (sima->mode == SI_MODE_PAINT) {
-      Paint *paint = &sce->toolsettings->imapaint.paint;
-      Brush *brush = (paint) ? BKE_paint_brush(paint) : nullptr;
-      if (brush && (brush->stroke_method == BRUSH_STROKE_CURVE)) {
-        t->options |= CTX_PAINT_CURVE;
-      }
     }
     /* Image not in UV edit, nor in mask mode, can happen for some tools. */
   }

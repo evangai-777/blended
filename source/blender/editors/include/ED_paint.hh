@@ -116,14 +116,6 @@ PaintTileMap *ED_image_paint_tile_map_get();
 #define ED_IMAGE_UNDO_TILE_NUMBER(size) \
   (((size) + ED_IMAGE_UNDO_TILE_SIZE - 1) >> ED_IMAGE_UNDO_TILE_BITS)
 
-/* `paint_curve_undo.cc` */
-
-void ED_paintcurve_undo_push_begin(const char *name);
-void ED_paintcurve_undo_push_end(bContext *C);
-
-/** Export for ED_undo_sys. */
-void ED_paintcurve_undosys_type(UndoType *ut);
-
 /* `paint_canvas.cc` */
 
 /** Color type of an object can be overridden in sculpt/paint mode. */

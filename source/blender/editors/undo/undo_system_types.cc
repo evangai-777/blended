@@ -50,8 +50,6 @@ void ED_undosys_type_init()
 
   BKE_UNDOSYS_TYPE_PARTICLE = BKE_undosys_type_append(ED_particle_undosys_type);
 
-  BKE_UNDOSYS_TYPE_PAINTCURVE = BKE_undosys_type_append(ED_paintcurve_undosys_type);
-
   /* Text editor */
   BKE_UNDOSYS_TYPE_TEXT = BKE_undosys_type_append(ED_text_undosys_type);
 

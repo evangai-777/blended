@@ -63,7 +63,6 @@ static CLG_LogRef LOG = {"undo"};
 
 const UndoType *BKE_UNDOSYS_TYPE_IMAGE = nullptr;
 const UndoType *BKE_UNDOSYS_TYPE_MEMFILE = nullptr;
-const UndoType *BKE_UNDOSYS_TYPE_PAINTCURVE = nullptr;
 const UndoType *BKE_UNDOSYS_TYPE_PARTICLE = nullptr;
 const UndoType *BKE_UNDOSYS_TYPE_SCULPT = nullptr;
 const UndoType *BKE_UNDOSYS_TYPE_TEXT = nullptr;
