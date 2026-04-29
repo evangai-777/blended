@@ -108,7 +108,6 @@ enum eTContext {
   CTX_MASK = (1 << 4),
   CTX_MOVIECLIP = (1 << 5),
   CTX_OBJECT = (1 << 6),
-  CTX_PAINT_CURVE = (1 << 7),
   CTX_POSE_BONE = (1 << 8),
   CTX_TEXTURE_SPACE = (1 << 9),
   CTX_SEQUENCER_IMAGE = (1 << 10),

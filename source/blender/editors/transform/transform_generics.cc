@@ -795,7 +795,7 @@ void postTrans(bContext *C, TransInfo *t)
   BLI_freelistN(&t->tsnap.points);
 
   if (t->spacetype == SPACE_IMAGE) {
-    if (t->options & (CTX_MASK | CTX_PAINT_CURVE)) {
+    if (t->options & CTX_MASK) {
       /* Pass. */
     }
     else {
@@ -928,16 +928,6 @@ void calculateCenterCursor(TransInfo *t, float r_center[3])
 {
   const float *cursor = t->scene->cursor.location;
   copy_v3_v3(r_center, cursor);
-
-  /* If edit or pose mode, move cursor in local space. */
-  if (t->options & CTX_PAINT_CURVE) {
-    if (ED_view3d_project_float_global(t->region, cursor, r_center, V3D_PROJ_TEST_NOP) !=
-        V3D_PROJ_RET_OK)
-    {
-      projectFloatViewCenterFallback(t, r_center);
-    }
-    r_center[2] = 0.0f;
-  }
 }
 
 void calculateCenterCursor2D(TransInfo *t, float r_center[2])
@@ -978,12 +968,6 @@ void calculateCenterCursor2D(TransInfo *t, float r_center[2])
 
       r_center[0] = co[0] * t->aspect[0];
       r_center[1] = co[1] * t->aspect[1];
-    }
-    else if (t->options & CTX_PAINT_CURVE) {
-      if (t->spacetype == SPACE_IMAGE) {
-        r_center[0] = ui::view2d_view_to_region_x(&t->region->v2d, cursor[0]);
-        r_center[1] = ui::view2d_view_to_region_y(&t->region->v2d, cursor[1]);
-      }
     }
     else {
       r_center[0] = cursor[0] * t->aspect[0];

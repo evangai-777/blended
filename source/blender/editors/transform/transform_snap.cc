@@ -738,7 +738,7 @@ static eSnapMode snap_mode_from_spacetype(TransInfo *t)
   }
 
   if (t->spacetype == SPACE_VIEW3D) {
-    if (t->options & (CTX_CAMERA | CTX_EDGE_DATA | CTX_PAINT_CURVE)) {
+    if (t->options & (CTX_CAMERA | CTX_EDGE_DATA)) {
       return SCE_SNAP_TO_INCREMENT;
     }
 

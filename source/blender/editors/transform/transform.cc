@@ -88,7 +88,7 @@ bool transdata_check_local_islands(TransInfo *t, short around)
 
 void setTransformViewMatrices(TransInfo *t)
 {
-  if (!(t->options & CTX_PAINT_CURVE) && (t->spacetype == SPACE_VIEW3D) && t->region &&
+  if ((t->spacetype == SPACE_VIEW3D) && t->region &&
       (t->region->regiontype == RGN_TYPE_WINDOW))
   {
     RegionView3D *rv3d = static_cast<RegionView3D *>(t->region->regiondata);
@@ -117,9 +117,6 @@ void setTransformViewAspect(TransInfo *t, float r_aspect[3])
 
     if (t->options & CTX_MASK) {
       ED_space_image_get_aspect(sima, &r_aspect[0], &r_aspect[1]);
-    }
-    else if (t->options & CTX_PAINT_CURVE) {
-      /* Pass. */
     }
     else {
       ED_space_image_get_uv_aspect(sima, &r_aspect[0], &r_aspect[1]);
@@ -185,22 +182,12 @@ static void convertViewVec2D_mask(View2D *v2d, float r_vec[3], int dx, int dy)
 void convertViewVec(TransInfo *t, float r_vec[3], double dx, double dy)
 {
   if ((t->spacetype == SPACE_VIEW3D) && (t->region->regiontype == RGN_TYPE_WINDOW)) {
-    if (t->options & CTX_PAINT_CURVE) {
-      r_vec[0] = dx;
-      r_vec[1] = dy;
-    }
-    else {
-      const float xy_delta[2] = {float(dx), float(dy)};
-      ED_view3d_win_to_delta(t->region, xy_delta, t->zfac, r_vec);
-    }
+    const float xy_delta[2] = {float(dx), float(dy)};
+    ED_view3d_win_to_delta(t->region, xy_delta, t->zfac, r_vec);
   }
   else if (t->spacetype == SPACE_IMAGE) {
     if (t->options & CTX_MASK) {
       convertViewVec2D_mask(static_cast<View2D *>(t->view), r_vec, dx, dy);
-    }
-    else if (t->options & CTX_PAINT_CURVE) {
-      r_vec[0] = dx;
-      r_vec[1] = dy;
     }
     else {
       convertViewVec2D(static_cast<View2D *>(t->view), r_vec, dx, dy);
@@ -309,10 +296,6 @@ void projectIntViewEx(TransInfo *t, const float vec[3], int adr[2], const eV3DPr
       adr[0] = v[0];
       adr[1] = v[1];
     }
-    else if (t->options & CTX_PAINT_CURVE) {
-      adr[0] = vec[0];
-      adr[1] = vec[1];
-    }
     else {
       float v[2];
 
@@ -406,11 +389,7 @@ void projectFloatViewEx(TransInfo *t, const float vec[3], float adr[2], const eV
 {
   switch (t->spacetype) {
     case SPACE_VIEW3D: {
-      if (t->options & CTX_PAINT_CURVE) {
-        adr[0] = vec[0];
-        adr[1] = vec[1];
-      }
-      else if (t->region->regiontype == RGN_TYPE_WINDOW) {
+      if (t->region->regiontype == RGN_TYPE_WINDOW) {
         /* Allow points behind the view #33643. */
         if (ED_view3d_project_float_global(t->region, vec, adr, flag) != V3D_PROJ_RET_OK) {
           /* XXX, 2.64 and prior did this, weak! */
@@ -436,9 +415,7 @@ void projectFloatView(TransInfo *t, const float vec[3], float adr[2])
 
 void applyAspectRatio(TransInfo *t, float vec[2])
 {
-  if ((t->spacetype == SPACE_IMAGE) && (t->mode == TFM_TRANSLATION) &&
-      !(t->options & CTX_PAINT_CURVE))
-  {
+  if ((t->spacetype == SPACE_IMAGE) && (t->mode == TFM_TRANSLATION)) {
     SpaceImage *sima = static_cast<SpaceImage *>(t->area->spacedata.first);
 
     if ((sima->flag & SI_COORDFLOATS) == 0) {
@@ -492,24 +469,18 @@ static void viewRedrawForce(const bContext *C, TransInfo *t)
     }
   }
   else if (t->spacetype == SPACE_VIEW3D) {
-    if (t->options & CTX_PAINT_CURVE) {
-      wmWindow *window = CTX_wm_window(C);
-      WM_paint_cursor_tag_redraw(window, t->region);
+    /* Do we need more refined tags? */
+    if (t->options & CTX_POSE_BONE) {
+      WM_event_add_notifier(C, NC_OBJECT | ND_POSE, nullptr);
     }
     else {
-      /* Do we need more refined tags? */
-      if (t->options & CTX_POSE_BONE) {
-        WM_event_add_notifier(C, NC_OBJECT | ND_POSE, nullptr);
-      }
-      else {
-        WM_event_add_notifier(C, NC_OBJECT | ND_TRANSFORM, nullptr);
-      }
+      WM_event_add_notifier(C, NC_OBJECT | ND_TRANSFORM, nullptr);
+    }
 
-      /* For real-time animation record - send notifiers recognized by animation editors. */
-      /* XXX: is this notifier a lame duck? */
-      if ((t->animtimer) && animrig::is_autokey_on(t->scene)) {
-        WM_event_add_notifier(C, NC_OBJECT | ND_KEYS, nullptr);
-      }
+    /* For real-time animation record - send notifiers recognized by animation editors. */
+    /* XXX: is this notifier a lame duck? */
+    if ((t->animtimer) && animrig::is_autokey_on(t->scene)) {
+      WM_event_add_notifier(C, NC_OBJECT | ND_KEYS, nullptr);
     }
   }
   else if (t->spacetype == SPACE_ACTION) {
@@ -537,10 +508,6 @@ static void viewRedrawForce(const bContext *C, TransInfo *t)
       Mask *mask = CTX_data_edit_mask(C);
 
       WM_event_add_notifier(C, NC_MASK | NA_EDITED, mask);
-    }
-    else if (t->options & CTX_PAINT_CURVE) {
-      wmWindow *window = CTX_wm_window(C);
-      WM_paint_cursor_tag_redraw(window, t->region);
     }
     else if (t->options & CTX_CURSOR) {
       ED_area_tag_redraw(t->area);

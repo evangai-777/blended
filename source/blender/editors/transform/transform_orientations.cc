@@ -801,7 +801,7 @@ short transform_orientation_matrix_get(bContext *C,
     v3d = static_cast<View3D *>(t->view);
     rv3d = static_cast<RegionView3D *>(t->region->regiondata);
 
-    if (ob && (ob->mode & OB_MODE_ALL_WEIGHT_PAINT) && !(t->options & CTX_PAINT_CURVE)) {
+    if (ob && (ob->mode & OB_MODE_ALL_WEIGHT_PAINT)) {
       Object *ob_armature = transform_object_deform_pose_armature_get(t, ob);
       if (ob_armature) {
         /* The armature matrix is used for GIMBAL, NORMAL and LOCAL orientations. */
@@ -812,17 +812,6 @@ short transform_orientation_matrix_get(bContext *C,
 
   const short orient_index_result = calc_orientation_from_type_ex(
       *t->bmain, scene, t->view_layer, v3d, rv3d, ob, obedit, orient_index, t->around, r_spacemtx);
-
-  if (rv3d && (t->options & CTX_PAINT_CURVE)) {
-    /* Screen space in the 3d region. */
-    if (orient_index_result == V3D_ORIENT_VIEW) {
-      unit_m3(r_spacemtx);
-    }
-    else {
-      mul_m3_m4m3(r_spacemtx, rv3d->viewmat, r_spacemtx);
-      normalize_m3(r_spacemtx);
-    }
-  }
 
   return orient_index_result;
 }

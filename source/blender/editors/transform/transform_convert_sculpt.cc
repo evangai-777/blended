@@ -94,7 +94,6 @@ static void createTransSculpt(bContext *C, TransInfo *t)
   copy_m3_m4(td->axismtx, ob.object_to_world().ptr());
   normalize_m3(td->axismtx);
 
-  BLI_assert(!(t->options & CTX_PAINT_CURVE));
   sculpt_paint::init_transform(C, ob, t->mval, t->undo_name);
 }
 
@@ -127,7 +126,6 @@ static void special_aftertrans_update__sculpt(bContext *C, TransInfo *t)
 
   BKE_view_layer_synced_ensure(*t->bmain, t->scene, t->view_layer);
   Object *ob = BKE_view_layer_active_object_get(t->view_layer);
-  BLI_assert(!(t->options & CTX_PAINT_CURVE));
   sculpt_paint::end_transform(C, *ob);
 }
 
