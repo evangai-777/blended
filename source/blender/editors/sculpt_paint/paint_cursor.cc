@@ -869,84 +869,6 @@ BLI_INLINE void draw_bezier_handle_lines(uint pos, const float sel_col[4], BezTr
   immEnd();
 }
 
-static void paint_draw_curve_cursor(Brush *brush, ViewContext *vc)
-{
-  GPU_matrix_push();
-  GPU_matrix_translate_2f(vc->region->winrct.xmin, vc->region->winrct.ymin);
-
-  if (brush->paint_curve && brush->paint_curve->points) {
-    PaintCurve *pc = brush->paint_curve;
-    PaintCurvePoint *cp = pc->points;
-
-    GPU_line_smooth(true);
-    GPU_blend(GPU_BLEND_ALPHA);
-
-    /* Draw the bezier handles and the curve segment between the current and next point. */
-    uint pos = GPU_vertformat_attr_add(immVertexFormat(), "pos", gpu::VertAttrType::SFLOAT_32_32);
-
-    immBindBuiltinProgram(GPU_SHADER_3D_UNIFORM_COLOR);
-
-    float selec_col[4], handle_col[4], pivot_col[4];
-    ui::theme::get_color_type_4fv(TH_VERTEX_SELECT, SPACE_VIEW3D, selec_col);
-    ui::theme::get_color_type_4fv(TH_GIZMO_PRIMARY, SPACE_VIEW3D, handle_col);
-    ui::theme::get_color_type_4fv(TH_GIZMO_SECONDARY, SPACE_VIEW3D, pivot_col);
-
-    for (int i = 0; i < pc->tot_points - 1; i++, cp++) {
-      int j;
-      PaintCurvePoint *cp_next = cp + 1;
-      float data[(PAINT_CURVE_NUM_SEGMENTS + 1) * 2];
-      /* Use color coding to distinguish handles vs curve segments. */
-      draw_bezier_handle_lines(pos, selec_col, &cp->bez);
-      draw_tri_point(pos, selec_col, pivot_col, &cp->bez.vec[1][0], 10.0f, cp->bez.f2);
-      draw_rect_point(
-          pos, selec_col, handle_col, &cp->bez.vec[0][0], 8.0f, cp->bez.f1 || cp->bez.f2);
-      draw_rect_point(
-          pos, selec_col, handle_col, &cp->bez.vec[2][0], 8.0f, cp->bez.f3 || cp->bez.f2);
-
-      for (j = 0; j < 2; j++) {
-        BKE_curve_forward_diff_bezier(cp->bez.vec[1][j],
-                                      cp->bez.vec[2][j],
-                                      cp_next->bez.vec[0][j],
-                                      cp_next->bez.vec[1][j],
-                                      data + j,
-                                      PAINT_CURVE_NUM_SEGMENTS,
-                                      sizeof(float[2]));
-      }
-
-      float (*v)[2] = reinterpret_cast<float (*)[2]>(data);
-
-      immUniformColor4f(0.0f, 0.0f, 0.0f, 0.5f);
-      GPU_line_width(3.0f);
-      immBegin(GPU_PRIM_LINE_STRIP, PAINT_CURVE_NUM_SEGMENTS + 1);
-      for (j = 0; j <= PAINT_CURVE_NUM_SEGMENTS; j++) {
-        immVertex2fv(pos, v[j]);
-      }
-      immEnd();
-
-      immUniformColor4f(0.9f, 0.9f, 1.0f, 0.5f);
-      GPU_line_width(1.0f);
-      immBegin(GPU_PRIM_LINE_STRIP, PAINT_CURVE_NUM_SEGMENTS + 1);
-      for (j = 0; j <= PAINT_CURVE_NUM_SEGMENTS; j++) {
-        immVertex2fv(pos, v[j]);
-      }
-      immEnd();
-    }
-
-    /* Draw last line segment. */
-    draw_bezier_handle_lines(pos, selec_col, &cp->bez);
-    draw_tri_point(pos, selec_col, pivot_col, &cp->bez.vec[1][0], 10.0f, cp->bez.f2);
-    draw_rect_point(
-        pos, selec_col, handle_col, &cp->bez.vec[0][0], 8.0f, cp->bez.f1 || cp->bez.f2);
-    draw_rect_point(
-        pos, selec_col, handle_col, &cp->bez.vec[2][0], 8.0f, cp->bez.f3 || cp->bez.f2);
-
-    GPU_blend(GPU_BLEND_NONE);
-    GPU_line_smooth(false);
-
-    immUnbindProgram();
-  }
-  GPU_matrix_pop();
-}
 
 static bool paint_use_2d_cursor(PaintMode mode)
 {
@@ -1011,10 +933,7 @@ static bool paint_cursor_context_init(bContext *C,
 
   pcontext.vc = ED_view3d_viewcontext_init(C, pcontext.depsgraph);
 
-  if (pcontext.brush->stroke_method == BRUSH_STROKE_CURVE) {
-    pcontext.cursor_type = PaintCursorDrawingType::Curve;
-  }
-  else if (paint_use_2d_cursor(pcontext.mode)) {
+  if (paint_use_2d_cursor(pcontext.mode)) {
     pcontext.cursor_type = PaintCursorDrawingType::Cursor2D;
   }
   else {
@@ -1276,9 +1195,6 @@ static void paint_draw_cursor(bContext *C, const int2 &xy, const float2 &tilt, v
   }
 
   switch (pcontext.cursor_type) {
-    case PaintCursorDrawingType::Curve:
-      paint_draw_curve_cursor(pcontext.brush, &pcontext.vc);
-      break;
     case PaintCursorDrawingType::Cursor2D:
       paint_update_mouse_cursor(pcontext);
 
