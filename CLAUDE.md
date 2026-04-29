@@ -29,117 +29,405 @@ The old approach (tiered UI, smart defaults, Emscripten) was prototyping toward 
 
 Pattern for each pending layer: `grep -rn "ID_WS"` the directory, delete or redirect every hit. The breakage is the audit — follow the compile errors, don't paper over them.
 
-### ID_SCR and ID_WM Blast Radius Audit (pre-chisel)
+### Bucket 5 + 6 Blast Radius Audit (pre-chisel)
 
-Grepped 2026-04-28 before starting the removal. Use this as the checklist.
+Grepped 2026-04-29 before starting the removal. Use this as the checklist.
 
-**ID_SCR — 64 hits, 39 files**
+**ID_CU_LEGACY — 74 hits, 33 files**
 
 Core definition:
-- `makesdna/DNA_ID_enums.h:143` — enum entry `ID_SCR = MAKE_ID2('S', 'R')`
-- `makesdna/DNA_ID.h` — `FILTER_ID_SCR`, `INDEX_ID_SCR`, `ID_CHECK_UNDO`, `ID_SCRN` alias, `FILTER_ID_ALL`
-- `makesdna/DNA_screen_types.h:95` — `static constexpr ID_Type id_type = ID_SCR` inside `bScreen` struct
-- `blenkernel/intern/screen.cc:246` — `IDTypeInfo IDType_ID_SCR = {...}` — main definition (the workspace.cc analogue)
-- `blenkernel/BKE_idtype.hh:316` — `extern IDTypeInfo IDType_ID_SCR`
-- `blenkernel/intern/idtype.cc:153` — `INIT_TYPE(ID_SCR)`
-- `blenkernel/intern/main.cc` — `bmain.screens` listbase wiring (lines 1014, 1119, 165)
-- `blenkernel/intern/blendfile.cc:992` — `const short ui_id_codes[]{ID_SCR}` array
-- `blenkernel/intern/blendfile.cc:1433` — `ELEM(GS(id->name), ID_SCE, ID_SCR, ID_WM)` (shared with WM)
-- `blenkernel/intern/lib_id.cc:667` — `LIB_ID_TYPES_NOCOPY ID_LI, ID_SCR, ID_WM` (shared macro)
-- `blenkernel/intern/lib_override.cc:964` — `HIERARCHY_BREAKING_ID_TYPES ID_SCE, ID_LI, ID_SCR, ID_WM` (shared)
-- `blenkernel/intern/lib_query.cc:507` — `GS(owner_id->name) == ID_SCR` (SCR-specific lib-link logic)
-- `blenkernel/intern/preview_image.cc:225` — `ID_PRV_CASE(ID_SCR, bScreen)`
+- `makesdna/DNA_ID_enums.h:133` — enum entry `ID_CU_LEGACY = MAKE_ID2('C', 'U')`
+- `makesdna/DNA_curve_types.h:216` — `static constexpr ID_Type id_type = ID_CU_LEGACY`
+- `makesdna/DNA_object_types.h:736,742,758` — object type check macros (shared with ID_MB)
+- `blenkernel/intern/idtype.cc:143` — `INIT_TYPE(ID_CU_LEGACY)`
+- `blenkernel/intern/main.cc:992` — `which_libbase` case
+- `blenkernel/intern/curve.cc:410` — `BKE_libblock_alloc(bmain, ID_CU_LEGACY, name, 0)` — curve creation
 
-blenloader/readfile.cc (3 hits — SCR-specific legacy compat):
-- Lines 4267–4269, 4971–4972 — `ID_SCRN → ID_SCR` conversion for old `.blend` files. On removal: skip these blocks rather than crash.
-- Line 2752 — switch case
+blenkernel (6 files):
+- `key.cc:256,1112,1251,1266` — GS checks for shape keys (4 sites)
+- `material.cc:423,451,480,517,539,838` — material slot handling (6 sites)
+- `object.cc:1123,1931,1963,2228,4277` — object data dispatch (5 sites)
+- `mesh_convert.cc:665,688,775` — mesh conversion GS checks
+- `lib_remap.cc:428,626` — library remapping
+- `object_update.cc:356` — update dispatch
 
-makesrna (7 files):
-- `rna_ID.cc:62` — RNA enum entry; `:462` and `:555` — GS switch cases
-- `rna_action.cc:1176`, `rna_image.cc:297`, `rna_movieclip.cc:79`, `rna_space.cc:1395,1817` — GS checks
-- `rna_main_api.cc:843` — `RNA_MAIN_ID_TAG_FUNCS_DEF(screens, screens, ID_SCR)`
-- `rna_wm.cc:2806` — `BLT_I18NCONTEXT_ID_SCREEN` translation context
+editors (11 files):
+- `interface_icons.cc:2053` — icon switch case
+- `interface_template_id.cc:582,857` — template checks
+- `object_data_transform.cc:389,570,702,797` — data transform dispatch (4 sites)
+- `object_edit.cc:1764` — GS check
+- `render_opengl.cc:609` — render switch
+- `transform_convert_object_texspace.cc:52` — `ELEM(GS(id->name), ID_ME, ID_CU_LEGACY, ID_MB)` (shared with MB)
+- `outliner_select.cc:1288` — outliner select
+- `outliner_draw.cc:2473` — outliner draw
+- `outliner_intern.hh:140` — outliner macro
+- `outliner_tools.cc:136,287` — outliner tools
+- `tree_element_id.cc:48` — tree element
 
-editors (10 files):
-- `interface.cc:1543`, `interface_icons.cc:1220,1950,2128`, `interface_template_id.cc:877,1007,1320`, `interface_templates.cc:85` — icon/template GS checks
-- `render_opengl.cc:638` — switch case
-- `screen_ops.cc:5075` — `BLT_I18NCONTEXT_ID_SCREEN` usage
-- `outliner_draw.cc:2574`, `outliner_intern.hh:166` (macro), `outliner_tools.cc:172`, `tree_element_id.cc:73` — outliner switch/macro
-- `ed_util_ops.cc:432` — ELEM check
+draw (2 files):
+- `overlay_bounds.hh:182` — bounds overlay
+- `draw_resource.hh:150` — draw resource
 
-depsgraph (2 files):
-- `deg_builder_nodes.cc:661`, `deg_builder_relations.cc:608` — switch cases
+depsgraph (4 files):
+- `depsgraph_tag.cc:72,344,627` — tag dispatch (shared ELEM with MB/GD_LEGACY)
+- `deg_eval_copy_on_write.cc:115,161,200,236,560,941` — COW special cases (6 sites)
+- `deg_builder_relations.cc:576,2587,2741` — relation builder
+- `deg_builder_nodes.cc:629,1795` — node builder
 
-blentranslation:
-- `BLT_translation.hh:138,216` — `BLT_I18NCONTEXT_ID_SCREEN` define and context list
-
-python:
-- `bpy_rna.cc:459` — `!ELEM(idcode, ID_WM, ID_SCR)` (shared with WM; both go at once)
-
-windowmanager:
-- `wm_operators.cc:571` — switch case
+makesrna (4 files):
+- `rna_ID.cc:38,388,498` — RNA enum entry and GS switch cases
+- `rna_key.cc:67,576,611,631,653,681,694,715` — shape key RNA (8 sites)
+- `rna_object.cc:572` — object RNA
+- `rna_main_api.cc:845` — `RNA_MAIN_ID_TAG_FUNCS_DEF(curves, curves, ID_CU_LEGACY)`
 
 ---
 
-**ID_WM — 46 hits, 27 files**
+**ID_GD_LEGACY — 39 hits, 28 files**
 
 Core definition:
-- `makesdna/DNA_ID_enums.h:155` — enum entry `ID_WM = MAKE_ID2('W', 'M')`
-- `makesdna/DNA_ID.h` — `FILTER_ID_WM`, `INDEX_ID_WM`, `ID_CHECK_UNDO`, `FILTER_ID_ALL`
-- `makesdna/DNA_windowmanager_types.h:111` — `static constexpr ID_Type id_type = ID_WM` inside `wmWindowManager`
-- `windowmanager/intern/wm.cc:218` — `IDTypeInfo IDType_ID_WM = {...}` — main definition
-- `windowmanager/intern/wm.cc:532` — `BKE_libblock_alloc(bmain, ID_WM, "WinMan", 0)` — WM creation (needs rethink: allocate as plain struct, not libblock)
-- `blenkernel/BKE_idtype.hh:328` — `extern IDTypeInfo IDType_ID_WM`
-- `blenkernel/intern/idtype.cc:165` — `INIT_TYPE(ID_WM)`
-- `blenkernel/intern/main.cc` — `bmain.wm` listbase wiring (lines 1038, 1124, 166)
+- `makesdna/DNA_ID_enums.h:153` — enum entry `ID_GD_LEGACY = MAKE_ID2('G', 'D')`
+- `makesdna/DNA_gpencil_legacy_types.h:711` — `static constexpr ID_Type id_type = ID_GD_LEGACY`
+- `makesdna/DNA_object_types.h:749,765` — object type macros
+- `blenkernel/intern/idtype.cc:163` — `INIT_TYPE(ID_GD_LEGACY)`
+- `blenkernel/intern/main.cc:1034` — `which_libbase` case
+- `blenkernel/intern/gpencil_legacy.cc:654` — `BKE_libblock_alloc(bmain, ID_GD_LEGACY, name, 0)` — data creation
 
-blenkernel (WM-specific property handling):
-- `lib_id.cc:2643–2649` — WM `id->properties` and `id->system_properties` already excluded from .blend writes. The code already treats WM as runtime-only — removal finishes what it believes.
-- `lib_id.cc:2063` — `ELEM(GS(id->name), ID_SCE, ID_WM)` check
-- `lib_id.cc:667` — `LIB_ID_TYPES_NOCOPY` (shared with SCR)
-- `lib_override.cc:964` — `HIERARCHY_BREAKING_ID_TYPES` (shared with SCR)
-- `image.cc:2925` — switch case
+blenkernel (4 files):
+- `material.cc:427,455,850` — material handling
+- `deform.cc:460,481` — deform data GS check
+- `grease_pencil_convert_legacy.cc:3057,3151` — conversion type-safety asserts
+- `blendfile_link_append.cc:555` — link/append: forces conversion on append
 
-blendfile.cc — load-critical WM handling:
-- `blendfile.cc:710` — `swap_old_bmain_data_for_blendfile(reuse_data, ID_WM)` — WM "survive file open" mechanism
-- `blendfile.cc:1008` — `swap_old_bmain_data_dependencies_process(&reuse_data, ID_WM)` — same mechanism
-- `blendfile.cc:1433` — shared ELEM check with SCR
+blenloader (2 files):
+- `versioning_250.cc:444` — `*(short *)id->name = ID_GD_LEGACY` (legacy compat; becomes skip)
+- `versioning_common.cc:61,62` — GD_LEGACY → GP v3 conversion marker
 
-blenloader:
-- `readfile.cc:1996` — `BLI_assert((GS(id->name) != ID_WM) || id->properties == nullptr)` — assertion, not a load branch
+editors (9 files):
+- `interface_icons.cc:2055` — icon case
+- `interface_template_id.cc:589,893` — template checks
+- `object_data_transform.cc:816` — data transform
+- `render_opengl.cc:652` — render switch
+- `outliner_select.cc:1296` — outliner select
+- `outliner_draw.cc:2557` — outliner draw
+- `outliner_intern.hh:158` — outliner macro
+- `outliner_tools.cc:158` — outliner tools
+- `tree_element_id.cc:56` — tree element
+- `space_node.cc:1537` — GS check for node space
+
+draw (1 file):
+- `draw_context.cc:1166` — `DEG_id_type_any_exists(depsgraph, ID_GD_LEGACY)` check
+
+depsgraph (3 files):
+- `depsgraph_tag.cc:72,639` — tag dispatch
+- `deg_builder_nodes.cc:631` — node builder
+- `deg_builder_relations.cc:581,2777` — relation builder
+
+makesrna (2 files):
+- `rna_ID.cc:41,391,500` — RNA enum entry and switch cases
+- `rna_main_api.cc:860` — `RNA_MAIN_ID_TAG_FUNCS_DEF(gpencils, gpencils, ID_GD_LEGACY)`
+
+---
+
+**ID_TE — 58 hits, 39 files**
+
+Core definition:
+- `makesdna/DNA_ID_enums.h:136` — enum entry `ID_TE = MAKE_ID2('T', 'E')`
+- `makesdna/DNA_texture_types.h:350` — `static constexpr ID_Type id_type = ID_TE`
+- `makesdna/DNA_ID.h:655` — `ELEM(id_type, ID_BR, ID_TE, ID_NT, ID_IM, ID_PC, ID_MA)` shared macro
+- `blenkernel/intern/idtype.cc:146` — `INIT_TYPE(ID_TE)`
+- `blenkernel/intern/main.cc:998` — `which_libbase` case
+
+blenkernel (4 files):
+- `preview_image.cc:218,283` — preview image handling
+- `image.cc:2903` — image switch case
+- `compositor.cc:280` — compositor case
+- `node.cc:5148` — node tree case
+- `brush_test.cc:65` — test fixture: `BKE_id_new(bmain, ID_TE, ...)` (test-only; delete with type)
+
+blenloader (2 files):
+- `versioning_500.cc:4494` — ELEM check (shared with ID_LS)
+- `versioning_450.cc:5891` — ELEM check (shared with ID_LS)
+
+editors (12 files):
+- `buttons_texture.cc:389` — pin ID GS check
+- `interface_anim.cc:280` — GS check
+- `interface_icons.cc:1933,2095` — icon switch (2 sites)
+- `interface_template_preview.cc:59,68` — preview template ELEM/GS checks
+- `interface_template_id.cc:629,863,1474` — template checks (3 sites)
+- `node_group_operator.cc:772` — returns `ID_TE` as default
+- `render_opengl.cc:612` — render switch
+- `render_update.cc:359` — render update switch
+- `render_preview.cc:412,543,607,1286,1310` — preview rendering (5 sites)
+- `anim_filter.cc:2806` — animation filter case
+- `anim_channels_defines.cc:325` — channel defines GS check
+- `outliner_draw.cc:780,2506` — outliner draw (2 sites)
+- `outliner_intern.hh:144` — outliner macro
+- `outliner_tools.cc:144,2930` — outliner tools (2 sites)
+- `tree_element_id.cc:52` — tree element
+
+depsgraph (4 files):
+- `depsgraph_tag.cc:881` — ID type tag
+- `deg_builder_relations.cc:556,3085` — relation builder
+- `deg_builder_nodes.cc:609,2048` — node builder
+- `deg_eval_copy_on_write.cc:112,158,197,233` — COW special cases (nodetree; 4 sites)
+
+windowmanager (1 file):
+- `wm_operators.cc:3898,3920` — ELEM checks in operator
+
+modifiers (1 file):
+- `MOD_nodes.cc:214` — geometry nodes modifier case
+
+makesrna (6 files):
+- `rna_ID.cc:65,466,550` — RNA enum entry and switch cases
+- `rna_color.cc:371` — color ramp case
+- `rna_image.cc:291` — image RNA GS check
+- `rna_space.cc:2264` — space RNA case
+- `rna_texture.cc:177` — texture RNA GS check
+- `rna_main_api.cc:848` — `RNA_MAIN_ID_TAG_FUNCS_DEF(textures, textures, ID_TE)`
+
+---
+
+**ID_PA — 35 hits, 28 files**
+
+Core definition:
+- `makesdna/DNA_ID_enums.h:152` — enum entry `ID_PA = MAKE_ID2('P', 'A')`
+- `makesdna/DNA_particle_types.h:533` — `static constexpr ID_Type id_type = ID_PA`
+- `blenkernel/intern/idtype.cc:162` — `INIT_TYPE(ID_PA)`
+- `blenkernel/intern/main.cc:1032` — `which_libbase` case
+
+blenkernel (1 file):
+- `texture.cc:486,516` — texture slot handling (2 sites)
+
+editors (9 files):
+- `buttons_context.cc:517` — buttons context GS check
+- `interface_icons.cc:2081` — icon case
+- `interface_template_id.cc:636,891` — template checks
+- `render_shading.cc:3045,3075` — render shading (2 sites)
+- `render_opengl.cc:624` — render switch
+- `outliner_draw.cc:2585` — outliner draw
+- `outliner_intern.hh:157` — outliner macro
+- `outliner_tools.cc:157` — outliner tools
+- `tree_element_id.cc:77` — tree element
+- `anim_filter.cc:2676` — animation filter case
+- `anim_channels_defines.cc:329` — `ELEM(GS(...), ID_MA, ID_PA)` (shared with MA)
+
+depsgraph (4 files):
+- `depsgraph_tag.cc:157,635` — tag dispatch (2 sites)
+- `deg_builder_relations.cc:600` — relation builder
+- `deg_builder_nodes.cc:653` — node builder
+- `depsgraph.cc:160` — `clear_id_nodes_conditional` lambda: `id_type != ID_PA`
+
+animrig (1 file):
+- `animdata.cc:125` — animdata case
+
+makesrna (7 files):
+- `rna_ID.cc:59,442,534,1050` — RNA enum entry and switch cases (4 sites)
+- `rna_texture.cc:272` — texture slot RNA
+- `rna_particle.cc:1014` — `GS(id->name) == ID_PA` check
+- `rna_boid.cc:232` — `GS(id->name) == ID_PA` check
+- `rna_color.cc:386` — color ramp case
+- `rna_object_force.cc:671` — object force RNA check
+- `rna_main_api.cc:858` — `RNA_MAIN_ID_TAG_FUNCS_DEF(particles, particles, ID_PA)`
+
+---
+
+**ID_MB — 49 hits, 28 files**
+
+Core definition:
+- `makesdna/DNA_ID_enums.h:134` — enum entry `ID_MB = MAKE_ID2('M', 'B')`
+- `makesdna/DNA_meta_types.h:91` — `static constexpr ID_Type id_type = ID_MB`
+- `makesdna/DNA_object_types.h:736,743,759` — object type macros (shared with ID_CU_LEGACY)
+- `blenkernel/intern/idtype.cc:144` — `INIT_TYPE(ID_MB)`
+- `blenkernel/intern/main.cc:994` — `which_libbase` case
+
+blenkernel (5 files):
+- `material.cc:425,453,486,519,542,847` — material slot handling (6 sites)
+- `object.cc:1934,1978,2230,4291` — object data dispatch (4 sites)
+- `object_dupli.cc:312` — dupli GS check
+- `lib_remap.cc:627` — library remapping
+- `mesh_convert.cc` — note: shared ELEM with CU_LEGACY at `transform_convert_object_texspace.cc:52`
+
+editors (10 files):
+- `interface_icons.cc:2069` — icon case
+- `interface_template_id.cc:583,859` — template checks
+- `object_data_transform.cc:442,612,736,810` — data transform dispatch (4 sites)
+- `transform_convert_object_texspace.cc:52` — `ELEM(GS(id->name), ID_ME, ID_CU_LEGACY, ID_MB)` (shared)
+- `render_opengl.cc:610` — render switch
+- `outliner_select.cc:1289` — outliner select
+- `outliner_draw.cc:2485` — outliner draw
+- `outliner_intern.hh:141` — outliner macro
+- `outliner_tools.cc:137,293` — outliner tools
+- `tree_element_id.cc:50` — tree element
+
+draw (2 files):
+- `overlay_bounds.hh:188` — bounds overlay
+- `draw_resource.hh:157` — draw resource
+
+depsgraph (5 files):
+- `depsgraph_tag.cc:72,629` — tag dispatch (shared ELEM with CU_LEGACY/GD_LEGACY)
+- `deg_eval_copy_on_write.cc:563,944` — COW special cases
+- `deg_builder_relations.cc:575,2739` — relation builder
+- `deg_builder_nodes.cc:628,1790` — node builder
+- `depsgraph_query_iter.cc:479` — dupli ob_data GS check
+
+makesrna (2 files):
+- `rna_ID.cc:53,424,522` — RNA enum entry and switch cases
+- `rna_main_api.cc:846` — `RNA_MAIN_ID_TAG_FUNCS_DEF(metaballs, metaballs, ID_MB)`
+
+---
+
+**ID_LS — 40 hits, 28 files**
+
+Core definition:
+- `makesdna/DNA_ID_enums.h:156` — enum entry `ID_LS = MAKE_ID2('L', 'S')`
+- `makesdna/DNA_linestyle_types.h:649` — `static constexpr ID_Type id_type = ID_LS`
+- `blenkernel/intern/idtype.cc:166` — `INIT_TYPE(ID_LS)`
+- `blenkernel/intern/main.cc:1042` — `which_libbase` case
+- `blenkernel/intern/linestyle.cc:743` — `BKE_libblock_alloc(bmain, ID_LS, name, 0)` — linestyle creation
+
+blenkernel (2 files):
+- `node.cc:5153` — node tree case
+- `texture.cc:480,513` — texture slot handling (2 sites)
+
+blenloader (2 files):
+- `versioning_500.cc:4494` — ELEM check (shared with ID_TE)
+- `versioning_450.cc:5891` — ELEM check (shared with ID_TE)
+
+editors (10 files):
+- `buttons_texture.cc:266` — pin ID GS check
+- `buttons_context.cc:523` — context GS check
+- `interface_icons.cc:2063` — icon case
+- `interface_template_id.cc:867` — template check
+- `interface_template_preview.cc:59,78,233` — preview template (3 sites)
+- `render_shading.cc:3049,3079` — render shading (2 sites)
+- `render_opengl.cc:641` — render switch
+- `outliner_draw.cc:2554` — outliner draw
+- `outliner_intern.hh:159` — outliner macro
+- `outliner_tools.cc:152,352` — outliner tools (2 sites)
+- `tree_element_id.cc:54` — tree element
+
+depsgraph (3 files):
+- `deg_eval_copy_on_write.cc:109,155,194,230` — COW special cases (nodetree; 4 sites)
+- `deg_builder_relations.cc:568` — relation builder
+- `deg_builder_nodes.cc:621` — node builder
+
+nodes (1 file):
+- `shader_nodes_inline.cc:338` — shader nodes case
 
 makesrna (5 files):
-- `rna_ID.cc:68,486,569` — RNA enum entry and GS switch cases
-- `rna_main_api.cc:844` — `RNA_MAIN_ID_TAG_FUNCS_DEF(window_managers, wm, ID_WM)`
-- `rna_space.cc:1433,1451` — GS checks
-- `rna_wm.cc:665` — `GS(ptr->owner_id->name) != ID_WM`
-- `rna_xr.cc:46` — `BLI_assert(wm && (GS(wm->id.name) == ID_WM))` — XR/VR type-safety assertion
+- `rna_ID.cc:49,412,516` — RNA enum entry and switch cases
+- `rna_texture.cc:269` — texture slot RNA
+- `rna_color.cc:254,315,378` — color ramp (3 sites)
+- `rna_main_api.cc:864` — `RNA_MAIN_ID_TAG_FUNCS_DEF(linestyle, linestyles, ID_LS)`
 
-editors (5 files):
-- `interface_handlers.cc:772`, `interface_icons.cc:2129`, `interface_template_id.cc:923`, `render_opengl.cc:642` — switch/GS checks
-- `outliner_intern.hh:167` (macro), `outliner_tools.cc:171`, `tree_element_id.cc:85` — outliner
+---
 
-depsgraph:
-- `deg_builder_nodes.cc:663`, `deg_builder_relations.cc:610` — switch cases (adjacent to SCR cases)
+**ID_SPK — 23 hits, 19 files**
 
-python:
-- `bpy_rna.cc:459` — shared ELEM check with SCR
+Core definition:
+- `makesdna/DNA_ID_enums.h:145` — enum entry `ID_SPK = MAKE_ID2('S', 'K')`
+- `makesdna/DNA_speaker_types.h:32` — `static constexpr ID_Type id_type = ID_SPK`
+- `makesdna/DNA_object_types.h:745,761` — object type macros
+- `blenkernel/intern/idtype.cc:155` — `INIT_TYPE(ID_SPK)`
+- `blenkernel/intern/main.cc:1016` — `which_libbase` case
+
+blenkernel (2 files):
+- `object.cc:2234` — object data case
+- `sound.cc:1446` — `DEG_id_type_any_exists(depsgraph, ID_SPK)` check
+
+editors (7 files):
+- `interface_icons.cc:2091` — icon case
+- `interface_template_id.cc:587,879` — template checks
+- `render_opengl.cc:620` — render switch
+- `outliner_draw.cc:2510` — outliner draw
+- `outliner_select.cc:1294` — outliner select
+- `outliner_intern.hh:152` — outliner macro
+- `outliner_tools.cc:142` — outliner tools
+- `tree_element_id.cc:74` — tree element
+
+depsgraph (2 files):
+- `deg_builder_relations.cc:585` — relation builder
+- `deg_builder_nodes.cc:638` — node builder
+
+makesrna (2 files):
+- `rna_ID.cc:63,463,548` — RNA enum entry and switch cases
+- `rna_main_api.cc:854` — `RNA_MAIN_ID_TAG_FUNCS_DEF(speakers, speakers, ID_SPK)`
+
+---
+
+**ID_PC — 21 hits, 17 files**
+
+Core definition:
+- `makesdna/DNA_ID_enums.h:158` — enum entry `ID_PC = MAKE_ID2('P', 'C')`
+- `makesdna/DNA_brush_types.h:492` — `static constexpr ID_Type id_type = ID_PC`
+- `makesdna/DNA_ID.h:655,695` — shared macro checks
+- `blenkernel/intern/idtype.cc:168` — `INIT_TYPE(ID_PC)`
+- `blenkernel/intern/main.cc:1046` — `which_libbase` case
+
+blenkernel (1 file):
+- `brush_test.cc:64,95` — test fixtures: `BKE_id_new(bmain, ID_PC, ...)` (test-only; delete with type)
+
+editors (7 files):
+- `interface_icons.cc:2085` — icon case
+- `interface_template_id.cc:901` — template check
+- `render_opengl.cc:643` — render switch
+- `outliner_draw.cc:2583` — outliner draw
+- `outliner_intern.hh:173` — outliner macro
+- `outliner_tools.cc:162` — outliner tools
+- `tree_element_id.cc:89` — tree element
+
+depsgraph (2 files):
+- `deg_builder_relations.cc:610` — relation builder
+- `deg_builder_nodes.cc:663` — node builder
+
+makesrna (2 files):
+- `rna_ID.cc:57,448,538` — RNA enum entry and switch cases
+- `rna_main_api.cc:866` — `RNA_MAIN_ID_TAG_FUNCS_DEF(paintcurves, paintcurves, ID_PC)`
+
+---
+
+**ID_CF — 18 hits, 15 files**
+
+Core definition:
+- `makesdna/DNA_ID_enums.h:159` — enum entry `ID_CF = MAKE_ID2('C', 'F')`
+- `makesdna/DNA_cachefile_types.h:69` — `static constexpr ID_Type id_type = ID_CF`
+- `blenkernel/intern/idtype.cc:169` — `INIT_TYPE(ID_CF)`
+- `blenkernel/intern/main.cc:1048` — `which_libbase` case
+
+editors (6 files):
+- `interface_icons.cc:2051` — icon case
+- `interface_template_id.cc:903` — template check
+- `render_opengl.cc:644` — render switch
+- `io_cache.cc:94` — `BKE_libblock_alloc(bmain, ID_CF, ...)` — cache file creation
+- `outliner_intern.hh:169` — outliner macro
+- `outliner_tools.cc:163` — outliner tools
+- `tree_element_id.cc:90` — tree element
+
+depsgraph (2 files):
+- `deg_builder_relations.cc:594,3643` — relation builder (2 sites)
+- `deg_builder_nodes.cc:647` — node builder
+
+makesrna (2 files):
+- `rna_ID.cc:35,382,496` — RNA enum entry and switch cases
+- `rna_main_api.cc:865` — `RNA_MAIN_ID_TAG_FUNCS_DEF(cachefiles, cachefiles, ID_CF)`
 
 ---
 
 **Key notes for the chisel session:**
 
-1. **bScreen and wmWindowManager stay as runtime structs.** Only ID-type registration is removed. They stop living in `bmain->screens` / `bmain->wm` but the structs themselves remain — the window system runs through them.
+1. **These are true fossils — no runtime rescue.** Unlike ID_SCR/ID_WM, none of these stay as runtime structs. Full removal: enum, DNA `id_type` constexpr, `IDTypeInfo`, `INIT_TYPE`, `which_libbase` case, `BKE_main_lists_get` entry, and `bmain->*` field.
 
-2. **ID_WM is already half-detached.** `lib_id.cc:2643–2649` already excludes WM properties from .blend writes. Removal finishes what the code believes.
+2. **ID_CU_LEGACY and ID_GD_LEGACY have active migration paths.** CU_LEGACY → CV (Curves), GD_LEGACY → GP (Grease Pencil v3). The migration code in `grease_pencil_convert_legacy.cc` and `blendfile_link_append.cc` must survive removal — only the type registration goes, not the converter.
 
-3. **blendfile.cc swap calls (WM lines 710, 1008) are load-critical.** They implement "WM survives file open." When WM stops being an ID type, this mechanism needs to be rethought — or WM simply never touches the load path at all.
+3. **ID_LS is already disabled in the build.** `blended_release.cmake` sets `WITH_FREESTYLE=OFF`. Most ID_LS code is guarded by `#ifdef WITH_FREESTYLE`. Confirm before chiseling — may be the easiest of the nine.
 
-4. **ID_SCRN legacy compat in readfile.cc** (lines 4267–4269, 4971–4972) must become skip/ignore handlers, not crashes.
+4. **Shared switch cases dominate the blast radius.** The depsgraph (`deg_builder_nodes.cc`, `deg_builder_relations.cc`), outliner (`outliner_draw.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc`), and RNA (`rna_ID.cc`, `rna_main_api.cc`) contain cases for many of these types side by side. Batch the removals per file rather than per type.
 
-5. **Shared macros and ELEM checks** (`LIB_ID_TYPES_NOCOPY`, `HIERARCHY_BREAKING_ID_TYPES`, `ID_CHECK_UNDO`, `FILTER_ID_ALL`, `bpy_rna.cc:459`) contain both SCR and WM. Edit them together — do both in one pass rather than two.
+5. **`brush_test.cc` uses `ID_TE` and `ID_PC` in test fixtures.** Both `BKE_id_new(bmain, ID_TE, ...)` and `BKE_id_new(bmain, ID_PC, ...)` are in unit tests that will need to be deleted or rewritten when those types go.
 
-6. **Suggested order:** SCR first (more complex, has readfile compat), WM second. Can be same PR or back-to-back depending on blast radius at compile time.
+6. **`depsgraph.cc:160` has a `!= ID_PA` guard** in `clear_id_nodes_conditional`. This is particle-specific cache invalidation logic — understand before removing; it may need to move to the particle module rather than just be deleted.
+
+7. **Suggested chisel order (smallest blast radius first):** ID_CF (18) → ID_PC (21) → ID_SPK (23) → ID_PA (35) → ID_GD_LEGACY (39) → ID_LS (40) → ID_MB (49) → ID_TE (58) → ID_CU_LEGACY (74). Total: 357 hits across 9 types.
 
 ---
 
