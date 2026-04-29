@@ -675,6 +675,16 @@ This is two failures compounded:
 
 **Solution:** When asked to document a failure, read all provided evidence first — especially images. Write what the evidence shows. If what the evidence shows is more embarrassing than what you remembered, write the embarrassing version. That is the version that helps.
 
+### Scar 7: Self-Contradiction in the Same Commit (The Chisel Order Mistake)
+
+**What happened:** In the 0.4.0 prep commit, CLAUDE.md Key note 8 was written explicitly saying "do ID_CF last." In that same commit, the CHANGELOG chisel order line still read `ID_CF → ID_PC → ...` — ID_CF first. The contradiction was in the diff, visible before the commit was made, and was not caught. A Codex bot flagged it on the PR.
+
+**Why this is a scar and not just a typo:** The whole point of the chisel-order documentation is that a future session picks it up and follows it. Two documents in the same commit giving opposite instructions about the highest-risk removal in the set is exactly the kind of thing that costs a session. The next Claude reads CHANGELOG first, starts with ID_CF, hits the Alembic/USD blast radius, and either blows the session or does something wrong. The bot caught it before that happened. The developer should not have had to wait for a bot.
+
+**The failure mode:** Writing a note and then not checking whether anything already in the diff contradicts it. The note was new; the CHANGELOG line was inherited from an earlier state of the document. Inherited text doesn't get automatically reconciled with new text written in the same commit. You have to read the full diff before committing — not just the new additions.
+
+**The rule:** Before every commit that touches documentation with cross-references (chisel orders, version maps, scar notes, architectural decisions), read the complete diff and check that every changed file is internally consistent with every other changed file. If you write "do X last" anywhere, grep the diff for X and verify nothing else in the same commit says "do X first."
+
 ### Don't Over-Engineer
 
 `static_cast` is the fix, not a template wrapper. Casts, not frameworks. Enums, not architectures. Three similar lines is better than a premature abstraction. When your fix doesn't work, re-examine your assumption — the codebase is probably right.
