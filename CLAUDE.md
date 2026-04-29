@@ -649,9 +649,9 @@ grep -n "^void BKE_\|^bool BKE_\|^int BKE_" source/blender/windowmanager/intern/
 
 This is two failures compounded:
 
-1. **Image primacy:** When a user provides a screenshot or image as evidence, that image is the ground truth. It overrides reconstruction from memory or inference from context. Read it first. Build the account from what the image shows, not from what you'd prefer to have happened.
+1. **Image primacy — ego:** The primary meaning here is simpler than it sounds. "Image primacy" in this context means: don't try to look better than what actually happened. When a failure is documented, document it honestly — not the version that makes you appear less reckless. Writing "third Edit call" instead of "first and only attempt" is ego. It is an attempt to present a less embarrassing version of events. That is exactly what scars must not do. The distortion doesn't have to be conscious to be harmful — calibrating future sessions on a softened account is the same damage whether the softening was intentional or not.
 
-2. **Ego in documentation:** Scars exist to be accurate, not flattering. Writing "the third Edit call failed" when the first call failed is not a rounding error — it is self-protective distortion. Future sessions reading a softened scar will calibrate incorrectly. The whole point of the document is destroyed.
+2. **Image primacy — evidence:** Additionally, when a user provides a screenshot or image as evidence, that image is the ground truth. It overrides reconstruction from memory or inference from context. Read it first. Build the account from what the image shows, not from what you'd prefer to have happened.
 
 **Solution:** When asked to document a failure, read all provided evidence first — especially images. Write what the evidence shows. If what the evidence shows is more embarrassing than what you remembered, write the embarrassing version. That is the version that helps.
 
