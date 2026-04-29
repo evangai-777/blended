@@ -25,9 +25,9 @@ carries a one-liner status per active item.
 
 ---
 
-## Unreleased — 0.3.0
+## 0.3.0 — 2026-04-29
 
-`ID_SCR` and `ID_WM` removed from the ID type system (Bucket 4 completions). Both are now runtime-only window state — not project data, not stored in .blended files.
+`ID_SCR` and `ID_WM` removed from the ID type system (Bucket 4 completions). Both are now runtime-only window state — not project data, not stored in .blended files. CI green (Windows x64, build #49).
 
 ### ID_SCR / ID_WM Removal
 
@@ -49,7 +49,13 @@ carries a one-liner status per active item.
 - `which_libbase(ID_SCR_LEGACY)` and `which_libbase(ID_WM_LEGACY)` still route to their listbases so `BKE_libblock_alloc` works; they are NOT in `BKE_main_lists_get` so the ID iteration system ignores them.
 - `screen_add` uses `BKE_libblock_alloc(bmain, ID_SCR_LEGACY, ...)` since `bScreen::id_type` constexpr was removed.
 
-**Pending (runtime debt):** CI validation needed. Screens still have `BKE_screen_blend_read_data` defined (not dead, kept for future format work). Runtime behavior of window-based screen iteration vs full-list iteration may expose edge cases in multi-window scenarios.
+**Deferred runtime debt:** Screens still have `BKE_screen_blend_read_data` defined (not dead, kept for future format work). Runtime behavior of window-based screen iteration vs full-list iteration may expose edge cases in multi-window scenarios.
+
+---
+
+## Unreleased — 0.4.0
+
+Bucket 5 + 6 fossil removals: `ID_CU_LEGACY`, `ID_GD_LEGACY`, `ID_TE`, `ID_PA`, `ID_MB`, `ID_LS`, `ID_SPK`, `ID_PC`, `ID_CF`. Same chisel pattern as 0.3.0.
 
 ---
 
