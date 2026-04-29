@@ -165,7 +165,6 @@ static void id_type_init()
   INIT_TYPE(ID_MSK);
   INIT_TYPE(ID_LS);
   INIT_TYPE(ID_PAL);
-  INIT_TYPE(ID_PC);
   INIT_TYPE(ID_CF);
   INIT_TYPE(ID_LP);
   INIT_TYPE(ID_CV);

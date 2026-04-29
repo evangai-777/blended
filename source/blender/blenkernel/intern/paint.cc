@@ -182,75 +182,6 @@ IDTypeInfo IDType_ID_PAL = {
     .lib_override_apply_post = nullptr,
 };
 
-static void paint_curve_copy_data(Main * /*bmain*/,
-                                  std::optional<Library *> /*owner_library*/,
-                                  ID *id_dst,
-                                  const ID *id_src,
-                                  const int /*flag*/)
-{
-  PaintCurve *paint_curve_dst = id_cast<PaintCurve *>(id_dst);
-  const PaintCurve *paint_curve_src = id_cast<const PaintCurve *>(id_src);
-
-  if (paint_curve_src->tot_points != 0) {
-    paint_curve_dst->points = static_cast<PaintCurvePoint *>(
-        MEM_dupalloc(paint_curve_src->points));
-  }
-}
-
-static void paint_curve_free_data(ID *id)
-{
-  PaintCurve *paint_curve = id_cast<PaintCurve *>(id);
-
-  MEM_SAFE_DELETE(paint_curve->points);
-  paint_curve->tot_points = 0;
-}
-
-static void paint_curve_blend_write(BlendWriter *writer, ID *id, const void *id_address)
-{
-  PaintCurve *pc = id_cast<PaintCurve *>(id);
-
-  writer->write_id_struct(id_address, pc);
-  BKE_id_blend_write(writer, &pc->id);
-
-  writer->write_struct_array(pc->tot_points, pc->points);
-}
-
-static void paint_curve_blend_read_data(BlendDataReader *reader, ID *id)
-{
-  PaintCurve *pc = id_cast<PaintCurve *>(id);
-  BLO_read_struct_array(reader, PaintCurvePoint, pc->tot_points, &pc->points);
-}
-
-IDTypeInfo IDType_ID_PC = {
-    .id_code = PaintCurve::id_type,
-    .id_filter = FILTER_ID_PC,
-    .dependencies_id_types = 0,
-    .main_listbase_index = INDEX_ID_PC,
-    .struct_size = sizeof(PaintCurve),
-    .name = "PaintCurve",
-    .name_plural = N_("paint_curves"),
-    .translation_context = BLT_I18NCONTEXT_ID_PAINTCURVE,
-    .flags = IDTYPE_FLAGS_NO_ANIMDATA,
-    .asset_type_info = nullptr,
-
-    .init_data = nullptr,
-    .copy_data = paint_curve_copy_data,
-    .free_data = paint_curve_free_data,
-    .make_local = nullptr,
-    .foreach_id = nullptr,
-    .foreach_cache = nullptr,
-    .foreach_path = nullptr,
-    .foreach_working_space_color = nullptr,
-    .owner_pointer_get = nullptr,
-
-    .blend_write = paint_curve_blend_write,
-    .blend_read_data = paint_curve_blend_read_data,
-    .blend_read_after_liblink = nullptr,
-
-    .blend_read_undo_preserve = nullptr,
-
-    .lib_override_apply_post = nullptr,
-};
 
 static ePaintOverlayControlFlags overlay_flags = ePaintOverlayControlFlags(0);
 
@@ -1269,11 +1200,6 @@ std::optional<int> BKE_paint_get_brush_type_from_paintmode(const Brush *brush,
   }
 }
 
-PaintCurve *BKE_paint_curve_add(Main *bmain, const char *name)
-{
-  PaintCurve *pc = BKE_id_new<PaintCurve>(bmain, name);
-  return pc;
-}
 
 Palette *BKE_paint_palette(Paint *paint)
 {
@@ -1289,10 +1215,6 @@ void BKE_paint_palette_set(Paint *paint, Palette *palette)
   }
 }
 
-void BKE_paint_curve_clamp_endpoint_add_index(PaintCurve *pc, const int add_index)
-{
-  pc->add_index = (add_index || pc->tot_points == 1) ? (add_index + 1) : 0;
-}
 
 void BKE_palette_color_remove(Palette *palette, PaletteColor *color)
 {

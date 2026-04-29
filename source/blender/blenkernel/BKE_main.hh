@@ -72,7 +72,6 @@ struct bNodeTree;
 struct Brush;
 struct ParticleSettings;
 struct Palette;
-struct PaintCurve;
 struct wmWindowManager;
 struct bGPdata;
 struct GreasePencil;
@@ -104,7 +103,6 @@ struct Mesh;
 struct MetaBall;
 struct MovieClip;
 struct Object;
-struct PaintCurve;
 struct Palette;
 struct ParticleSettings;
 struct PointCloud;
@@ -391,7 +389,6 @@ struct Main : NonCopyable, NonMovable {
   ListBaseT<Brush> brushes = {};
   ListBaseT<ParticleSettings> particles = {};
   ListBaseT<Palette> palettes = {};
-  ListBaseT<PaintCurve> paintcurves = {};
   /** Runtime window state — not project data. */
   ListBaseT<bScreen> screens = {};
   /** Singleton (exception). */
