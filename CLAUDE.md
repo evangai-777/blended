@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.3.0 WIP — `ID_SCR` and `ID_WM` removed from ID type system; pending CI validation on branch `claude/remove-id-scr-id-wm`. (Independent of Blender's 5.2 base version.)
+**Current version:** Blended 0.3.0 — `ID_SCR` and `ID_WM` removed from ID type system; CI green (Windows x64, build #49). Next: Bucket 5 + 6 fossil removals (0.4.x).
 
 ---
 
