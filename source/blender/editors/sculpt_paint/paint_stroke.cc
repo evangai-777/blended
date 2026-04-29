@@ -369,17 +369,14 @@ bool PaintStroke::update(bContext *C,
     paint_runtime.draw_anchored = true;
   }
   else {
-    /* curve strokes do their own rake calculation */
-    if (brush.stroke_method != BRUSH_STROKE_CURVE) {
-      if (!paint_calculate_rake_rotation(*paint, brush, mouse_init, mode, rake_started_)) {
-        /* Not enough motion to define an angle. */
-        if (!rake_started_) {
-          is_dry_run = true;
-        }
+    if (!paint_calculate_rake_rotation(*paint, brush, mouse_init, mode, rake_started_)) {
+      /* Not enough motion to define an angle. */
+      if (!rake_started_) {
+        is_dry_run = true;
       }
-      else {
-        rake_started_ = true;
-      }
+    }
+    else {
+      rake_started_ = true;
     }
   }
 
@@ -425,7 +422,7 @@ bool PaintStroke::update(bContext *C,
 static bool paint_stroke_use_dash(const Brush &brush)
 {
   /* Only these stroke modes support dash lines */
-  return ELEM(brush.stroke_method, BRUSH_STROKE_SPACE, BRUSH_STROKE_LINE, BRUSH_STROKE_CURVE);
+  return ELEM(brush.stroke_method, BRUSH_STROKE_SPACE, BRUSH_STROKE_LINE);
 }
 
 static bool paint_stroke_use_jitter(const PaintMode mode, const Brush &brush, const bool invert)
@@ -893,11 +890,6 @@ PaintStroke::PaintStroke(bContext *C, wmOperator *op, int event_type) : event_ty
     BKE_image_release_ibuf(this->brush->mtex.tex->ima, tex_ibuf, nullptr);
   }
 
-  if (stroke_mode_ == BrushStrokeMode::Invert) {
-    if (this->brush->stroke_method == BRUSH_STROKE_CURVE) {
-      RNA_enum_set(op->ptr, "mode", int(BrushStrokeMode::Normal));
-    }
-  }
   /* initialize here */
   paint_runtime->overlap_factor = 1.0;
   paint_runtime->stroke_active = true;

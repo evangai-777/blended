@@ -66,7 +66,7 @@ bool transdata_check_local_center(const TransInfo *t, short around)
                 OB_MBALL,
                 OB_ARMATURE) ||
            (t->spacetype == SPACE_GRAPH) ||
-           (t->options & (CTX_MOVIECLIP | CTX_MASK | CTX_PAINT_CURVE | CTX_SEQUENCER_IMAGE))));
+           (t->options & (CTX_MOVIECLIP | CTX_MASK | CTX_SEQUENCER_IMAGE))));
 }
 
 bool transform_mode_is_changeable(const int mode)

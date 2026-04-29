@@ -540,7 +540,7 @@ class StrokePanel(BrushPanel):
             row.prop(brush, "spacing", text="Spacing")
             row.prop(brush, "use_pressure_spacing", toggle=True, text="")
 
-        if brush.stroke_method in {'LINE', 'CURVE'}:
+        if brush.stroke_method == 'LINE':
             row = col.row(align=True)
             row.prop(brush, "spacing", text="Spacing")
 
@@ -551,13 +551,7 @@ class StrokePanel(BrushPanel):
             if brush.image_paint_capabilities.has_space_attenuation or brush.sculpt_capabilities.has_space_attenuation:
                 col.prop(brush, "use_space_attenuation")
 
-        if brush.stroke_method == 'CURVE':
-            col.separator()
-            col.template_ID(brush, "paint_curve", new="paintcurve.new")
-            col.operator("paintcurve.draw")
-            col.separator()
-
-        if brush.stroke_method in {'SPACE', 'LINE', 'CURVE'}:
+        if brush.stroke_method in {'SPACE', 'LINE'}:
             col.separator()
             row = col.row(align=True)
             col.prop(brush, "dash_ratio", text="Dash Ratio")

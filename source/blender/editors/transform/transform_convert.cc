@@ -904,7 +904,7 @@ static TransConvertTypeInfo *convert_type_get(const TransInfo *t, Object **r_obj
 
     return &TransConvertType_Cursor3D;
   }
-  if (!(t->options & CTX_PAINT_CURVE) && (t->spacetype == SPACE_VIEW3D) && ob &&
+  if ((t->spacetype == SPACE_VIEW3D) && ob &&
       (ob->mode == OB_MODE_SCULPT) && ob->runtime->sculpt_session)
   {
     return &TransConvertType_Sculpt;
@@ -996,7 +996,7 @@ static TransConvertTypeInfo *convert_type_get(const TransInfo *t, Object **r_obj
   if (ob && (ob->mode & OB_MODE_POSE)) {
     return &TransConvertType_Pose;
   }
-  if (ob && (ob->mode & OB_MODE_ALL_WEIGHT_PAINT) && !(t->options & CTX_PAINT_CURVE)) {
+  if (ob && (ob->mode & OB_MODE_ALL_WEIGHT_PAINT)) {
     Object *ob_armature = transform_object_deform_pose_armature_get(t, ob);
     if (ob_armature) {
       *r_obj_armature = ob_armature;

@@ -274,14 +274,6 @@ void initTransInfo(bContext *C, TransInfo *t, wmOperator *op, const wmEvent *eve
       t->flag |= T_V3D_ALIGN;
     }
 
-    if ((object_mode & OB_MODE_ALL_PAINT) || (object_mode & OB_MODE_SCULPT_CURVES)) {
-      Paint *paint = BKE_paint_get_active_from_context(C);
-      Brush *brush = (paint) ? BKE_paint_brush(paint) : nullptr;
-      if (brush && (brush->stroke_method == BRUSH_STROKE_CURVE)) {
-        t->options |= CTX_PAINT_CURVE;
-      }
-    }
-
     /* Initialize UV transform from. */
     if (op && (prop = RNA_struct_find_property(op->ptr, "correct_uv"))) {
       if (RNA_property_is_set(op->ptr, prop)) {
@@ -306,13 +298,6 @@ void initTransInfo(bContext *C, TransInfo *t, wmOperator *op, const wmEvent *eve
     }
     else if (sima->mode == SI_MODE_MASK) {
       t->options |= CTX_MASK;
-    }
-    else if (sima->mode == SI_MODE_PAINT) {
-      Paint *paint = &sce->toolsettings->imapaint.paint;
-      Brush *brush = (paint) ? BKE_paint_brush(paint) : nullptr;
-      if (brush && (brush->stroke_method == BRUSH_STROKE_CURVE)) {
-        t->options |= CTX_PAINT_CURVE;
-      }
     }
     /* Image not in UV edit, nor in mask mode, can happen for some tools. */
   }
@@ -810,7 +795,7 @@ void postTrans(bContext *C, TransInfo *t)
   BLI_freelistN(&t->tsnap.points);
 
   if (t->spacetype == SPACE_IMAGE) {
-    if (t->options & (CTX_MASK | CTX_PAINT_CURVE)) {
+    if (t->options & CTX_MASK) {
       /* Pass. */
     }
     else {
@@ -943,16 +928,6 @@ void calculateCenterCursor(TransInfo *t, float r_center[3])
 {
   const float *cursor = t->scene->cursor.location;
   copy_v3_v3(r_center, cursor);
-
-  /* If edit or pose mode, move cursor in local space. */
-  if (t->options & CTX_PAINT_CURVE) {
-    if (ED_view3d_project_float_global(t->region, cursor, r_center, V3D_PROJ_TEST_NOP) !=
-        V3D_PROJ_RET_OK)
-    {
-      projectFloatViewCenterFallback(t, r_center);
-    }
-    r_center[2] = 0.0f;
-  }
 }
 
 void calculateCenterCursor2D(TransInfo *t, float r_center[2])
@@ -993,12 +968,6 @@ void calculateCenterCursor2D(TransInfo *t, float r_center[2])
 
       r_center[0] = co[0] * t->aspect[0];
       r_center[1] = co[1] * t->aspect[1];
-    }
-    else if (t->options & CTX_PAINT_CURVE) {
-      if (t->spacetype == SPACE_IMAGE) {
-        r_center[0] = ui::view2d_view_to_region_x(&t->region->v2d, cursor[0]);
-        r_center[1] = ui::view2d_view_to_region_y(&t->region->v2d, cursor[1]);
-      }
     }
     else {
       r_center[0] = cursor[0] * t->aspect[0];

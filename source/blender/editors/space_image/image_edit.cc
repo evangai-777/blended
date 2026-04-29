@@ -539,18 +539,8 @@ bool ED_space_image_maskedit_visible_splines_poll(bContext *C)
   return space_image->mask_info.draw_flag & MASK_DRAWFLAG_SPLINE;
 }
 
-bool ED_space_image_paint_curve(const bContext *C)
+bool ED_space_image_paint_curve(const bContext * /*C*/)
 {
-  SpaceImage *sima = CTX_wm_space_image(C);
-
-  if (sima && sima->mode == SI_MODE_PAINT) {
-    Brush *br = BKE_paint_brush(&CTX_data_tool_settings(C)->imapaint.paint);
-
-    if (br && (br->stroke_method == BRUSH_STROKE_CURVE)) {
-      return true;
-    }
-  }
-
   return false;
 }
 

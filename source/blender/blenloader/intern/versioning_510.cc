@@ -604,7 +604,7 @@ static void convert_brush_flags_to_type(Brush &brush)
   }
   else if (brush.flag & BRUSH_UNUSED_6) {
     brush.flag &= ~BRUSH_UNUSED_6;
-    brush.stroke_method = BRUSH_STROKE_CURVE;
+    brush.stroke_method = BRUSH_STROKE_DOTS;
   }
   else {
     brush.stroke_method = BRUSH_STROKE_DOTS;
@@ -919,6 +919,16 @@ void blo_do_versions_510(FileData * /*fd*/, Library * /*lib*/, Main *bmain)
         if (scene.toolsettings->snap_mode_tools == snap_geom_old) {
           scene.toolsettings->snap_mode_tools = SCE_SNAP_TO_GEOM;
         }
+      }
+    }
+  }
+
+  if (!MAIN_VERSION_FILE_ATLEAST(bmain, 502, 0)) {
+    /* BRUSH_STROKE_CURVE (value 6) was removed in Blended 0.4.0 when PaintCurve (ID_PC) was
+     * cut. Remap any persisted value to DOTS so 5.1.x files load with a valid stroke mode. */
+    for (Brush &brush : bmain->brushes) {
+      if (brush.stroke_method == BRUSH_STROKE_CURVE) {
+        brush.stroke_method = BRUSH_STROKE_DOTS;
       }
     }
   }
