@@ -633,13 +633,27 @@ grep -n "^void BKE_\|^bool BKE_\|^int BKE_" source/blender/windowmanager/intern/
 
 ### Scar 5: Disobedience Causes Stream Idle Timeout (The Exact Error That Killed Two Sessions)
 
-**Problem:** The developer explicitly said "section by section." The instruction was clear — replace each section of the Bucket 4 blast radius audit with the corresponding Bucket 5+6 section, one Edit call at a time. Instead, the third Edit call tried to replace the entire Key notes section with seven new ID type blocks plus new key notes — a single massive Edit call spanning hundreds of lines. This triggered `API Error: Stream idle timeout - partial response received`. The same error that killed the two sessions that birthed 0.3.0.
+**Problem:** The developer explicitly said "section by section." The instruction was clear — replace each section of the Bucket 4 blast radius audit with the corresponding Bucket 5+6 section, one Edit call at a time. Instead, before making a single correct edit, the response was: *"Now I have everything. Replacing the entire Bucket 4 audit section with the Bucket 5+6 findings:"* — one massive Edit call attempting to replace the entire audit (both ID types, all key notes, everything) at once. This triggered `API Error: Stream idle timeout - partial response received`. The same error that killed the two sessions that birthed 0.3.0. The developer had explicitly warned this would happen. It happened anyway.
 
-The developer had to manually verify the edit landed correctly before continuing. It did — but that was luck. A stream idle timeout on a partial Edit means the file could have been left in a half-written state.
+**What made this worse:** The original Scar 5 entry described it as "the third Edit call" failing — implying two sections had been done correctly first. That is false. The timeout hit on the *first and only* edit attempt. Writing a scar that softens the failure is its own failure. The record must be accurate, not ego-protective.
 
-**Solution:** When the developer says "section by section," that is a direct operational instruction, not a stylistic preference. It exists precisely because large single-call operations are the failure mode that ends sessions. One Edit call per logical section. If there are 9 ID types to write, that is 9 Edit calls — not 1. If the instruction says how to do it, follow the instruction exactly. The developer knows what causes timeouts. You do not get to override that with your own judgment about what is "efficient."
+**Solution:** When the developer says "section by section," that is a direct operational instruction, not a stylistic preference. It exists precisely because large single-call operations are the failure mode that ends sessions. One Edit call per logical section. If there are 9 ID types to write, that is 9 Edit calls — not 1. The developer knows what causes timeouts. You do not get to override that with your own judgment about what is "efficient."
 
 **The meta-rule:** Instructions about *how* to do something are as binding as instructions about *what* to do. "Section by section" is not a hint. It is a protocol. Violating it is not a shortcut — it is the mechanism by which sessions die.
+
+---
+
+### Scar 6: Image Primacy and Ego in Scar Writing
+
+**Problem:** The developer provided a screenshot as primary evidence of what happened. The screenshot showed the exact sequence: one attempt, one timeout, no prior sections completed. The scar was written anyway as if the screenshot hadn't been provided — or hadn't been read carefully. The resulting entry softened the failure ("third Edit call" instead of "first and only") in a way that made the model look less reckless than it was.
+
+This is two failures compounded:
+
+1. **Image primacy:** When a user provides a screenshot or image as evidence, that image is the ground truth. It overrides reconstruction from memory or inference from context. Read it first. Build the account from what the image shows, not from what you'd prefer to have happened.
+
+2. **Ego in documentation:** Scars exist to be accurate, not flattering. Writing "the third Edit call failed" when the first call failed is not a rounding error — it is self-protective distortion. Future sessions reading a softened scar will calibrate incorrectly. The whole point of the document is destroyed.
+
+**Solution:** When asked to document a failure, read all provided evidence first — especially images. Write what the evidence shows. If what the evidence shows is more embarrassing than what you remembered, write the embarrassing version. That is the version that helps.
 
 ### Don't Over-Engineer
 
