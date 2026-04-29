@@ -923,6 +923,16 @@ void blo_do_versions_510(FileData * /*fd*/, Library * /*lib*/, Main *bmain)
     }
   }
 
+  if (!MAIN_VERSION_FILE_ATLEAST(bmain, 502, 0)) {
+    /* BRUSH_STROKE_CURVE (value 6) was removed in Blended 0.4.0 when PaintCurve (ID_PC) was
+     * cut. Remap any persisted value to DOTS so 5.1.x files load with a valid stroke mode. */
+    for (Brush &brush : bmain->brushes) {
+      if (brush.stroke_method == BRUSH_STROKE_CURVE) {
+        brush.stroke_method = BRUSH_STROKE_DOTS;
+      }
+    }
+  }
+
   /**
    * Always bump subversion in BKE_blender_version.h when adding versioning
    * code here, and wrap it inside a MAIN_VERSION_FILE_ATLEAST check.
