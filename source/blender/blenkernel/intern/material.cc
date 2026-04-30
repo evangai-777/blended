@@ -847,10 +847,6 @@ std::optional<int> BKE_id_material_index_max_eval(const ID &id)
     case ID_MB:
       /* Always use the first material. */
       return 0;
-    case ID_GD_LEGACY:
-      /* Is not rendered anymore. */
-      BLI_assert_unreachable();
-      return 0;
     default:
       break;
   }

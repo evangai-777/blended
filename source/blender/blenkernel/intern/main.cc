@@ -128,7 +128,7 @@ void BKE_main_clear(Main &bmain)
       switch ((eID_Index)a) {
         CASE_ID_INDEX(INDEX_ID_LI);
         CASE_ID_INDEX(INDEX_ID_AC);
-        CASE_ID_INDEX(INDEX_ID_GD_LEGACY);
+
         CASE_ID_INDEX(INDEX_ID_NT);
         CASE_ID_INDEX(INDEX_ID_VF);
         CASE_ID_INDEX(INDEX_ID_TXT);
@@ -1067,8 +1067,6 @@ MainListsArray BKE_main_lists_get(Main &bmain)
   /* Referenced by gpencil, so needs to be before that to avoid crashes. */
   lb[INDEX_ID_PAL] = &(bmain.palettes.cast<ID>());
 
-  /* Referenced by nodes, objects, view, scene etc, before to free after. */
-  lb[INDEX_ID_GD_LEGACY] = &(bmain.gpencils.cast<ID>());
   lb[INDEX_ID_GP] = &(bmain.grease_pencils.cast<ID>());
 
   lb[INDEX_ID_NT] = &(bmain.nodetrees.cast<ID>());
