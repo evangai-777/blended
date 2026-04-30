@@ -63,6 +63,7 @@ Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEG
 **Key notes:**
 - `ID_CU_LEGACY` and `ID_GD_LEGACY` have active migration paths — only the type *registration* goes, not the converters.
 - ~~`ID_LS` is already guarded by `#ifdef WITH_FREESTYLE`~~ — verified false for core registration files; `linestyle.cc` and render_shading.cc ID_LS cases are outside the guard. Full removal required.
+- `ID_LS` known latent leak: opening a legacy `.blend` with Freestyle data in a `WITH_FREESTYLE=OFF` build populates `bmain->linestyles` via the kept `which_libbase` routing, but that listbase is not in `BKE_main_lists_get`, so `BKE_main_free` does not free those IDs. Accepted artifact — no Freestyle fixtures in CI, does not affect release builds. Fix if needed: blenloader post-read pass draining `bmain->linestyles` when `WITH_FREESTYLE=OFF`.
 - `brush_test.cc` uses `ID_TE` in test fixtures — those tests get deleted with the type. (ID_PC fixtures rewritten in 0.4.0.)
 - ~~`depsgraph.cc:160` has a `!= ID_PA` guard~~ — resolved in ID_PA chisel; guard changed to `!= ID_SCE`.
 

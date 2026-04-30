@@ -285,12 +285,14 @@ Blender itself has marked these for replacement. Blended finishes the job.
 | `ID_TE` | Texture | Blender Internal renderer fossil; residual folds into NodeTree | pending |
 | `ID_PA` | ParticleSettings | Replaced by Geometry Nodes (purest example of §5 Group 5 swamp) | ✓ 0.4.0 |
 | `ID_MB` | MetaBall | 1990s implicit surfaces; sculpt/remesh covers it | pending |
-| `ID_LS` | FreestyleLineStyle | Niche NPR renderer; NPR via shader nodes / Grease Pencil | ✓ 0.4.0 |
+| `ID_LS` | FreestyleLineStyle | Niche NPR renderer; NPR via shader nodes / Grease Pencil | ✓ 0.4.0 ¹ |
 | `ID_SPK` | Speaker | 3D positional audio on scene objects; niche. Audio flows through VSE timeline. | ✓ 0.4.0 |
 | `ID_PC` | PaintCurve | Niche stroke guide | ✓ 0.4.0 |
 | `ID_CF` | CacheFile | External Alembic/USD cache reference — boundary concern, not project data | deferred (design question) |
 
 Removal in progress — 0.4.x. Per-layer file detail in [`CHANGELOG.md`](CHANGELOG.md).
+
+¹ **ID_LS known artifact:** `bmain->linestyles` is kept as a non-indexed listbase (Scar 2 pattern) so `which_libbase` can route legacy file reads. Unlike ID_SCR/ID_WM (runtime-only), linestyle IDs can be loaded from legacy `.blend` files. With `WITH_FREESTYLE=OFF`, those IDs escape `BKE_main_free` and leak for the session. Accepted — no Freestyle fixtures in CI. See CLAUDE.md ID_LS review note for fix path if needed.
 
 ### Open tensions [OPEN]
 
