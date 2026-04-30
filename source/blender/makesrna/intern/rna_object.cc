@@ -235,8 +235,6 @@ const EnumPropertyItem rna_enum_object_type_items[] = {
     {OB_LIGHTPROBE, "LIGHT_PROBE", ICON_OUTLINER_OB_LIGHTPROBE, "Light Probe", ""},
     RNA_ENUM_ITEM_SEPR,
     {OB_CAMERA, "CAMERA", ICON_OUTLINER_OB_CAMERA, "Camera", ""},
-    RNA_ENUM_ITEM_SEPR,
-    {OB_SPEAKER, "SPEAKER", ICON_OUTLINER_OB_SPEAKER, "Speaker", ""},
     {0, nullptr, 0, nullptr, nullptr},
 };
 
@@ -604,8 +602,6 @@ static StructRNA *rna_Object_data_typef(PointerRNA *ptr)
       return RNA_Lattice;
     case OB_ARMATURE:
       return RNA_Armature;
-    case OB_SPEAKER:
-      return RNA_Speaker;
     case OB_LIGHTPROBE:
       return RNA_LightProbe;
     case OB_GPENCIL_LEGACY:

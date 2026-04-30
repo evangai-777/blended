@@ -3967,11 +3967,11 @@ static IDFilterEnumPropertyItem rna_enum_space_file_id_filter_categories[] = {
      ICON_IMAGE_DATA,
      "Images & Sounds",
      "Show images, movie clips, sounds and masks"},
-    {FILTER_ID_CA | FILTER_ID_LA | FILTER_ID_LP | FILTER_ID_SPK | FILTER_ID_WO,
+    {FILTER_ID_CA | FILTER_ID_LA | FILTER_ID_LP | FILTER_ID_WO,
      "category_environment",
      ICON_WORLD_DATA,
      "Environment",
-     "Show worlds, lights, cameras and speakers"},
+     "Show worlds, lights and cameras"},
     {FILTER_ID_BR | FILTER_ID_GD_LEGACY | FILTER_ID_PA | FILTER_ID_PAL |
          FILTER_ID_TXT | FILTER_ID_VF | FILTER_ID_CF,
      "category_misc",

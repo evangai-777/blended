@@ -83,7 +83,6 @@
 #  include "DNA_particle_types.h"
 #  include "DNA_pointcloud_types.h"
 #  include "DNA_sound_types.h"
-#  include "DNA_speaker_types.h"
 #  include "DNA_text_types.h"
 #  include "DNA_texture_types.h"
 #  include "DNA_vfont_types.h"
@@ -565,18 +564,6 @@ static Collection *rna_Main_collections_new(Main *bmain, const char *name)
   return collection;
 }
 
-static Speaker *rna_Main_speakers_new(Main *bmain, const char *name)
-{
-  char safe_name[MAX_ID_NAME - 2];
-  rna_idname_validate(name, safe_name);
-
-  Speaker *speaker = BKE_speaker_add(bmain, safe_name);
-  id_us_min(&speaker->id);
-
-  WM_main_add_notifier(NC_ID | NA_ADDED, nullptr);
-
-  return speaker;
-}
 
 static bSound *rna_Main_sounds_load(Main *bmain, const char *name, bool check_existing)
 {
@@ -851,7 +838,6 @@ RNA_MAIN_ID_TAG_FUNCS_DEF(worlds, worlds, ID_WO)
 RNA_MAIN_ID_TAG_FUNCS_DEF(collections, collections, ID_GR)
 // RNA_MAIN_ID_TAG_FUNCS_DEF(shape_keys, key, ID_KE)
 RNA_MAIN_ID_TAG_FUNCS_DEF(texts, texts, ID_TXT)
-RNA_MAIN_ID_TAG_FUNCS_DEF(speakers, speakers, ID_SPK)
 RNA_MAIN_ID_TAG_FUNCS_DEF(sounds, sounds, ID_SO)
 RNA_MAIN_ID_TAG_FUNCS_DEF(armatures, armatures, ID_AR)
 RNA_MAIN_ID_TAG_FUNCS_DEF(actions, actions, ID_AC)
@@ -1715,49 +1701,6 @@ void RNA_def_main_collections(BlenderRNA *brna, PropertyRNA *cprop)
   RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
 }
 
-void RNA_def_main_speakers(BlenderRNA *brna, PropertyRNA *cprop)
-{
-  StructRNA *srna;
-  FunctionRNA *func;
-  PropertyRNA *parm;
-
-  RNA_def_property_srna(cprop, "BlendDataSpeakers");
-  srna = RNA_def_struct(brna, "BlendDataSpeakers", nullptr);
-  RNA_def_struct_sdna(srna, "Main");
-  RNA_def_struct_ui_text(srna, "Main Speakers", "Collection of speakers");
-
-  func = RNA_def_function(srna, "new", "rna_Main_speakers_new");
-  RNA_def_function_ui_description(func, "Add a new speaker to the main database");
-  parm = RNA_def_string(func, "name", "Speaker", 0, "", "New name for the data-block");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-  /* return type */
-  parm = RNA_def_pointer(func, "speaker", "Speaker", "", "New speaker data-block");
-  RNA_def_function_return(func, parm);
-
-  func = RNA_def_function(srna, "remove", "rna_Main_ID_remove");
-  RNA_def_function_flag(func, FUNC_USE_REPORTS);
-  RNA_def_function_ui_description(func, "Remove a speaker from the current blendfile");
-  parm = RNA_def_pointer(func, "speaker", "Speaker", "", "Speaker to remove");
-  RNA_def_parameter_flags(parm, PROP_NEVER_NULL, PARM_REQUIRED | PARM_RNAPTR);
-  RNA_def_parameter_clear_flags(parm, PROP_THICK_WRAP, ParameterFlag(0));
-  RNA_def_boolean(func,
-                  "do_unlink",
-                  true,
-                  "",
-                  "Unlink all usages of this speaker before deleting it "
-                  "(WARNING: will also delete objects instancing that speaker data)");
-  RNA_def_boolean(func,
-                  "do_id_user",
-                  true,
-                  "",
-                  "Decrement user counter of all data-blocks used by this speaker data");
-  RNA_def_boolean(
-      func, "do_ui_user", true, "", "Make sure interface does not reference this speaker data");
-
-  func = RNA_def_function(srna, "tag", "rna_Main_speakers_tag");
-  parm = RNA_def_boolean(func, "value", false, "Value", "");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-}
 
 void RNA_def_main_texts(BlenderRNA *brna, PropertyRNA *cprop)
 {
