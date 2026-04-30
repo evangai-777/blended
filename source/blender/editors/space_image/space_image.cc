@@ -1211,7 +1211,7 @@ static void image_id_remap(ScrArea * /*area*/,
 {
   SpaceImage *simg = reinterpret_cast<SpaceImage *>(slink);
 
-  if (!mappings.contains_mappings_for_any(FILTER_ID_IM | FILTER_ID_GD_LEGACY | FILTER_ID_MSK)) {
+  if (!mappings.contains_mappings_for_any(FILTER_ID_IM | FILTER_ID_MSK)) {
     return;
   }
 

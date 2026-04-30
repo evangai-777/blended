@@ -1534,13 +1534,6 @@ static void node_id_remap(ID *old_id, ID *new_id, SpaceNode *snode)
       snode->from = new_id;
     }
   }
-  else if (GS(old_id->name) == ID_GD_LEGACY) {
-    if (id_cast<ID *>(snode->gpd) == old_id) {
-      snode->gpd = id_cast<bGPdata *>(new_id);
-      id_us_min(old_id);
-      id_us_plus(new_id);
-    }
-  }
   else if (GS(old_id->name) == ID_NT) {
 
     if (snode->selected_node_group) {

@@ -153,7 +153,6 @@ static void get_element_operation_type(
       case ID_VF:
       case ID_NT:
       case ID_BR:
-      case ID_GD_LEGACY:
       case ID_MC:
       case ID_MSK:
       case ID_PAL:

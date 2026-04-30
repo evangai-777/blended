@@ -585,7 +585,6 @@ ID *template_id_liboverride_hierarchy_make(
     case ID_LA:
     case ID_CA:
     case ID_AR:
-    case ID_GD_LEGACY:
     case ID_CV:
     case ID_PT:
     case ID_VO:
@@ -882,8 +881,7 @@ static StringRef template_id_browse_tip(const StructRNA *type)
         return N_("Browse Node Tree to be linked");
       case ID_BR:
         return N_("Browse Brush to be linked");
-      case ID_GD_LEGACY:
-        return N_("Browse Grease Pencil Data to be linked");
+
       case ID_MC:
         return N_("Browse Movie Clip to be linked");
       case ID_MSK:
