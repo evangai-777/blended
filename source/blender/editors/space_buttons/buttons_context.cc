@@ -260,9 +260,6 @@ static bool buttons_context_path_data(ButsContextPath *path, int type)
   if (RNA_struct_is_a(ptr->type, RNA_Light) && ELEM(type, -1, OB_LAMP)) {
     return true;
   }
-  if (RNA_struct_is_a(ptr->type, RNA_Speaker) && ELEM(type, -1, OB_SPEAKER)) {
-    return true;
-  }
   if (RNA_struct_is_a(ptr->type, RNA_LightProbe) && ELEM(type, -1, OB_LIGHTPROBE)) {
     return true;
   }
@@ -1003,10 +1000,6 @@ int /*eContextResult*/ buttons_context(const bContext *C,
   }
   if (CTX_data_equals(member, "camera")) {
     set_pointer_type(path, result, RNA_Camera);
-    return CTX_RESULT_OK;
-  }
-  if (CTX_data_equals(member, "speaker")) {
-    set_pointer_type(path, result, RNA_Speaker);
     return CTX_RESULT_OK;
   }
   if (CTX_data_equals(member, "lightprobe")) {

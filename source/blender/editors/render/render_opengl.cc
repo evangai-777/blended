@@ -617,7 +617,6 @@ static int gather_frames_to_render_for_id(LibraryIDLinkCallbackData *cb_data)
     case ID_KE:        /* Key (shape key) */
     case ID_VF:        /* VFont (Vector Font) */
     case ID_TXT:       /* Text */
-    case ID_SPK:       /* Speaker */
     case ID_SO:        /* Sound */
     case ID_AR:        /* bArmature */
     case ID_NT:        /* bNodeTree */

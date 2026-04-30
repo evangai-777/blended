@@ -125,7 +125,6 @@
 #include "BKE_scene.hh"
 #include "BKE_shader_fx.hh"
 #include "BKE_softbody.h"
-#include "BKE_speaker.hh"
 #include "BKE_subdiv_ccg.hh"
 #include "BKE_vfont.hh"
 #include "BKE_volume.hh"
@@ -2128,8 +2127,6 @@ static const char *get_obdata_defname(int type)
       return DATA_("Lattice");
     case OB_ARMATURE:
       return DATA_("Armature");
-    case OB_SPEAKER:
-      return DATA_("Speaker");
     case OB_CURVES:
       return DATA_("Curves");
     case OB_POINTCLOUD:
@@ -2158,7 +2155,7 @@ static void object_init(Object *ob, const short ob_type)
     zero_v2(ob->ima_ofs);
   }
 
-  if (ELEM(ob->type, OB_LAMP, OB_CAMERA, OB_SPEAKER)) {
+  if (ELEM(ob->type, OB_LAMP, OB_CAMERA)) {
     ob->trackflag = OB_NEGZ;
     ob->upflag = OB_POSY;
   }
@@ -2199,8 +2196,6 @@ void *BKE_object_obdata_add_from_type(Main *bmain, int type, const char *name)
       return BKE_lattice_add(bmain, name);
     case OB_ARMATURE:
       return BKE_armature_add(bmain, name);
-    case OB_SPEAKER:
-      return BKE_speaker_add(bmain, name);
     case OB_LIGHTPROBE:
       return BKE_lightprobe_add(bmain, name);
     case OB_CURVES:
@@ -2231,8 +2226,6 @@ int BKE_object_obdata_to_type(const ID *id)
       return OB_MBALL;
     case ID_LA:
       return OB_LAMP;
-    case ID_SPK:
-      return OB_SPEAKER;
     case ID_CA:
       return OB_CAMERA;
     case ID_LT:
@@ -2740,11 +2733,6 @@ Object *BKE_object_duplicate(Main *bmain,
       break;
     case OB_LIGHTPROBE:
       if (dupflag & USER_DUP_LIGHTPROBE) {
-        id_new = BKE_id_copy_for_duplicate(bmain, id_old, dupflag, copy_flags);
-      }
-      break;
-    case OB_SPEAKER:
-      if (dupflag & USER_DUP_SPEAKER) {
         id_new = BKE_id_copy_for_duplicate(bmain, id_old, dupflag, copy_flags);
       }
       break;

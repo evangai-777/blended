@@ -57,7 +57,7 @@ carries a one-liner status per active item.
 ## Unreleased — 0.4.0
 
 Bucket 5 + 6 fossil removals. 9 ID types, 357 hits, same chisel pattern as 0.3.0.
-Chisel order: **ID_PC ✓** → ID_SPK → ID_PA → ID_GD_LEGACY → ID_LS → ID_MB → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision — see CLAUDE.md Key note 8).
+Chisel order: **ID_PC ✓** → **ID_SPK ✓** → ID_PA → ID_GD_LEGACY → ID_LS → ID_MB → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision — see CLAUDE.md Key note 8).
 *(Order corrected in PR #126 fix — initial commit had ID_CF first, contradicting CLAUDE.md Key note 8. Scar 7.)*
 
 **Key notes:**
@@ -76,15 +76,19 @@ Chisel order: **ID_PC ✓** → ID_SPK → ID_PA → ID_GD_LEGACY → ID_LS → 
 | `editors` | `paint_curve.cc` (deleted), `paint_curve_undo.cc` (deleted), `transform_convert_paintcurve.cc` (deleted); `paint_cursor.cc/hh`, `paint_stroke.cc`, `paint_ops.cc`, `paint_intern.hh`, `transform_convert.cc/hh`, `transform_generics.cc`, `interface_icons.cc`, `interface_template_id.cc`, `render_opengl.cc`, `outliner_draw.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc`, `BLT_translation.hh` | ✓ |
 | `depsgraph` | `deg_builder_relations.cc`, `deg_builder_nodes.cc` | ✓ |
 
-### ID_SPK — Speaker
+### ID_SPK — Speaker ✓ complete
 
 | Layer | Files touched | Status |
 |-------|--------------|--------|
-| `makesdna` | `DNA_ID_enums.h`, `DNA_speaker_types.h` (id_type constexpr), `DNA_object_types.h` (macros) | ☐ |
-| `blenkernel` | `idtype.cc`, `main.cc`, `object.cc`, `sound.cc` | ☐ |
-| `makesrna` | `rna_ID.cc`, `rna_main_api.cc` | ☐ |
-| `editors` | `interface_icons.cc`, `interface_template_id.cc`, `render_opengl.cc`, `outliner_draw.cc`, `outliner_select.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc` | ☐ |
-| `depsgraph` | `deg_builder_relations.cc`, `deg_builder_nodes.cc` | ☐ |
+| `makesdna` | `DNA_ID_enums.h`, `DNA_speaker_types.h` (deleted), `DNA_ID.h` (FILTER/INDEX macros), `DNA_object_types.h` (OB_SPEAKER enum + macros), `DNA_userdef_types.h` (dupflag default) | ✓ |
+| `blenkernel` | `idtype.cc`, `main.cc`, `object.cc`, `sound.cc` (speaker loop + speaker_handles), `nla.cc` (BKE_nla_add_soundstrip), `anim_data_bmain_utils.cc`, `anim_sys.cc`, `geometry_set_instances.cc`; `speaker.cc` (deleted), headers: `BKE_idtype.hh`, `BKE_main.hh`, `BKE_nla.hh`, `BKE_scene_runtime.hh`, `BKE_speaker.hh` (deleted) | ✓ |
+| `makesrna` | `rna_ID.cc`, `rna_main_api.cc`, `rna_main.cc`, `rna_object.cc`, `rna_userdef.cc`, `rna_action.cc`, `rna_space.cc`, `rna_space_api.cc`, `rna_internal.hh`; `rna_speaker.cc` (deleted) | ✓ |
+| `editors` | `interface_icons.cc`, `interface_template_id.cc`, `render_opengl.cc`, `outliner_draw.cc`, `outliner_select.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc`, `space_view3d.cc`, `buttons_context.cc`, `object_add.cc` (OBJECT_OT_speaker_add deleted), `object_intern.hh`, `object_ops.cc`, `object_relations.cc`, `space_nla/nla_edit.cc` (NLA_OT_soundclip_add deleted), `nla_intern.hh`, `nla_ops.cc`, `nla_draw.cc`, `nla_tracks.cc`, `nla_buttons.cc`, `anim_filter.cc`, `anim_channels_defines.cc` (ACF_DSSPK deleted), `anim_channels_edit.cc`, `anim_deps.cc`, `transform/transform_convert_action.cc`, `BLT_translation.hh` (BLT_I18NCONTEXT_ID_SPEAKER), `ED_anim_api.hh` (ANIMTYPE_DSSPK) | ✓ |
+| `draw` | `overlay_speaker.hh` (deleted), `overlay_instance.hh`, `overlay_instance.cc`, `overlay_private.hh`, `overlay_bounds.hh` | ✓ |
+| `depsgraph` | `deg_builder_nodes.cc`, `deg_builder_nodes.h`, `deg_builder_nodes_scene.cc`, `deg_builder_relations.cc`, `deg_builder_relations.h`, `deg_builder_relations_scene.cc`, `deg_node_operation.hh`, `deg_node_operation.cc` (SPEAKER_EVAL removed) | ✓ |
+| `python` | `properties_data_speaker.py` (deleted), `bl_ui/__init__.py`, `space_dopesheet.py`, `space_outliner.py`, `space_userpref.py`, `space_view3d.py`, `bl_operators/wm.py`, `_bpy_types.py`, `_bl_i18n_utils/settings.py`, `_rna_manual_reference.py` | ✓ |
+| `blenloader` | `versioning_520.cc` (502.23 pass — OB_SPEAKER → OB_EMPTY), `BKE_blender_version.h` (subversion bump) | ✓ |
+| `io` | `io/usd/intern/usd_hierarchy_iterator.cc`, `io/alembic/exporter/abc_hierarchy_iterator.cc` | ✓ |
 
 ### ID_PA — ParticleSettings
 

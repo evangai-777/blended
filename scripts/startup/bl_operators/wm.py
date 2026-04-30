@@ -2798,7 +2798,6 @@ class WM_OT_batch_rename(Operator):
             ('LIGHT', "Lights", "", 'LIGHT_DATA', 10),
             ('LIGHT_PROBE', "Light Probes", "", 'OUTLINER_DATA_LIGHTPROBE', 11),
             ('CAMERA', "Cameras", "", 'CAMERA_DATA', 12),
-            ('SPEAKER', "Speakers", "", 'OUTLINER_DATA_SPEAKER', 13),
             None,
             ('BONE', "Bones", "", 'BONE_DATA', 14),
             ('NODE', "Nodes", "", 'NODETREE', 15),
@@ -2947,7 +2946,6 @@ class WM_OT_batch_rename(Operator):
             'LIGHT': ("lights", iface_("Light(s)"), bpy.types.Light),
             'LIGHT_PROBE': ("lightprobes", iface_("Light Probe(s)"), bpy.types.LightProbe),
             'CAMERA': ("cameras", iface_("Camera(s)"), bpy.types.Camera),
-            'SPEAKER': ("speakers", iface_("Speaker(s)"), bpy.types.Speaker),
         }
 
         # Finish with space types.

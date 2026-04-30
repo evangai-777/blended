@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.3.0 (tagged, CI green). 0.4.0 in progress — Bucket 5 + 6 fossil removals. `ID_PC` (PaintCurve) complete; next: `ID_SPK`.
+**Current version:** Blended 0.3.0 (tagged, CI green). 0.4.0 in progress — Bucket 5 + 6 fossil removals. `ID_PC` ✓ + `ID_SPK` ✓; next: `ID_PA`.
 
 ---
 
@@ -25,7 +25,7 @@ The old approach (tiered UI, smart defaults, Emscripten) was prototyping toward 
 
 **`ID_SCR` and `ID_WM` removal — compile-clean, pending CI.** All layers merged. The blast radius was enormous — see Scar 2 below. Key architectural outcome: `bmain->screens` and `bmain->wm` kept as non-indexed runtime listbases; `ID_SCR_LEGACY` / `ID_WM_LEGACY` defines route through `which_libbase` for allocation but are excluded from `BKE_main_lists_get`. Branch: `claude/remove-id-scr-id-wm`. Layer-by-layer status in [`CHANGELOG.md`](CHANGELOG.md).
 
-**In progress: Bucket 5 + 6 fossil removals (0.4.x)** — `ID_CU_LEGACY`, `ID_GD_LEGACY`, `ID_TE`, `ID_PA`, `ID_MB`, `ID_LS`, `ID_SPK`, `ID_CF`. `ID_PC` ✓. Next: `ID_SPK`. See roadmap in CHANGELOG.md.
+**In progress: Bucket 5 + 6 fossil removals (0.4.x)** — `ID_CU_LEGACY`, `ID_GD_LEGACY`, `ID_TE`, `ID_PA`, `ID_MB`, `ID_LS`, `ID_CF`. `ID_PC` ✓. `ID_SPK` ✓. Next: `ID_PA`. See roadmap in CHANGELOG.md.
 
 Pattern for each pending layer: `grep -rn "ID_WS"` the directory, delete or redirect every hit. The breakage is the audit — follow the compile errors, don't paper over them.
 
@@ -336,36 +336,9 @@ makesrna (5 files):
 
 ---
 
-**ID_SPK — 23 hits, 19 files**
+**ID_SPK — ✓ COMPLETE (0.4.0)** *(true blast radius was ~45 files vs 23 literal hits)*
 
-Core definition:
-- `makesdna/DNA_ID_enums.h:145` — enum entry `ID_SPK = MAKE_ID2('S', 'K')`
-- `makesdna/DNA_speaker_types.h:32` — `static constexpr ID_Type id_type = ID_SPK`
-- `makesdna/DNA_object_types.h:745,761` — object type macros
-- `blenkernel/intern/idtype.cc:155` — `INIT_TYPE(ID_SPK)`
-- `blenkernel/intern/main.cc:1016` — `which_libbase` case
-
-blenkernel (2 files):
-- `object.cc:2234` — object data case
-- `sound.cc:1446` — `DEG_id_type_any_exists(depsgraph, ID_SPK)` check
-
-editors (7 files):
-- `interface_icons.cc:2091` — icon case
-- `interface_template_id.cc:587,879` — template checks
-- `render_opengl.cc:620` — render switch
-- `outliner_draw.cc:2510` — outliner draw
-- `outliner_select.cc:1294` — outliner select
-- `outliner_intern.hh:152` — outliner macro
-- `outliner_tools.cc:142` — outliner tools
-- `tree_element_id.cc:74` — tree element
-
-depsgraph (2 files):
-- `deg_builder_relations.cc:585` — relation builder
-- `deg_builder_nodes.cc:638` — node builder
-
-makesrna (2 files):
-- `rna_ID.cc:63,463,548` — RNA enum entry and switch cases
-- `rna_main_api.cc:854` — `RNA_MAIN_ID_TAG_FUNCS_DEF(speakers, speakers, ID_SPK)`
+> **Session note (2026-04-30):** The "23 hits" count was literal `ID_SPK` string occurrences only. True scope: `DNA_speaker_types.h` deleted entire; `BKE_speaker.hh`/`speaker.cc` deleted; `sound.cc` speaker iteration loop + `SceneAudioRuntime.speaker_handles` removed; `BKE_nla_add_soundstrip` removed; `overlay_speaker.hh` deleted; `OBJECT_OT_speaker_add` + `NLA_OT_soundclip_add` operators deleted; `ACF_DSSPK` animation channel + `ANIMTYPE_DSSPK` enum removed; `rna_speaker.cc` deleted entire; `SPEAKER_EVAL` depsgraph opcode removed; 9 `case ANIMTYPE_DSSPK:` fallthrough sites across NLA/transform/anim editors; `OB_SPEAKER = 12` removed from object type enum; versioning pass added (502.23) converting old speaker objects to OB_EMPTY.
 
 ---
 
@@ -472,9 +445,9 @@ Additional files NOT in the literal grep (discovered 2026-04-29):
 
 6. **`depsgraph.cc:160` has a `!= ID_PA` guard** in `clear_id_nodes_conditional`. This is particle-specific cache invalidation logic — understand before removing; it may need to move to the particle module rather than just be deleted.
 
-7. **Remaining chisel order (smallest blast radius first):** ID_SPK (23) → ID_PA (35) → ID_GD_LEGACY (39) → ID_LS (40) → ID_MB (49) → ID_TE (58) → ID_CU_LEGACY (74) → ID_CF (last, design decision). ~278 hits across 8 types. ID_PC (21) complete in 0.4.0; ID_CF deferred — see note 8.
+7. **Remaining chisel order (smallest blast radius first):** ID_PA (35) → ID_GD_LEGACY (39) → ID_LS (40) → ID_MB (49) → ID_TE (58) → ID_CU_LEGACY (74) → ID_CF (last, design decision). ~255 hits across 6 types. ID_PC (21) ✓ 0.4.0. ID_SPK (23) ✓ 0.4.0. ID_CF deferred — see note 8.
 
-8. **ID_CF is architecturally entangled — do it last or separately.** The literal grep count (18) dramatically understates the true blast radius. `CacheFile` as a struct is woven into: the Alembic importer (`io/alembic/`), the USD importer (`io/usd/`), the Mesh Sequence Cache modifier (`MOD_meshsequencecache.cc`), the constraint system, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. The Mesh Sequence Cache modifier holds a `CacheFile *` ID pointer so multiple objects can share one cache reference — removing the ID type means deciding what replaces that pointer. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI builds, so breakage here will surface. **Revised chisel order: ID_SPK → ID_PA → ID_GD_LEGACY → ID_LS → ID_MB → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision). ID_PC complete (0.4.0).** The open question: does the cache-file reference mechanism get inlined into the modifier/constraint DNA per-instance, or does CacheFile stay as a non-ID struct in a non-indexed listbase (like ID_SCR_LEGACY/ID_WM_LEGACY pattern)? Answer this before chiseling ID_CF.
+8. **ID_CF is architecturally entangled — do it last or separately.** The literal grep count (18) dramatically understates the true blast radius. `CacheFile` as a struct is woven into: the Alembic importer (`io/alembic/`), the USD importer (`io/usd/`), the Mesh Sequence Cache modifier (`MOD_meshsequencecache.cc`), the constraint system, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. The Mesh Sequence Cache modifier holds a `CacheFile *` ID pointer so multiple objects can share one cache reference — removing the ID type means deciding what replaces that pointer. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI builds, so breakage here will surface. **Revised chisel order: ID_PA → ID_GD_LEGACY → ID_LS → ID_MB → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision). ID_PC ✓ (0.4.0). ID_SPK ✓ (0.4.0).** The open question: does the cache-file reference mechanism get inlined into the modifier/constraint DNA per-instance, or does CacheFile stay as a non-ID struct in a non-indexed listbase (like ID_SCR_LEGACY/ID_WM_LEGACY pattern)? Answer this before chiseling ID_CF.
 
 ---
 
@@ -564,7 +537,7 @@ make check_mypy     # Python type checking
 Target: 39 → ~19 ID types.
 - **Bucket 4 (UI state, remove):** `ID_WS` ✓ (0.2.0), `ID_SCR` ✓ (0.3.0 WIP), `ID_WM` ✓ (0.3.0 WIP)
 - **Bucket 5 (upstream deprecations, finish):** `ID_CU_LEGACY`, `ID_GD_LEGACY` — next up
-- **Bucket 6 (fossils, cut):** `ID_TE`, `ID_PA`, `ID_MB`, `ID_LS`, `ID_SPK`, `ID_CF` — in progress; `ID_PC` ✓ (0.4.0)
+- **Bucket 6 (fossils, cut):** `ID_TE`, `ID_PA`, `ID_MB`, `ID_LS`, `ID_CF` — in progress; `ID_PC` ✓ (0.4.0); `ID_SPK` ✓ (0.4.0)
 
 ---
 

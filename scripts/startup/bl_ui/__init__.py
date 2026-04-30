@@ -35,7 +35,6 @@ _modules = [
     "properties_data_pointcloud",
     "properties_data_shaderfx",
     "properties_data_lightprobe",
-    "properties_data_speaker",
     "properties_data_volume",
     "properties_mask_common",
     "properties_material",

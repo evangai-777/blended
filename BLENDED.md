@@ -286,7 +286,7 @@ Blender itself has marked these for replacement. Blended finishes the job.
 | `ID_PA` | ParticleSettings | Replaced by Geometry Nodes (purest example of §5 Group 5 swamp) | pending |
 | `ID_MB` | MetaBall | 1990s implicit surfaces; sculpt/remesh covers it | pending |
 | `ID_LS` | FreestyleLineStyle | Niche NPR renderer; NPR via shader nodes / Grease Pencil | pending |
-| `ID_SPK` | Speaker | 3D positional audio on scene objects; niche. Audio flows through VSE timeline. | pending |
+| `ID_SPK` | Speaker | 3D positional audio on scene objects; niche. Audio flows through VSE timeline. | ✓ 0.4.0 |
 | `ID_PC` | PaintCurve | Niche stroke guide | ✓ 0.4.0 |
 | `ID_CF` | CacheFile | External Alembic/USD cache reference — boundary concern, not project data | deferred (design question) |
 

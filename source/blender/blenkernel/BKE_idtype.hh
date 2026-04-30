@@ -315,7 +315,6 @@ extern IDTypeInfo IDType_ID_KE;
 extern IDTypeInfo IDType_ID_WO;
 extern IDTypeInfo IDType_ID_VF;
 extern IDTypeInfo IDType_ID_TXT;
-extern IDTypeInfo IDType_ID_SPK;
 extern IDTypeInfo IDType_ID_SO;
 extern IDTypeInfo IDType_ID_GR;
 extern IDTypeInfo IDType_ID_AR;

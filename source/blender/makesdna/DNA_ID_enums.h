@@ -142,7 +142,6 @@ enum ID_Type {
   ID_WO = MAKE_ID2('W', 'O'),        /* World */
   ID_VF = MAKE_ID2('V', 'F'),        /* VFont (Vector Font) */
   ID_TXT = MAKE_ID2('T', 'X'),       /* Text */
-  ID_SPK = MAKE_ID2('S', 'K'),       /* Speaker */
   ID_SO = MAKE_ID2('S', 'O'),        /* Sound */
   ID_GR = MAKE_ID2('G', 'R'),        /* Collection */
   ID_AR = MAKE_ID2('A', 'R'),        /* bArmature */

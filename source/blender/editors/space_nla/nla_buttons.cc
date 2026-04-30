@@ -126,7 +126,6 @@ bool nla_panel_context(const bContext *C,
       case ANIMTYPE_DSTEX:
       case ANIMTYPE_DSLAT:
       case ANIMTYPE_DSLINESTYLE:
-      case ANIMTYPE_DSSPK:
       case ANIMTYPE_DSGPENCIL:
       case ANIMTYPE_PALETTE:
       case ANIMTYPE_DSHAIR:

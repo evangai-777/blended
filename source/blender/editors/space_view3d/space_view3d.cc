@@ -893,7 +893,6 @@ static void view3d_main_region_message_subscribe(const wmRegionMessageSubscribeP
       RNA_AreaLight,
       RNA_Camera,
       RNA_Light,
-      RNA_Speaker,
       RNA_SunLight,
 
       /* General types the 3D view depends on. */

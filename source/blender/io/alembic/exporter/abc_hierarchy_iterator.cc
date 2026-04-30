@@ -208,7 +208,6 @@ ABCAbstractWriter *ABCHierarchyIterator::create_data_writer_for_object_type(
     case OB_EMPTY:
     case OB_LAMP:
     case OB_FONT:
-    case OB_SPEAKER:
     case OB_LIGHTPROBE:
     case OB_LATTICE:
     case OB_ARMATURE:

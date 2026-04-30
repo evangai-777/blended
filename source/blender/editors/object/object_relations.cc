@@ -1319,7 +1319,7 @@ static wmOperatorStatus track_set_exec(bContext *C, wmOperator *op)
                             ID_RECALC_TRANSFORM | ID_RECALC_GEOMETRY | ID_RECALC_ANIMATION);
 
           /* Light, Camera and Speaker track differently by default */
-          if (ELEM(ob->type, OB_LAMP, OB_CAMERA, OB_SPEAKER)) {
+          if (ELEM(ob->type, OB_LAMP, OB_CAMERA)) {
             data->trackflag = TRACK_nZ;
           }
         }
@@ -1341,7 +1341,7 @@ static wmOperatorStatus track_set_exec(bContext *C, wmOperator *op)
                             ID_RECALC_TRANSFORM | ID_RECALC_GEOMETRY | ID_RECALC_ANIMATION);
 
           /* Light, Camera and Speaker track differently by default */
-          if (ELEM(ob->type, OB_LAMP, OB_CAMERA, OB_SPEAKER)) {
+          if (ELEM(ob->type, OB_LAMP, OB_CAMERA)) {
             data->reserved1 = TRACK_nZ;
             data->reserved2 = UP_Y;
           }
@@ -1364,7 +1364,7 @@ static wmOperatorStatus track_set_exec(bContext *C, wmOperator *op)
                             ID_RECALC_TRANSFORM | ID_RECALC_GEOMETRY | ID_RECALC_ANIMATION);
 
           /* Light, Camera and Speaker track differently by default */
-          if (ELEM(ob->type, OB_LAMP, OB_CAMERA, OB_SPEAKER)) {
+          if (ELEM(ob->type, OB_LAMP, OB_CAMERA)) {
             data->trackflag = TRACK_nZ;
             data->lockflag = LOCK_Y;
           }
@@ -2021,13 +2021,6 @@ static void single_obdata_users(
                                                  nullptr,
                                                  LIB_ID_COPY_DEFAULT | LIB_ID_COPY_ACTIONS));
             BKE_pose_rebuild(bmain, ob, id_cast<bArmature *>(ob->data), true);
-            break;
-          case OB_SPEAKER:
-            ob->data = ID_NEW_SET(ob->data,
-                                  BKE_id_copy_ex(bmain,
-                                                 static_cast<const ID *>(ob->data),
-                                                 nullptr,
-                                                 LIB_ID_COPY_DEFAULT | LIB_ID_COPY_ACTIONS));
             break;
           case OB_LIGHTPROBE:
             ob->data = ID_NEW_SET(ob->data,

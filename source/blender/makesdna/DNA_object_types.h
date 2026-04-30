@@ -103,7 +103,6 @@ enum ObjectType {
   OB_LAMP = 10,
   OB_CAMERA = 11,
 
-  OB_SPEAKER = 12,
   OB_LIGHTPROBE = 13,
 
   OB_LATTICE = 22,
@@ -742,7 +741,6 @@ struct ObHook {
         ID_CU_LEGACY, \
         ID_MB, \
         ID_LA, \
-        ID_SPK, \
         ID_LP, \
         ID_CA, \
         ID_LT, \
@@ -758,7 +756,6 @@ struct ObHook {
   case ID_CU_LEGACY: \
   case ID_MB: \
   case ID_LA: \
-  case ID_SPK: \
   case ID_LP: \
   case ID_CA: \
   case ID_LT: \

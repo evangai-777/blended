@@ -28,7 +28,6 @@
 #include "DNA_object_types.h"
 #include "DNA_pointcloud_types.h"
 #include "DNA_scene_types.h"
-#include "DNA_speaker_types.h"
 #include "DNA_vfont_types.h"
 
 #include "BLI_array_utils.hh"
@@ -2223,63 +2222,6 @@ void OBJECT_OT_data_instance_add(wmOperatorType *ot)
 }
 
 /** \} */
-
-/* -------------------------------------------------------------------- */
-/** \name Add Speaker Operator
- * \{ */
-
-static wmOperatorStatus object_speaker_add_exec(bContext *C, wmOperator *op)
-{
-  Main *bmain = CTX_data_main(C);
-  Scene *scene = CTX_data_scene(C);
-
-  ushort local_view_bits;
-  float loc[3], rot[3];
-  add_generic_get_opts(C, op, 'Z', loc, rot, nullptr, nullptr, &local_view_bits, nullptr);
-
-  Object *ob = add_type(C, OB_SPEAKER, nullptr, loc, rot, false, local_view_bits);
-  const bool is_liboverride = ID_IS_OVERRIDE_LIBRARY(ob);
-
-  /* To make it easier to start using this immediately in NLA, a default sound clip is created
-   * ready to be moved around to re-time the sound and/or make new sound clips. */
-  {
-    /* create new data for NLA hierarchy */
-    AnimData *adt = BKE_animdata_ensure_id(&ob->id);
-    NlaTrack *nlt = BKE_nlatrack_new_tail(&adt->nla_tracks, is_liboverride);
-    BKE_nlatrack_set_active(&adt->nla_tracks, nlt);
-    NlaStrip *strip = BKE_nla_add_soundstrip(bmain, scene, id_cast<Speaker *>(ob->data));
-    strip->start = scene->r.cfra;
-    strip->end += strip->start;
-
-    /* hook them up */
-    BKE_nlatrack_add_strip(nlt, strip, is_liboverride);
-
-    /* Auto-name the strip, and give the track an interesting name. */
-    STRNCPY_UTF8(nlt->name, DATA_("SoundTrack"));
-    BKE_nlastrip_validate_name(adt, strip);
-
-    WM_event_add_notifier(C, NC_ANIMATION | ND_NLA | NA_ADDED, nullptr);
-  }
-
-  return OPERATOR_FINISHED;
-}
-
-void OBJECT_OT_speaker_add(wmOperatorType *ot)
-{
-  /* identifiers */
-  ot->name = "Add Speaker";
-  ot->description = "Add a speaker object to the scene";
-  ot->idname = "OBJECT_OT_speaker_add";
-
-  /* API callbacks. */
-  ot->exec = object_speaker_add_exec;
-  ot->poll = ED_operator_objectmode;
-
-  /* flags */
-  ot->flag = OPTYPE_REGISTER | OPTYPE_UNDO;
-
-  add_generic_props(ot, true);
-}
 
 /** \} */
 
