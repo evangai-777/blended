@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.3.0 (tagged, CI green). 0.4.0 in progress — Bucket 5 + 6 fossil removals. `ID_PC` ✓ + `ID_SPK` ✓; next: `ID_PA`.
+**Current version:** Blended 0.3.0 (tagged, CI green). 0.4.0 in progress — Bucket 5 + 6 fossil removals. `ID_PC` ✓ + `ID_SPK` ✓ + `ID_PA` ✓ + `ID_GD_LEGACY` ✓; next: `ID_LS`.
 
 ---
 
@@ -25,7 +25,7 @@ The old approach (tiered UI, smart defaults, Emscripten) was prototyping toward 
 
 **`ID_SCR` and `ID_WM` removal — compile-clean, pending CI.** All layers merged. The blast radius was enormous — see Scar 2 below. Key architectural outcome: `bmain->screens` and `bmain->wm` kept as non-indexed runtime listbases; `ID_SCR_LEGACY` / `ID_WM_LEGACY` defines route through `which_libbase` for allocation but are excluded from `BKE_main_lists_get`. Branch: `claude/remove-id-scr-id-wm`. Layer-by-layer status in [`CHANGELOG.md`](CHANGELOG.md).
 
-**In progress: Bucket 5 + 6 fossil removals (0.4.x)** — `ID_CU_LEGACY`, `ID_GD_LEGACY`, `ID_TE`, `ID_PA`, `ID_MB`, `ID_LS`, `ID_CF`. `ID_PC` ✓. `ID_SPK` ✓. Next: `ID_PA`. See roadmap in CHANGELOG.md.
+**In progress: Bucket 5 + 6 fossil removals (0.4.x)** — `ID_CU_LEGACY`, `ID_GD_LEGACY`, `ID_TE`, `ID_MB`, `ID_LS`, `ID_CF`. `ID_PC` ✓. `ID_SPK` ✓. `ID_PA` ✓. `ID_GD_LEGACY` ✓. Next: `ID_LS`. See roadmap in CHANGELOG.md.
 
 Pattern for each pending layer: `grep -rn "ID_WS"` the directory, delete or redirect every hit. The breakage is the audit — follow the compile errors, don't paper over them.
 
@@ -96,49 +96,60 @@ makesrna (4 files):
 
 ---
 
-**ID_GD_LEGACY — 39 hits, 28 files**
+**ID_GD_LEGACY — ✓ COMPLETE (0.4.0)** *(true blast radius: 5 layers removed, depsgraph/deform/material kept — ~31 files)*
 
-Core definition:
-- `makesdna/DNA_ID_enums.h:153` — enum entry `ID_GD_LEGACY = MAKE_ID2('G', 'D')`
-- `makesdna/DNA_gpencil_legacy_types.h:711` — `static constexpr ID_Type id_type = ID_GD_LEGACY`
-- `makesdna/DNA_object_types.h:749,765` — object type macros
-- `blenkernel/intern/idtype.cc:163` — `INIT_TYPE(ID_GD_LEGACY)`
-- `blenkernel/intern/main.cc:1034` — `which_libbase` case
-- `blenkernel/intern/gpencil_legacy.cc:654` — `BKE_libblock_alloc(bmain, ID_GD_LEGACY, name, 0)` — data creation
+> **Session note (2026-04-30):** Three key true-blast-radius findings vs. the literal audit: (1) `bmain->gpencils` field stays in `BKE_main.hh` and `which_libbase` routing stays in `main.cc` — same Scar 2 pattern as ID_SCR_LEGACY. OB_GPENCIL_LEGACY objects and annotation creation via `BKE_gpencil_data_addnew` still need the runtime listbase. (2) All four depsgraph sites (`depsgraph_tag.cc:72,626`, `deg_builder_nodes.cc:630`, `deg_builder_relations.cc:580,2758`) were left untouched — OB_GPENCIL_LEGACY objects still exist at runtime, so the geometry node building and relations for bGPdata must survive. (3) `material.cc` mat/totcol pointer cases were initially removed then restored — OB_GPENCIL_LEGACY objects have material slots that are still accessed at runtime. The `BLI_assert_unreachable()` render case was correctly removed. What actually went: IDTypeInfo definition, INIT_TYPE, both CASE_IDINDEX entries (Scar 4 sweep), CASE_ID_INDEX(INDEX_ID_GD_LEGACY), lb[] assignment in BKE_main_lists_get, all RNA registration, all editor dispatch table entries. Deprecated `#define ID_GD_LEGACY` added to DNA_ID_enums.h for .blend read-skip and runtime GS checks.
 
-blenkernel (4 files):
-- `material.cc:427,455,850` — material handling
-- `deform.cc:460,481` — deform data GS check
-- `grease_pencil_convert_legacy.cc:3057,3151` — conversion type-safety asserts
-- `blendfile_link_append.cc:555` — link/append: forces conversion on append
+> **Active migration path caveat:** `grease_pencil_convert_legacy.cc` and `blendfile_link_append.cc` converter code preserved as planned. Only the type registration went.
 
-blenloader (2 files):
-- `versioning_250.cc:444` — `*(short *)id->name = ID_GD_LEGACY` (legacy compat; becomes skip)
-- `versioning_common.cc:61,62` — GD_LEGACY → GP v3 conversion marker
+makesdna (4 files):
+- `makesdna/DNA_ID_enums.h:151` — enum entry `ID_GD_LEGACY = MAKE_ID2('G', 'D')` — remove; add deprecated `#define` below
+- `makesdna/DNA_gpencil_legacy_types.h:711` — `static constexpr ID_Type id_type = ID_GD_LEGACY` — remove
+- `makesdna/DNA_object_types.h:747,762` — object type check macros (2 sites) — remove
+- `makesdna/DNA_ID.h:1162,1195,1244` — `FILTER_ID_GD` define, `FILTER_ID_ALL` inclusion, `INDEX_ID_GD` enum entry — remove all three
 
-editors (9 files):
-- `interface_icons.cc:2055` — icon case
-- `interface_template_id.cc:589,893` — template checks
-- `object_data_transform.cc:816` — data transform
-- `render_opengl.cc:652` — render switch
-- `outliner_select.cc:1296` — outliner select
-- `outliner_draw.cc:2557` — outliner draw
-- `outliner_intern.hh:158` — outliner macro
-- `outliner_tools.cc:158` — outliner tools
-- `tree_element_id.cc:56` — tree element
-- `space_node.cc:1537` — GS check for node space
+blenkernel (9 files):
+- `blenkernel/BKE_idtype.hh:324` — `extern IDTypeInfo IDType_ID_GD_LEGACY;` — remove declaration
+- `blenkernel/intern/gpencil_legacy.cc:267,269,271,654` — IDTypeInfo static callbacks + `BKE_libblock_alloc(bmain, ID_GD_LEGACY, name, 0)` — remove IDTypeInfo block and alloc call
+- `blenkernel/intern/idtype.cc:161` — `INIT_TYPE(ID_GD_LEGACY)` — remove; also sweep both `CASE_IDINDEX(GD_LEGACY)` entries per Scar 4 protocol
+- `blenkernel/intern/main.cc:131,1027,1071` — `CASE_ID_INDEX(INDEX_ID_GD)`, `which_libbase` case, `lb[]` assignment — remove all three
+- `blenkernel/intern/material.cc:427,455,850` — material slot handling (3 sites) — remove `case ID_GD_LEGACY:` blocks
+- `blenkernel/intern/deform.cc:460,481` — deform data GS check (2 sites) — remove `case ID_GD_LEGACY:` branches
+- `blenkernel/intern/grease_pencil_convert_legacy.cc:3057,3151` — **KEEP** (type-safety asserts in GD_LEGACY → GP v3 converter; these are the converter, not the registration)
+- `blenkernel/intern/blendfile_link_append.cc:555` — link/append routing that forces conversion on append — **KEEP** (this is converter logic, not registration)
+- `blenkernel/intern/scene.cc:1611` — `FILTER_ID_GD` in scene filter — remove
+- `blenkernel/intern/movieclip.cc:298` — IDTypeInfo dependency check — remove
+
+blenloader (2 files — **KEEP both**):
+- `blenloader/intern/versioning_250.cc:444` — `*(short *)id->name = ID_GD_LEGACY` legacy compat assignment — **KEEP** (versioning file reads old .blend data; removing would break loading old files)
+- `blenloader/intern/versioning_common.cc:61,62` — GD_LEGACY → GP v3 conversion marker — **KEEP** (converter logic)
+
+editors (10 files):
+- `editors/interface/interface_icons.cc:2055` — icon case — remove
+- `editors/interface/templates/interface_template_id.cc:588,885` — template checks (2 sites) — remove
+- `editors/object/object_data_transform.cc:816` — data transform dispatch — remove
+- `editors/render/render_opengl.cc:649` — render switch — remove
+- `editors/space_outliner/outliner_select.cc:1295` — outliner select — remove
+- `editors/space_outliner/outliner_draw.cc:2556` — outliner draw — remove
+- `editors/space_outliner/outliner_intern.hh:156` — outliner macro — remove
+- `editors/space_outliner/outliner_tools.cc:156` — outliner tools — remove
+- `editors/space_outliner/tree/tree_element_id.cc:56` — tree element — remove
+- `editors/space_node/space_node.cc:1537` — GS check for node space — remove
+- `editors/space_image/space_image.cc:1214` — `FILTER_ID_GD` in image space mappings check — remove
 
 draw (1 file):
-- `draw_context.cc:1166` — `DEG_id_type_any_exists(depsgraph, ID_GD_LEGACY)` check
+- `draw/intern/draw_context.cc:1166` — `DEG_id_type_any_exists(depsgraph, ID_GD_LEGACY)` check — remove
 
 depsgraph (3 files):
-- `depsgraph_tag.cc:72,639` — tag dispatch
-- `deg_builder_nodes.cc:631` — node builder
-- `deg_builder_relations.cc:581,2777` — relation builder
+- `depsgraph/intern/depsgraph_tag.cc:72,626` — tag dispatch (2 sites; line 72 is shared ELEM with other types) — remove `ID_GD_LEGACY` from ELEM, remove case at 626
+- `depsgraph/intern/builder/deg_builder_nodes.cc:630` — node builder — remove case
+- `depsgraph/intern/builder/deg_builder_relations.cc:580,2758` — relation builder (2 sites) — remove cases
 
-makesrna (2 files):
-- `rna_ID.cc:41,391,500` — RNA enum entry and switch cases
-- `rna_main_api.cc:860` — `RNA_MAIN_ID_TAG_FUNCS_DEF(gpencils, gpencils, ID_GD_LEGACY)`
+makesrna (4 files):
+- `makesrna/intern/rna_ID.cc:41,124,377,477` — RNA enum item, filter item, `base_type == RNA_bGPdata` check, `case ID_GD_LEGACY:` return — remove all four
+- `makesrna/intern/rna_main_api.cc:831` — `RNA_MAIN_ID_TAG_FUNCS_DEF(gpencils, gpencils, ID_GD_LEGACY)` + `rna_Main_gpencils_new()` + `RNA_def_main_gpencils()` — remove
+- `makesrna/intern/rna_main.cc` — `RNA_MAIN_LISTBASE_FUNCS_DEF(gpencils)` + table entry — remove
+- `makesrna/intern/rna_space.cc:3975` — `FILTER_ID_GD |` in asset browser "Miscellaneous" filter — remove (same grep-miss pattern as ID_PA / rna_space.cc; do a post-chisel `grep -n "FILTER_ID_GD" source/` sweep)
 
 ---
 
@@ -201,7 +212,9 @@ makesrna (6 files):
 
 ---
 
-**ID_PA — 35 hits, 28 files**
+**ID_PA — ✓ COMPLETE (0.4.0)** *(true blast radius was ~40 files vs 35 literal hits)*
+
+> **Session note (2026-04-30):** The "35 hits" count was literal `ID_PA` string occurrences only. True scope additions: `particle.cc` IDTypeInfo + all static callbacks (particle_settings_init/copy/free/foreach_id, write_boid_state, blend_write/read_data/read_after_liblink) + `fluid_free_settings` forward decl and definition; `BKE_idtype.hh` extern decl; `BKE_main.hh` listbase field; `rna_internal.hh` declaration; `rna_main.cc` listbase macro + table entry; `rna_main_api.cc` RNA_def_main_particles() function + rna_Main_particles_new(); `rna_space.cc` — the FILTER_ID_PA in the asset browser category filter was a literal grep miss (uses the macro, not the string `ID_PA`). Notable decisions: `BKE_particle_partdeflect_blend_read_data` kept (still called from `object.cc`); `rna_particle.cc` / `rna_boid.cc` / `rna_color.cc` / `rna_object_force.cc` kept intact — only the GS == ID_PA checks remain, which compile fine since ID_PA is now a deprecated `#define` constant; `depsgraph.cc` teardown guard changed from `id_type != ID_PA` (preserve particles for last) to `id_type != ID_SCE` (scenes already destroyed in pass 1); ID_PA added to deprecated `#define` block in `DNA_ID_enums.h` for `.blend` read-skip.
 
 Core definition:
 - `makesdna/DNA_ID_enums.h:152` — enum entry `ID_PA = MAKE_ID2('P', 'A')`
@@ -433,7 +446,7 @@ Additional files NOT in the literal grep (discovered 2026-04-29):
 
 **Key notes for the chisel session:**
 
-1. **These are true fossils — no runtime rescue.** Unlike ID_SCR/ID_WM, none of these stay as runtime structs. Full removal: enum, DNA `id_type` constexpr, `IDTypeInfo`, `INIT_TYPE`, `which_libbase` case, `BKE_main_lists_get` entry, and `bmain->*` field.
+1. **These are true fossils — no runtime rescue.** Unlike ID_SCR/ID_WM, none of these stay as runtime structs. Full removal: enum, DNA `id_type` constexpr, `IDTypeInfo`, `INIT_TYPE`, `which_libbase` case, `BKE_main_lists_get` entry, and `bmain->*` field. **Exception: ID_GD_LEGACY follows the Scar 2 pattern** — `bmain->gpencils` and `which_libbase` routing stay because OB_GPENCIL_LEGACY objects and annotations still use bGPdata at runtime.
 
 2. **ID_CU_LEGACY and ID_GD_LEGACY have active migration paths.** CU_LEGACY → CV (Curves), GD_LEGACY → GP (Grease Pencil v3). The migration code in `grease_pencil_convert_legacy.cc` and `blendfile_link_append.cc` must survive removal — only the type registration goes, not the converter.
 
@@ -443,11 +456,11 @@ Additional files NOT in the literal grep (discovered 2026-04-29):
 
 5. **`brush_test.cc` uses `ID_TE` in test fixtures.** `BKE_id_new(bmain, ID_TE, ...)` is in a unit test that needs rewriting when ID_TE goes. (ID_PC fixtures were rewritten in 0.4.0 — paint_curve lines stripped, `brush->paint_curve` accesses removed.)
 
-6. **`depsgraph.cc:160` has a `!= ID_PA` guard** in `clear_id_nodes_conditional`. This is particle-specific cache invalidation logic — understand before removing; it may need to move to the particle module rather than just be deleted.
+6. **`depsgraph.cc:160` had a `!= ID_PA` guard** in `clear_id_nodes_conditional` — resolved in 0.4.0. The two-pass teardown (scenes first, then everything-except-particles) ensured particle COW copies outlived the objects referencing them. With ID_PA gone, the guard was changed to `!= ID_SCE` (scenes already destroyed in pass 1 are caught by the `id_cow == nullptr` guard in pass 2).
 
-7. **Remaining chisel order (smallest blast radius first):** ID_PA (35) → ID_GD_LEGACY (39) → ID_LS (40) → ID_MB (49) → ID_TE (58) → ID_CU_LEGACY (74) → ID_CF (last, design decision). ~255 hits across 6 types. ID_PC (21) ✓ 0.4.0. ID_SPK (23) ✓ 0.4.0. ID_CF deferred — see note 8.
+7. **Remaining chisel order (smallest blast radius first):** **ID_GD_LEGACY ✓** → ID_LS (40) → ID_MB (49) → ID_TE (58) → ID_CU_LEGACY (74) → ID_CF (last, design decision). ~180 hits across 4 types remaining. ID_PC (21) ✓ 0.4.0. ID_SPK (23) ✓ 0.4.0. ID_PA (35) ✓ 0.4.0. ID_GD_LEGACY (56) ✓ 0.4.0. ID_CF deferred — see note 8.
 
-8. **ID_CF is architecturally entangled — do it last or separately.** The literal grep count (18) dramatically understates the true blast radius. `CacheFile` as a struct is woven into: the Alembic importer (`io/alembic/`), the USD importer (`io/usd/`), the Mesh Sequence Cache modifier (`MOD_meshsequencecache.cc`), the constraint system, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. The Mesh Sequence Cache modifier holds a `CacheFile *` ID pointer so multiple objects can share one cache reference — removing the ID type means deciding what replaces that pointer. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI builds, so breakage here will surface. **Revised chisel order: ID_PA → ID_GD_LEGACY → ID_LS → ID_MB → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision). ID_PC ✓ (0.4.0). ID_SPK ✓ (0.4.0).** The open question: does the cache-file reference mechanism get inlined into the modifier/constraint DNA per-instance, or does CacheFile stay as a non-ID struct in a non-indexed listbase (like ID_SCR_LEGACY/ID_WM_LEGACY pattern)? Answer this before chiseling ID_CF.
+8. **ID_CF is architecturally entangled — do it last or separately.** The literal grep count (18) dramatically understates the true blast radius. `CacheFile` as a struct is woven into: the Alembic importer (`io/alembic/`), the USD importer (`io/usd/`), the Mesh Sequence Cache modifier (`MOD_meshsequencecache.cc`), the constraint system, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. The Mesh Sequence Cache modifier holds a `CacheFile *` ID pointer so multiple objects can share one cache reference — removing the ID type means deciding what replaces that pointer. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI builds, so breakage here will surface. **Revised chisel order: ID_LS → ID_MB → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision). ID_PC ✓ (0.4.0). ID_SPK ✓ (0.4.0). ID_PA ✓ (0.4.0). ID_GD_LEGACY ✓ (0.4.0).** The open question: does the cache-file reference mechanism get inlined into the modifier/constraint DNA per-instance, or does CacheFile stay as a non-ID struct in a non-indexed listbase (like ID_SCR_LEGACY/ID_WM_LEGACY pattern)? Answer this before chiseling ID_CF.
 
 ---
 
@@ -537,7 +550,7 @@ make check_mypy     # Python type checking
 Target: 39 → ~19 ID types.
 - **Bucket 4 (UI state, remove):** `ID_WS` ✓ (0.2.0), `ID_SCR` ✓ (0.3.0 WIP), `ID_WM` ✓ (0.3.0 WIP)
 - **Bucket 5 (upstream deprecations, finish):** `ID_CU_LEGACY`, `ID_GD_LEGACY` — next up
-- **Bucket 6 (fossils, cut):** `ID_TE`, `ID_PA`, `ID_MB`, `ID_LS`, `ID_CF` — in progress; `ID_PC` ✓ (0.4.0); `ID_SPK` ✓ (0.4.0)
+- **Bucket 6 (fossils, cut):** `ID_TE`, `ID_MB`, `ID_LS`, `ID_CF` — in progress; `ID_PC` ✓ (0.4.0); `ID_SPK` ✓ (0.4.0); `ID_PA` ✓ (0.4.0)
 
 ---
 
@@ -648,6 +661,17 @@ grep -n "^void BKE_\|^bool BKE_\|^int BKE_" source/blender/windowmanager/intern/
 ```
 
 **Verified clean after 0.3.0:** Both files grep clean as of the PR #123 fix. No remaining duplicate definitions.
+
+**Mandatory after removing any ID type — sweep `idtype.cc` switch tables:**
+```bash
+# Both lookup functions must have no entry for the removed type:
+grep -n "CASE_IDINDEX(PC)\|CASE_IDINDEX(SPK)" source/blender/blenkernel/intern/idtype.cc
+# Replace PC/SPK with whichever two-letter code was just removed.
+# BKE_idtype_idcode_to_index() and BKE_idtype_idfilter_to_index() each have
+# their own CASE_IDINDEX block — the removed entry must be gone from BOTH.
+# MSVC C2051/C2065 is the error when you miss one; grep catches it before CI does.
+```
+This is not optional. The 0.3.0 chisel left `CASE_IDINDEX(SCR)` and `CASE_IDINDEX(WM)` behind — four lines, two sessions to find. The 0.4.0 chisel (ID_PC + ID_SPK) left the same four lines behind for the same reason. It will happen again unless it is checked explicitly after every removal.
 
 ---
 
@@ -765,7 +789,17 @@ Here is what a previous Claude did instead of listening:
 | Design rationale (*why* something is removed/changed) | `BLENDED.md` — the locked decision |
 | Code progress (per-layer status, file lists) | `CHANGELOG.md` — *Unreleased* section |
 | Operational grep pattern / session instructions | `CLAUDE.md` — this file |
-| One-liner status for humans landing on GitHub | `.github/README.md` — "What's Different" bullet + link |
+| One-liner status for humans landing on GitHub | `.github/README.md` — "What's Different" + AI contributor section |
+
+**After every chisel, all four documents must be updated before the session ends.** The four are: `CLAUDE.md`, `CHANGELOG.md`, `BLENDED.md`, `.github/README.md`. Specific targets per document:
+- **CLAUDE.md** — blast radius entry header → ✓ COMPLETE, session note, current version line, in-progress paragraph, key notes chisel order
+- **CHANGELOG.md** — layer rows → ✓, chisel order line → ✓ bolded, key notes updated
+- **BLENDED.md** — Bucket 5/6 status table: `pending` → `✓ X.Y.Z`
+- **`.github/README.md`** — "What's Different" section current state, AI contributor bullet extended with new removal
+
+**Note:** `.github/` is in `.gitignore` on this repo. Use `git add -f .github/README.md` when staging README updates — normal `git add` silently skips it.
+
+**Meta-rule:** CLAUDE.md is the place for operational gotchas like this, not the chat. If you discover something worth knowing for the next session, write it here before the session ends.
 
 ---
 

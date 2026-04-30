@@ -2553,7 +2553,6 @@ static BIFIconID tree_element_get_icon_from_id(const ID *id)
     case ID_LS:
       return ICON_LINE_DATA;
     case ID_GP:
-    case ID_GD_LEGACY:
       return ICON_OUTLINER_DATA_GREASEPENCIL;
     case ID_LP: {
       const LightProbe *lp = id_cast<LightProbe *>(const_cast<ID *>(id));
@@ -2579,8 +2578,6 @@ static BIFIconID tree_element_get_icon_from_id(const ID *id)
     }
     case ID_MC:
       return ICON_SEQUENCE;
-    case ID_PA:
-      return ICON_PARTICLES;
     case ID_PAL:
       return ICON_COLOR;
     case ID_VF:

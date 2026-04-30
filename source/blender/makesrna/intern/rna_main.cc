@@ -155,7 +155,7 @@ RNA_MAIN_LISTBASE_FUNCS_DEF(cameras)
 RNA_MAIN_LISTBASE_FUNCS_DEF(collections)
 RNA_MAIN_LISTBASE_FUNCS_DEF(curves)
 RNA_MAIN_LISTBASE_FUNCS_DEF(fonts)
-RNA_MAIN_LISTBASE_FUNCS_DEF(gpencils)
+
 RNA_MAIN_LISTBASE_FUNCS_DEF(grease_pencils)
 RNA_MAIN_LISTBASE_FUNCS_DEF(hair_curves)
 RNA_MAIN_LISTBASE_FUNCS_DEF(images)
@@ -172,7 +172,6 @@ RNA_MAIN_LISTBASE_FUNCS_DEF(movieclips)
 RNA_MAIN_LISTBASE_FUNCS_DEF(nodetrees)
 RNA_MAIN_LISTBASE_FUNCS_DEF(objects)
 RNA_MAIN_LISTBASE_FUNCS_DEF(palettes)
-RNA_MAIN_LISTBASE_FUNCS_DEF(particles)
 RNA_MAIN_LISTBASE_FUNCS_DEF(pointclouds)
 RNA_MAIN_LISTBASE_FUNCS_DEF(scenes)
 RNA_MAIN_LISTBASE_FUNCS_DEF(screens)
@@ -454,24 +453,13 @@ void RNA_def_main(BlenderRNA *brna)
        "Actions",
        "Action data-blocks",
        RNA_def_main_actions},
-      {"particles",
-       "ParticleSettings",
-       "rna_Main_particles_begin",
-       "Particles",
-       "Particle data-blocks",
-       RNA_def_main_particles},
       {"palettes",
        "Palette",
        "rna_Main_palettes_begin",
        "Palettes",
        "Palette data-blocks",
        RNA_def_main_palettes},
-      {"annotations",
-       "Annotation",
-       "rna_Main_gpencils_begin",
-       "Annotation",
-       "Annotation data-blocks (legacy Grease Pencil)",
-       RNA_def_main_annotations},
+
       {"grease_pencils",
        "GreasePencil",
        "rna_Main_grease_pencils_begin",

@@ -57,14 +57,14 @@ carries a one-liner status per active item.
 ## Unreleased — 0.4.0
 
 Bucket 5 + 6 fossil removals. 9 ID types, 357 hits, same chisel pattern as 0.3.0.
-Chisel order: **ID_PC ✓** → **ID_SPK ✓** → ID_PA → ID_GD_LEGACY → ID_LS → ID_MB → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision — see CLAUDE.md Key note 8).
+Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEGACY ✓** → ID_LS → ID_MB → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision — see CLAUDE.md Key note 8).
 *(Order corrected in PR #126 fix — initial commit had ID_CF first, contradicting CLAUDE.md Key note 8. Scar 7.)*
 
 **Key notes:**
 - `ID_CU_LEGACY` and `ID_GD_LEGACY` have active migration paths — only the type *registration* goes, not the converters.
 - `ID_LS` is already guarded by `#ifdef WITH_FREESTYLE` (`WITH_FREESTYLE=OFF` in `blended_release.cmake`).
 - `brush_test.cc` uses `ID_TE` in test fixtures — those tests get deleted with the type. (ID_PC fixtures rewritten in 0.4.0.)
-- `depsgraph.cc:160` has a `!= ID_PA` guard in `clear_id_nodes_conditional` — particle-specific cache invalidation; audit before removing.
+- ~~`depsgraph.cc:160` has a `!= ID_PA` guard~~ — resolved in ID_PA chisel; guard changed to `!= ID_SCE`.
 
 ### ID_PC — PaintCurve ✓ complete
 
@@ -90,28 +90,28 @@ Chisel order: **ID_PC ✓** → **ID_SPK ✓** → ID_PA → ID_GD_LEGACY → ID
 | `blenloader` | `versioning_520.cc` (502.23 pass — OB_SPEAKER → OB_EMPTY), `BKE_blender_version.h` (subversion bump) | ✓ |
 | `io` | `io/usd/intern/usd_hierarchy_iterator.cc`, `io/alembic/exporter/abc_hierarchy_iterator.cc` | ✓ |
 
-### ID_PA — ParticleSettings
+### ID_PA — ParticleSettings ✓ complete
 
 | Layer | Files touched | Status |
 |-------|--------------|--------|
-| `makesdna` | `DNA_ID_enums.h`, `DNA_particle_types.h` (id_type constexpr) | ☐ |
-| `blenkernel` | `idtype.cc`, `main.cc`, `texture.cc` | ☐ |
-| `makesrna` | `rna_ID.cc`, `rna_texture.cc`, `rna_particle.cc`, `rna_boid.cc`, `rna_color.cc`, `rna_object_force.cc`, `rna_main_api.cc` | ☐ |
-| `editors` | `buttons_context.cc`, `interface_icons.cc`, `interface_template_id.cc`, `render_shading.cc`, `render_opengl.cc`, `outliner_draw.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc`, `anim_filter.cc`, `anim_channels_defines.cc` | ☐ |
-| `depsgraph` | `depsgraph_tag.cc`, `deg_builder_relations.cc`, `deg_builder_nodes.cc`, `depsgraph.cc` (clear_id_nodes_conditional) | ☐ |
-| `animrig` | `animdata.cc` | ☐ |
+| `makesdna` | `DNA_ID_enums.h` (enum entry → deprecated `#define`), `DNA_particle_types.h` (id_type constexpr), `DNA_ID.h` (FILTER_ID_PA, INDEX_ID_PA, FILTER_ID_ALL) | ✓ |
+| `blenkernel` | `idtype.cc` (INIT_TYPE + CASE_IDINDEX ×2), `main.cc` (which_libbase, CASE_ID_INDEX, lb[]), `texture.cc` (×2), `particle.cc` (IDTypeInfo + all callbacks + fluid_free_settings), `BKE_idtype.hh`, `BKE_main.hh` (particles field) | ✓ |
+| `makesrna` | `rna_ID.cc`, `rna_main_api.cc` (RNA_def_main_particles, rna_Main_particles_new), `rna_main.cc` (listbase macro + table entry), `rna_internal.hh`, `rna_space.cc` (FILTER_ID_PA in asset browser misc category — literal grep miss) | ✓ |
+| `editors` | `buttons_context.cc`, `interface_icons.cc`, `interface_template_id.cc`, `render_shading.cc` (×2), `render_opengl.cc`, `outliner_draw.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc`, `anim_filter.cc`, `anim_channels_defines.cc` | ✓ |
+| `depsgraph` | `depsgraph_tag.cc` (×2), `deg_builder_relations.cc`, `deg_builder_nodes.cc`, `depsgraph.cc` (teardown guard: `!= ID_PA` → `!= ID_SCE`) | ✓ |
+| `animrig` | `animdata.cc` | ✓ |
 
-### ID_GD_LEGACY — Old Grease Pencil
+### ID_GD_LEGACY — Old Grease Pencil ✓ complete
 
 | Layer | Files touched | Status |
 |-------|--------------|--------|
-| `makesdna` | `DNA_ID_enums.h`, `DNA_gpencil_legacy_types.h` (id_type constexpr), `DNA_object_types.h` (macros) | ☐ |
-| `blenkernel` | `idtype.cc`, `main.cc`, `material.cc`, `deform.cc`, `grease_pencil_convert_legacy.cc` (type-safety asserts only), `blendfile_link_append.cc` | ☐ |
-| `blenloader` | `versioning_250.cc`, `versioning_common.cc` | ☐ |
-| `makesrna` | `rna_ID.cc`, `rna_main_api.cc` | ☐ |
-| `editors` | `interface_icons.cc`, `interface_template_id.cc`, `object_data_transform.cc`, `render_opengl.cc`, `outliner_draw.cc`, `outliner_select.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc`, `space_node.cc` | ☐ |
-| `draw` | `draw_context.cc` | ☐ |
-| `depsgraph` | `depsgraph_tag.cc`, `deg_builder_nodes.cc`, `deg_builder_relations.cc` | ☐ |
+| `makesdna` | `DNA_ID_enums.h` (enum entry → deprecated `#define`), `DNA_gpencil_legacy_types.h` (id_type constexpr), `DNA_object_types.h` (OB_DATA_SUPPORT_ID macros ×2), `DNA_ID.h` (FILTER_ID_GD_LEGACY, INDEX_ID_GD_LEGACY, FILTER_ID_ALL) | ✓ |
+| `blenkernel` | `idtype.cc` (INIT_TYPE + CASE_IDINDEX ×2), `main.cc` (CASE_ID_INDEX, lb[] — KEEP which_libbase routing), `gpencil_legacy.cc` (IDTypeInfo block removed — KEEP alloc call), `material.cc` (render case removed, mat/totcol pointer cases kept), `scene.cc` (FILTER_ID_GD_LEGACY from deps), `movieclip.cc` (FILTER_ID_GD_LEGACY from deps); `BKE_idtype.hh` (extern decl); `BKE_main.hh` KEPT, `deform.cc` KEPT | ✓ |
+| `blenloader` | `versioning_250.cc` KEPT, `versioning_common.cc` KEPT (converter logic) | ✓ |
+| `makesrna` | `rna_ID.cc` (enum item, filter item, base_type check, case return), `rna_main_api.cc` (RNA_def_main_annotations, rna_Main_annotations_new, RNA_MAIN_ID_TAG_FUNCS_DEF(gpencils)), `rna_main.cc` (listbase macro + table entry), `rna_internal.hh` (decl), `rna_space.cc` (FILTER_ID_GD_LEGACY in asset browser misc — literal grep miss) | ✓ |
+| `editors` | `interface_icons.cc`, `interface_template_id.cc` (×2), `object_data_transform.cc`, `render_opengl.cc`, `outliner_draw.cc`, `outliner_select.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc`, `space_node.cc`, `space_image.cc` | ✓ |
+| `draw` | `draw_context.cc` (gpencil_any_exists simplified to ID_GP only) | ✓ |
+| `depsgraph` | `depsgraph_tag.cc`, `deg_builder_nodes.cc`, `deg_builder_relations.cc` — **ALL KEPT** (OB_GPENCIL_LEGACY objects still exist at runtime; geometry node building and relations for bGPdata must survive) | ✓ |
 
 ### ID_LS — FreestyleLineStyle
 

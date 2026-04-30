@@ -2052,8 +2052,7 @@ int icon_from_idcode(const int idcode)
       return ICON_FILE;
     case ID_CU_LEGACY:
       return ICON_CURVE_DATA;
-    case ID_GD_LEGACY:
-      return ICON_OUTLINER_DATA_GREASEPENCIL;
+
     case ID_GR:
       return ICON_GROUP;
     case ID_IM:
@@ -2078,8 +2077,6 @@ int icon_from_idcode(const int idcode)
       return ICON_NODETREE;
     case ID_OB:
       return ICON_OBJECT_DATA;
-    case ID_PA:
-      return ICON_PARTICLE_DATA;
     case ID_PAL:
       return ICON_COLOR; /* TODO: this would need its own icon! */
     case ID_LP:

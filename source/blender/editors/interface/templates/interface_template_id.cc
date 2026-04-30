@@ -585,7 +585,6 @@ ID *template_id_liboverride_hierarchy_make(
     case ID_LA:
     case ID_CA:
     case ID_AR:
-    case ID_GD_LEGACY:
     case ID_CV:
     case ID_PT:
     case ID_VO:
@@ -630,9 +629,6 @@ ID *template_id_liboverride_hierarchy_make(
       WM_global_reportf(RPT_WARNING, "The type of data-block %s is not yet implemented", id->name);
       break;
     case ID_WO:
-      WM_global_reportf(RPT_WARNING, "The type of data-block %s is not yet implemented", id->name);
-      break;
-    case ID_PA:
       WM_global_reportf(RPT_WARNING, "The type of data-block %s is not yet implemented", id->name);
       break;
     default:
@@ -885,10 +881,7 @@ static StringRef template_id_browse_tip(const StructRNA *type)
         return N_("Browse Node Tree to be linked");
       case ID_BR:
         return N_("Browse Brush to be linked");
-      case ID_PA:
-        return N_("Browse Particle Settings to be linked");
-      case ID_GD_LEGACY:
-        return N_("Browse Grease Pencil Data to be linked");
+
       case ID_MC:
         return N_("Browse Movie Clip to be linked");
       case ID_MSK:
@@ -992,7 +985,6 @@ static Button *template_id_def_new_but(Block *block,
                             BLT_I18NCONTEXT_ID_NODETREE,
                             BLT_I18NCONTEXT_ID_OBJECT,
                             BLT_I18NCONTEXT_ID_PALETTE,
-                            BLT_I18NCONTEXT_ID_PARTICLESETTINGS,
                             BLT_I18NCONTEXT_ID_POINTCLOUD,
                             BLT_I18NCONTEXT_ID_SCENE,
                             BLT_I18NCONTEXT_ID_SOUND,

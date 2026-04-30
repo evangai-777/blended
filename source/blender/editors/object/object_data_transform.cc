@@ -813,12 +813,6 @@ void data_xform_tag_update(XFormObjectData &xod_base)
       DEG_id_tag_update(&mb->id, ID_RECALC_GEOMETRY | ID_RECALC_SYNC_TO_EVAL);
       break;
     }
-    case ID_GD_LEGACY: {
-      /* Generic update. */
-      bGPdata *gpd = id_cast<bGPdata *>(xod_base.id);
-      DEG_id_tag_update(&gpd->id, ID_RECALC_GEOMETRY | ID_RECALC_SYNC_TO_EVAL);
-      break;
-    }
     case ID_GP: {
       /* Generic update. */
       GreasePencil *grease_pencil = id_cast<GreasePencil *>(xod_base.id);

@@ -154,18 +154,7 @@ void depsgraph_tag_to_component_opcode(const ID *id,
     case ID_RECALC_PSYS_RESET:
     case ID_RECALC_PSYS_CHILD:
     case ID_RECALC_PSYS_PHYS:
-      if (id_type == ID_PA) {
-        /* NOTES:
-         * - For particle settings node we need to use different
-         *   component. Will be nice to get this unified with object,
-         *   but we can survive for now with single exception here.
-         *   Particles needs reconsideration anyway, */
-        *component_type = NodeType::PARTICLE_SETTINGS;
-        *operation_code = psysTagToOperationCode(tag);
-      }
-      else {
-        *component_type = NodeType::PARTICLE_SYSTEM;
-      }
+      *component_type = NodeType::PARTICLE_SYSTEM;
       break;
     case ID_RECALC_SYNC_TO_EVAL:
       *component_type = NodeType::COPY_ON_EVAL;
@@ -632,8 +621,6 @@ NodeType geometry_tag_to_component(const ID *id)
     case ID_VO:
     case ID_GR:
       return NodeType::GEOMETRY;
-    case ID_PA: /* Particles */
-      return NodeType::UNDEFINED;
     case ID_LP:
       return NodeType::PARAMETERS;
     case ID_GD_LEGACY:

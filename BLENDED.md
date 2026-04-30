@@ -271,10 +271,10 @@ Property bags pretending to be first-class entities:
 
 ### Bucket 5 — Finish upstream's already-marked deprecations [LOCKED]
 
-| ID | Name |
-|---|---|
-| `ID_CU_LEGACY` | Curve — tagged LEGACY by upstream, replaced by `ID_CV` |
-| `ID_GD_LEGACY` | Old Grease Pencil — tagged LEGACY, replaced by `ID_GP` |
+| ID | Name | Status |
+|---|---|---|
+| `ID_CU_LEGACY` | Curve — tagged LEGACY by upstream, replaced by `ID_CV` | pending |
+| `ID_GD_LEGACY` | Old Grease Pencil — tagged LEGACY, replaced by `ID_GP` | ✓ 0.4.0 |
 
 Blender itself has marked these for replacement. Blended finishes the job.
 
@@ -283,7 +283,7 @@ Blender itself has marked these for replacement. Blended finishes the job.
 | ID | Name | Why cut | Status |
 |---|---|---|---|
 | `ID_TE` | Texture | Blender Internal renderer fossil; residual folds into NodeTree | pending |
-| `ID_PA` | ParticleSettings | Replaced by Geometry Nodes (purest example of §5 Group 5 swamp) | pending |
+| `ID_PA` | ParticleSettings | Replaced by Geometry Nodes (purest example of §5 Group 5 swamp) | ✓ 0.4.0 |
 | `ID_MB` | MetaBall | 1990s implicit surfaces; sculpt/remesh covers it | pending |
 | `ID_LS` | FreestyleLineStyle | Niche NPR renderer; NPR via shader nodes / Grease Pencil | pending |
 | `ID_SPK` | Speaker | 3D positional audio on scene objects; niche. Audio flows through VSE timeline. | ✓ 0.4.0 |

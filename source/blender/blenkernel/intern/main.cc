@@ -128,7 +128,7 @@ void BKE_main_clear(Main &bmain)
       switch ((eID_Index)a) {
         CASE_ID_INDEX(INDEX_ID_LI);
         CASE_ID_INDEX(INDEX_ID_AC);
-        CASE_ID_INDEX(INDEX_ID_GD_LEGACY);
+
         CASE_ID_INDEX(INDEX_ID_NT);
         CASE_ID_INDEX(INDEX_ID_VF);
         CASE_ID_INDEX(INDEX_ID_TXT);
@@ -142,7 +142,6 @@ void BKE_main_clear(Main &bmain)
         CASE_ID_INDEX(INDEX_ID_WO);
         CASE_ID_INDEX(INDEX_ID_CF);
         CASE_ID_INDEX(INDEX_ID_SIM);
-        CASE_ID_INDEX(INDEX_ID_PA);
         CASE_ID_INDEX(INDEX_ID_KE);
         CASE_ID_INDEX(INDEX_ID_AR);
         CASE_ID_INDEX(INDEX_ID_ME);
@@ -1025,8 +1024,6 @@ ListBaseT<ID> *which_libbase(Main *bmain, short type)
       return &(bmain->nodetrees.cast<ID>());
     case ID_BR:
       return &(bmain->brushes.cast<ID>());
-    case ID_PA:
-      return &(bmain->particles.cast<ID>());
     case ID_GD_LEGACY:
       return &(bmain->gpencils.cast<ID>());
     case ID_GP:
@@ -1070,8 +1067,6 @@ MainListsArray BKE_main_lists_get(Main &bmain)
   /* Referenced by gpencil, so needs to be before that to avoid crashes. */
   lb[INDEX_ID_PAL] = &(bmain.palettes.cast<ID>());
 
-  /* Referenced by nodes, objects, view, scene etc, before to free after. */
-  lb[INDEX_ID_GD_LEGACY] = &(bmain.gpencils.cast<ID>());
   lb[INDEX_ID_GP] = &(bmain.grease_pencils.cast<ID>());
 
   lb[INDEX_ID_NT] = &(bmain.nodetrees.cast<ID>());
@@ -1102,7 +1097,6 @@ MainListsArray BKE_main_lists_get(Main &bmain)
   lb[INDEX_ID_GR] = &(bmain.collections.cast<ID>());
   lb[INDEX_ID_PAL] = &(bmain.palettes.cast<ID>());
   lb[INDEX_ID_BR] = &(bmain.brushes.cast<ID>());
-  lb[INDEX_ID_PA] = &(bmain.particles.cast<ID>());
   lb[INDEX_ID_LP] = &(bmain.lightprobes.cast<ID>());
 
   lb[INDEX_ID_WO] = &(bmain.worlds.cast<ID>());

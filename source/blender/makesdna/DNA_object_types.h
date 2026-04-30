@@ -744,7 +744,6 @@ struct ObHook {
         ID_LP, \
         ID_CA, \
         ID_LT, \
-        ID_GD_LEGACY, \
         ID_AR, \
         ID_CV, \
         ID_PT, \
@@ -759,7 +758,6 @@ struct ObHook {
   case ID_LP: \
   case ID_CA: \
   case ID_LT: \
-  case ID_GD_LEGACY: \
   case ID_AR: \
   case ID_CV: \
   case ID_PT: \

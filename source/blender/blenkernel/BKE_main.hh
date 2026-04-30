@@ -384,7 +384,6 @@ struct Main : NonCopyable, NonMovable {
   ListBaseT<bAction> actions = {};
   ListBaseT<bNodeTree> nodetrees = {};
   ListBaseT<Brush> brushes = {};
-  ListBaseT<ParticleSettings> particles = {};
   ListBaseT<Palette> palettes = {};
   /** Runtime window state — not project data. */
   ListBaseT<bScreen> screens = {};
