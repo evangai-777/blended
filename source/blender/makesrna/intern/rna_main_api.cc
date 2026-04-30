@@ -733,19 +733,6 @@ static LightProbe *rna_Main_lightprobe_new(Main *bmain, const char *name, int ty
   return probe;
 }
 
-static bGPdata *rna_Main_annotations_new(Main *bmain, const char *name)
-{
-  char safe_name[MAX_ID_NAME - 2];
-  rna_idname_validate(name, safe_name);
-
-  bGPdata *gpd = BKE_gpencil_data_addnew(bmain, safe_name);
-  id_us_min(&gpd->id);
-
-  WM_main_add_notifier(NC_ID | NA_ADDED, nullptr);
-
-  return gpd;
-}
-
 static GreasePencil *rna_Main_grease_pencils_new(Main *bmain, const char *name)
 {
   char safe_name[MAX_ID_NAME - 2];
@@ -828,7 +815,7 @@ RNA_MAIN_ID_TAG_FUNCS_DEF(sounds, sounds, ID_SO)
 RNA_MAIN_ID_TAG_FUNCS_DEF(armatures, armatures, ID_AR)
 RNA_MAIN_ID_TAG_FUNCS_DEF(actions, actions, ID_AC)
 RNA_MAIN_ID_TAG_FUNCS_DEF(palettes, palettes, ID_PAL)
-RNA_MAIN_ID_TAG_FUNCS_DEF(gpencils, gpencils, ID_GD_LEGACY)
+
 RNA_MAIN_ID_TAG_FUNCS_DEF(grease_pencils, grease_pencils, ID_GP)
 RNA_MAIN_ID_TAG_FUNCS_DEF(movieclips, movieclips, ID_MC)
 RNA_MAIN_ID_TAG_FUNCS_DEF(masks, masks, ID_MSK)
@@ -1922,46 +1909,6 @@ void RNA_def_main_cachefiles(BlenderRNA *brna, PropertyRNA *cprop)
   parm = RNA_def_boolean(func, "value", false, "Value", "");
   RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
 }
-void RNA_def_main_annotations(BlenderRNA *brna, PropertyRNA *cprop)
-{
-  StructRNA *srna;
-  FunctionRNA *func;
-  PropertyRNA *parm;
-
-  RNA_def_property_srna(cprop, "BlendDataAnnotations");
-  srna = RNA_def_struct(brna, "BlendDataAnnotations", nullptr);
-  RNA_def_struct_sdna(srna, "Main");
-  RNA_def_struct_ui_text(srna, "Main Annotations", "Collection of annotations");
-
-  func = RNA_def_function(srna, "tag", "rna_Main_gpencils_tag");
-  parm = RNA_def_boolean(func, "value", false, "Value", "");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-
-  func = RNA_def_function(srna, "new", "rna_Main_annotations_new");
-  RNA_def_function_ui_description(func, "Add a new annotation data-block to the main database");
-  parm = RNA_def_string(func, "name", "Annotation", 0, "", "New name for the data-block");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-  /* return type */
-  parm = RNA_def_pointer(func, "annotation", "Annotation", "", "New annotation data-block");
-  RNA_def_function_return(func, parm);
-
-  func = RNA_def_function(srna, "remove", "rna_Main_ID_remove");
-  RNA_def_function_flag(func, FUNC_USE_REPORTS);
-  RNA_def_function_ui_description(func, "Remove annotation instance from the current blendfile");
-  parm = RNA_def_pointer(func, "annotation", "Annotation", "", "Grease Pencil to remove");
-  RNA_def_parameter_flags(parm, PROP_NEVER_NULL, PARM_REQUIRED | PARM_RNAPTR);
-  RNA_def_parameter_clear_flags(parm, PROP_THICK_WRAP, ParameterFlag(0));
-  RNA_def_boolean(
-      func, "do_unlink", true, "", "Unlink all usages of this annotation before deleting it");
-  RNA_def_boolean(func,
-                  "do_id_user",
-                  true,
-                  "",
-                  "Decrement user counter of all data-blocks used by this annotation");
-  RNA_def_boolean(
-      func, "do_ui_user", true, "", "Make sure interface does not reference this annotation");
-}
-
 void RNA_def_main_grease_pencil(BlenderRNA *brna, PropertyRNA *cprop)
 {
   StructRNA *srna;
