@@ -157,7 +157,7 @@ void Depsgraph::clear_id_nodes()
 
   /* Stupid workaround to ensure we free IDs in a proper order. */
   clear_id_nodes_conditional(&id_nodes, [](ID_Type id_type) { return id_type == ID_SCE; });
-  clear_id_nodes_conditional(&id_nodes, [](ID_Type id_type) { return id_type != ID_PA; });
+  clear_id_nodes_conditional(&id_nodes, [](ID_Type id_type) { return id_type != ID_SCE; });
 
   for (IDNode *id_node : id_nodes) {
     delete id_node;

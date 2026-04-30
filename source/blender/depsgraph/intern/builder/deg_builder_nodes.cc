@@ -646,9 +646,6 @@ void DepsgraphNodeBuilder::build_id(ID *id, const bool force_be_visible)
     case ID_SCE:
       build_scene_parameters(id_cast<Scene *>(id));
       break;
-    case ID_PA:
-      build_particle_settings(id_cast<ParticleSettings *>(id));
-      break;
     case ID_VF:
       build_vfont((VFont *)id);
       break;
