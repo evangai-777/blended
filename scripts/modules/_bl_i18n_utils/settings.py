@@ -472,7 +472,6 @@ WARN_MSGID_NOT_CAPITALIZED_ALLOWED = {
     "screens",
     "shape_keys",
     "sounds",
-    "speakers",
     "texts",
     "textures",
     "volumes",

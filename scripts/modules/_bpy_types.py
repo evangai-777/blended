@@ -140,7 +140,7 @@ class Library(_types.ID):
             "curves", "grease_pencils", "collections", "images",
             "lights", "lattices", "materials", "metaballs",
             "meshes", "node_groups", "objects", "scenes",
-            "sounds", "speakers", "textures", "texts",
+            "sounds", "textures", "texts",
             "fonts", "worlds",
         )
 

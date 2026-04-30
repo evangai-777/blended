@@ -2735,10 +2735,6 @@ class VIEW3D_MT_add(Menu):
 
         layout.separator()
 
-        layout.operator("object.speaker_add", text="Speaker", icon='OUTLINER_OB_SPEAKER')
-
-        layout.separator()
-
         layout.operator_menu_enum("object.effector_add", "type", text="Force Field", icon='OUTLINER_OB_FORCE_FIELD')
 
         layout.separator()
@@ -6579,7 +6575,6 @@ class VIEW3D_PT_object_type_visibility(Panel):
             ("light", "Light", 'OUTLINER_OB_LIGHT'),
             ("light_probe", "Light Probe", 'OUTLINER_OB_LIGHTPROBE'),
             ("camera", "Camera", 'OUTLINER_OB_CAMERA'),
-            ("speaker", "Speaker", 'OUTLINER_OB_SPEAKER'),
         )
 
         for attr, attr_name, attr_icon in attr_object_types:

@@ -133,8 +133,6 @@ class DopesheetFilterPopoverBase:
             flow.prop(dopesheet, "show_particles", text="Particles")
         if bpy.data.linestyles:
             flow.prop(dopesheet, "show_linestyles", text="Line Styles")
-        if bpy.data.speakers:
-            flow.prop(dopesheet, "show_speakers", text="Speakers")
         if bpy.data.materials:
             flow.prop(dopesheet, "show_materials", text="Materials")
         if bpy.data.textures:
