@@ -2507,7 +2507,6 @@ static BIFIconID tree_element_get_icon_from_id(const ID *id)
       return ICON_TEXTURE_DATA;
     case ID_IM:
       return ICON_IMAGE_DATA;
-    case ID_SPK:
     case ID_SO:
       return ICON_OUTLINER_DATA_SPEAKER;
     case ID_AR:

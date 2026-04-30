@@ -491,7 +491,6 @@ void Instance::begin_sync()
     layer.pointclouds.begin_sync(resources, state);
     layer.prepass.begin_sync(resources, state);
     layer.relations.begin_sync(resources, state);
-    layer.speakers.begin_sync(resources, state);
     layer.sculpts.begin_sync(resources, state);
     layer.wireframe.begin_sync(resources, state);
   };
@@ -641,9 +640,6 @@ void Instance::object_sync(ObjectRef &ob_ref, Manager &manager)
       case OB_GREASE_PENCIL:
         layer.grease_pencil.object_sync(manager, ob_ref, resources, state);
         break;
-      case OB_SPEAKER:
-        layer.speakers.object_sync(manager, ob_ref, resources, state);
-        break;
     }
     layer.attribute_viewer.object_sync(manager, ob_ref, resources, state);
     layer.attribute_texts.object_sync(manager, ob_ref, resources, state);
@@ -685,7 +681,6 @@ void Instance::end_sync()
     layer.metaballs.end_sync(resources, state);
     layer.relations.end_sync(resources, state);
     layer.fluids.end_sync(resources, state);
-    layer.speakers.end_sync(resources, state);
   };
   end_sync_layer(regular);
   end_sync_layer(infront);
@@ -849,7 +844,6 @@ void Instance::draw_v3d(Manager &manager, View &view)
     layer.force_fields.draw_line(framebuffer, manager, view);
     layer.lights.draw_line(framebuffer, manager, view);
     layer.light_probes.draw_line(framebuffer, manager, view);
-    layer.speakers.draw_line(framebuffer, manager, view);
     layer.lattices.draw_line(framebuffer, manager, view);
     layer.metaballs.draw_line(framebuffer, manager, view);
     layer.pointclouds.draw_line(framebuffer, manager, view);

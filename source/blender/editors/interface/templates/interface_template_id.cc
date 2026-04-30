@@ -584,7 +584,6 @@ ID *template_id_liboverride_hierarchy_make(
     case ID_LT:
     case ID_LA:
     case ID_CA:
-    case ID_SPK:
     case ID_AR:
     case ID_GD_LEGACY:
     case ID_CV:
@@ -876,8 +875,6 @@ static StringRef template_id_browse_tip(const StructRNA *type)
         return N_("Browse World Settings to be linked");
       case ID_TXT:
         return N_("Browse Text to be linked");
-      case ID_SPK:
-        return N_("Browse Speaker Data to be linked");
       case ID_SO:
         return N_("Browse Sound to be linked");
       case ID_AR:

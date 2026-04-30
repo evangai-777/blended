@@ -43,7 +43,6 @@
 #include "overlay_prepass.hh"
 #include "overlay_relation.hh"
 #include "overlay_sculpt.hh"
-#include "overlay_speaker.hh"
 #include "overlay_text.hh"
 #include "overlay_wireframe.hh"
 #include "overlay_xray_fade.hh"
@@ -103,7 +102,6 @@ class Instance : public DrawEngine {
     Prepass prepass;
     Relations relations = {selection_type_};
     Sculpts sculpts;
-    Speakers speakers = {selection_type_};
     Wireframe wireframe;
   } regular{selection_type_}, infront{selection_type_};
 

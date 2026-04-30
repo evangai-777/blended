@@ -54,7 +54,6 @@
 #include "DNA_screen_types.h"
 #include "DNA_sequence_types.h"
 #include "DNA_space_types.h"
-#include "DNA_speaker_types.h"
 #include "DNA_userdef_types.h"
 #include "DNA_volume_types.h"
 #include "DNA_world_types.h"
@@ -790,12 +789,6 @@ static bAnimListElem *make_new_animlistelem(
       Lattice *lt = static_cast<Lattice *>(data);
       ale->flag = FILTER_LATTICE_OBJD(lt);
       key_data_from_adt(*ale, lt->adt);
-      break;
-    }
-    case ANIMTYPE_DSSPK: {
-      Speaker *spk = static_cast<Speaker *>(data);
-      ale->flag = FILTER_SPK_OBJD(spk);
-      key_data_from_adt(*ale, spk->adt);
       break;
     }
     case ANIMTYPE_DSHAIR: {
@@ -3022,14 +3015,6 @@ static size_t animdata_filter_ds_obdata(bAnimContext *ac,
 
       type = ANIMTYPE_DSLAT;
       expanded = FILTER_LATTICE_OBJD(lt);
-      break;
-    }
-    case OB_SPEAKER: /* ---------- Speaker ----------- */
-    {
-      Speaker *spk = id_cast<Speaker *>(ob->data);
-
-      type = ANIMTYPE_DSSPK;
-      expanded = FILTER_SPK_OBJD(spk);
       break;
     }
     case OB_CURVES: /* ---------- Curves ----------- */

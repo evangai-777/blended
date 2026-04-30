@@ -2086,8 +2086,6 @@ int icon_from_idcode(const int idcode)
       return ICON_OUTLINER_DATA_LIGHTPROBE;
     case ID_SCE:
       return ICON_SCENE_DATA;
-    case ID_SPK:
-      return ICON_SPEAKER;
     case ID_SO:
       return ICON_SOUND;
     case ID_TE:
@@ -2167,8 +2165,6 @@ int icon_from_object_type(const Object *object)
       return ICON_OUTLINER_OB_FONT;
     case OB_SURF:
       return ICON_OUTLINER_OB_SURFACE;
-    case OB_SPEAKER:
-      return ICON_OUTLINER_OB_SPEAKER;
     case OB_LIGHTPROBE:
       return ICON_OUTLINER_OB_LIGHTPROBE;
     case OB_CURVES:

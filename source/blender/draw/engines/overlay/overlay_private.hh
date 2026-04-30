@@ -883,8 +883,6 @@ struct Resources : public select::SelectMap {
     switch (ob_ref.object->type) {
       case OB_LAMP:
         return TH_LIGHT;
-      case OB_SPEAKER:
-        return TH_SPEAKER;
       case OB_CAMERA:
         return TH_CAMERA;
       case OB_LIGHTPROBE:
