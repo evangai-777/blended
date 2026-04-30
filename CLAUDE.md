@@ -96,49 +96,58 @@ makesrna (4 files):
 
 ---
 
-**ID_GD_LEGACY — 39 hits, 28 files**
+**ID_GD_LEGACY — LITERAL: 56 hits, ~31 files** *(true blast radius TBD — update this header during chisel)*
 
-Core definition:
-- `makesdna/DNA_ID_enums.h:153` — enum entry `ID_GD_LEGACY = MAKE_ID2('G', 'D')`
-- `makesdna/DNA_gpencil_legacy_types.h:711` — `static constexpr ID_Type id_type = ID_GD_LEGACY`
-- `makesdna/DNA_object_types.h:749,765` — object type macros
-- `blenkernel/intern/idtype.cc:163` — `INIT_TYPE(ID_GD_LEGACY)`
-- `blenkernel/intern/main.cc:1034` — `which_libbase` case
-- `blenkernel/intern/gpencil_legacy.cc:654` — `BKE_libblock_alloc(bmain, ID_GD_LEGACY, name, 0)` — data creation
+> **Active migration path caveat:** `grease_pencil_convert_legacy.cc` and `blendfile_link_append.cc` converter code must be preserved. Only the type registration goes (enum entry, IDTypeInfo, INIT_TYPE, which_libbase case, BKE_main.hh field, RNA registration). The GD_LEGACY → GP v3 converters stay.
 
-blenkernel (4 files):
-- `material.cc:427,455,850` — material handling
-- `deform.cc:460,481` — deform data GS check
-- `grease_pencil_convert_legacy.cc:3057,3151` — conversion type-safety asserts
-- `blendfile_link_append.cc:555` — link/append: forces conversion on append
+makesdna (4 files):
+- `makesdna/DNA_ID_enums.h:151` — enum entry `ID_GD_LEGACY = MAKE_ID2('G', 'D')` — remove; add deprecated `#define` below
+- `makesdna/DNA_gpencil_legacy_types.h:711` — `static constexpr ID_Type id_type = ID_GD_LEGACY` — remove
+- `makesdna/DNA_object_types.h:747,762` — object type check macros (2 sites) — remove
+- `makesdna/DNA_ID.h:1162,1195,1244` — `FILTER_ID_GD` define, `FILTER_ID_ALL` inclusion, `INDEX_ID_GD` enum entry — remove all three
 
-blenloader (2 files):
-- `versioning_250.cc:444` — `*(short *)id->name = ID_GD_LEGACY` (legacy compat; becomes skip)
-- `versioning_common.cc:61,62` — GD_LEGACY → GP v3 conversion marker
+blenkernel (9 files):
+- `blenkernel/BKE_idtype.hh:324` — `extern IDTypeInfo IDType_ID_GD_LEGACY;` — remove declaration
+- `blenkernel/intern/gpencil_legacy.cc:267,269,271,654` — IDTypeInfo static callbacks + `BKE_libblock_alloc(bmain, ID_GD_LEGACY, name, 0)` — remove IDTypeInfo block and alloc call
+- `blenkernel/intern/idtype.cc:161` — `INIT_TYPE(ID_GD_LEGACY)` — remove; also sweep both `CASE_IDINDEX(GD_LEGACY)` entries per Scar 4 protocol
+- `blenkernel/intern/main.cc:131,1027,1071` — `CASE_ID_INDEX(INDEX_ID_GD)`, `which_libbase` case, `lb[]` assignment — remove all three
+- `blenkernel/intern/material.cc:427,455,850` — material slot handling (3 sites) — remove `case ID_GD_LEGACY:` blocks
+- `blenkernel/intern/deform.cc:460,481` — deform data GS check (2 sites) — remove `case ID_GD_LEGACY:` branches
+- `blenkernel/intern/grease_pencil_convert_legacy.cc:3057,3151` — **KEEP** (type-safety asserts in GD_LEGACY → GP v3 converter; these are the converter, not the registration)
+- `blenkernel/intern/blendfile_link_append.cc:555` — link/append routing that forces conversion on append — **KEEP** (this is converter logic, not registration)
+- `blenkernel/intern/scene.cc:1611` — `FILTER_ID_GD` in scene filter — remove
+- `blenkernel/intern/movieclip.cc:298` — IDTypeInfo dependency check — remove
 
-editors (9 files):
-- `interface_icons.cc:2055` — icon case
-- `interface_template_id.cc:589,893` — template checks
-- `object_data_transform.cc:816` — data transform
-- `render_opengl.cc:652` — render switch
-- `outliner_select.cc:1296` — outliner select
-- `outliner_draw.cc:2557` — outliner draw
-- `outliner_intern.hh:158` — outliner macro
-- `outliner_tools.cc:158` — outliner tools
-- `tree_element_id.cc:56` — tree element
-- `space_node.cc:1537` — GS check for node space
+blenloader (2 files — **KEEP both**):
+- `blenloader/intern/versioning_250.cc:444` — `*(short *)id->name = ID_GD_LEGACY` legacy compat assignment — **KEEP** (versioning file reads old .blend data; removing would break loading old files)
+- `blenloader/intern/versioning_common.cc:61,62` — GD_LEGACY → GP v3 conversion marker — **KEEP** (converter logic)
+
+editors (10 files):
+- `editors/interface/interface_icons.cc:2055` — icon case — remove
+- `editors/interface/templates/interface_template_id.cc:588,885` — template checks (2 sites) — remove
+- `editors/object/object_data_transform.cc:816` — data transform dispatch — remove
+- `editors/render/render_opengl.cc:649` — render switch — remove
+- `editors/space_outliner/outliner_select.cc:1295` — outliner select — remove
+- `editors/space_outliner/outliner_draw.cc:2556` — outliner draw — remove
+- `editors/space_outliner/outliner_intern.hh:156` — outliner macro — remove
+- `editors/space_outliner/outliner_tools.cc:156` — outliner tools — remove
+- `editors/space_outliner/tree/tree_element_id.cc:56` — tree element — remove
+- `editors/space_node/space_node.cc:1537` — GS check for node space — remove
+- `editors/space_image/space_image.cc:1214` — `FILTER_ID_GD` in image space mappings check — remove
 
 draw (1 file):
-- `draw_context.cc:1166` — `DEG_id_type_any_exists(depsgraph, ID_GD_LEGACY)` check
+- `draw/intern/draw_context.cc:1166` — `DEG_id_type_any_exists(depsgraph, ID_GD_LEGACY)` check — remove
 
 depsgraph (3 files):
-- `depsgraph_tag.cc:72,639` — tag dispatch
-- `deg_builder_nodes.cc:631` — node builder
-- `deg_builder_relations.cc:581,2777` — relation builder
+- `depsgraph/intern/depsgraph_tag.cc:72,626` — tag dispatch (2 sites; line 72 is shared ELEM with other types) — remove `ID_GD_LEGACY` from ELEM, remove case at 626
+- `depsgraph/intern/builder/deg_builder_nodes.cc:630` — node builder — remove case
+- `depsgraph/intern/builder/deg_builder_relations.cc:580,2758` — relation builder (2 sites) — remove cases
 
-makesrna (2 files):
-- `rna_ID.cc:41,391,500` — RNA enum entry and switch cases
-- `rna_main_api.cc:860` — `RNA_MAIN_ID_TAG_FUNCS_DEF(gpencils, gpencils, ID_GD_LEGACY)`
+makesrna (4 files):
+- `makesrna/intern/rna_ID.cc:41,124,377,477` — RNA enum item, filter item, `base_type == RNA_bGPdata` check, `case ID_GD_LEGACY:` return — remove all four
+- `makesrna/intern/rna_main_api.cc:831` — `RNA_MAIN_ID_TAG_FUNCS_DEF(gpencils, gpencils, ID_GD_LEGACY)` + `rna_Main_gpencils_new()` + `RNA_def_main_gpencils()` — remove
+- `makesrna/intern/rna_main.cc` — `RNA_MAIN_LISTBASE_FUNCS_DEF(gpencils)` + table entry — remove
+- `makesrna/intern/rna_space.cc:3975` — `FILTER_ID_GD |` in asset browser "Miscellaneous" filter — remove (same grep-miss pattern as ID_PA / rna_space.cc; do a post-chisel `grep -n "FILTER_ID_GD" source/` sweep)
 
 ---
 
