@@ -11,7 +11,7 @@ Blended
 
 Blended is a fork of [Blender](https://www.blender.org) being rebuilt from the foundation up around one stated identity: **free 2D and 3D software tools, with an explicit focus on the craft of animation.**
 
-The project is at 0.1.0 — early, honest, and moving forward with intention.
+The project is at 0.3.0 (tagged, CI green) — 0.4.0 in progress. Early, honest, and moving forward with intention.
 
 What Blended Is
 ---------------
@@ -39,7 +39,7 @@ What's Different Right Now
 - **Pre-5.0 rig compatibility** — `blended_rig_compat.py` restores `action.fcurves` as a compatibility property on `bpy.types.Action`. Pre-Blender-5.0 Rigify rigs (including CGCookie Vonnbots rigs) that access `action.fcurves` directly work again. IK/FK bake operators no longer fail silently.
 - **Update notifications** — Background GitHub Releases check at startup (24-hour cache, non-blocking). Top-bar notification with version string when an update is available. One-click download via browser. "Blended Updates" panel in System Preferences.
 - **CI** — Windows x64 portable `.zip` builds via GitHub Actions. Branch pushes run a fast lite build for compile-error checking. Tags produce a full release artifact. `blended_release.cmake` disables GPU kernel pre-compilation (CUDA/HIP/OneAPI) to keep CI under an hour — runtime compilation covers the same hardware.
-- **`ID_WS` (WorkSpace) removal — in progress** (target: 0.2.0). Three of seven compilation layers merged; `editors`, `depsgraph`, `python`, `windowmanager` pending. See [`CHANGELOG.md`](../CHANGELOG.md) for the per-layer status.
+- **Datablock audit — 0.4.x in progress.** Target: 39 → ~19 ID types. Removed so far: `ID_WS` ✓ (0.2.0), `ID_SCR` + `ID_WM` ✓ (0.3.0), `ID_PC` + `ID_SPK` + `ID_PA` ✓ (0.4.0). Next: `ID_GD_LEGACY`. See [`CHANGELOG.md`](../CHANGELOG.md) for per-layer file detail.
 
 On the Horizon
 --------------
@@ -94,6 +94,10 @@ Blended is developed with contributions from both human developers and AI tools.
   speaker.cc, BKE_speaker.hh, rna_speaker.cc, overlay_speaker.hh), speaker 3D audio loop
   and NLA sound strip function removed, ANIMTYPE_DSSPK animation channel removed,
   SPEAKER_EVAL depsgraph opcode removed, versioning pass 502.23 added;
+  `ID_PA` (ParticleSettings) removal — 40+ files, IDTypeInfo and all static callbacks
+  removed from particle.cc, BKE_main.hh particles field removed, rna_main.cc listbase
+  unregistered, depsgraph two-pass teardown guard updated, rna_space.cc asset browser
+  filter corrected (literal grep miss — FILTER_ID_PA macro, not string);
   ongoing PR review and integration: 10+ PRs assessed, applied selectively.
   *"Listen to the whole thing before reacting."*
 
