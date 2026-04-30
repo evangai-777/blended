@@ -55,7 +55,6 @@ const EnumPropertyItem rna_enum_id_type_items[] = {
     {ID_NT, "NODETREE", ICON_NODETREE, "Node Tree", ""},
     {ID_OB, "OBJECT", ICON_OBJECT_DATA, "Object", ""},
     {ID_PAL, "PALETTE", ICON_COLOR, "Palette", ""},
-    {ID_PA, "PARTICLE", ICON_PARTICLE_DATA, "Particle", ""},
     {ID_PT, "POINTCLOUD", ICON_POINTCLOUD_DATA, "Point Cloud", ""},
     {ID_SCE, "SCENE", ICON_SCENE_DATA, "Scene", ""},
     {ID_SO, "SOUND", ICON_SOUND, "Sound", ""},
@@ -166,11 +165,6 @@ const IDFilterEnumPropertyItem rna_enum_id_type_filter_items[] = {
     {FILTER_ID_MSK, "filter_mask", ICON_MOD_MASK, "Masks", "Show Mask data-blocks"},
     {FILTER_ID_NT, "filter_node_tree", ICON_NODETREE, "Node Trees", "Show Node Tree data-blocks"},
     {FILTER_ID_OB, "filter_object", ICON_OBJECT_DATA, "Objects", "Show Object data-blocks"},
-    {FILTER_ID_PA,
-     "filter_particle_settings",
-     ICON_PARTICLE_DATA,
-     "Particles Settings",
-     "Show Particle Settings data-blocks"},
     {FILTER_ID_PAL, "filter_palette", ICON_COLOR, "Palettes", "Show Palette data-blocks"},
     {FILTER_ID_PT,
      "filter_pointcloud",
@@ -430,9 +424,6 @@ short RNA_type_to_ID_code(const StructRNA *type)
   if (base_type == RNA_Object) {
     return ID_OB;
   }
-  if (base_type == RNA_ParticleSettings) {
-    return ID_PA;
-  }
   if (base_type == RNA_Palette) {
     return ID_PAL;
   }
@@ -517,8 +508,6 @@ StructRNA *ID_code_to_RNA_type(short idcode)
       return RNA_NodeTree;
     case ID_OB:
       return RNA_Object;
-    case ID_PA:
-      return RNA_ParticleSettings;
     case ID_PAL:
       return RNA_Palette;
     case ID_PT:
@@ -1027,12 +1016,6 @@ static void rna_ID_update_tag(ID *id, Main *bmain, ReportList *reports, int flag
          * the tag was valid or not. */
         allow_flag = ID_RECALC_ALL;
         break;
-/* Could add particle updates later */
-#  if 0
-      case ID_PA:
-        allow_flag = OB_RECALC_ALL | PSYS_RECALC;
-        break;
-#  endif
       case ID_AC:
         allow_flag = ID_RECALC_ANIMATION;
         break;
