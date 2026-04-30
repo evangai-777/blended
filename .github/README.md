@@ -39,7 +39,7 @@ What's Different Right Now
 - **Pre-5.0 rig compatibility** — `blended_rig_compat.py` restores `action.fcurves` as a compatibility property on `bpy.types.Action`. Pre-Blender-5.0 Rigify rigs (including CGCookie Vonnbots rigs) that access `action.fcurves` directly work again. IK/FK bake operators no longer fail silently.
 - **Update notifications** — Background GitHub Releases check at startup (24-hour cache, non-blocking). Top-bar notification with version string when an update is available. One-click download via browser. "Blended Updates" panel in System Preferences.
 - **CI** — Windows x64 portable `.zip` builds via GitHub Actions. Branch pushes run a fast lite build for compile-error checking. Tags produce a full release artifact. `blended_release.cmake` disables GPU kernel pre-compilation (CUDA/HIP/OneAPI) to keep CI under an hour — runtime compilation covers the same hardware.
-- **Datablock audit — 0.4.x in progress.** Target: 39 → ~19 ID types. Removed so far: `ID_WS` ✓ (0.2.0), `ID_SCR` + `ID_WM` ✓ (0.3.0), `ID_PC` + `ID_SPK` + `ID_PA` + `ID_GD_LEGACY` ✓ (0.4.0). Next: `ID_LS`. See [`CHANGELOG.md`](../CHANGELOG.md) for per-layer file detail.
+- **Datablock audit — 0.4.x in progress.** Target: 39 → ~19 ID types. Removed so far: `ID_WS` ✓ (0.2.0), `ID_SCR` + `ID_WM` ✓ (0.3.0), `ID_PC` + `ID_SPK` + `ID_PA` + `ID_GD_LEGACY` + `ID_LS` ✓ (0.4.0). Next: `ID_MB`. See [`CHANGELOG.md`](../CHANGELOG.md) for per-layer file detail.
 
 On the Horizon
 --------------
@@ -104,6 +104,12 @@ Blended is developed with contributions from both human developers and AI tools.
   preserved (Scar 2 pattern — OB_GPENCIL_LEGACY objects and annotations still use
   bGPdata at runtime); depsgraph geometry node building kept for same reason;
   rna_space.cc asset browser filter corrected (same grep-miss pattern as ID_PA);
+  `ID_LS` (FreestyleLineStyle) removal — ~50 files (vs 28 literal hits), ANIMTYPE_DSLINESTYLE
+  chain across 7 files (9 fallthrough cases), ACF_DSLINESTYLE animation channel type removed,
+  animdata_filter_ds_linestyle function removed, ADS_FILTER_NOLINESTYLE bitmask removed,
+  tree_element_id_linestyle.cc/.hh deleted, NC_LINESTYLE cases in space_node.cc (unguarded),
+  4 NESTED_ID_NASTY_WORKAROUND SPECIAL_CASE entries removed from depsgraph COW; Scar 2
+  pattern: bmain->linestyles and which_libbase routing preserved for anim_sys iteration;
   ongoing PR review and integration: 10+ PRs assessed, applied selectively.
   *"Listen to the whole thing before reacting."*
 
