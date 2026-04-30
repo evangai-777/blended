@@ -3042,10 +3042,6 @@ static void copy_mtex_copybuf(ID *id)
   MTex **mtex = nullptr;
 
   switch (GS(id->name)) {
-    case ID_PA:
-      mtex = &(
-          (id_cast<ParticleSettings *>(id))->mtex[int((id_cast<ParticleSettings *>(id))->texact)]);
-      break;
     case ID_LS:
       mtex = &((id_cast<FreestyleLineStyle *>(id))
                    ->mtex[int((id_cast<FreestyleLineStyle *>(id))->texact)]);
@@ -3072,10 +3068,6 @@ static void paste_mtex_copybuf(ID *id)
   }
 
   switch (GS(id->name)) {
-    case ID_PA:
-      mtex = &(
-          (id_cast<ParticleSettings *>(id))->mtex[int((id_cast<ParticleSettings *>(id))->texact)]);
-      break;
     case ID_LS:
       mtex = &((id_cast<FreestyleLineStyle *>(id))
                    ->mtex[int((id_cast<FreestyleLineStyle *>(id))->texact)]);

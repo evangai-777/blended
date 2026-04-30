@@ -511,9 +511,6 @@ static bool buttons_context_path_texture(const bContext *C,
     if (GS(id->name) == ID_BR) {
       buttons_context_path_brush(C, path);
     }
-    else if (GS(id->name) == ID_PA) {
-      buttons_context_path_particle(path);
-    }
     else if (GS(id->name) == ID_OB) {
       buttons_context_path_object(path);
     }

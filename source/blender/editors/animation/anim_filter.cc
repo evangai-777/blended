@@ -2666,11 +2666,6 @@ static size_t animdata_filter_ds_textures(bAnimContext *ac,
   }
 
   switch (GS(owner_id->name)) {
-    case ID_PA: {
-      ParticleSettings *part = reinterpret_cast<ParticleSettings *>(owner_id);
-      mtex = reinterpret_cast<MTex **>(&part->mtex);
-      break;
-    }
     default: {
       /* invalid/unsupported option */
       if (G.debug & G_DEBUG) {
