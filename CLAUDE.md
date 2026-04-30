@@ -786,6 +786,8 @@ Here is what a previous Claude did instead of listening:
 - **BLENDED.md** — Bucket 5/6 status table: `pending` → `✓ X.Y.Z`
 - **`.github/README.md`** — "What's Different" section current state, AI contributor bullet extended with new removal
 
+**Note:** `.github/` is in `.gitignore` on this repo. Use `git add -f .github/README.md` when staging README updates — normal `git add` silently skips it.
+
 ---
 
 ## Working with Claude Code Efficiently
