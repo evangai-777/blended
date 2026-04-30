@@ -122,36 +122,6 @@ Vector<ID *> find_related_ids(Main &bmain, ID &id)
         break;
       }
 
-      case ID_PA: {
-        if (ID_REAL_USERS(related_id) != 1) {
-          continue;
-        }
-        Object *ob;
-        ID *object_id;
-        /* Find users of this particle setting. */
-        FOREACH_MAIN_LISTBASE_ID_BEGIN (&bmain.objects, object_id) {
-          ob = reinterpret_cast<Object *>(object_id);
-          bool object_uses_particle_settings = false;
-          for (ParticleSystem &particle_system : ob->particlesystem) {
-            if (!particle_system.part) {
-              continue;
-            }
-            if (&particle_system.part->id != related_id) {
-              continue;
-            }
-            object_uses_particle_settings = true;
-            break;
-          }
-          if (object_uses_particle_settings) {
-            related_ids.append_non_duplicates(&ob->id);
-            break;
-          }
-        }
-        FOREACH_MAIN_LISTBASE_ID_END;
-
-        break;
-      }
-
       default: {
         /* Just check if the ID is used as object data somewhere. */
         add_object_data_users(bmain, *related_id, related_ids);
