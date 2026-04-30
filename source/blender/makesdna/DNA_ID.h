@@ -1163,7 +1163,7 @@ enum IDRecalcFlag {
 #define FILTER_ID_GR (1ULL << 6)
 #define FILTER_ID_IM (1ULL << 7)
 #define FILTER_ID_LA (1ULL << 8)
-#define FILTER_ID_LS (1ULL << 9)
+
 #define FILTER_ID_LT (1ULL << 10)
 #define FILTER_ID_MA (1ULL << 11)
 #define FILTER_ID_MB (1ULL << 12)
@@ -1192,7 +1192,7 @@ enum IDRecalcFlag {
 
 #define FILTER_ID_ALL \
   (FILTER_ID_AC | FILTER_ID_AR | FILTER_ID_BR | FILTER_ID_CA | FILTER_ID_CU_LEGACY | \
-   FILTER_ID_GR | FILTER_ID_IM | FILTER_ID_LA | FILTER_ID_LS | \
+   FILTER_ID_GR | FILTER_ID_IM | FILTER_ID_LA | \
    FILTER_ID_LT | FILTER_ID_MA | FILTER_ID_MB | FILTER_ID_MC | FILTER_ID_ME | FILTER_ID_MSK | \
    FILTER_ID_NT | FILTER_ID_OB | FILTER_ID_PAL | FILTER_ID_SCE | \
    FILTER_ID_SO | FILTER_ID_TE | FILTER_ID_TXT | FILTER_ID_VF | FILTER_ID_WO | \
@@ -1258,7 +1258,7 @@ enum eID_Index {
   /* Shading types. */
   INDEX_ID_TE,
   INDEX_ID_MA,
-  INDEX_ID_LS,
+
   INDEX_ID_WO,
 
   /* Simulation-related types. */
