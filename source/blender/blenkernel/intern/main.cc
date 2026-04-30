@@ -138,7 +138,7 @@ void BKE_main_clear(Main &bmain)
         CASE_ID_INDEX(INDEX_ID_MC);
         CASE_ID_INDEX(INDEX_ID_TE);
         CASE_ID_INDEX(INDEX_ID_MA);
-        CASE_ID_INDEX(INDEX_ID_LS);
+
         CASE_ID_INDEX(INDEX_ID_WO);
         CASE_ID_INDEX(INDEX_ID_CF);
         CASE_ID_INDEX(INDEX_ID_SIM);
@@ -1102,8 +1102,7 @@ MainListsArray BKE_main_lists_get(Main &bmain)
   lb[INDEX_ID_WO] = &(bmain.worlds.cast<ID>());
   lb[INDEX_ID_MC] = &(bmain.movieclips.cast<ID>());
   lb[INDEX_ID_OB] = &(bmain.objects.cast<ID>());
-  /* referenced by scenes */
-  lb[INDEX_ID_LS] = &(bmain.linestyles.cast<ID>());
+
   lb[INDEX_ID_SCE] = &(bmain.scenes.cast<ID>());
   lb[INDEX_ID_MSK] = &(bmain.masks.cast<ID>());
 
