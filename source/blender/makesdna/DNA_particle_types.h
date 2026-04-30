@@ -760,6 +760,7 @@ struct ParticleSystem {
    * Use #psys_orig_get() function to access.
    */
   struct ParticleSystem *orig_psys = nullptr;
+#endif /* __cplusplus */
 };
 
 }  // namespace blender
