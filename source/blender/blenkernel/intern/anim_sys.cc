@@ -4149,9 +4149,6 @@ void BKE_animsys_evaluate_all_animation(Main *main, Depsgraph *depsgraph, float 
   /* particles */
   EVAL_ANIM_IDS(main->particles.first, ADT_RECALC_ANIM);
 
-  /* speakers */
-  EVAL_ANIM_IDS(main->speakers.first, ADT_RECALC_ANIM);
-
   /* movie clips */
   EVAL_ANIM_IDS(main->movieclips.first, ADT_RECALC_ANIM);
 

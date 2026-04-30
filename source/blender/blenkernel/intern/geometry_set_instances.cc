@@ -123,7 +123,7 @@ void Instances::ensure_geometry_instances()
         /* Create a new reference that contains the geometry set of the object. We may want to
          * treat e.g. lamps and similar object types separately here. */
         Object &object = reference.object();
-        if (ELEM(object.type, OB_LAMP, OB_CAMERA, OB_SPEAKER, OB_ARMATURE)) {
+        if (ELEM(object.type, OB_LAMP, OB_CAMERA, OB_ARMATURE)) {
           new_references.append(InstanceReference(object));
           break;
         }

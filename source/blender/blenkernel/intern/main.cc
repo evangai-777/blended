@@ -154,7 +154,6 @@ void BKE_main_clear(Main &bmain)
         CASE_ID_INDEX(INDEX_ID_LT);
         CASE_ID_INDEX(INDEX_ID_LA);
         CASE_ID_INDEX(INDEX_ID_CA);
-        CASE_ID_INDEX(INDEX_ID_SPK);
         CASE_ID_INDEX(INDEX_ID_LP);
         CASE_ID_INDEX(INDEX_ID_OB);
         CASE_ID_INDEX(INDEX_ID_GR);
@@ -1012,8 +1011,6 @@ ListBaseT<ID> *which_libbase(Main *bmain, short type)
       return &(bmain->fonts.cast<ID>());
     case ID_TXT:
       return &(bmain->texts.cast<ID>());
-    case ID_SPK:
-      return &(bmain->speakers.cast<ID>());
     case ID_LP:
       return &(bmain->lightprobes.cast<ID>());
     case ID_SO:
@@ -1106,7 +1103,6 @@ MainListsArray BKE_main_lists_get(Main &bmain)
   lb[INDEX_ID_PAL] = &(bmain.palettes.cast<ID>());
   lb[INDEX_ID_BR] = &(bmain.brushes.cast<ID>());
   lb[INDEX_ID_PA] = &(bmain.particles.cast<ID>());
-  lb[INDEX_ID_SPK] = &(bmain.speakers.cast<ID>());
   lb[INDEX_ID_LP] = &(bmain.lightprobes.cast<ID>());
 
   lb[INDEX_ID_WO] = &(bmain.worlds.cast<ID>());
