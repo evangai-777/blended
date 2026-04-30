@@ -31,7 +31,6 @@ void DepsgraphNodeBuilder::build_scene_render(Scene *scene, ViewLayer *view_laye
   }
   if (build_sequencer) {
     build_scene_sequencer(scene);
-    build_scene_speakers(scene, view_layer);
   }
   build_scene_camera(scene);
 }

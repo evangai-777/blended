@@ -49,7 +49,6 @@
 #include "DNA_scene_types.h"
 #include "DNA_sequence_types.h"
 #include "DNA_sound_types.h"
-#include "DNA_speaker_types.h"
 #include "DNA_texture_types.h"
 #include "DNA_vfont_types.h"
 #include "DNA_volume_types.h"
@@ -582,9 +581,6 @@ void DepsgraphRelationBuilder::build_id(ID *id)
     case ID_GP:
       build_object_data_geometry_datablock(id);
       break;
-    case ID_SPK:
-      build_speaker(id_cast<Speaker *>(id));
-      break;
     case ID_SO:
       build_sound(id_cast<bSound *>(id));
       break;
@@ -1029,9 +1025,6 @@ void DepsgraphRelationBuilder::build_object_data(Object *object)
     case OB_LIGHTPROBE:
       build_object_data_lightprobe(object);
       break;
-    case OB_SPEAKER:
-      build_object_data_speaker(object);
-      break;
   }
   Key *key = BKE_key_from_object(object);
   if (key != nullptr) {
@@ -1080,14 +1073,6 @@ void DepsgraphRelationBuilder::build_object_data_lightprobe(Object *object)
   add_relation(probe_key, object_shading_key, "LightProbe -> Object Shading");
 }
 
-void DepsgraphRelationBuilder::build_object_data_speaker(Object *object)
-{
-  Speaker *speaker = id_cast<Speaker *>(object->data);
-  build_speaker(speaker);
-  ComponentKey speaker_key(&speaker->id, NodeType::AUDIO);
-  ComponentKey object_key(&object->id, NodeType::AUDIO);
-  add_relation(speaker_key, object_key, "Speaker Update");
-}
 
 void DepsgraphRelationBuilder::build_object_parent(Object *object)
 {
@@ -3401,25 +3386,6 @@ void DepsgraphRelationBuilder::build_lightprobe(LightProbe *probe)
   build_parameters(&probe->id);
 }
 
-void DepsgraphRelationBuilder::build_speaker(Speaker *speaker)
-{
-  if (built_map_.check_is_built_and_tag(speaker)) {
-    return;
-  }
-
-  const BuilderStack::ScopedEntry stack_entry = stack_.trace(speaker->id);
-
-  build_idproperties(speaker->id.properties);
-  build_idproperties(speaker->id.system_properties);
-  build_animdata(&speaker->id);
-  build_parameters(&speaker->id);
-  if (speaker->sound != nullptr) {
-    build_sound(speaker->sound);
-    ComponentKey speaker_key(&speaker->id, NodeType::AUDIO);
-    ComponentKey sound_key(&speaker->sound->id, NodeType::AUDIO);
-    add_relation(sound_key, speaker_key, "Sound -> Speaker");
-  }
-}
 
 void DepsgraphRelationBuilder::build_sound(bSound *sound)
 {
@@ -3474,7 +3440,6 @@ static bool strip_build_prop_cb(Strip *strip, void *user_data)
           sequence_scene_key, cd->sequencer_key, "Sequence Scene -> Sequencer");
     }
     ViewLayer *sequence_view_layer = BKE_view_layer_default_render(strip->scene);
-    cd->builder->build_scene_speakers(strip->scene, sequence_view_layer);
   }
   if (strip->type == STRIP_TYPE_COMPOSITOR && strip->effectdata) {
     const CompositorEffectVars *comp_data = static_cast<CompositorEffectVars *>(strip->effectdata);
@@ -3542,17 +3507,6 @@ void DepsgraphRelationBuilder::build_scene_audio(Scene *scene)
   }
 }
 
-void DepsgraphRelationBuilder::build_scene_speakers(Scene *scene, ViewLayer *view_layer)
-{
-  BKE_view_layer_synced_ensure(*bmain_, scene, view_layer);
-  for (Base &base : *BKE_view_layer_object_bases_get(view_layer)) {
-    Object *object = base.object;
-    if (object->type != OB_SPEAKER || !need_pull_base_into_graph(&base)) {
-      continue;
-    }
-    build_object(base.object);
-  }
-}
 
 void DepsgraphRelationBuilder::build_vfont(VFont *vfont)
 {

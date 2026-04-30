@@ -30,7 +30,6 @@ void DepsgraphRelationBuilder::build_scene_render(Scene *scene, ViewLayer *view_
   }
   if (build_sequencer) {
     build_scene_sequencer(scene);
-    build_scene_speakers(scene, view_layer);
   }
   build_scene_camera(scene);
 }
