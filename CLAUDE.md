@@ -258,48 +258,51 @@ makesrna (7 files):
 
 ---
 
-**ID_MB — 49 hits, 28 files**
+**ID_MB — 60 hits, 32 files**
 
 Core definition:
 - `makesdna/DNA_ID_enums.h:134` — enum entry `ID_MB = MAKE_ID2('M', 'B')`
 - `makesdna/DNA_meta_types.h:91` — `static constexpr ID_Type id_type = ID_MB`
-- `makesdna/DNA_object_types.h:736,743,759` — object type macros (shared with ID_CU_LEGACY)
+- `makesdna/DNA_object_types.h:735,742,756` — object type check macros (shared with ID_CU_LEGACY)
+- `makesdna/DNA_ID.h:1169,1196,1274` — `FILTER_ID_MB` define, `FILTER_ID_ALL` inclusion, `INDEX_ID_MB` enum entry
+- `blenkernel/BKE_idtype.hh:307` — `extern IDTypeInfo IDType_ID_MB`
 - `blenkernel/intern/idtype.cc:144` — `INIT_TYPE(ID_MB)`
-- `blenkernel/intern/main.cc:994` — `which_libbase` case
+- `blenkernel/intern/main.cc:149,991,1086` — `CASE_ID_INDEX(INDEX_ID_MB)`, `which_libbase` case, `lb[]` assignment
 
 blenkernel (5 files):
+- `mball.cc:139,141,143` — `IDTypeInfo IDType_ID_MB` definition + `.id_filter` + `.main_listbase_index`
 - `material.cc:425,453,486,519,542,847` — material slot handling (6 sites)
-- `object.cc:1934,1978,2230,4291` — object data dispatch (4 sites)
+- `object.cc:1933,1977,2225,4279` — object data dispatch (4 sites)
 - `object_dupli.cc:312` — dupli GS check
 - `lib_remap.cc:627` — library remapping
-- `mesh_convert.cc` — note: shared ELEM with CU_LEGACY at `transform_convert_object_texspace.cc:52`
 
 editors (10 files):
-- `interface_icons.cc:2069` — icon case
-- `interface_template_id.cc:583,859` — template checks
+- `interface_icons.cc:2066` — icon case
+- `interface_template_id.cc:583,854` — template checks
 - `object_data_transform.cc:442,612,736,810` — data transform dispatch (4 sites)
-- `transform_convert_object_texspace.cc:52` — `ELEM(GS(id->name), ID_ME, ID_CU_LEGACY, ID_MB)` (shared)
+- `transform_convert_object_texspace.cc:52` — `ELEM(GS(id->name), ID_ME, ID_CU_LEGACY, ID_MB)` (shared with CU_LEGACY)
 - `render_opengl.cc:610` — render switch
 - `outliner_select.cc:1289` — outliner select
 - `outliner_draw.cc:2485` — outliner draw
 - `outliner_intern.hh:141` — outliner macro
-- `outliner_tools.cc:137,293` — outliner tools
-- `tree_element_id.cc:50` — tree element
+- `outliner_tools.cc:136,287` — outliner tools
+- `tree_element_id.cc:49` — tree element
 
 draw (2 files):
 - `overlay_bounds.hh:188` — bounds overlay
 - `draw_resource.hh:157` — draw resource
 
 depsgraph (5 files):
-- `depsgraph_tag.cc:72,629` — tag dispatch (shared ELEM with CU_LEGACY/GD_LEGACY)
-- `deg_eval_copy_on_write.cc:563,944` — COW special cases
-- `deg_builder_relations.cc:575,2739` — relation builder
-- `deg_builder_nodes.cc:628,1790` — node builder
+- `depsgraph_tag.cc:72,618` — tag dispatch (line 72 shared ELEM with CU_LEGACY/GD_LEGACY; GD_LEGACY kept per session note)
+- `deg_eval_copy_on_write.cc:557,938` — COW special cases
+- `deg_builder_relations.cc:570,2716` — relation builder
+- `deg_builder_nodes.cc:624,1769` — node builder
 - `depsgraph_query_iter.cc:479` — dupli ob_data GS check
 
-makesrna (2 files):
-- `rna_ID.cc:53,424,522` — RNA enum entry and switch cases
-- `rna_main_api.cc:846` — `RNA_MAIN_ID_TAG_FUNCS_DEF(metaballs, metaballs, ID_MB)`
+makesrna (3 files):
+- `rna_ID.cc:53,150,398,485` — RNA enum entry, filter item, and switch cases (4 sites)
+- `rna_main_api.cc:794` — `RNA_MAIN_ID_TAG_FUNCS_DEF(metaballs, metaballs, ID_MB)`
+- `rna_space.cc:3954` — `FILTER_ID_MB` in asset browser geometry filter
 
 ---
 
@@ -483,7 +486,7 @@ Additional files NOT in the literal grep (discovered 2026-04-29):
 
 6. **`depsgraph.cc:160` had a `!= ID_PA` guard** in `clear_id_nodes_conditional` — resolved in 0.4.0. The two-pass teardown (scenes first, then everything-except-particles) ensured particle COW copies outlived the objects referencing them. With ID_PA gone, the guard was changed to `!= ID_SCE` (scenes already destroyed in pass 1 are caught by the `id_cow == nullptr` guard in pass 2).
 
-7. **Remaining chisel order (smallest blast radius first):** **ID_GD_LEGACY ✓** → **ID_LS ✓** → ID_MB (49) → ID_TE (58) → ID_CU_LEGACY (74) → ID_CF (last, design decision). ~180 hits across 3 types remaining. ID_PC (21) ✓ 0.4.0. ID_SPK (23) ✓ 0.4.0. ID_PA (35) ✓ 0.4.0. ID_GD_LEGACY (56) ✓ 0.4.0. ID_LS (~50) ✓ 0.4.0. ID_CF deferred — see note 8.
+7. **Remaining chisel order (smallest blast radius first):** **ID_GD_LEGACY ✓** → **ID_LS ✓** → ID_MB (60) → ID_TE (58) → ID_CU_LEGACY (74) → ID_CF (last, design decision). ~192 hits across 3 types remaining. ID_PC (21) ✓ 0.4.0. ID_SPK (23) ✓ 0.4.0. ID_PA (35) ✓ 0.4.0. ID_GD_LEGACY (56) ✓ 0.4.0. ID_LS (~50) ✓ 0.4.0. ID_CF deferred — see note 8.
 
 8. **ID_CF is architecturally entangled — do it last or separately.** The literal grep count (18) dramatically understates the true blast radius. `CacheFile` as a struct is woven into: the Alembic importer (`io/alembic/`), the USD importer (`io/usd/`), the Mesh Sequence Cache modifier (`MOD_meshsequencecache.cc`), the constraint system, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. The Mesh Sequence Cache modifier holds a `CacheFile *` ID pointer so multiple objects can share one cache reference — removing the ID type means deciding what replaces that pointer. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI builds, so breakage here will surface. **Revised chisel order: ID_MB → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision). ID_PC ✓ (0.4.0). ID_SPK ✓ (0.4.0). ID_PA ✓ (0.4.0). ID_GD_LEGACY ✓ (0.4.0). ID_LS ✓ (0.4.0).** The open question: does the cache-file reference mechanism get inlined into the modifier/constraint DNA per-instance, or does CacheFile stay as a non-ID struct in a non-indexed listbase (like ID_SCR_LEGACY/ID_WM_LEGACY pattern)? Answer this before chiseling ID_CF.
 
