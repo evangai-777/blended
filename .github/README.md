@@ -39,7 +39,7 @@ What's Different Right Now
 - **Pre-5.0 rig compatibility** — `blended_rig_compat.py` restores `action.fcurves` as a compatibility property on `bpy.types.Action`. Pre-Blender-5.0 Rigify rigs (including CGCookie Vonnbots rigs) that access `action.fcurves` directly work again. IK/FK bake operators no longer fail silently.
 - **Update notifications** — Background GitHub Releases check at startup (24-hour cache, non-blocking). Top-bar notification with version string when an update is available. One-click download via browser. "Blended Updates" panel in System Preferences.
 - **CI** — Windows x64 portable `.zip` builds via GitHub Actions. Branch pushes run a fast lite build for compile-error checking. Tags produce a full release artifact. `blended_release.cmake` disables GPU kernel pre-compilation (CUDA/HIP/OneAPI) to keep CI under an hour — runtime compilation covers the same hardware.
-- **Datablock audit — 0.4.x in progress.** Target: 39 → ~19 ID types. Removed so far: `ID_WS` ✓ (0.2.0), `ID_SCR` + `ID_WM` ✓ (0.3.0), `ID_PC` + `ID_SPK` + `ID_PA` ✓ (0.4.0). Next: `ID_GD_LEGACY`. See [`CHANGELOG.md`](../CHANGELOG.md) for per-layer file detail.
+- **Datablock audit — 0.4.x in progress.** Target: 39 → ~19 ID types. Removed so far: `ID_WS` ✓ (0.2.0), `ID_SCR` + `ID_WM` ✓ (0.3.0), `ID_PC` + `ID_SPK` + `ID_PA` + `ID_GD_LEGACY` ✓ (0.4.0). Next: `ID_LS`. See [`CHANGELOG.md`](../CHANGELOG.md) for per-layer file detail.
 
 On the Horizon
 --------------
@@ -98,6 +98,12 @@ Blended is developed with contributions from both human developers and AI tools.
   removed from particle.cc, BKE_main.hh particles field removed, rna_main.cc listbase
   unregistered, depsgraph two-pass teardown guard updated, rna_space.cc asset browser
   filter corrected (literal grep miss — FILTER_ID_PA macro, not string);
+  `ID_GD_LEGACY` (legacy Grease Pencil) removal — 30+ files, IDTypeInfo removed,
+  RNA registration (BlendDataAnnotations, rna_Main_annotations_new, gpencils listbase)
+  removed, editor dispatch tables cleared; bmain->gpencils and which_libbase routing
+  preserved (Scar 2 pattern — OB_GPENCIL_LEGACY objects and annotations still use
+  bGPdata at runtime); depsgraph geometry node building kept for same reason;
+  rna_space.cc asset browser filter corrected (same grep-miss pattern as ID_PA);
   ongoing PR review and integration: 10+ PRs assessed, applied selectively.
   *"Listen to the whole thing before reacting."*
 

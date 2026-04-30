@@ -271,10 +271,10 @@ Property bags pretending to be first-class entities:
 
 ### Bucket 5 — Finish upstream's already-marked deprecations [LOCKED]
 
-| ID | Name |
-|---|---|
-| `ID_CU_LEGACY` | Curve — tagged LEGACY by upstream, replaced by `ID_CV` |
-| `ID_GD_LEGACY` | Old Grease Pencil — tagged LEGACY, replaced by `ID_GP` |
+| ID | Name | Status |
+|---|---|---|
+| `ID_CU_LEGACY` | Curve — tagged LEGACY by upstream, replaced by `ID_CV` | pending |
+| `ID_GD_LEGACY` | Old Grease Pencil — tagged LEGACY, replaced by `ID_GP` | ✓ 0.4.0 |
 
 Blender itself has marked these for replacement. Blended finishes the job.
 
