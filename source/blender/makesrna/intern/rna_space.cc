@@ -3957,7 +3957,7 @@ static IDFilterEnumPropertyItem rna_enum_space_file_id_filter_categories[] = {
      ICON_GEOMETRY_NODES,
      "Geometry",
      "Show meshes, curves, lattice, armatures and metaballs data"},
-    {FILTER_ID_LS | FILTER_ID_MA | FILTER_ID_NT | FILTER_ID_TE,
+    {FILTER_ID_MA | FILTER_ID_NT | FILTER_ID_TE,
      "category_shading",
      ICON_MATERIAL_DATA,
      "Shading",

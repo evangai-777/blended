@@ -266,9 +266,7 @@ void rna_TextureSlot_update(bContext *C, PointerRNA *ptr)
       WM_main_add_notifier(NC_BRUSH, id);
       break;
     }
-    case ID_LS:
-      WM_main_add_notifier(NC_LINESTYLE, id);
-      break;
+
     case ID_PA: {
       MTex *mtex = static_cast<MTex *>(ptr->data);
       int recalc = ID_RECALC_GEOMETRY;
