@@ -788,6 +788,8 @@ Here is what a previous Claude did instead of listening:
 
 **Note:** `.github/` is in `.gitignore` on this repo. Use `git add -f .github/README.md` when staging README updates — normal `git add` silently skips it.
 
+**Meta-rule:** CLAUDE.md is the place for operational gotchas like this, not the chat. If you discover something worth knowing for the next session, write it here before the session ends.
+
 ---
 
 ## Working with Claude Code Efficiently
