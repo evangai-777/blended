@@ -86,10 +86,14 @@ Blended is developed with contributions from both human developers and AI tools.
   library caching, artifact packaging, GitHub Release automation);
   `blended_release.cmake` build configuration;
   documentation architecture (CLAUDE.md, UPSTREAM_SYNC.md, this README, archive consolidation);
-  `ID_WS` (WorkSpace) removal — three chisel layers merged (`makesdna`, `blenkernel`,
-  `makesrna`); `WorkSpace` excised from DNA, `Main::workspaces` removed, full RNA
-  registration deleted across `rna_ID.cc`, `rna_space.cc`, `rna_main.cc`,
-  `rna_main_api.cc`, `rna_internal.hh`;
+  `ID_WS` (WorkSpace) removal — full chisel across all layers; `ID_SCR` and `ID_WM` removal
+  — full chisel across all layers, introducing ID_SCR_LEGACY/ID_WM_LEGACY routing pattern;
+  `ID_PC` (PaintCurve) removal — 35+ files, three entire files deleted, paint curve undo
+  subsystem gutted, versioning pass added;
+  `ID_SPK` (Speaker) removal — 45+ files, five entire files deleted (DNA_speaker_types.h,
+  speaker.cc, BKE_speaker.hh, rna_speaker.cc, overlay_speaker.hh), speaker 3D audio loop
+  and NLA sound strip function removed, ANIMTYPE_DSSPK animation channel removed,
+  SPEAKER_EVAL depsgraph opcode removed, versioning pass 502.23 added;
   ongoing PR review and integration: 10+ PRs assessed, applied selectively.
   *"Listen to the whole thing before reacting."*
 
