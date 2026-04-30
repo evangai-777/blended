@@ -16,6 +16,7 @@
 #include "DNA_modifier_types.h"
 #include "DNA_node_tree_interface_types.h"
 #include "DNA_node_types.h"
+#include "DNA_object_types.h"
 #include "DNA_scene_types.h"
 #include "DNA_screen_types.h"
 
@@ -503,6 +504,16 @@ void blo_do_versions_520(FileData * /*fd*/, Library * /*lib*/, Main *bmain)
     for (Brush &brush : bmain->brushes) {
       if (brush.stroke_method == BRUSH_STROKE_CURVE) {
         brush.stroke_method = BRUSH_STROKE_DOTS;
+      }
+    }
+  }
+  if (!MAIN_VERSION_FILE_ATLEAST(bmain, 502, 23)) {
+    /* OB_SPEAKER (value 12) was removed in Blended 0.4.0 when ID_SPK was cut.
+     * Convert speaker objects to empty objects so files load without dangling data pointers. */
+    for (Object &object : bmain->objects) {
+      if (object.type == 12 /* OB_SPEAKER */) {
+        object.type = OB_EMPTY;
+        object.data = nullptr;
       }
     }
   }

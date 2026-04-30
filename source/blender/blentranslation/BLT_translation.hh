@@ -139,7 +139,6 @@ StringRef BLT_translate_do_new_dataname(StringRef msgctxt, StringRef msgid);
 #define BLT_I18NCONTEXT_ID_SHAPEKEY "Key"
 #define BLT_I18NCONTEXT_ID_SIMULATION "Simulation"
 #define BLT_I18NCONTEXT_ID_SOUND "Sound"
-#define BLT_I18NCONTEXT_ID_SPEAKER "Speaker"
 #define BLT_I18NCONTEXT_ID_TEXT "Text"
 #define BLT_I18NCONTEXT_ID_TEXTURE "Texture"
 #define BLT_I18NCONTEXT_ID_VFONT "VFont"
@@ -216,7 +215,6 @@ struct BLT_i18n_contexts_descriptor {
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_SHAPEKEY, "id_shapekey"), \
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_SIMULATION, "id_simulation"), \
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_SOUND, "id_sound"), \
-        BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_SPEAKER, "id_speaker"), \
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_TEXT, "id_text"), \
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_TEXTURE, "id_texture"), \
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_VFONT, "id_vfont"), \
