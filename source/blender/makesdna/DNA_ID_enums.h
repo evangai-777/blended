@@ -148,7 +148,6 @@ enum ID_Type {
   ID_AC = MAKE_ID2('A', 'C'),        /* bAction */
   ID_NT = MAKE_ID2('N', 'T'),        /* bNodeTree */
   ID_BR = MAKE_ID2('B', 'R'),        /* Brush */
-  ID_GD_LEGACY = MAKE_ID2('G', 'D'), /* bGPdata, (legacy Grease Pencil) */
   ID_MC = MAKE_ID2('M', 'C'),        /* MovieClip */
   ID_MSK = MAKE_ID2('M', 'S'),       /* Mask */
   ID_LS = MAKE_ID2('L', 'S'),        /* FreestyleLineStyle */
@@ -168,7 +167,8 @@ enum ID_Type {
 #define ID_SCRN MAKE_ID2('S', 'N')
 #define ID_SCR_LEGACY MAKE_ID2('S', 'R')
 #define ID_WM_LEGACY MAKE_ID2('W', 'M')
-#define ID_PA MAKE_ID2('P', 'A') /* ParticleSettings — removed in Blended 0.4.0 */
+#define ID_PA MAKE_ID2('P', 'A')        /* ParticleSettings — removed in Blended 0.4.0 */
+#define ID_GD_LEGACY MAKE_ID2('G', 'D') /* bGPdata (legacy Grease Pencil) — removed in Blended 0.4.0 */
 
 /* NOTE: Fake IDs, needed for `g.sipo->blocktype` or outliner. */
 #define ID_SEQ MAKE_ID2('S', 'Q')
