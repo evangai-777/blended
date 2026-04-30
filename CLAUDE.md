@@ -258,54 +258,63 @@ makesrna (7 files):
 
 ---
 
-**ID_MB — 49 hits, 28 files**
+**ID_MB — 60 hits, 32 files**
 
 Core definition:
 - `makesdna/DNA_ID_enums.h:134` — enum entry `ID_MB = MAKE_ID2('M', 'B')`
 - `makesdna/DNA_meta_types.h:91` — `static constexpr ID_Type id_type = ID_MB`
-- `makesdna/DNA_object_types.h:736,743,759` — object type macros (shared with ID_CU_LEGACY)
+- `makesdna/DNA_object_types.h:735,742,756` — object type check macros (shared with ID_CU_LEGACY)
+- `makesdna/DNA_ID.h:1169,1196,1274` — `FILTER_ID_MB` define, `FILTER_ID_ALL` inclusion, `INDEX_ID_MB` enum entry
+- `blenkernel/BKE_idtype.hh:307` — `extern IDTypeInfo IDType_ID_MB`
 - `blenkernel/intern/idtype.cc:144` — `INIT_TYPE(ID_MB)`
-- `blenkernel/intern/main.cc:994` — `which_libbase` case
+- `blenkernel/intern/main.cc:149,991,1086` — `CASE_ID_INDEX(INDEX_ID_MB)`, `which_libbase` case, `lb[]` assignment
 
 blenkernel (5 files):
+- `mball.cc:139,141,143` — `IDTypeInfo IDType_ID_MB` definition + `.id_filter` + `.main_listbase_index`
 - `material.cc:425,453,486,519,542,847` — material slot handling (6 sites)
-- `object.cc:1934,1978,2230,4291` — object data dispatch (4 sites)
+- `object.cc:1933,1977,2225,4279` — object data dispatch (4 sites)
 - `object_dupli.cc:312` — dupli GS check
 - `lib_remap.cc:627` — library remapping
-- `mesh_convert.cc` — note: shared ELEM with CU_LEGACY at `transform_convert_object_texspace.cc:52`
 
 editors (10 files):
-- `interface_icons.cc:2069` — icon case
-- `interface_template_id.cc:583,859` — template checks
+- `interface_icons.cc:2066` — icon case
+- `interface_template_id.cc:583,854` — template checks
 - `object_data_transform.cc:442,612,736,810` — data transform dispatch (4 sites)
-- `transform_convert_object_texspace.cc:52` — `ELEM(GS(id->name), ID_ME, ID_CU_LEGACY, ID_MB)` (shared)
+- `transform_convert_object_texspace.cc:52` — `ELEM(GS(id->name), ID_ME, ID_CU_LEGACY, ID_MB)` (shared with CU_LEGACY)
 - `render_opengl.cc:610` — render switch
 - `outliner_select.cc:1289` — outliner select
 - `outliner_draw.cc:2485` — outliner draw
 - `outliner_intern.hh:141` — outliner macro
-- `outliner_tools.cc:137,293` — outliner tools
-- `tree_element_id.cc:50` — tree element
+- `outliner_tools.cc:136,287` — outliner tools
+- `tree_element_id.cc:49` — tree element
 
 draw (2 files):
 - `overlay_bounds.hh:188` — bounds overlay
 - `draw_resource.hh:157` — draw resource
 
 depsgraph (5 files):
-- `depsgraph_tag.cc:72,629` — tag dispatch (shared ELEM with CU_LEGACY/GD_LEGACY)
-- `deg_eval_copy_on_write.cc:563,944` — COW special cases
-- `deg_builder_relations.cc:575,2739` — relation builder
-- `deg_builder_nodes.cc:628,1790` — node builder
+- `depsgraph_tag.cc:72,618` — tag dispatch (line 72 shared ELEM with CU_LEGACY/GD_LEGACY; GD_LEGACY kept per session note)
+- `deg_eval_copy_on_write.cc:557,938` — COW special cases
+- `deg_builder_relations.cc:570,2716` — relation builder
+- `deg_builder_nodes.cc:624,1769` — node builder
 - `depsgraph_query_iter.cc:479` — dupli ob_data GS check
 
-makesrna (2 files):
-- `rna_ID.cc:53,424,522` — RNA enum entry and switch cases
-- `rna_main_api.cc:846` — `RNA_MAIN_ID_TAG_FUNCS_DEF(metaballs, metaballs, ID_MB)`
+makesrna (3 files):
+- `rna_ID.cc:53,150,398,485` — RNA enum entry, filter item, and switch cases (4 sites)
+- `rna_main_api.cc:794` — `RNA_MAIN_ID_TAG_FUNCS_DEF(metaballs, metaballs, ID_MB)`
+- `rna_space.cc:3954` — `FILTER_ID_MB` in asset browser geometry filter
 
 ---
 
 **ID_LS — ✓ COMPLETE (0.4.0)** *(true blast radius: ~50 files vs 28 literal hits — ANIMTYPE/ACF chain, anim filter function, DNA_action_types, node_texture_tree, view layer builder callers, space_node NC_LINESTYLE)*
 
 > **Session note (2026-04-30):** True blast radius significantly exceeded the literal grep. Key additional scope beyond the 28-file audit: (1) `ANIMTYPE_DSLINESTYLE` enum value in `ED_anim_api.hh` + 9 fallthrough `case ANIMTYPE_DSLINESTYLE:` sites across `anim_channels_edit.cc`, `anim_deps.cc`, `nla_buttons.cc`, `nla_draw.cc`, `nla_tracks.cc`, `transform_convert_action.cc`; (2) `ACF_DSLINESTYLE` animation channel block (3 functions + struct + `animchannelTypeInfo` entry) in `anim_channels_defines.cc`; (3) `animdata_filter_ds_linestyle` function + call site in `anim_filter.cc`; (4) `ADS_FILTER_NOLINESTYLE` bitmask in `DNA_action_types.h` + `show_linestyles` RNA prop in `rna_action.cc`; (5) `FILTER_LS_SCED` macro in `ED_anim_api.hh`; (6) `tree_element_id_linestyle.cc/.hh` deleted + CMakeLists.txt updated; (7) `NC_LINESTYLE` notifier cases in `space_node.cc` (2 sites, unguarded); (8) `node_texture_tree.cc` unguarded `SNODE_TEX_LINESTYLE` branch; (9) `deg_builder_nodes_view_layer.cc` + `deg_builder_relations_view_layer.cc` calls to `build_freestyle_linestyle`; (10) `build_freestyle_linestyle` implementations + declarations removed from both depsgraph builders. Scar 2 pattern: `bmain->linestyles` field and `which_libbase` routing kept; `rna_linestyle.cc` kept (FreestyleLineStyle struct still referenced by `FreestyleLineSet::linestyle` DNA field and iterated in `node.cc`). All WITH_FREESTYLE-guarded code left untouched.
+
+> **Review note (2026-04-30):** Two Codex bot review comments flagged issues with this chisel. Analysis:
+>
+> **Comment 1 — "Keep ID_LS registered while style creation still exists"** (flagged `INIT_TYPE(ID_LS)` removal): The bot is correct about the failure *mechanism* — `BKE_linestyle_new` calls `BKE_libblock_alloc(bmain, ID_LS, ...)`, which calls `BKE_libblock_get_alloc_info`, which calls `BKE_idtype_get_info_from_idcode(ID_LS)`. Without `INIT_TYPE`, that returns `nullptr`, size is 0, and `BLI_assert_msg(0, "Request to allocate unknown data type")` fires. **However**, the code path is dead with `WITH_FREESTYLE=OFF`. `freestyle_linestyle_new_exec` and `SCENE_OT_freestyle_linestyle_new` are inside the `#ifdef WITH_FREESTYLE` block in `render_shading.cc:1817` and `render_ops.cc:55`. The operator is never registered. `BKE_linestyle_new` is never called at runtime. This comment does not require action for the current build config.
+>
+> **Comment 2 — "Include linestyles in main list traversal"** (flagged `lb[INDEX_ID_LS]` removal): This is a real architectural asymmetry. The Scar 2 pattern was designed for `ID_SCR` and `ID_WM`, which are runtime-only objects — they are created fresh at app startup and are never populated by loading a `.blend` file in normal operation. Linestyle IDs are different: `which_libbase` still routes `ID_LS` to `bmain->linestyles` (deliberately kept), and blenloader's legacy read path is not guarded by `WITH_FREESTYLE`. Opening a legacy `.blend` file with Freestyle data in a `WITH_FREESTYLE=OFF` build will load `FreestyleLineStyle` ID blocks into `bmain->linestyles`. Because that listbase is not in `BKE_main_lists_get`, `BKE_main_free` will not free those IDs. They leak. **Accepted as a known artifact.** The project does not ship with Freestyle enabled, and there are no legacy Freestyle `.blend` fixtures in the CI test suite, so this does not affect CI or release builds. It is a latent memory leak for any user who opens a legacy file with Freestyle data — the blocks accumulate for the session and are freed when the process exits. If this ever becomes a problem, the correct fix is a blenloader post-read pass that immediately drains `bmain->linestyles` after any file load when `WITH_FREESTYLE=OFF`, not restoring the listbase to `BKE_main_lists_get`.
 
 Core definition:
 - `makesdna/DNA_ID_enums.h:156` — enum entry `ID_LS = MAKE_ID2('L', 'S')` — removed; deprecated `#define` added
@@ -477,7 +486,7 @@ Additional files NOT in the literal grep (discovered 2026-04-29):
 
 6. **`depsgraph.cc:160` had a `!= ID_PA` guard** in `clear_id_nodes_conditional` — resolved in 0.4.0. The two-pass teardown (scenes first, then everything-except-particles) ensured particle COW copies outlived the objects referencing them. With ID_PA gone, the guard was changed to `!= ID_SCE` (scenes already destroyed in pass 1 are caught by the `id_cow == nullptr` guard in pass 2).
 
-7. **Remaining chisel order (smallest blast radius first):** **ID_GD_LEGACY ✓** → **ID_LS ✓** → ID_MB (49) → ID_TE (58) → ID_CU_LEGACY (74) → ID_CF (last, design decision). ~180 hits across 3 types remaining. ID_PC (21) ✓ 0.4.0. ID_SPK (23) ✓ 0.4.0. ID_PA (35) ✓ 0.4.0. ID_GD_LEGACY (56) ✓ 0.4.0. ID_LS (~50) ✓ 0.4.0. ID_CF deferred — see note 8.
+7. **Remaining chisel order (smallest blast radius first):** **ID_GD_LEGACY ✓** → **ID_LS ✓** → ID_MB (60) → ID_TE (58) → ID_CU_LEGACY (74) → ID_CF (last, design decision). ~192 hits across 3 types remaining. ID_PC (21) ✓ 0.4.0. ID_SPK (23) ✓ 0.4.0. ID_PA (35) ✓ 0.4.0. ID_GD_LEGACY (56) ✓ 0.4.0. ID_LS (~50) ✓ 0.4.0. ID_CF deferred — see note 8.
 
 8. **ID_CF is architecturally entangled — do it last or separately.** The literal grep count (18) dramatically understates the true blast radius. `CacheFile` as a struct is woven into: the Alembic importer (`io/alembic/`), the USD importer (`io/usd/`), the Mesh Sequence Cache modifier (`MOD_meshsequencecache.cc`), the constraint system, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. The Mesh Sequence Cache modifier holds a `CacheFile *` ID pointer so multiple objects can share one cache reference — removing the ID type means deciding what replaces that pointer. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI builds, so breakage here will surface. **Revised chisel order: ID_MB → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision). ID_PC ✓ (0.4.0). ID_SPK ✓ (0.4.0). ID_PA ✓ (0.4.0). ID_GD_LEGACY ✓ (0.4.0). ID_LS ✓ (0.4.0).** The open question: does the cache-file reference mechanism get inlined into the modifier/constraint DNA per-instance, or does CacheFile stay as a non-ID struct in a non-indexed listbase (like ID_SCR_LEGACY/ID_WM_LEGACY pattern)? Answer this before chiseling ID_CF.
 
