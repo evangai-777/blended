@@ -649,6 +649,17 @@ grep -n "^void BKE_\|^bool BKE_\|^int BKE_" source/blender/windowmanager/intern/
 
 **Verified clean after 0.3.0:** Both files grep clean as of the PR #123 fix. No remaining duplicate definitions.
 
+**Mandatory after removing any ID type — sweep `idtype.cc` switch tables:**
+```bash
+# Both lookup functions must have no entry for the removed type:
+grep -n "CASE_IDINDEX(PC)\|CASE_IDINDEX(SPK)" source/blender/blenkernel/intern/idtype.cc
+# Replace PC/SPK with whichever two-letter code was just removed.
+# BKE_idtype_idcode_to_index() and BKE_idtype_idfilter_to_index() each have
+# their own CASE_IDINDEX block — the removed entry must be gone from BOTH.
+# MSVC C2051/C2065 is the error when you miss one; grep catches it before CI does.
+```
+This is not optional. The 0.3.0 chisel left `CASE_IDINDEX(SCR)` and `CASE_IDINDEX(WM)` behind — four lines, two sessions to find. The 0.4.0 chisel (ID_PC + ID_SPK) left the same four lines behind for the same reason. It will happen again unless it is checked explicitly after every removal.
+
 ---
 
 ### Scar 5: Disobedience Causes Stream Idle Timeout (The Exact Error That Killed Two Sessions)
