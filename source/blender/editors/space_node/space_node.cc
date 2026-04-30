@@ -834,11 +834,6 @@ static void node_area_listener(const wmSpaceTypeListenerParams *params)
       }
       break;
 
-    case NC_LINESTYLE:
-      if (ED_node_is_shader(snode) && shader_type == SNODE_SHADER_LINESTYLE) {
-        node_area_tag_tree_recalc(snode, area);
-      }
-      break;
     case NC_WM:
       if (wmn->data == ND_UNDO) {
         node_area_tag_tree_recalc(snode, area);
@@ -1390,7 +1385,6 @@ static void node_region_listener(const wmRegionListenerParams *params)
     case NC_MATERIAL:
     case NC_TEXTURE:
     case NC_WORLD:
-    case NC_LINESTYLE:
       ED_region_tag_redraw(region);
       break;
     case NC_OBJECT:

@@ -833,12 +833,6 @@ static bAnimListElem *make_new_animlistelem(
       key_data_from_adt(*ale, ntree->adt);
       break;
     }
-    case ANIMTYPE_DSLINESTYLE: {
-      FreestyleLineStyle *linestyle = static_cast<FreestyleLineStyle *>(data);
-      ale->flag = FILTER_LS_SCED(linestyle);
-      key_data_from_adt(*ale, linestyle->adt);
-      break;
-    }
     case ANIMTYPE_DSPART: {
       ParticleSettings *part = static_cast<ParticleSettings *>(ale->data);
       ale->flag = FILTER_PART_OBJD(part);
@@ -2537,68 +2531,6 @@ static size_t animdata_filter_ds_nodetree(bAnimContext *ac,
   return items;
 }
 
-static size_t animdata_filter_ds_linestyle(bAnimContext *ac,
-                                           ListBaseT<bAnimListElem> *anim_data,
-                                           Scene *sce,
-                                           eAnimFilter_Flags filter_mode)
-{
-  size_t items = 0;
-
-  for (ViewLayer &view_layer : sce->view_layers) {
-    for (FreestyleLineSet &lineset : view_layer.freestyle_config.linesets) {
-      if (lineset.linestyle) {
-        lineset.linestyle->id.tag |= ID_TAG_DOIT;
-      }
-    }
-  }
-
-  for (ViewLayer &view_layer : sce->view_layers) {
-    /* skip render layers without Freestyle enabled */
-    if ((view_layer.flag & VIEW_LAYER_FREESTYLE) == 0) {
-      continue;
-    }
-
-    /* loop over linesets defined in the render layer */
-    for (FreestyleLineSet &lineset : view_layer.freestyle_config.linesets) {
-      FreestyleLineStyle *linestyle = lineset.linestyle;
-      ListBaseT<bAnimListElem> tmp_data = {nullptr, nullptr};
-      size_t tmp_items = 0;
-
-      if ((linestyle == nullptr) || !(linestyle->id.tag & ID_TAG_DOIT)) {
-        continue;
-      }
-      linestyle->id.tag &= ~ID_TAG_DOIT;
-
-      /* add scene-level animation channels */
-      BEGIN_ANIMFILTER_SUBCHANNELS (FILTER_LS_SCED(linestyle)) {
-        /* animation data filtering */
-        tmp_items += animfilter_block_data(
-            ac, &tmp_data, reinterpret_cast<ID *>(linestyle), filter_mode);
-      }
-      END_ANIMFILTER_SUBCHANNELS;
-
-      /* did we find anything? */
-      if (tmp_items) {
-        /* include anim-expand widget first */
-        if (filter_mode & ANIMFILTER_LIST_CHANNELS) {
-          /* check if filtering by active status */
-          if (ANIMCHANNEL_ACTIVEOK(linestyle)) {
-            ANIMCHANNEL_NEW_CHANNEL(ac->bmain, linestyle, ANIMTYPE_DSLINESTYLE, sce, nullptr);
-          }
-        }
-
-        /* now add the list of collected channels */
-        BLI_movelisttolist(anim_data, &tmp_data);
-        BLI_assert(BLI_listbase_is_empty(&tmp_data));
-        items += tmp_items;
-      }
-    }
-  }
-
-  /* return the number of items added to the list */
-  return items;
-}
-
 static size_t animdata_filter_ds_texture(bAnimContext *ac,
                                          ListBaseT<bAnimListElem> *anim_data,
                                          Tex *tex,
@@ -3449,11 +3381,6 @@ static size_t animdata_filter_dopesheet_scene(bAnimContext *ac,
         tmp_items += animdata_filter_ds_nodetree(
             ac, &tmp_data, &sce->id, reinterpret_cast<bNodeTree *>(node_tree), filter_mode);
       }
-    }
-
-    /* line styles */
-    if ((ac->filters.flag & ADS_FILTER_NOLINESTYLE) == 0) {
-      tmp_items += animdata_filter_ds_linestyle(ac, &tmp_data, sce, filter_mode);
     }
 
     /* TODO: one day, when sequencer becomes its own datatype,

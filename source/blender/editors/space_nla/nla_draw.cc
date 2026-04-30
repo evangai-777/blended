@@ -937,7 +937,6 @@ void draw_nla_main_data(bAnimContext *ac, SpaceNla *snla, ARegion *region)
         case ANIMTYPE_DSMESH:
         case ANIMTYPE_DSTEX:
         case ANIMTYPE_DSLAT:
-        case ANIMTYPE_DSLINESTYLE:
         case ANIMTYPE_DSGPENCIL:
         case ANIMTYPE_DSMCLIP:
         case ANIMTYPE_DSHAIR:

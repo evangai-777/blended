@@ -2059,8 +2059,6 @@ int icon_from_idcode(const int idcode)
       return ICON_IMAGE_DATA;
     case ID_LA:
       return ICON_LIGHT_DATA;
-    case ID_LS:
-      return ICON_LINE_DATA;
     case ID_LT:
       return ICON_LATTICE_DATA;
     case ID_MA:

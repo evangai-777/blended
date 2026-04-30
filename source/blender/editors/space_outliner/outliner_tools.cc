@@ -17,7 +17,6 @@
 #include "DNA_curves_types.h"
 #include "DNA_gpencil_legacy_types.h"
 #include "DNA_light_types.h"
-#include "DNA_linestyle_types.h"
 #include "DNA_material_types.h"
 #include "DNA_mesh_types.h"
 #include "DNA_meta_types.h"
@@ -148,7 +147,6 @@ static void get_element_operation_type(
       case ID_AC:
       case ID_TXT:
       case ID_GR:
-      case ID_LS:
       case ID_LI:
       case ID_VF:
       case ID_NT:
@@ -327,40 +325,14 @@ static void unlink_material_fn(bContext * /*C*/,
 static void unlink_texture_fn(bContext * /*C*/,
                               ReportList *reports,
                               Scene * /*scene*/,
-                              TreeElement *te,
-                              TreeStoreElem *tsep,
+                              TreeElement * /*te*/,
+                              TreeStoreElem * /*tsep*/,
                               TreeStoreElem *tselem)
 {
-  if (!tsep || !TSE_IS_REAL_ID(tsep)) {
-    /* Valid case, no parent element of the texture or it is not an ID (could be a #TSE_ID_BASE
-     * for example) so there's no data to unlink from. */
-    BKE_reportf(reports,
-                RPT_WARNING,
-                "Cannot unlink texture '%s'. It's not clear which Freestyle line style it should "
-                "be unlinked from, there's no Freestyle line style as parent in the Outliner tree",
-                tselem->id->name + 2);
-    return;
-  }
-
-  MTex **mtex = nullptr;
-  int a;
-
-  if (GS(tsep->id->name) == ID_LS) {
-    FreestyleLineStyle *ls = id_cast<FreestyleLineStyle *>(tsep->id);
-    mtex = ls->mtex;
-  }
-  else {
-    return;
-  }
-
-  for (a = 0; a < MAX_MTEX; a++) {
-    if (a == te->index && mtex[a]) {
-      if (mtex[a]->tex) {
-        id_us_min(&mtex[a]->tex->id);
-        mtex[a]->tex = nullptr;
-      }
-    }
-  }
+  BKE_reportf(reports,
+              RPT_WARNING,
+              "Cannot unlink texture '%s': texture unlinking is not supported",
+              tselem->id->name + 2);
 }
 
 static void unlink_collection_fn(bContext *C,

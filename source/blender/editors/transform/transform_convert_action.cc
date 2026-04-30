@@ -742,7 +742,6 @@ static void createTransActionData(bContext *C, TransInfo *t)
       case ANIMTYPE_DSMESH:
       case ANIMTYPE_DSTEX:
       case ANIMTYPE_DSLAT:
-      case ANIMTYPE_DSLINESTYLE:
       case ANIMTYPE_DSGPENCIL:
       case ANIMTYPE_DSMCLIP:
       case ANIMTYPE_DSHAIR:

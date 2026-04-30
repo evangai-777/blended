@@ -19,7 +19,7 @@
 
 #include "DNA_ID.h"
 #include "DNA_brush_types.h"
-#include "DNA_linestyle_types.h"
+
 #include "DNA_modifier_types.h"
 #include "DNA_node_types.h"
 #include "DNA_object_force_types.h"
@@ -33,7 +33,6 @@
 #include "BKE_context.hh"
 #include "BKE_layer.hh"
 #include "BKE_lib_id.hh"
-#include "BKE_linestyle.h"
 #include "BKE_modifier.hh"
 #include "BKE_node_legacy_types.hh"
 #include "BKE_node_runtime.hh"
@@ -247,7 +246,6 @@ static void buttons_texture_users_from_context(ListBaseT<ButsTextureUser> *users
 {
   Scene *scene = nullptr;
   Object *ob = nullptr;
-  FreestyleLineStyle *linestyle = nullptr;
   Brush *brush = nullptr;
   ID *pinid = sbuts->pinid;
   bool limited_mode = (sbuts->flag & SB_TEX_USER_LIMITED) != 0;
@@ -263,9 +261,6 @@ static void buttons_texture_users_from_context(ListBaseT<ButsTextureUser> *users
     else if (GS(pinid->name) == ID_BR) {
       brush = reinterpret_cast<Brush *>(pinid);
     }
-    else if (GS(pinid->name) == ID_LS) {
-      linestyle = id_cast<FreestyleLineStyle *>(pinid);
-    }
   }
 
   if (!scene) {
@@ -280,7 +275,6 @@ static void buttons_texture_users_from_context(ListBaseT<ButsTextureUser> *users
                                                     BKE_view_layer_default_view(scene);
 
     brush = BKE_paint_brush(BKE_paint_get_active_from_context(C));
-    linestyle = BKE_linestyle_active_from_view_layer(view_layer);
     BKE_view_layer_synced_ensure(*bmain, scene, view_layer);
     ob = BKE_view_layer_active_object_get(view_layer);
   }
@@ -291,16 +285,6 @@ static void buttons_texture_users_from_context(ListBaseT<ButsTextureUser> *users
   if (scene && scene->compositing_node_group) {
     buttons_texture_users_find_nodetree(
         users, &scene->id, scene->compositing_node_group, N_("Compositor"));
-  }
-
-  if (linestyle && !limited_mode) {
-    for (int i = 0; i < MAX_MTEX; i++) {
-      if (linestyle->mtex[i] && linestyle->mtex[i]->tex) {
-        buttons_texture_user_mtex_add(users, &linestyle->id, linestyle->mtex[i], N_("Line Style"));
-      }
-    }
-    buttons_texture_users_find_nodetree(
-        users, &linestyle->id, linestyle->nodetree, N_("Line Style"));
   }
 
   if (ob) {

@@ -2550,8 +2550,6 @@ static BIFIconID tree_element_get_icon_from_id(const ID *id)
       else {
         return ICON_LIBRARY_DATA_DIRECT;
       }
-    case ID_LS:
-      return ICON_LINE_DATA;
     case ID_GP:
       return ICON_OUTLINER_DATA_GREASEPENCIL;
     case ID_LP: {

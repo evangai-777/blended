@@ -295,7 +295,7 @@ void ANIM_set_active_channel(bAnimContext *ac,
       case ANIMTYPE_DSMESH:
       case ANIMTYPE_DSTEX:
       case ANIMTYPE_DSLAT:
-      case ANIMTYPE_DSLINESTYLE:
+
       case ANIMTYPE_DSGPENCIL:
       case ANIMTYPE_DSMCLIP:
       case ANIMTYPE_DSHAIR:
@@ -375,7 +375,7 @@ void ANIM_set_active_channel(bAnimContext *ac,
       case ANIMTYPE_DSARM:
       case ANIMTYPE_DSMESH:
       case ANIMTYPE_DSLAT:
-      case ANIMTYPE_DSLINESTYLE:
+
       case ANIMTYPE_DSNTREE:
       case ANIMTYPE_DSTEX:
       case ANIMTYPE_DSGPENCIL:
@@ -431,7 +431,6 @@ bool ANIM_is_active_channel(bAnimListElem *ale)
     case ANIMTYPE_DSNTREE:
     case ANIMTYPE_DSTEX:
     case ANIMTYPE_DSLAT:
-    case ANIMTYPE_DSLINESTYLE:
     case ANIMTYPE_DSGPENCIL:
     case ANIMTYPE_DSMCLIP:
     case ANIMTYPE_DSHAIR:
@@ -592,7 +591,7 @@ static eAnimChannels_SetFlag anim_channels_selection_flag_for_toggle(
       case ANIMTYPE_DSNTREE:
       case ANIMTYPE_DSTEX:
       case ANIMTYPE_DSLAT:
-      case ANIMTYPE_DSLINESTYLE:
+
       case ANIMTYPE_DSGPENCIL:
       case ANIMTYPE_DSMCLIP:
       case ANIMTYPE_DSHAIR:
@@ -762,7 +761,7 @@ static void anim_channels_select_set(bAnimContext *ac,
       case ANIMTYPE_DSNTREE:
       case ANIMTYPE_DSTEX:
       case ANIMTYPE_DSLAT:
-      case ANIMTYPE_DSLINESTYLE:
+
       case ANIMTYPE_DSGPENCIL:
       case ANIMTYPE_DSMCLIP:
       case ANIMTYPE_DSHAIR:
@@ -2656,7 +2655,7 @@ static bool animchannels_delete_containers(const bContext *C, bAnimContext *ac)
       case ANIMTYPE_DSMESH:
       case ANIMTYPE_DSTEX:
       case ANIMTYPE_DSLAT:
-      case ANIMTYPE_DSLINESTYLE:
+
       case ANIMTYPE_DSGPENCIL:
       case ANIMTYPE_DSMCLIP:
       case ANIMTYPE_DSHAIR:
@@ -2835,7 +2834,7 @@ static wmOperatorStatus animchannels_delete_exec(bContext *C, wmOperator * /*op*
       case ANIMTYPE_DSMESH:
       case ANIMTYPE_DSTEX:
       case ANIMTYPE_DSLAT:
-      case ANIMTYPE_DSLINESTYLE:
+
       case ANIMTYPE_DSGPENCIL:
       case ANIMTYPE_DSMCLIP:
       case ANIMTYPE_DSHAIR:
@@ -3664,7 +3663,7 @@ static void box_select_anim_channels(bAnimContext *ac, const rcti &rect, short s
         case ANIMTYPE_DSMESH:
         case ANIMTYPE_DSTEX:
         case ANIMTYPE_DSLAT:
-        case ANIMTYPE_DSLINESTYLE:
+  
         case ANIMTYPE_DSGPENCIL:
         case ANIMTYPE_DSMCLIP:
         case ANIMTYPE_DSHAIR:
@@ -4538,7 +4537,6 @@ static int mouse_anim_channels(bContext *C,
     case ANIMTYPE_DSNTREE:
     case ANIMTYPE_DSTEX:
     case ANIMTYPE_DSLAT:
-    case ANIMTYPE_DSLINESTYLE:
     case ANIMTYPE_DSGPENCIL:
     case ANIMTYPE_DSMCLIP:
     case ANIMTYPE_DSHAIR:

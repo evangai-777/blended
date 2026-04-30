@@ -20,7 +20,6 @@
 
 #include "DNA_armature_types.h"
 #include "DNA_collection_types.h"
-#include "DNA_linestyle_types.h"
 #include "DNA_material_types.h"
 #include "DNA_node_types.h"
 #include "DNA_scene_types.h"
@@ -31,7 +30,6 @@
 #include "BKE_action.hh"
 #include "BKE_context.hh"
 #include "BKE_layer.hh"
-#include "BKE_linestyle.h"
 #include "BKE_material.hh"
 #include "BKE_modifier.hh"
 #include "BKE_object.hh"
@@ -180,29 +178,6 @@ static bool buttons_context_path_collection(const bContext *C,
   }
 
   /* no path to a collection possible */
-  return false;
-}
-
-static bool buttons_context_path_linestyle(ButsContextPath *path, wmWindow *window)
-{
-  PointerRNA *ptr = &path->ptr[path->len - 1];
-
-  /* if we already have a (pinned) linestyle, we're done */
-  if (RNA_struct_is_a(ptr->type, RNA_FreestyleLineStyle)) {
-    return true;
-  }
-  /* if we have a view layer, use the lineset's linestyle */
-  if (buttons_context_path_view_layer(path, window)) {
-    ViewLayer *view_layer = static_cast<ViewLayer *>(path->ptr[path->len - 1].data);
-    FreestyleLineStyle *linestyle = BKE_linestyle_active_from_view_layer(view_layer);
-    if (linestyle) {
-      path->ptr[path->len] = RNA_id_pointer_create(&linestyle->id);
-      path->len++;
-      return true;
-    }
-  }
-
-  /* no path to a linestyle possible */
   return false;
 }
 
@@ -514,9 +489,6 @@ static bool buttons_context_path_texture(const bContext *C,
     else if (GS(id->name) == ID_OB) {
       buttons_context_path_object(path);
     }
-    else if (GS(id->name) == ID_LS) {
-      buttons_context_path_linestyle(path, CTX_wm_window(C));
-    }
   }
 
   if (ct->texture) {
@@ -566,30 +538,6 @@ static bool buttons_context_path_strip_modifier(Scene *sequencer_scene, ButsCont
 
   return false;
 }
-
-#ifdef WITH_FREESTYLE
-static bool buttons_context_linestyle_pinnable(const bContext *C, ViewLayer *view_layer)
-{
-  wmWindow *window = CTX_wm_window(C);
-  Scene *scene = WM_window_get_active_scene(window);
-
-  /* if Freestyle is disabled in the scene */
-  if ((scene->r.mode & R_EDGE_FRS) == 0) {
-    return false;
-  }
-  /* if Freestyle is not in the Parameter Editor mode */
-  FreestyleConfig *config = &view_layer->freestyle_config;
-  if (config->mode != FREESTYLE_CONTROL_EDITOR_MODE) {
-    return false;
-  }
-  /* if the scene has already been pinned */
-  SpaceProperties *sbuts = CTX_wm_space_properties(C);
-  if (sbuts->pinid && sbuts->pinid == &scene->id) {
-    return false;
-  }
-  return true;
-}
-#endif
 
 static bool buttons_context_path(
     const bContext *C, SpaceProperties *sbuts, ButsContextPath *path, int mainb, int flag)
@@ -650,14 +598,6 @@ static bool buttons_context_path(
       found = buttons_context_path_scene(path);
       break;
     case BCONTEXT_VIEW_LAYER:
-#ifdef WITH_FREESTYLE
-      if (buttons_context_linestyle_pinnable(C, view_layer)) {
-        found = buttons_context_path_linestyle(path, window);
-        if (found) {
-          break;
-        }
-      }
-#endif
       found = buttons_context_path_view_layer(path, window);
       break;
     case BCONTEXT_WORLD:
@@ -1109,14 +1049,6 @@ int /*eContextResult*/ buttons_context(const bContext *C,
     else if (ct) {
       return CTX_RESULT_MEMBER_NOT_FOUND; /* new shading system */
     }
-    else if ((ptr = get_pointer_type(path, RNA_FreestyleLineStyle))) {
-      FreestyleLineStyle *ls = static_cast<FreestyleLineStyle *>(ptr->data);
-
-      if (ls) {
-        CTX_data_pointer_set(result, &ls->id, RNA_LineStyleTextureSlot, ls->mtex[int(ls->texact)]);
-      }
-    }
-
     return CTX_RESULT_OK;
   }
   if (CTX_data_equals(member, "bone")) {
@@ -1224,10 +1156,6 @@ int /*eContextResult*/ buttons_context(const bContext *C,
       return CTX_RESULT_OK;
     }
     return CTX_RESULT_NO_DATA;
-  }
-  if (CTX_data_equals(member, "line_style")) {
-    set_pointer_type(path, result, RNA_FreestyleLineStyle);
-    return CTX_RESULT_OK;
   }
   if (CTX_data_equals(member, "gpencil")) {
     set_pointer_type(path, result, RNA_Annotation);
