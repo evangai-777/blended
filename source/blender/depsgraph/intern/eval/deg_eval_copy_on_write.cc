@@ -50,7 +50,6 @@
 #  include "DNA_key_types.h"
 #  include "DNA_lattice_types.h"
 #  include "DNA_light_types.h"
-#  include "DNA_linestyle_types.h"
 #  include "DNA_material_types.h"
 #  include "DNA_meta_types.h"
 #  include "DNA_node_types.h"
@@ -87,7 +86,6 @@ namespace {
 
 #ifdef NESTED_ID_NASTY_WORKAROUND
 constexpr size_t NestedIDHackTempStorage = std::max({sizeof(Curve),
-                                                     sizeof(FreestyleLineStyle),
                                                      sizeof(Light),
                                                      sizeof(Lattice),
                                                      sizeof(Material),
@@ -106,7 +104,6 @@ void nested_id_hack_discard_pointers(ID *id_cow)
       break; \
     }
 
-    SPECIAL_CASE(ID_LS, FreestyleLineStyle, nodetree)
     SPECIAL_CASE(ID_LA, Light, nodetree)
     SPECIAL_CASE(ID_MA, Material, nodetree)
     SPECIAL_CASE(ID_TE, Tex, nodetree)
@@ -152,7 +149,6 @@ const ID *nested_id_hack_get_discarded_pointers(void *storage, const ID *id)
       return &data->id; \
     }
 
-    SPECIAL_CASE(ID_LS, FreestyleLineStyle, nodetree, linestyle)
     SPECIAL_CASE(ID_LA, Light, nodetree, lamp)
     SPECIAL_CASE(ID_MA, Material, nodetree, material)
     SPECIAL_CASE(ID_TE, Tex, nodetree, tex)
@@ -191,7 +187,6 @@ void nested_id_hack_restore_pointers(const ID *old_id, ID *new_id)
       break; \
     }
 
-    SPECIAL_CASE(ID_LS, FreestyleLineStyle, nodetree)
     SPECIAL_CASE(ID_LA, Light, nodetree)
     SPECIAL_CASE(ID_MA, Material, nodetree)
     SPECIAL_CASE(ID_TE, Tex, nodetree)
@@ -227,7 +222,6 @@ void ntree_hack_remap_pointers(const Depsgraph *depsgraph, ID *id_cow)
       break; \
     }
 
-    SPECIAL_CASE(ID_LS, FreestyleLineStyle, nodetree, bNodeTree)
     SPECIAL_CASE(ID_LA, Light, nodetree, bNodeTree)
     SPECIAL_CASE(ID_MA, Material, nodetree, bNodeTree)
     SPECIAL_CASE(ID_TE, Tex, nodetree, bNodeTree)

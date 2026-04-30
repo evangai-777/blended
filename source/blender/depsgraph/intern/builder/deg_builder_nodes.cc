@@ -32,7 +32,7 @@
 #include "DNA_key_types.h"
 #include "DNA_light_types.h"
 #include "DNA_lightprobe_types.h"
-#include "DNA_linestyle_types.h"
+
 #include "DNA_mask_types.h"
 #include "DNA_material_types.h"
 #include "DNA_mesh_types.h"
@@ -616,9 +616,6 @@ void DepsgraphNodeBuilder::build_id(ID *id, const bool force_be_visible)
       break;
     case ID_MSK:
       build_mask(id_cast<Mask *>(id));
-      break;
-    case ID_LS:
-      build_freestyle_linestyle(id_cast<FreestyleLineStyle *>(id));
       break;
     case ID_MC:
       build_movieclip(id_cast<MovieClip *>(id));
@@ -2220,20 +2217,6 @@ void DepsgraphNodeBuilder::build_mask(Mask *mask)
       }
     }
   }
-}
-
-void DepsgraphNodeBuilder::build_freestyle_linestyle(FreestyleLineStyle *linestyle)
-{
-  if (built_map_.check_is_built_and_tag(linestyle)) {
-    return;
-  }
-
-  ID *linestyle_id = &linestyle->id;
-  build_parameters(linestyle_id);
-  build_idproperties(linestyle->id.properties);
-  build_idproperties(linestyle->id.system_properties);
-  build_animdata(linestyle_id);
-  build_nodetree(linestyle->nodetree);
 }
 
 void DepsgraphNodeBuilder::build_movieclip(MovieClip *clip)

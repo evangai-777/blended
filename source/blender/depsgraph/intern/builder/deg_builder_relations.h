@@ -38,7 +38,6 @@ struct Collection;
 struct EffectorWeights;
 struct FCurve;
 struct FreestyleLineSet;
-struct FreestyleLineStyle;
 struct ID;
 struct IDProperty;
 struct Image;
@@ -247,7 +246,6 @@ class DepsgraphRelationBuilder : public DepsgraphBuilder {
   virtual void build_material(Material *ma, ID *owner = nullptr);
   virtual void build_materials(ID *owner, Material **materials, int num_materials);
   virtual void build_freestyle_lineset(FreestyleLineSet *fls);
-  virtual void build_freestyle_linestyle(FreestyleLineStyle *linestyle);
   virtual void build_texture(Tex *tex);
   virtual void build_image(Image *image);
   virtual void build_cachefile(CacheFile *cache_file);
