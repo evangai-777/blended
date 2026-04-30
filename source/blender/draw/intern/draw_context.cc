@@ -1163,8 +1163,7 @@ static bool gpencil_object_is_excluded(View3D *v3d)
 
 static bool gpencil_any_exists(Depsgraph *depsgraph)
 {
-  return (DEG_id_type_any_exists(depsgraph, ID_GD_LEGACY) ||
-          DEG_id_type_any_exists(depsgraph, ID_GP));
+  return DEG_id_type_any_exists(depsgraph, ID_GP);
 }
 
 /* -------------------------------------------------------------------- */
