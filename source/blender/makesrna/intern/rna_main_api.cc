@@ -53,7 +53,6 @@
 #  include "BKE_pointcloud.hh"
 #  include "BKE_scene.hh"
 #  include "BKE_sound.hh"
-#  include "BKE_speaker.hh"
 #  include "BKE_text.h"
 #  include "BKE_texture.h"
 #  include "BKE_vfont.hh"
