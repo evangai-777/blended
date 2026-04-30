@@ -859,8 +859,6 @@ static StringRef template_id_browse_tip(const StructRNA *type)
         return N_("Browse Texture to be linked");
       case ID_IM:
         return N_("Browse Image to be linked");
-      case ID_LS:
-        return N_("Browse Line Style Data to be linked");
       case ID_LT:
         return N_("Browse Lattice Data to be linked");
       case ID_LA:
@@ -971,7 +969,6 @@ static Button *template_id_def_new_but(Block *block,
                             BLT_I18NCONTEXT_ID_CAMERA,
                             BLT_I18NCONTEXT_ID_CURVES,
                             BLT_I18NCONTEXT_ID_CURVE_LEGACY,
-                            BLT_I18NCONTEXT_ID_FREESTYLELINESTYLE,
                             BLT_I18NCONTEXT_ID_GPENCIL,
                             BLT_I18NCONTEXT_ID_IMAGE,
                             BLT_I18NCONTEXT_ID_LATTICE,

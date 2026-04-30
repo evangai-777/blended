@@ -5150,8 +5150,6 @@ bNodeTree **node_tree_ptr_from_id(ID *id)
     case ID_SCE:
       /* Needed for backward compatibility. */
       return &reinterpret_cast<Scene *>(id)->nodetree;
-    case ID_LS:
-      return &reinterpret_cast<FreestyleLineStyle *>(id)->nodetree;
     default:
       return nullptr;
   }

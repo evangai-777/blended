@@ -18,7 +18,6 @@
 
 #include "BKE_context.hh"
 #include "BKE_layer.hh"
-#include "BKE_linestyle.h"
 #include "BKE_node.hh"
 #include "BKE_node_runtime.hh"
 #include "BKE_paint.hh"
@@ -69,17 +68,7 @@ static void texture_get_from_context(const bContext *C,
       }
     }
   }
-  else if (snode->texfrom == SNODE_TEX_LINESTYLE) {
-    FreestyleLineStyle *linestyle = BKE_linestyle_active_from_view_layer(view_layer);
-    if (linestyle) {
-      *r_from = id_cast<ID *>(linestyle);
-      tx = give_current_linestyle_texture(linestyle);
-      if (tx) {
-        *r_id = &tx->id;
-        *r_ntree = tx->nodetree;
-      }
-    }
-  }
+}
 }
 
 static void foreach_nodeclass(void *calldata, bke::bNodeClassCallback func)

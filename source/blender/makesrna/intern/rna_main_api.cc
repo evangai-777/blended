@@ -704,18 +704,6 @@ static Mask *rna_Main_mask_new(Main *bmain, const char *name)
   return mask;
 }
 
-static FreestyleLineStyle *rna_Main_linestyles_new(Main *bmain, const char *name)
-{
-  char safe_name[MAX_ID_NAME - 2];
-  rna_idname_validate(name, safe_name);
-
-  FreestyleLineStyle *linestyle = BKE_linestyle_new(bmain, safe_name);
-  id_us_min(&linestyle->id);
-
-  WM_main_add_notifier(NC_ID | NA_ADDED, nullptr);
-
-  return linestyle;
-}
 
 static LightProbe *rna_Main_lightprobe_new(Main *bmain, const char *name, int type)
 {
@@ -819,7 +807,7 @@ RNA_MAIN_ID_TAG_FUNCS_DEF(palettes, palettes, ID_PAL)
 RNA_MAIN_ID_TAG_FUNCS_DEF(grease_pencils, grease_pencils, ID_GP)
 RNA_MAIN_ID_TAG_FUNCS_DEF(movieclips, movieclips, ID_MC)
 RNA_MAIN_ID_TAG_FUNCS_DEF(masks, masks, ID_MSK)
-RNA_MAIN_ID_TAG_FUNCS_DEF(linestyle, linestyles, ID_LS)
+
 RNA_MAIN_ID_TAG_FUNCS_DEF(cachefiles, cachefiles, ID_CF)
 RNA_MAIN_ID_TAG_FUNCS_DEF(lightprobes, lightprobes, ID_LP)
 RNA_MAIN_ID_TAG_FUNCS_DEF(hair_curves, hair_curves, ID_CV)
@@ -2041,46 +2029,6 @@ void RNA_def_main_masks(BlenderRNA *brna, PropertyRNA *cprop)
       func, "do_id_user", true, "", "Decrement user counter of all data-blocks used by this mask");
   RNA_def_boolean(
       func, "do_ui_user", true, "", "Make sure interface does not reference this mask");
-}
-
-void RNA_def_main_linestyles(BlenderRNA *brna, PropertyRNA *cprop)
-{
-  StructRNA *srna;
-  FunctionRNA *func;
-  PropertyRNA *parm;
-
-  RNA_def_property_srna(cprop, "BlendDataLineStyles");
-  srna = RNA_def_struct(brna, "BlendDataLineStyles", nullptr);
-  RNA_def_struct_sdna(srna, "Main");
-  RNA_def_struct_ui_text(srna, "Main Line Styles", "Collection of line styles");
-
-  func = RNA_def_function(srna, "tag", "rna_Main_linestyle_tag");
-  parm = RNA_def_boolean(func, "value", false, "Value", "");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-
-  func = RNA_def_function(srna, "new", "rna_Main_linestyles_new");
-  RNA_def_function_ui_description(func, "Add a new line style instance to the main database");
-  parm = RNA_def_string(func, "name", "FreestyleLineStyle", 0, "", "New name for the data-block");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-  /* return type */
-  parm = RNA_def_pointer(func, "linestyle", "FreestyleLineStyle", "", "New line style data-block");
-  RNA_def_function_return(func, parm);
-
-  func = RNA_def_function(srna, "remove", "rna_Main_ID_remove");
-  RNA_def_function_flag(func, FUNC_USE_REPORTS);
-  RNA_def_function_ui_description(func, "Remove a line style instance from the current blendfile");
-  parm = RNA_def_pointer(func, "linestyle", "FreestyleLineStyle", "", "Line style to remove");
-  RNA_def_parameter_flags(parm, PROP_NEVER_NULL, PARM_REQUIRED | PARM_RNAPTR);
-  RNA_def_parameter_clear_flags(parm, PROP_THICK_WRAP, ParameterFlag(0));
-  RNA_def_boolean(
-      func, "do_unlink", true, "", "Unlink all usages of this line style before deleting it");
-  RNA_def_boolean(func,
-                  "do_id_user",
-                  true,
-                  "",
-                  "Decrement user counter of all data-blocks used by this line style");
-  RNA_def_boolean(
-      func, "do_ui_user", true, "", "Make sure interface does not reference this line style");
 }
 
 void RNA_def_main_lightprobes(BlenderRNA *brna, PropertyRNA *cprop)

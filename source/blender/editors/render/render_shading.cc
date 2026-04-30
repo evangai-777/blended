@@ -3041,15 +3041,6 @@ static void copy_mtex_copybuf(ID *id)
 {
   MTex **mtex = nullptr;
 
-  switch (GS(id->name)) {
-    case ID_LS:
-      mtex = &((id_cast<FreestyleLineStyle *>(id))
-                   ->mtex[int((id_cast<FreestyleLineStyle *>(id))->texact)]);
-      break;
-    default:
-      break;
-  }
-
   if (mtex && *mtex) {
     mtexcopybuf = dna::shallow_copy(**mtex);
     mtexcopied = 1;
@@ -3065,16 +3056,6 @@ static void paste_mtex_copybuf(ID *id)
 
   if (mtexcopied == 0 || mtexcopybuf.tex == nullptr) {
     return;
-  }
-
-  switch (GS(id->name)) {
-    case ID_LS:
-      mtex = &((id_cast<FreestyleLineStyle *>(id))
-                   ->mtex[int((id_cast<FreestyleLineStyle *>(id))->texact)]);
-      break;
-    default:
-      BLI_assert_msg(0, "invalid id type");
-      return;
   }
 
   if (mtex) {
@@ -3167,9 +3148,6 @@ static wmOperatorStatus paste_mtex_exec(bContext *C, wmOperator * /*op*/)
     World *wo = static_cast<World *>(CTX_data_pointer_get_type(C, "world", RNA_World).data);
     ParticleSystem *psys = static_cast<ParticleSystem *>(
         CTX_data_pointer_get_type(C, "particle_system", RNA_ParticleSystem).data);
-    FreestyleLineStyle *linestyle = static_cast<FreestyleLineStyle *>(
-        CTX_data_pointer_get_type(C, "line_style", RNA_FreestyleLineStyle).data);
-
     if (ma) {
       id = &ma->id;
     }
@@ -3181,9 +3159,6 @@ static wmOperatorStatus paste_mtex_exec(bContext *C, wmOperator * /*op*/)
     }
     else if (psys) {
       id = &psys->part->id;
-    }
-    else if (linestyle) {
-      id = &linestyle->id;
     }
 
     if (id == nullptr) {

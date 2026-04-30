@@ -57,12 +57,12 @@ carries a one-liner status per active item.
 ## Unreleased — 0.4.0
 
 Bucket 5 + 6 fossil removals. 9 ID types, 357 hits, same chisel pattern as 0.3.0.
-Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEGACY ✓** → ID_LS → ID_MB → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision — see CLAUDE.md Key note 8).
+Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEGACY ✓** → **ID_LS ✓** → ID_MB → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision — see CLAUDE.md Key note 8).
 *(Order corrected in PR #126 fix — initial commit had ID_CF first, contradicting CLAUDE.md Key note 8. Scar 7.)*
 
 **Key notes:**
 - `ID_CU_LEGACY` and `ID_GD_LEGACY` have active migration paths — only the type *registration* goes, not the converters.
-- `ID_LS` is already guarded by `#ifdef WITH_FREESTYLE` (`WITH_FREESTYLE=OFF` in `blended_release.cmake`).
+- ~~`ID_LS` is already guarded by `#ifdef WITH_FREESTYLE`~~ — verified false for core registration files; `linestyle.cc` and render_shading.cc ID_LS cases are outside the guard. Full removal required.
 - `brush_test.cc` uses `ID_TE` in test fixtures — those tests get deleted with the type. (ID_PC fixtures rewritten in 0.4.0.)
 - ~~`depsgraph.cc:160` has a `!= ID_PA` guard~~ — resolved in ID_PA chisel; guard changed to `!= ID_SCE`.
 
@@ -113,17 +113,17 @@ Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEG
 | `draw` | `draw_context.cc` (gpencil_any_exists simplified to ID_GP only) | ✓ |
 | `depsgraph` | `depsgraph_tag.cc`, `deg_builder_nodes.cc`, `deg_builder_relations.cc` — **ALL KEPT** (OB_GPENCIL_LEGACY objects still exist at runtime; geometry node building and relations for bGPdata must survive) | ✓ |
 
-### ID_LS — FreestyleLineStyle
+### ID_LS — FreestyleLineStyle ✓ complete
 
 | Layer | Files touched | Status |
 |-------|--------------|--------|
-| `makesdna` | `DNA_ID_enums.h`, `DNA_linestyle_types.h` (id_type constexpr) | ☐ |
-| `blenkernel` | `idtype.cc`, `main.cc`, `node.cc`, `texture.cc`, `linestyle.cc` | ☐ |
-| `blenloader` | `versioning_500.cc`, `versioning_450.cc` | ☐ |
-| `makesrna` | `rna_ID.cc`, `rna_texture.cc`, `rna_color.cc`, `rna_main_api.cc` | ☐ |
-| `editors` | `buttons_texture.cc`, `buttons_context.cc`, `interface_icons.cc`, `interface_template_id.cc`, `interface_template_preview.cc`, `render_shading.cc`, `render_opengl.cc`, `outliner_draw.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc` | ☐ |
-| `nodes` | `shader_nodes_inline.cc` | ☐ |
-| `depsgraph` | `deg_eval_copy_on_write.cc`, `deg_builder_relations.cc`, `deg_builder_nodes.cc` | ☐ |
+| `makesdna` | `DNA_ID_enums.h` (enum → deprecated `#define`), `DNA_linestyle_types.h` (id_type constexpr), `DNA_ID.h` (FILTER_ID_LS, INDEX_ID_LS, FILTER_ID_ALL), `DNA_action_types.h` (ADS_FILTER_NOLINESTYLE) | ✓ |
+| `blenkernel` | `idtype.cc` (INIT_TYPE + CASE_IDINDEX ×2), `main.cc` (CASE_ID_INDEX, lb[] — KEEP which_libbase routing), `linestyle.cc` (IDTypeInfo block removed — KEEP alloc call), `node.cc` (node tree case), `texture.cc` (×2), `scene.cc` (FILTER_ID_LS from deps); `BKE_idtype.hh` (extern decl) | ✓ |
+| `blenloader` | `versioning_500.cc` (`, ID_LS` from ELEM), `versioning_450.cc` (`, ID_LS` from ELEM) | ✓ |
+| `makesrna` | `rna_ID.cc` (enum item, filter item, base_type check, case return), `rna_texture.cc` (NC_LINESTYLE case), `rna_color.cc` (×3), `rna_space.cc` (FILTER_ID_LS from shading filter), `rna_main_api.cc`, `rna_main.cc` (listbase macro + table entry), `rna_internal.hh`, `rna_action.cc` (show_linestyles prop) | ✓ |
+| `editors` | `buttons_texture.cc`, `buttons_context.cc` (linestyle path fn + pinnable fn + dispatch + "line_style" member + FS texture slot), `interface_icons.cc`, `interface_template_id.cc` (×2), `interface_template_preview.cc` (×3), `render_shading.cc` (×3 incl. FreestyleLineStyle paste context), `render_opengl.cc`, `outliner_draw.cc`, `outliner_intern.hh`, `outliner_tools.cc` (×2 + simplified unlink_texture_fn), `tree_element_id.cc`, `tree_element_id_linestyle.cc/.hh` (DELETED), `space_node.cc` (NC_LINESTYLE ×2), `anim_channels_defines.cc` (ACF_DSLINESTYLE 3 fns + struct + table entry), `anim_channels_edit.cc` (ANIMTYPE_DSLINESTYLE ×9), `anim_deps.cc` (×1), `anim_filter.cc` (animdata_filter_ds_linestyle fn + ANIMTYPE case + ANIMCHANNEL_NEW_CHANNEL call), `ED_anim_api.hh` (ANIMTYPE_DSLINESTYLE enum + FILTER_LS_SCED macro), `nla_buttons.cc`, `nla_draw.cc`, `nla_tracks.cc`, `transform_convert_action.cc` | ✓ |
+| `nodes` | `shader_nodes_inline.cc` (ShaderNodeOutputLineStyle case), `node_texture_tree.cc` (SNODE_TEX_LINESTYLE unguarded branch) | ✓ |
+| `depsgraph` | `deg_eval_copy_on_write.cc` (SPECIAL_CASE ×4 + sizeof(FreestyleLineStyle) + DNA include), `deg_builder_relations.cc/.h` (case + fn + forward decl), `deg_builder_nodes.cc/.h` (case + fn + forward decl), `deg_builder_relations_view_layer.cc` (call site), `deg_builder_nodes_view_layer.cc` (call site) | ✓ |
 
 ### ID_MB — MetaBall
 

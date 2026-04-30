@@ -331,7 +331,6 @@ void ANIM_sync_animchannels_to_data(const bContext *C)
       case ANIMTYPE_DSMESH:
       case ANIMTYPE_DSTEX:
       case ANIMTYPE_DSLAT:
-      case ANIMTYPE_DSLINESTYLE:
       case ANIMTYPE_DSGPENCIL:
       case ANIMTYPE_DSMCLIP:
       case ANIMTYPE_DSHAIR:

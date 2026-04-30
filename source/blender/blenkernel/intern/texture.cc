@@ -477,12 +477,6 @@ void set_current_linestyle_texture(FreestyleLineStyle *linestyle, Tex *newtex)
 bool give_active_mtex(ID *id, MTex ***mtex_ar, short *act)
 {
   switch (GS(id->name)) {
-    case ID_LS:
-      *mtex_ar = (id_cast<FreestyleLineStyle *>(id))->mtex;
-      if (act) {
-        *act = ((id_cast<FreestyleLineStyle *>(id))->texact);
-      }
-      break;
     default:
       *mtex_ar = nullptr;
       if (act) {
@@ -504,9 +498,6 @@ void set_active_mtex(ID *id, short act)
   }
 
   switch (GS(id->name)) {
-    case ID_LS:
-      (id_cast<FreestyleLineStyle *>(id))->texact = act;
-      break;
     default:
       break;
   }

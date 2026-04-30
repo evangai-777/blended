@@ -58,7 +58,6 @@ set(SRC
   tree/tree_element_id_gpencil_legacy.cc
   tree/tree_element_id_grease_pencil.cc
   tree/tree_element_id_library.cc
-  tree/tree_element_id_linestyle.cc
   tree/tree_element_id_mesh.cc
   tree/tree_element_id_metaball.cc
   tree/tree_element_id_object.cc
@@ -104,7 +103,6 @@ set(SRC
   tree/tree_element_id_gpencil_legacy.hh
   tree/tree_element_id_grease_pencil.hh
   tree/tree_element_id_library.hh
-  tree/tree_element_id_linestyle.hh
   tree/tree_element_id_mesh.hh
   tree/tree_element_id_metaball.hh
   tree/tree_element_id_object.hh

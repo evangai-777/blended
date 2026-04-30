@@ -20,7 +20,6 @@
 #include "tree_element_id_gpencil_legacy.hh"
 #include "tree_element_id_grease_pencil.hh"
 #include "tree_element_id_library.hh"
-#include "tree_element_id_linestyle.hh"
 #include "tree_element_id_mesh.hh"
 #include "tree_element_id_metaball.hh"
 #include "tree_element_id_object.hh"
@@ -51,9 +50,6 @@ std::unique_ptr<TreeElementID> TreeElementID::create_from_id(TreeElement &legacy
       return std::make_unique<TreeElementIDMetaBall>(legacy_te, (MetaBall &)id);
     case ID_TE:
       return std::make_unique<TreeElementIDTexture>(legacy_te, (Tex &)id);
-    case ID_LS:
-      return std::make_unique<TreeElementIDLineStyle>(legacy_te, (FreestyleLineStyle &)id);
-
     case ID_GP:
       return std::make_unique<TreeElementIDGreasePencil>(legacy_te, (GreasePencil &)id);
     case ID_GR:

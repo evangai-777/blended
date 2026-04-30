@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.3.0 (tagged, CI green). 0.4.0 in progress — Bucket 5 + 6 fossil removals. `ID_PC` ✓ + `ID_SPK` ✓ + `ID_PA` ✓ + `ID_GD_LEGACY` ✓; next: `ID_LS`.
+**Current version:** Blended 0.3.0 (tagged, CI green). 0.4.0 in progress — Bucket 5 + 6 fossil removals. `ID_PC` ✓ + `ID_SPK` ✓ + `ID_PA` ✓ + `ID_GD_LEGACY` ✓ + `ID_LS` ✓; next: `ID_MB`.
 
 ---
 
@@ -25,7 +25,7 @@ The old approach (tiered UI, smart defaults, Emscripten) was prototyping toward 
 
 **`ID_SCR` and `ID_WM` removal — compile-clean, pending CI.** All layers merged. The blast radius was enormous — see Scar 2 below. Key architectural outcome: `bmain->screens` and `bmain->wm` kept as non-indexed runtime listbases; `ID_SCR_LEGACY` / `ID_WM_LEGACY` defines route through `which_libbase` for allocation but are excluded from `BKE_main_lists_get`. Branch: `claude/remove-id-scr-id-wm`. Layer-by-layer status in [`CHANGELOG.md`](CHANGELOG.md).
 
-**In progress: Bucket 5 + 6 fossil removals (0.4.x)** — `ID_CU_LEGACY`, `ID_GD_LEGACY`, `ID_TE`, `ID_MB`, `ID_LS`, `ID_CF`. `ID_PC` ✓. `ID_SPK` ✓. `ID_PA` ✓. `ID_GD_LEGACY` ✓. Next: `ID_LS`. See roadmap in CHANGELOG.md.
+**In progress: Bucket 5 + 6 fossil removals (0.4.x)** — `ID_CU_LEGACY`, `ID_GD_LEGACY`, `ID_TE`, `ID_MB`, `ID_LS`, `ID_CF`. `ID_PC` ✓. `ID_SPK` ✓. `ID_PA` ✓. `ID_GD_LEGACY` ✓. `ID_LS` ✓. Next: `ID_MB`. See roadmap in CHANGELOG.md.
 
 Pattern for each pending layer: `grep -rn "ID_WS"` the directory, delete or redirect every hit. The breakage is the audit — follow the compile errors, don't paper over them.
 
@@ -303,49 +303,68 @@ makesrna (2 files):
 
 ---
 
-**ID_LS — 40 hits, 28 files**
+**ID_LS — ✓ COMPLETE (0.4.0)** *(true blast radius: ~50 files vs 28 literal hits — ANIMTYPE/ACF chain, anim filter function, DNA_action_types, node_texture_tree, view layer builder callers, space_node NC_LINESTYLE)*
+
+> **Session note (2026-04-30):** True blast radius significantly exceeded the literal grep. Key additional scope beyond the 28-file audit: (1) `ANIMTYPE_DSLINESTYLE` enum value in `ED_anim_api.hh` + 9 fallthrough `case ANIMTYPE_DSLINESTYLE:` sites across `anim_channels_edit.cc`, `anim_deps.cc`, `nla_buttons.cc`, `nla_draw.cc`, `nla_tracks.cc`, `transform_convert_action.cc`; (2) `ACF_DSLINESTYLE` animation channel block (3 functions + struct + `animchannelTypeInfo` entry) in `anim_channels_defines.cc`; (3) `animdata_filter_ds_linestyle` function + call site in `anim_filter.cc`; (4) `ADS_FILTER_NOLINESTYLE` bitmask in `DNA_action_types.h` + `show_linestyles` RNA prop in `rna_action.cc`; (5) `FILTER_LS_SCED` macro in `ED_anim_api.hh`; (6) `tree_element_id_linestyle.cc/.hh` deleted + CMakeLists.txt updated; (7) `NC_LINESTYLE` notifier cases in `space_node.cc` (2 sites, unguarded); (8) `node_texture_tree.cc` unguarded `SNODE_TEX_LINESTYLE` branch; (9) `deg_builder_nodes_view_layer.cc` + `deg_builder_relations_view_layer.cc` calls to `build_freestyle_linestyle`; (10) `build_freestyle_linestyle` implementations + declarations removed from both depsgraph builders. Scar 2 pattern: `bmain->linestyles` field and `which_libbase` routing kept; `rna_linestyle.cc` kept (FreestyleLineStyle struct still referenced by `FreestyleLineSet::linestyle` DNA field and iterated in `node.cc`). All WITH_FREESTYLE-guarded code left untouched.
 
 Core definition:
-- `makesdna/DNA_ID_enums.h:156` — enum entry `ID_LS = MAKE_ID2('L', 'S')`
-- `makesdna/DNA_linestyle_types.h:649` — `static constexpr ID_Type id_type = ID_LS`
-- `blenkernel/intern/idtype.cc:166` — `INIT_TYPE(ID_LS)`
-- `blenkernel/intern/main.cc:1042` — `which_libbase` case
-- `blenkernel/intern/linestyle.cc:743` — `BKE_libblock_alloc(bmain, ID_LS, name, 0)` — linestyle creation
+- `makesdna/DNA_ID_enums.h:156` — enum entry `ID_LS = MAKE_ID2('L', 'S')` — removed; deprecated `#define` added
+- `makesdna/DNA_linestyle_types.h:649` — `static constexpr ID_Type id_type = ID_LS` — removed
+- `blenkernel/intern/idtype.cc:166` — `INIT_TYPE(ID_LS)` + both `CASE_IDINDEX(LS)` — removed (Scar 4)
+- `blenkernel/intern/main.cc:1042` — `lb[INDEX_ID_LS]` and `CASE_ID_INDEX(INDEX_ID_LS)` removed; `case ID_LS: return &bmain->linestyles` KEPT (Scar 2)
+- `blenkernel/intern/linestyle.cc` — IDTypeInfo block removed; `BKE_linestyle_new` + `BKE_libblock_alloc` KEPT
 
 blenkernel (2 files):
-- `node.cc:5153` — node tree case
-- `texture.cc:480,513` — texture slot handling (2 sites)
+- `node.cc:5153` — node tree case removed
+- `texture.cc:480,513` — texture slot handling removed (2 sites)
+- `scene.cc` — FILTER_ID_LS removed from dependencies_id_types
 
 blenloader (2 files):
-- `versioning_500.cc:4494` — ELEM check (shared with ID_TE)
-- `versioning_450.cc:5891` — ELEM check (shared with ID_TE)
+- `versioning_500.cc:4494` — `, ID_LS` removed from ELEM check
+- `versioning_450.cc:5891` — `, ID_LS` removed from ELEM check
 
-editors (10 files):
-- `buttons_texture.cc:266` — pin ID GS check
-- `buttons_context.cc:523` — context GS check
-- `interface_icons.cc:2063` — icon case
-- `interface_template_id.cc:867` — template check
-- `interface_template_preview.cc:59,78,233` — preview template (3 sites)
-- `render_shading.cc:3049,3079` — render shading (2 sites)
-- `render_opengl.cc:641` — render switch
-- `outliner_draw.cc:2554` — outliner draw
-- `outliner_intern.hh:159` — outliner macro
-- `outliner_tools.cc:152,352` — outliner tools (2 sites)
-- `tree_element_id.cc:54` — tree element
+editors (26 files — true blast radius):
+- `buttons_texture.cc` — linestyle variable, pin dispatch, mtex users removed
+- `buttons_context.cc` — `buttons_context_path_linestyle`, `buttons_context_linestyle_pinnable`, ID_LS dispatch, "line_style" context member, FreestyleLineStyle texture slot removed
+- `interface_icons.cc` — icon case removed
+- `interface_template_id.cc` — browse string + BLT_I18NCONTEXT removed
+- `interface_template_preview.cc` — 3 sites removed
+- `render_shading.cc` — 2 ID_LS switch cases + FreestyleLineStyle paste context removed
+- `render_opengl.cc` — case removed
+- `outliner_draw.cc` — case removed
+- `outliner_intern.hh` — macro entry removed
+- `outliner_tools.cc` — case removed; `unlink_texture_fn` simplified (LS-only path gone)
+- `tree_element_id.cc` — include + case removed; `tree_element_id_linestyle.cc/.hh` DELETED
+- `space_node/space_node.cc` — 2 unguarded `NC_LINESTYLE` cases removed
+- `anim_channels_defines.cc` — `ACF_DSLINESTYLE` 3 functions + struct + `animchannelTypeInfo` entry removed
+- `anim_channels_edit.cc` — 9 `ANIMTYPE_DSLINESTYLE` fallthrough cases removed
+- `anim_deps.cc` — 1 fallthrough case removed
+- `anim_filter.cc` — `animdata_filter_ds_linestyle` function + call site + `ANIMTYPE_DSLINESTYLE` case in switch removed
+- `ED_anim_api.hh` — `ANIMTYPE_DSLINESTYLE` enum value + `FILTER_LS_SCED` macro removed
+- `nla_buttons.cc`, `nla_draw.cc`, `nla_tracks.cc` — 1 case each removed
+- `transform_convert_action.cc` — 1 case removed
+- `DNA_action_types.h` — `ADS_FILTER_NOLINESTYLE` bitmask removed
+- `makesrna/intern/rna_action.cc` — `show_linestyles` RNA property removed
 
-depsgraph (3 files):
-- `deg_eval_copy_on_write.cc:109,155,194,230` — COW special cases (nodetree; 4 sites)
-- `deg_builder_relations.cc:568` — relation builder
-- `deg_builder_nodes.cc:621` — node builder
+depsgraph (7 files):
+- `deg_eval_copy_on_write.cc` — 4 `SPECIAL_CASE(ID_LS, ...)` + `sizeof(FreestyleLineStyle)` removed; DNA_linestyle_types.h include removed
+- `deg_builder_relations.cc/.h` — dispatch case + function removed; forward decl removed
+- `deg_builder_nodes.cc/.h` — dispatch case + function removed; forward decl removed
+- `deg_builder_relations_view_layer.cc` — `build_freestyle_linestyle` call removed
+- `deg_builder_nodes_view_layer.cc` — `build_freestyle_linestyle` call removed
 
-nodes (1 file):
-- `shader_nodes_inline.cc:338` — shader nodes case
+nodes (2 files):
+- `shader_nodes_inline.cc` — `ShaderNodeOutputLineStyle` case removed
+- `node_texture_tree.cc` — unguarded `SNODE_TEX_LINESTYLE` branch + `BKE_linestyle.h` include removed
 
-makesrna (5 files):
-- `rna_ID.cc:49,412,516` — RNA enum entry and switch cases
-- `rna_texture.cc:269` — texture slot RNA
-- `rna_color.cc:254,315,378` — color ramp (3 sites)
-- `rna_main_api.cc:864` — `RNA_MAIN_ID_TAG_FUNCS_DEF(linestyle, linestyles, ID_LS)`
+makesrna (7 files):
+- `rna_ID.cc` — RNA enum item, filter item, base_type check, case in id_to_type switch removed
+- `rna_texture.cc` — `NC_LINESTYLE` notifier case removed
+- `rna_color.cc` — 3 `case ID_LS:` blocks removed (path_to_color_ramp, modifier_list_color_ramps, notifier)
+- `rna_space.cc` — `FILTER_ID_LS |` removed from shading category filter
+- `rna_main_api.cc` — `rna_Main_linestyles_new()` + `RNA_MAIN_ID_TAG_FUNCS_DEF` + `RNA_def_main_linestyles()` removed
+- `rna_main.cc` — `RNA_MAIN_LISTBASE_FUNCS_DEF(linestyles)` + table entry removed
+- `rna_internal.hh` — `RNA_def_main_linestyles` declaration removed
 
 ---
 
@@ -458,9 +477,9 @@ Additional files NOT in the literal grep (discovered 2026-04-29):
 
 6. **`depsgraph.cc:160` had a `!= ID_PA` guard** in `clear_id_nodes_conditional` — resolved in 0.4.0. The two-pass teardown (scenes first, then everything-except-particles) ensured particle COW copies outlived the objects referencing them. With ID_PA gone, the guard was changed to `!= ID_SCE` (scenes already destroyed in pass 1 are caught by the `id_cow == nullptr` guard in pass 2).
 
-7. **Remaining chisel order (smallest blast radius first):** **ID_GD_LEGACY ✓** → ID_LS (40) → ID_MB (49) → ID_TE (58) → ID_CU_LEGACY (74) → ID_CF (last, design decision). ~180 hits across 4 types remaining. ID_PC (21) ✓ 0.4.0. ID_SPK (23) ✓ 0.4.0. ID_PA (35) ✓ 0.4.0. ID_GD_LEGACY (56) ✓ 0.4.0. ID_CF deferred — see note 8.
+7. **Remaining chisel order (smallest blast radius first):** **ID_GD_LEGACY ✓** → **ID_LS ✓** → ID_MB (49) → ID_TE (58) → ID_CU_LEGACY (74) → ID_CF (last, design decision). ~180 hits across 3 types remaining. ID_PC (21) ✓ 0.4.0. ID_SPK (23) ✓ 0.4.0. ID_PA (35) ✓ 0.4.0. ID_GD_LEGACY (56) ✓ 0.4.0. ID_LS (~50) ✓ 0.4.0. ID_CF deferred — see note 8.
 
-8. **ID_CF is architecturally entangled — do it last or separately.** The literal grep count (18) dramatically understates the true blast radius. `CacheFile` as a struct is woven into: the Alembic importer (`io/alembic/`), the USD importer (`io/usd/`), the Mesh Sequence Cache modifier (`MOD_meshsequencecache.cc`), the constraint system, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. The Mesh Sequence Cache modifier holds a `CacheFile *` ID pointer so multiple objects can share one cache reference — removing the ID type means deciding what replaces that pointer. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI builds, so breakage here will surface. **Revised chisel order: ID_LS → ID_MB → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision). ID_PC ✓ (0.4.0). ID_SPK ✓ (0.4.0). ID_PA ✓ (0.4.0). ID_GD_LEGACY ✓ (0.4.0).** The open question: does the cache-file reference mechanism get inlined into the modifier/constraint DNA per-instance, or does CacheFile stay as a non-ID struct in a non-indexed listbase (like ID_SCR_LEGACY/ID_WM_LEGACY pattern)? Answer this before chiseling ID_CF.
+8. **ID_CF is architecturally entangled — do it last or separately.** The literal grep count (18) dramatically understates the true blast radius. `CacheFile` as a struct is woven into: the Alembic importer (`io/alembic/`), the USD importer (`io/usd/`), the Mesh Sequence Cache modifier (`MOD_meshsequencecache.cc`), the constraint system, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. The Mesh Sequence Cache modifier holds a `CacheFile *` ID pointer so multiple objects can share one cache reference — removing the ID type means deciding what replaces that pointer. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI builds, so breakage here will surface. **Revised chisel order: ID_MB → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision). ID_PC ✓ (0.4.0). ID_SPK ✓ (0.4.0). ID_PA ✓ (0.4.0). ID_GD_LEGACY ✓ (0.4.0). ID_LS ✓ (0.4.0).** The open question: does the cache-file reference mechanism get inlined into the modifier/constraint DNA per-instance, or does CacheFile stay as a non-ID struct in a non-indexed listbase (like ID_SCR_LEGACY/ID_WM_LEGACY pattern)? Answer this before chiseling ID_CF.
 
 ---
 
@@ -549,8 +568,8 @@ make check_mypy     # Python type checking
 ### Datablock Cuts in Progress (BLENDED.md §10)
 Target: 39 → ~19 ID types.
 - **Bucket 4 (UI state, remove):** `ID_WS` ✓ (0.2.0), `ID_SCR` ✓ (0.3.0 WIP), `ID_WM` ✓ (0.3.0 WIP)
-- **Bucket 5 (upstream deprecations, finish):** `ID_CU_LEGACY`, `ID_GD_LEGACY` — next up
-- **Bucket 6 (fossils, cut):** `ID_TE`, `ID_MB`, `ID_LS`, `ID_CF` — in progress; `ID_PC` ✓ (0.4.0); `ID_SPK` ✓ (0.4.0); `ID_PA` ✓ (0.4.0)
+- **Bucket 5 (upstream deprecations, finish):** `ID_CU_LEGACY`, `ID_GD_LEGACY` ✓ (0.4.0)
+- **Bucket 6 (fossils, cut):** `ID_TE`, `ID_MB`, `ID_CF` — in progress; `ID_PC` ✓ (0.4.0); `ID_SPK` ✓ (0.4.0); `ID_PA` ✓ (0.4.0); `ID_LS` ✓ (0.4.0)
 
 ---
 

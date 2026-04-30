@@ -2767,89 +2767,6 @@ static bAnimChannelType ACF_DSNTREE = {
     /*setting_post_update*/ nullptr,
 };
 
-/* LineStyle Expander  ------------------------------------------- */
-
-/* TODO: just get this from RNA? */
-static int acf_dslinestyle_icon(bAnimListElem * /*ale*/)
-{
-  return ICON_LINE_DATA;
-}
-
-/* Get the appropriate flag(s) for the setting when it is valid. */
-static int acf_dslinestyle_setting_flag(bAnimContext * /*ac*/,
-                                        eAnimChannel_Settings setting,
-                                        bool *r_neg)
-{
-  /* Clear extra return data first. */
-  *r_neg = false;
-
-  switch (setting) {
-    case ACHANNEL_SETTING_EXPAND: /* expanded */
-      return LS_DS_EXPAND;
-
-    case ACHANNEL_SETTING_MUTE: /* mute (only in NLA) */
-      return ADT_NLA_EVAL_OFF;
-
-    case ACHANNEL_SETTING_VISIBLE: /* visible (only in Graph Editor) */
-      *r_neg = true;
-      return ADT_CURVES_NOT_VISIBLE;
-
-    case ACHANNEL_SETTING_SELECT: /* selected */
-      return ADT_UI_SELECTED;
-
-    default: /* unsupported */
-      return 0;
-  }
-}
-
-/* get pointer to the setting */
-static void *acf_dslinestyle_setting_ptr(bAnimListElem *ale,
-                                         eAnimChannel_Settings setting,
-                                         short *r_type)
-{
-  FreestyleLineStyle *linestyle = static_cast<FreestyleLineStyle *>(ale->data);
-
-  /* Clear extra return data first. */
-  *r_type = 0;
-
-  switch (setting) {
-    case ACHANNEL_SETTING_EXPAND: /* expanded */
-      return GET_ACF_FLAG_PTR(linestyle->flag, r_type);
-
-    case ACHANNEL_SETTING_SELECT:  /* selected */
-    case ACHANNEL_SETTING_MUTE:    /* muted (for NLA only) */
-    case ACHANNEL_SETTING_VISIBLE: /* visible (for Graph Editor only) */
-      if (linestyle->adt) {
-        return GET_ACF_FLAG_PTR(linestyle->adt->flag, r_type);
-      }
-      return nullptr;
-
-    default: /* unsupported */
-      return nullptr;
-  }
-}
-
-/** Line Style expander type define. */
-static bAnimChannelType ACF_DSLINESTYLE = {
-    /*channel_type_name*/ "Line Style Expander",
-    /*channel_role*/ ACHANNEL_ROLE_EXPANDER,
-
-    /*get_backdrop_color*/ acf_generic_dataexpand_color,
-    /*get_channel_color*/ nullptr,
-    /*draw_backdrop*/ acf_generic_dataexpand_backdrop,
-    /*get_indent_level*/ acf_generic_indentation_1,
-    /*get_offset*/ acf_generic_basic_offset,
-
-    /*name*/ acf_generic_idblock_name,
-    /*name_prop*/ acf_generic_idblock_name_prop,
-    /*icon*/ acf_dslinestyle_icon,
-
-    /*has_setting*/ acf_generic_dataexpand_setting_valid,
-    /*setting_flag*/ acf_dslinestyle_setting_flag,
-    /*setting_ptr*/ acf_dslinestyle_setting_ptr,
-    /*setting_post_update*/ nullptr,
-};
-
 /* Mesh Expander  ------------------------------------------- */
 
 /* TODO: just get this from RNA? */
@@ -4643,7 +4560,6 @@ static void ANIM_init_channel_typeinfo_data()
     animchannelTypeInfo[type++] = &ACF_DSMESH;       /* Mesh Channel */
     animchannelTypeInfo[type++] = &ACF_DSTEX;        /* Texture Channel */
     animchannelTypeInfo[type++] = &ACF_DSLAT;        /* Lattice Channel */
-    animchannelTypeInfo[type++] = &ACF_DSLINESTYLE;  /* LineStyle Channel */
     animchannelTypeInfo[type++] = &ACF_DSGPENCIL;    /* GreasePencil Channel */
     animchannelTypeInfo[type++] = &ACF_DSMCLIP;      /* MovieClip Channel */
     animchannelTypeInfo[type++] = &ACF_DSCURVES;     /* Curves Channel */

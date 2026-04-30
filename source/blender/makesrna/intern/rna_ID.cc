@@ -46,7 +46,7 @@ const EnumPropertyItem rna_enum_id_type_items[] = {
     {ID_LI, "LIBRARY", ICON_LIBRARY_DATA_DIRECT, "Library", ""},
     {ID_LA, "LIGHT", ICON_LIGHT_DATA, "Light", ""},
     {ID_LP, "LIGHT_PROBE", ICON_LIGHTPROBE_SPHERE, "Light Probe", ""},
-    {ID_LS, "LINESTYLE", ICON_LINE_DATA, "Line Style", ""},
+
     {ID_MSK, "MASK", ICON_MOD_MASK, "Mask", ""},
     {ID_MA, "MATERIAL", ICON_MATERIAL_DATA, "Material", ""},
     {ID_ME, "MESH", ICON_MESH_DATA, "Mesh", ""},
@@ -140,11 +140,7 @@ const IDFilterEnumPropertyItem rna_enum_id_type_filter_items[] = {
      ICON_OUTLINER_DATA_LIGHTPROBE,
      "Light Probes",
      "Show Light Probe data-blocks"},
-    {FILTER_ID_LS,
-     "filter_linestyle",
-     ICON_LINE_DATA,
-     "Freestyle Linestyles",
-     "Show Freestyle's Line Style data-blocks"},
+
     {FILTER_ID_LT, "filter_lattice", ICON_LATTICE_DATA, "Lattices", "Show Lattice data-blocks"},
     {FILTER_ID_MA,
      "filter_material",
@@ -388,9 +384,7 @@ short RNA_type_to_ID_code(const StructRNA *type)
   if (base_type == RNA_Library) {
     return ID_LI;
   }
-  if (base_type == RNA_FreestyleLineStyle) {
-    return ID_LS;
-  }
+
   if (base_type == RNA_Curves) {
     return ID_CV;
   }
@@ -483,8 +477,7 @@ StructRNA *ID_code_to_RNA_type(short idcode)
       return RNA_Light;
     case ID_LI:
       return RNA_Library;
-    case ID_LS:
-      return RNA_FreestyleLineStyle;
+
     case ID_LT:
       return RNA_Lattice;
     case ID_MA:

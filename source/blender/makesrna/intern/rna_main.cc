@@ -163,7 +163,7 @@ RNA_MAIN_LISTBASE_FUNCS_DEF(lattices)
 RNA_MAIN_LISTBASE_FUNCS_DEF(libraries)
 RNA_MAIN_LISTBASE_FUNCS_DEF(lightprobes)
 RNA_MAIN_LISTBASE_FUNCS_DEF(lights)
-RNA_MAIN_LISTBASE_FUNCS_DEF(linestyles)
+
 RNA_MAIN_LISTBASE_FUNCS_DEF(masks)
 RNA_MAIN_LISTBASE_FUNCS_DEF(materials)
 RNA_MAIN_LISTBASE_FUNCS_DEF(meshes)
@@ -473,12 +473,7 @@ void RNA_def_main(BlenderRNA *brna)
        "Movie Clip data-blocks",
        RNA_def_main_movieclips},
       {"masks", "Mask", "rna_Main_masks_begin", "Masks", "Masks data-blocks", RNA_def_main_masks},
-      {"linestyles",
-       "FreestyleLineStyle",
-       "rna_Main_linestyles_begin",
-       "Line Styles",
-       "Line Style data-blocks",
-       RNA_def_main_linestyles},
+
       {"cache_files",
        "CacheFile",
        "rna_Main_cachefiles_begin",

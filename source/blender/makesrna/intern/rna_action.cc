@@ -1483,13 +1483,6 @@ static void rna_def_dopesheet(BlenderRNA *brna)
   RNA_def_property_ui_icon(prop, ICON_OUTLINER_OB_LIGHT, 0);
   RNA_def_property_update(prop, NC_ANIMATION | ND_ANIMCHAN | NA_EDITED, nullptr);
 
-  prop = RNA_def_property(srna, "show_linestyles", PROP_BOOLEAN, PROP_NONE);
-  RNA_def_property_boolean_negative_sdna(prop, nullptr, "filterflag", ADS_FILTER_NOLINESTYLE);
-  RNA_def_property_ui_text(
-      prop, "Display Line Style", "Include visualization of Line Style related Animation data");
-  RNA_def_property_ui_icon(prop, ICON_LINE_DATA, 0);
-  RNA_def_property_update(prop, NC_ANIMATION | ND_ANIMCHAN | NA_EDITED, nullptr);
-
   prop = RNA_def_property(srna, "show_textures", PROP_BOOLEAN, PROP_NONE);
   RNA_def_property_boolean_negative_sdna(prop, nullptr, "filterflag", ADS_FILTER_NOTEX);
   RNA_def_property_ui_text(

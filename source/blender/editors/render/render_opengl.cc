@@ -636,7 +636,6 @@ static int gather_frames_to_render_for_id(LibraryIDLinkCallbackData *cb_data)
     case ID_GR:  /* Group */
     case ID_AC:  /* bAction */
     case ID_BR:  /* Brush */
-    case ID_LS:  /* FreestyleLineStyle */
     case ID_PAL: /* Palette */
     case ID_CF:  /* CacheFile */
       /* Only follow pointers to specific datablocks, to avoid ending up in

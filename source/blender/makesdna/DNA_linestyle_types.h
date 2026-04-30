@@ -646,7 +646,6 @@ struct FreestyleLineStyle {
 #ifdef __cplusplus
   DNA_DEFINE_CXX_METHODS(FreestyleLineStyle)
   /** See #ID_Type comment for why this is here. */
-  static constexpr ID_Type id_type = ID_LS;
 #endif
 
   ID id;

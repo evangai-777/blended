@@ -83,9 +83,6 @@ void DepsgraphRelationBuilder::build_freestyle_lineset(FreestyleLineSet *fls)
   if (fls->group != nullptr) {
     build_collection(nullptr, fls->group);
   }
-  if (fls->linestyle != nullptr) {
-    build_freestyle_linestyle(fls->linestyle);
-  }
 }
 
 void DepsgraphRelationBuilder::build_view_layer(Scene *scene,

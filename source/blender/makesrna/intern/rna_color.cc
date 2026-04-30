@@ -251,12 +251,6 @@ static std::optional<std::string> rna_ColorRamp_path(const PointerRNA *ptr)
         break;
       }
 
-      case ID_LS: {
-        /* may be nullptr */
-        return BKE_linestyle_path_to_color_ramp(id_cast<FreestyleLineStyle *>(id),
-                                                static_cast<ColorBand *>(ptr->data));
-      }
-
       default:
         /* everything else just uses 'color_ramp' */
         return "color_ramp";
@@ -312,19 +306,6 @@ static std::optional<std::string> rna_ColorRampElement_path(const PointerRNA *pt
         }
         break;
       }
-      case ID_LS: {
-        ListBaseT<LinkData> listbase;
-        LinkData *link;
-
-        BKE_linestyle_modifier_list_color_ramps(id_cast<FreestyleLineStyle *>(id), &listbase);
-        for (link = static_cast<LinkData *>(listbase.first); link; link = link->next) {
-          ramp_ptr = RNA_pointer_create_discrete(id, RNA_ColorRamp, link->data);
-          COLRAMP_GETPATH;
-        }
-        BLI_freelistN(&listbase);
-        break;
-      }
-
       default: /* everything else should have a "color_ramp" property */
       {
         /* create pointer to the ID block, and try to resolve "color_ramp" pointer */
@@ -373,12 +354,6 @@ static void rna_ColorRamp_update(Main *bmain, Scene * /*scene*/, PointerRNA *ptr
 
         DEG_id_tag_update(&tex->id, 0);
         WM_main_add_notifier(NC_TEXTURE, tex);
-        break;
-      }
-      case ID_LS: {
-        FreestyleLineStyle *linestyle = id_cast<FreestyleLineStyle *>(ptr->owner_id);
-
-        WM_main_add_notifier(NC_LINESTYLE, linestyle);
         break;
       }
       /* Color Ramp for particle display is owned by the object (see #54422) */

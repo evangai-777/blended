@@ -412,7 +412,6 @@ enum eDopeSheet_FilterFlag {
   ADS_FILTER_NONTREE = (1 << 19),
   ADS_FILTER_NOTEX = (1 << 20),
   ADS_FILTER_NOSPK = (1 << 21),
-  ADS_FILTER_NOLINESTYLE = (1 << 22),
   ADS_FILTER_NOMODIFIERS = (1 << 23),
   ADS_FILTER_NOGPENCIL = (1 << 24),
   /* NOTE: all new datablock filters will have to go in filterflag2 (see below) */
