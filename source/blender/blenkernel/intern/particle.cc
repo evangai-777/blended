@@ -3768,9 +3768,10 @@ ParticleSettings *BKE_particlesettings_add(Main *bmain, const char *name)
 {
   /* ID_PA is removed from the IDType registry (no INIT_TYPE, no INDEX_ID_PA), so
    * BKE_libblock_alloc would crash because it can't find the struct size via IDTypeInfo.
-   * Replicate the allocation manually: MEM_new_zeroed gives us the size statically,
-   * then we init the ID header and insert into bmain->particles (Scar 2 listbase). */
-  ParticleSettings *part = MEM_new_zeroed<ParticleSettings>("ParticleSettings");
+   * Replicate the allocation manually: MEM_new runs the default constructor (required —
+   * ParticleSettings has in-class initializers, MEM_new_zeroed static_asserts trivial types).
+   * Insert into bmain->particles via Scar 2 which_libbase routing. */
+  ParticleSettings *part = MEM_new<ParticleSettings>("ParticleSettings");
   BKE_libblock_runtime_ensure(part->id);
   *(reinterpret_cast<short *>(part->id.name)) = ID_PA;
   part->id.us = 1;
