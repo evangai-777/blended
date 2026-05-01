@@ -153,7 +153,6 @@ struct TreeElementIcon {
         ID_AR, \
         ID_AC, \
         ID_BR, \
-
         ID_LP, \
         ID_CV, \
         ID_PT, \
