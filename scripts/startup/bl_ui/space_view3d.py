@@ -3362,7 +3362,6 @@ class VIEW3D_MT_object_quick_effects(Menu):
         layout = self.layout
 
         layout.operator("object.quick_fur")
-        layout.operator("object.quick_explode")
         layout.operator("object.quick_smoke")
         layout.operator("object.quick_liquid")
         layout.template_node_operator_asset_menu_items(catalog_path="Object/Quick Effects")

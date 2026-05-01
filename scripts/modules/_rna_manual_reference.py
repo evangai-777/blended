@@ -943,7 +943,6 @@ url_manual_mapping = (
     ("bpy.ops.grease_pencil.set_uniform_thickness*", "grease_pencil/modes/edit/stroke_menu.html#bpy-ops-grease-pencil-set-uniform-thickness"),
     ("bpy.ops.object.geometry_nodes_move_to_nodes*", "modeling/modifiers/geometry_nodes.html#bpy-ops-object-geometry-nodes-move-to-nodes"),
     ("bpy.ops.object.light_linking_receivers_link*", "scene_layout/object/editing/link_transfer/link_data.html#bpy-ops-object-light-linking-receivers-link"),
-    ("bpy.ops.particle.particle_system_remove_all*", "physics/particles/particle_system_panel.html#bpy-ops-particle-particle-system-remove-all"),
     ("bpy.ops.preferences.script_directory_remove*", "editors/preferences/file_paths.html#bpy-ops-preferences-script-directory-remove"),
     ("bpy.types.blendfilecolorspace.working_space*", "render/color_management/color_spaces.html#bpy-types-blendfilecolorspace-working-space"),
     ("bpy.types.brush.use_automasking_view_normal*", "sculpt_paint/brush/brush_settings.html#bpy-types-brush-use-automasking-view-normal"),

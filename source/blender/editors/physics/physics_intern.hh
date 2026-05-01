@@ -65,9 +65,6 @@ void update_world_cos(Object *ob, PTCacheEdit *edit);
 
 /* `particle_object.cc` */
 
-void OBJECT_OT_particle_system_add(wmOperatorType *ot);
-void OBJECT_OT_particle_system_remove(wmOperatorType *ot);
-
 void PARTICLE_OT_new(wmOperatorType *ot);
 void PARTICLE_OT_new_target(wmOperatorType *ot);
 void PARTICLE_OT_target_remove(wmOperatorType *ot);
@@ -77,7 +74,6 @@ void PARTICLE_OT_connect_hair(wmOperatorType *ot);
 void PARTICLE_OT_disconnect_hair(wmOperatorType *ot);
 void PARTICLE_OT_copy_particle_systems(wmOperatorType *ot);
 void PARTICLE_OT_duplicate_particle_system(wmOperatorType *ot);
-void PARTICLE_OT_particle_system_remove_all(wmOperatorType *ot);
 
 void PARTICLE_OT_dupliob_copy(wmOperatorType *ot);
 void PARTICLE_OT_dupliob_remove(wmOperatorType *ot);
