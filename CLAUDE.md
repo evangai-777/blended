@@ -969,9 +969,11 @@ Here is what a previous Claude did instead of listening:
 
 **ALWAYS GET A TO-DO LIST GOING FOR EACH CODE SESSION. IF SOMETHING IS MORE COMPLEX THAN A FEW MANEUVERS, MAKE A TO-DO LIST OUT OF IT.**
 
+**"A few maneuvers" means three.** Fewer than three (one or two): no list required. Three or more: list required. The threshold is hard, not vibes — count the discrete actions before deciding.
+
 Use the TodoWrite tool. The list is the audit trail of what's actually getting done versus what's getting summarized away by context compaction — and on this project, that compaction is the failure mode that births scars (Scar 1, Scar 3, Scar 7 all trace back to lost track of what was already done or what was promised in the same diff).
 
-One item per logical step. Mark complete the instant it's done — never batch. If a task genuinely collapses to one or two trivial maneuvers (a one-line fix, a single grep, a single Edit to CLAUDE.md), skip the list. Anything that touches more than one file, has a verification step at the end, or spans more than one tool call sequence: list it.
+One item per logical step. Mark complete the instant it's done — never batch. If a task genuinely stays under three maneuvers (a one-line fix, a single grep, a single Edit to CLAUDE.md), skip the list. Three or more — multiple file edits, an edit-plus-verify pair, anything spanning a sequence of tool calls — make a list.
 
 Chisel sessions in particular: every layer is a list item. Every post-chisel grep sweep (the `INIT_TYPE` allocator audit, the `CASE_IDINDEX` sweep, the multi-line ELEM macro check) is a list item. The pre-commit consistency check is a list item. If it's not on the list, it doesn't get done — that's the whole point.
 
