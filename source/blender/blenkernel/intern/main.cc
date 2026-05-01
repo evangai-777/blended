@@ -1034,6 +1034,8 @@ ListBaseT<ID> *which_libbase(Main *bmain, short type)
       return &(bmain->masks.cast<ID>());
     case ID_LS:
       return &(bmain->linestyles.cast<ID>());
+    case ID_PA:
+      return &(bmain->particles.cast<ID>());
     case ID_PAL:
       return &(bmain->palettes.cast<ID>());
     case ID_CF:
