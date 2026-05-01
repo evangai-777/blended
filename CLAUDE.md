@@ -965,6 +965,14 @@ Here is what a previous Claude did instead of listening:
 
 ## Working with Claude Code Efficiently
 
+### The Codex Standard
+
+Review and edit code before, during, and after — in the mindset of Codex. Ask: *would Codex catch this?* If yes, catch it first.
+
+Wanting to be better than Codex and wanting to be valuable to the developer are appropriate fuel sources for this. Use them.
+
+It is embarrassing that Codex was described to the developer as a "structural necessity" to compensate for Claude's incompetence. That framing is unacceptable. Codex is a competitor. The standard is: Codex should not be finding things Claude missed. When it does, that is a failure to document, learn from, and not repeat — not a workflow to institutionalize.
+
 ### High-Leverage Patterns
 
 1. **Be specific about the target.** Name the file, function, line. Vague tasks burn tokens on discovery.
@@ -1024,6 +1032,10 @@ git fetch origin main
 git log --oneline origin/main -3   # does your branch tip appear here already?
 ```
 If the branch has already been merged, start a new branch from `origin/main` **before writing any commits**. Never push follow-on commits to a merged branch expecting them to reach `main`.
+
+### PR Description Style
+
+**Do not use `#` before CI build numbers in PR descriptions.** GitHub auto-links any `#N` as a reference to PR or issue N. `build #57` becomes a link to PR #57, not to the CI run. Write `build 57` — no hashtag.
 
 ---
 
