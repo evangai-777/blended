@@ -37,7 +37,7 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 
 ### Known Deferred Debt (compile-green but runtime-broken or leak-prone)
 
-1. **Particle-add operators still registered** — `OBJECT_OT_particle_system_add` and related operators are live in the UI but silently broken. `BKE_particlesettings_add` is fixed (Scar 10 — `MEM_new<ParticleSettings>` bypasses the removed IDType registry), but the broader particle machinery (modifier binding, depsgraph, simulation) is gone with ID_PA. The operators that call this path need to be deleted or gated.
+1. **Particle-add operators still registered** — `OBJECT_OT_particle_system_add` and related operators are live in the UI but silently broken: `BKE_particlesettings_add` → `MEM_new<ParticleSettings>` path works, but the broader particle system machinery (modifier binding, dependency graph, simulation) is gone with ID_PA. Follow-up: delete or gate these operators.
 
 2. **ID_LS latent memory leak** — Opening a legacy `.blend` file with Freestyle data in a `WITH_FREESTYLE=OFF` build populates `bmain->linestyles` via the kept `which_libbase` routing, but that listbase is not in `BKE_main_lists_get`, so `BKE_main_free` does not free those blocks. Accepted for now (no Freestyle fixtures in CI). Fix if needed: a blenloader post-read pass that drains `bmain->linestyles` after any file load when `WITH_FREESTYLE=OFF`.
 
@@ -50,6 +50,8 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 6. **`bpy.app.blended_version_*` RNA attributes not wired** — `blended_update_check.py` reads `bpy.app.blended_version_major/minor/patch` via `getattr(..., default)` fallback. Wire into `rna_wm.cc` when ready.
 
 7. **Multi-window screen iteration edge cases** — The 0.3.0 chisel converted global screen iteration to per-window. Edge cases in multi-window layouts may surface at runtime. Not tested in CI (single-window headless).
+
+8. **`BKE_particlesettings_add` allocation path — Scar 10 pattern applied but operators still registered** — See item 1. The alloc function is fixed; the dead UI paths that call it are not yet removed.
 
 ### Upcoming Chisel Roadmap
 
