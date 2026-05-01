@@ -69,7 +69,6 @@ static void texture_get_from_context(const bContext *C,
     }
   }
 }
-}
 
 static void foreach_nodeclass(void *calldata, bke::bNodeClassCallback func)
 {
