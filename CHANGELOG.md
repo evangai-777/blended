@@ -56,7 +56,7 @@ carries a one-liner status per active item.
 
 ## Unreleased — 0.4.0
 
-Bucket 5 + 6 fossil removals. 9 ID types, 357 hits, same chisel pattern as 0.3.0.
+Bucket 5 + 6 fossil removals. 9 ID types, 357 hits, same chisel pattern as 0.3.0. CI green (Windows x64, build #57, commit `29e4663`) — 5 of 9 types complete.
 Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEGACY ✓** → **ID_LS ✓** → ID_MB → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision — see CLAUDE.md Key note 8).
 *(Order corrected in PR #126 fix — initial commit had ID_CF first, contradicting CLAUDE.md Key note 8. Scar 7.)*
 
@@ -139,6 +139,7 @@ Three post-chisel bugs found during first full build of the 0.4.0 removal set:
 | Fix `BKE_particlesettings_add` allocation crash — bypass IDType registry, use `MEM_new<ParticleSettings>` + manual ID init | `blenkernel/intern/particle.cc` | INIT_TYPE(ID_PA) removed → `BKE_libblock_alloc_notest` returns nullptr → `BKE_libblock_runtime_ensure(*id)` null dereference crash in all build types. Callers include `versioning_legacy.cc` and `fluid.cc` (live paths). See Scar 10. |
 | Fix `BKE_gpencil_data_addnew` allocation crash — bypass IDType registry, use `MEM_new<bGPdata>` + manual ID init | `blenkernel/intern/gpencil_legacy.cc` | Same pattern: INIT_TYPE(ID_GD_LEGACY) removed. Called from annotation painting, gpencil operators, ruler gizmo — all live. |
 | Fix `BKE_linestyle_new` allocation crash — bypass IDType registry, use `MEM_new<FreestyleLineStyle>` + manual ID init | `blenkernel/intern/linestyle.cc` | Same pattern: INIT_TYPE(ID_LS) removed. `freestyle.cc` (caller) is unconditionally compiled — not guarded by `WITH_FREESTYLE`. |
+| Fix spurious `}` premature namespace close | `nodes/texture/node_texture_tree.cc` | ID_LS chisel removed `SNODE_TEX_LINESTYLE` else-if block but left a stray `}` that closed `namespace blender` at line 72, stranding 260 lines outside the namespace. All `bke::` references failed. Fix: delete the stray brace. |
 
 ### ID_MB — MetaBall
 
