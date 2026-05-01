@@ -29,6 +29,52 @@ The old approach (tiered UI, smart defaults, Emscripten) was prototyping toward 
 
 Pattern for each pending layer: `grep -rn "ID_WS"` the directory, delete or redirect every hit. The breakage is the audit — follow the compile errors, don't paper over them.
 
+---
+
+## Deferred Debt & Roadmap Snapshot
+
+Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.md.
+
+### Known Deferred Debt (compile-green but runtime-broken or leak-prone)
+
+1. **Particle-add operators still registered** — `OBJECT_OT_particle_system_add` and related operators are live in the UI but silently broken: `BKE_particlesettings_add` → `MEM_new<ParticleSettings>` path works, but the broader particle system machinery (modifier binding, dependency graph, simulation) is gone with ID_PA. Follow-up: delete or gate these operators.
+
+2. **ID_LS latent memory leak** — Opening a legacy `.blend` file with Freestyle data in a `WITH_FREESTYLE=OFF` build populates `bmain->linestyles` via the kept `which_libbase` routing, but that listbase is not in `BKE_main_lists_get`, so `BKE_main_free` does not free those blocks. Accepted for now (no Freestyle fixtures in CI). Fix if needed: a blenloader post-read pass that drains `bmain->linestyles` after any file load when `WITH_FREESTYLE=OFF`.
+
+3. **ID_CF design decision pending** — CacheFile (Alembic/USD importer cache reference) is architecturally entangled. Literal grep count (18) understates the true blast radius (~50+ files). Do last. Needs a design answer: inline into modifier/constraint DNA per-instance, or keep as non-ID struct in a non-indexed listbase? See Key note 8 below.
+
+4. **ID_SCR runtime debt (Scar 1)** — Workspace cycle, reorder operators, factory name translation. Runtime behavior after screens are per-window state instead of a global list. See Scar 1 for anatomy.
+
+5. **`BKE_screen_blend_read_data` kept but not dead** — Defined, not called by the ID system. Retained for possible future format work. If `.blended` format work starts, audit this first.
+
+6. **`bpy.app.blended_version_*` RNA attributes not wired** — `blended_update_check.py` reads `bpy.app.blended_version_major/minor/patch` via `getattr(..., default)` fallback. Wire into `rna_wm.cc` when ready.
+
+7. **Multi-window screen iteration edge cases** — The 0.3.0 chisel converted global screen iteration to per-window. Edge cases in multi-window layouts may surface at runtime. Not tested in CI (single-window headless).
+
+8. **`BKE_particlesettings_add` allocation path — Scar 10 pattern applied but operators still registered** — See item 1. The alloc function is fixed; the dead UI paths that call it are not yet removed.
+
+### Upcoming Chisel Roadmap
+
+| Order | ID type | Literal hits | Status |
+|-------|---------|-------------|--------|
+| Next | `ID_MB` — MetaBall | 60 hits / 32 files | ☐ |
+| 2 | `ID_TE` — Texture | 58 hits / 39 files | ☐ |
+| 3 | `ID_CU_LEGACY` — Legacy Curve | 74 hits / 33 files | ☐ (active migration path to ID_CV must survive) |
+| Last | `ID_CF` — CacheFile | 18 literal / ~50+ true | ☐ (needs design decision first) |
+
+### Foundation Layer Roadmap
+
+| Version | Layer | Status |
+|---------|-------|--------|
+| 0.4.x | Datablock audit — 9 fossil removals (Bucket 5+6) | In progress |
+| 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) | Pending |
+| 0.6.x | Evaluation model — depsgraph audit | Pending |
+| 0.7.x | App lenses — launcher as canonical workspace system | Pending |
+| 0.8.x | File format — `.blended` is the project, import/export is the boundary | Pending |
+| 1.0.0 | Foundation complete; basic pipeline navigation working | Pending |
+
+---
+
 ### Bucket 5 + 6 Blast Radius Audit (pre-chisel)
 
 Grepped 2026-04-29 before starting the removal. Use this as the checklist.
