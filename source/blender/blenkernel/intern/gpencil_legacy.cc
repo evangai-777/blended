@@ -619,8 +619,20 @@ bGPdata *BKE_gpencil_data_addnew(Main *bmain, const char name[])
 {
   bGPdata *gpd;
 
-  /* allocate memory for a new block */
-  gpd = static_cast<bGPdata *>(BKE_libblock_alloc(bmain, ID_GD_LEGACY, name, 0));
+  /* ID_GD_LEGACY removed from IDType registry; bypass BKE_libblock_alloc (no IDTypeInfo). */
+  gpd = MEM_new<bGPdata>("bGPdata");
+  BKE_libblock_runtime_ensure(gpd->id);
+  *(reinterpret_cast<short *>(gpd->id.name)) = ID_GD_LEGACY;
+  gpd->id.us = 1;
+  {
+    ListBaseT<ID> *lb = which_libbase(bmain, ID_GD_LEGACY);
+    BKE_main_lock(bmain);
+    BLI_addtail(lb, gpd);
+    BKE_id_new_name_validate(*bmain, *lb, gpd->id, name, IDNewNameMode::RenameExistingNever, true);
+    bmain->is_memfile_undo_written = false;
+    BKE_main_unlock(bmain);
+  }
+  BKE_lib_libblock_session_uid_ensure(&gpd->id);
 
   /* initial settings */
   gpd->flag = (GP_DATA_DISPINFO | GP_DATA_EXPAND);

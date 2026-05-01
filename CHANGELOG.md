@@ -136,6 +136,9 @@ Three post-chisel bugs found during first full build of the 0.4.0 removal set:
 | Remove blank continuation line in `TREESTORE_ID_TYPE` macro | `editors/space_outliner/outliner_intern.hh` | ID_SPK + ID_PA + ID_GD_LEGACY + ID_LS removed consecutively from middle of `ELEM()` call, leaving blank line with no `\` that silently terminated the macro |
 | Remove `ANIMDATA_IDS_CB(bmain->particles.first)` | `blenkernel/intern/anim_data_bmain_utils.cc` | Missed site — not in literal or true blast radius audit for ID_PA |
 | Apply Scar 2 to ID_PA — restore `bmain->particles` + `which_libbase` routing | `BKE_main.hh`, `blenkernel/intern/main.cc` | 15+ blenloader versioning sites (`versioning_250` through `versioning_400`, `versioning_legacy`) iterate `bmain->particles`; full field removal crashed legacy file loading |
+| Fix `BKE_particlesettings_add` allocation crash — bypass IDType registry, use `MEM_new<ParticleSettings>` + manual ID init | `blenkernel/intern/particle.cc` | INIT_TYPE(ID_PA) removed → `BKE_libblock_alloc_notest` returns nullptr → `BKE_libblock_runtime_ensure(*id)` null dereference crash in all build types. Callers include `versioning_legacy.cc` and `fluid.cc` (live paths). See Scar 10. |
+| Fix `BKE_gpencil_data_addnew` allocation crash — bypass IDType registry, use `MEM_new<bGPdata>` + manual ID init | `blenkernel/intern/gpencil_legacy.cc` | Same pattern: INIT_TYPE(ID_GD_LEGACY) removed. Called from annotation painting, gpencil operators, ruler gizmo — all live. |
+| Fix `BKE_linestyle_new` allocation crash — bypass IDType registry, use `MEM_new<FreestyleLineStyle>` + manual ID init | `blenkernel/intern/linestyle.cc` | Same pattern: INIT_TYPE(ID_LS) removed. `freestyle.cc` (caller) is unconditionally compiled — not guarded by `WITH_FREESTYLE`. |
 
 ### ID_MB — MetaBall
 

@@ -781,6 +781,52 @@ Then read the full macro body and confirm every non-closing line ends with `\`.
 
 ---
 
+### Scar 10: INIT_TYPE Removal Breaks All Allocation Functions for That Type
+
+**What happened:** Three fossil types (ID_PA, ID_GD_LEGACY, ID_LS) had their `INIT_TYPE` removed but kept allocation functions (`BKE_particlesettings_add`, `BKE_gpencil_data_addnew`, `BKE_linestyle_new`) that call `BKE_libblock_alloc`. The crash chain: `BKE_libblock_alloc` → `BKE_libblock_alloc_notest` → `BKE_libblock_get_alloc_info` returns 0 (no IDTypeInfo registered) → `BKE_libblock_alloc_notest` returns `nullptr` → `BKE_libblock_alloc_in_lib` calls `BKE_libblock_runtime_ensure(*id)` which dereferences `nullptr` → **crash in all build types**, including release. `BLI_assert` is a no-op under NDEBUG but the null dereference is not.
+
+**Why it wasn't caught immediately:** The initial assumption was "dead code with INIT_TYPE removed." Wrong for all three. `BKE_gpencil_data_addnew` is called from annotation painting, gpencil operators, and the ruler gizmo. `BKE_linestyle_new` is called from `freestyle.cc` which is unconditionally compiled (not guarded by `WITH_FREESTYLE`). `BKE_particlesettings_add` is called from the fluid sim path and `versioning_legacy.cc` (live path for loading pre-2.5 .blend files).
+
+**The fix pattern:** Replace `BKE_libblock_alloc(bmain, ID_XX, name, 0)` with manual allocation in the add-new function itself:
+```cpp
+T *obj = MEM_new<T>("TypeName");
+BKE_libblock_runtime_ensure(obj->id);
+*(reinterpret_cast<short *>(obj->id.name)) = ID_XX;
+obj->id.us = 1;
+{
+  ListBaseT<ID> *lb = which_libbase(bmain, ID_XX);  /* Scar 2 routing still intact */
+  BKE_main_lock(bmain);
+  BLI_addtail(lb, obj);
+  BKE_id_new_name_validate(*bmain, *lb, obj->id, name, IDNewNameMode::RenameExistingNever, true);
+  bmain->is_memfile_undo_written = false;
+  BKE_main_unlock(bmain);
+}
+BKE_lib_libblock_session_uid_ensure(&obj->id);
+```
+Requires `BKE_lib_id.hh` (for `BKE_libblock_runtime_ensure`, `BKE_lib_libblock_session_uid_ensure`, `BKE_id_new_name_validate`, `IDNewNameMode`) and `BKE_main.hh` (for `which_libbase`, `BKE_main_lock/unlock`).
+
+**Cannot restore INIT_TYPE as the fix:** `INDEX_ID_XX` was also removed from the `IDIndex` enum. `MainListsArray` is `std::array<ListBaseT<ID>*, INDEX_ID_MAX - 1>` — `BKE_main_free` dereferences every slot. An unset `lb[INDEX_ID_XX]` nullptr crashes there. Restoring `INDEX_ID_PA` would require also restoring `lb[INDEX_ID_PA]` in `BKE_main_lists_get`, which fully restores the type to the indexed system — undoing the chisel.
+
+**The three wrong answers before the right one (ego-honest record):**
+1. First fix: `static_cast<T *>(BKE_libblock_alloc(bmain, ID_PA, name, 0))` — compiles but crashes at runtime via null dereference in `BKE_libblock_runtime_ensure`.
+2. Second fix: `MEM_callocN(sizeof(T), "name")` — dodged the `MEM_new_zeroed` static_assert but wrong: zero-fills raw bytes, skipping C++ constructors on non-trivial members. All three structs have in-class default member initializers and `DNA_DEFINE_CXX_METHODS` — non-trivial. `MEM_callocN` leaves them in undefined state.
+3. Third fix (correct): `MEM_new<T>("name")` — allocates via malloc then runs the default constructor via placement new, properly initializing all in-class defaults.
+
+The rule that would have caught #2 immediately: **read the struct before choosing the allocator.** If the struct has any in-class initializers (`= value`), `DNA_DEFINE_CXX_METHODS`, or non-trivial member types, it is non-trivial and requires `MEM_new`. `MEM_new_zeroed` enforces this with a static_assert. `MEM_callocN` does not — it silently does the wrong thing.
+
+**Allocator decision tree:**
+- Trivially constructible T (all POD fields, no in-class initializers): `MEM_new_zeroed<T>` (zero-init + no constructor)
+- Non-trivial T (any in-class initializer, `DNA_DEFINE_CXX_METHODS`, std:: members): `MEM_new<T>` (runs constructor)
+- Never `MEM_callocN` for C++ types with constructors
+
+**Mandatory post-chisel grep (run after removing INIT_TYPE for any type):**
+```bash
+grep -rn "BKE_libblock_alloc.*ID_XX" source/ --include="*.cc" --include="*.c"
+```
+Every hit is a potential crash. Each allocation function must be patched to the manual pattern above, or the caller must be removed entirely if the path is truly dead.
+
+---
+
 ### Pre-Commit Consistency Check (Mandatory — No Exceptions)
 
 **This is not a reminder. It is a required step before every `git add`. Do it even when you think it's unnecessary. Especially when you think it's unnecessary.**

@@ -112,6 +112,12 @@ Blended is developed with contributions from both human developers and AI tools.
   tree_element_id_linestyle.cc/.hh deleted, NC_LINESTYLE cases in space_node.cc (unguarded),
   4 NESTED_ID_NASTY_WORKAROUND SPECIAL_CASE entries removed from depsgraph COW; Scar 2
   pattern: bmain->linestyles and which_libbase routing preserved for anim_sys iteration;
+  Post-chisel allocation crash (Scar 10): INIT_TYPE removal breaks BKE_libblock_alloc for
+  that type in all build types — BKE_libblock_alloc_notest returns nullptr (size=0, no
+  IDTypeInfo), BKE_libblock_runtime_ensure then dereferences it. Three allocation functions
+  patched to use MEM_new<T> + manual ID init bypassing the registry: BKE_particlesettings_add
+  (particle.cc), BKE_gpencil_data_addnew (gpencil_legacy.cc), BKE_linestyle_new (linestyle.cc).
+  MEM_callocN is wrong for non-trivial types (skips constructors); MEM_new is correct.
   ongoing PR review and integration: 10+ PRs assessed, applied selectively.
   *"Listen to the whole thing before reacting."*
 
