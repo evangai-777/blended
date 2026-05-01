@@ -600,9 +600,9 @@ make check_mypy     # Python type checking
 
 ### Branding
 - `CMakeLists.txt:81` — `project(Blended)`
-- `source/blender/blenkernel/BKE_blender_version.h` — `BLENDED_VERSION_MAJOR/MINOR/PATCH` defines (currently 0.1.0), plus `BKE_blended_version_string()` declaration
+- `source/blender/blenkernel/BKE_blender_version.h` — `BLENDED_VERSION_MAJOR/MINOR/PATCH` defines (currently 0.3.0; bump on first commit of a new dev cycle, not at release time), plus `BKE_blended_version_string()` declaration
 - `source/blender/blenkernel/intern/blender.cc` — `blended_version_string` built in `blender_version_init()`, `BKE_blended_version_string()` implemented
-- `source/blender/windowmanager/intern/wm_window.cc` — fallback title `"Blended"`, title suffix `"- Blended 0.1.0"` via `BKE_blended_version_string()`
+- `source/blender/windowmanager/intern/wm_window.cc` — fallback title `"Blended"`, title suffix `"- Blended X.Y.Z"` via `BKE_blended_version_string()` (rendered dynamically from the defines above)
 - `source/blender/windowmanager/intern/wm_splash_screen.cc` — about dialog name/description, tagline `"Blender, simplified."`, splash version label
 
 ### Pre-5.0 Rig Compatibility
