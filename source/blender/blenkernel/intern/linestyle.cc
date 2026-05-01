@@ -36,6 +36,7 @@
 #include "BKE_freestyle.h"
 #include "BKE_idtype.hh"
 #include "BKE_lib_id.hh"
+#include "BKE_main.hh"
 #include "BKE_lib_query.hh"
 #include "BKE_linestyle.h"
 #include "BKE_node.hh"
@@ -709,7 +710,21 @@ FreestyleLineStyle *BKE_linestyle_new(Main *bmain, const char *name)
 {
   FreestyleLineStyle *linestyle;
 
-  linestyle = static_cast<FreestyleLineStyle *>(BKE_libblock_alloc(bmain, ID_LS, name, 0));
+  /* ID_LS removed from IDType registry; bypass BKE_libblock_alloc (no IDTypeInfo). */
+  linestyle = MEM_new<FreestyleLineStyle>("FreestyleLineStyle");
+  BKE_libblock_runtime_ensure(linestyle->id);
+  *(reinterpret_cast<short *>(linestyle->id.name)) = ID_LS;
+  linestyle->id.us = 1;
+  {
+    ListBaseT<ID> *lb = which_libbase(bmain, ID_LS);
+    BKE_main_lock(bmain);
+    BLI_addtail(lb, linestyle);
+    BKE_id_new_name_validate(
+        *bmain, *lb, linestyle->id, name, IDNewNameMode::RenameExistingNever, true);
+    bmain->is_memfile_undo_written = false;
+    BKE_main_unlock(bmain);
+  }
+  BKE_lib_libblock_session_uid_ensure(&linestyle->id);
 
   BKE_linestyle_init(linestyle);
 
