@@ -216,6 +216,14 @@ makesrna (6 files):
 
 > **Session note (2026-04-30):** The "35 hits" count was literal `ID_PA` string occurrences only. True scope additions: `particle.cc` IDTypeInfo + all static callbacks (particle_settings_init/copy/free/foreach_id, write_boid_state, blend_write/read_data/read_after_liblink) + `fluid_free_settings` forward decl and definition; `BKE_idtype.hh` extern decl; `BKE_main.hh` listbase field; `rna_internal.hh` declaration; `rna_main.cc` listbase macro + table entry; `rna_main_api.cc` RNA_def_main_particles() function + rna_Main_particles_new(); `rna_space.cc` — the FILTER_ID_PA in the asset browser category filter was a literal grep miss (uses the macro, not the string `ID_PA`). Notable decisions: `BKE_particle_partdeflect_blend_read_data` kept (still called from `object.cc`); `rna_particle.cc` / `rna_boid.cc` / `rna_color.cc` / `rna_object_force.cc` kept intact — only the GS == ID_PA checks remain, which compile fine since ID_PA is now a deprecated `#define` constant; `depsgraph.cc` teardown guard changed from `id_type != ID_PA` (preserve particles for last) to `id_type != ID_SCE` (scenes already destroyed in pass 1); ID_PA added to deprecated `#define` block in `DNA_ID_enums.h` for `.blend` read-skip.
 
+> **Correction note (2026-05-01):** Three bugs found during the 0.4.0 cleanup build — all missed in the original chisel:
+>
+> **(1) Scar 2 applied retroactively — `bmain->particles` restored.** The chisel declared ID_PA a "true fossil — no runtime rescue" and fully removed `bmain->particles` from `BKE_main.hh` and the `which_libbase` routing. This was wrong. `blenloader/intern/versioning_250.cc`, `versioning_260.cc`, `versioning_270.cc`, `versioning_280.cc`, `versioning_290.cc`, `versioning_400.cc`, and `versioning_legacy.cc` contain 15+ sites that iterate `bmain->particles` to upgrade old particle data on file load — none appeared in the literal grep because they use the field name, not `ID_PA`. Without the field and routing, loading any legacy `.blend` with particle data would crash. Fix: restored `bmain->particles` as a non-indexed Scar 2 listbase (not in `BKE_main_lists_get`) and restored `case ID_PA: return &(bmain->particles.cast<ID>());` in `which_libbase`. `INIT_TYPE` and `BKE_main_lists_get` entry remain removed. Key Note 1 updated to reflect this.
+>
+> **(2) Dangling `#ifdef __cplusplus` in `DNA_particle_types.h`.** The chisel removed `static constexpr ID_Type id_type = ID_PA;`, its comment, and the closing `#endif` from `ParticleSettings` — but left the opening `#ifdef __cplusplus` behind. This caused MSVC C1070 (mismatched #if/#endif). The initial fix (placing `#endif` at end of struct) was wrong: `dna_parse.cc`'s `strip_ignored_tokens()` consumes all tokens between `#ifdef __cplusplus` and `#endif`, which would have silently voided every `ParticleSettings` member from the SDNA database, breaking runtime serialization. The correct fix: remove the now-empty `#ifdef __cplusplus` entirely. **Rule: when removing `id_type` constexpr, always remove the entire `#ifdef __cplusplus` / comment / `#endif` block — not just the constexpr line.** See Scar 8.
+>
+> **(3) Missed site: `anim_data_bmain_utils.cc:92`** — `ANIMDATA_IDS_CB(bmain->particles.first)` was not in the literal or true blast radius audit. Caught at compile step 6484/8112.
+
 Core definition:
 - `makesdna/DNA_ID_enums.h:152` — enum entry `ID_PA = MAKE_ID2('P', 'A')`
 - `makesdna/DNA_particle_types.h:533` — `static constexpr ID_Type id_type = ID_PA`
@@ -474,7 +482,7 @@ Additional files NOT in the literal grep (discovered 2026-04-29):
 
 **Key notes for the chisel session:**
 
-1. **These are true fossils — no runtime rescue.** Unlike ID_SCR/ID_WM, none of these stay as runtime structs. Full removal: enum, DNA `id_type` constexpr, `IDTypeInfo`, `INIT_TYPE`, `which_libbase` case, `BKE_main_lists_get` entry, and `bmain->*` field. **Exception: ID_GD_LEGACY follows the Scar 2 pattern** — `bmain->gpencils` and `which_libbase` routing stay because OB_GPENCIL_LEGACY objects and annotations still use bGPdata at runtime.
+1. **These are true fossils — no runtime rescue.** Unlike ID_SCR/ID_WM, none of these stay as runtime structs. Full removal: enum, DNA `id_type` constexpr, `IDTypeInfo`, `INIT_TYPE`, `which_libbase` case, `BKE_main_lists_get` entry, and `bmain->*` field. **Exceptions — Scar 2 pattern applies to:** `ID_GD_LEGACY` (`bmain->gpencils` kept — OB_GPENCIL_LEGACY objects and annotations still use bGPdata at runtime), `ID_LS` (`bmain->linestyles` kept — legacy file loads populate it; see ID_LS review note), and `ID_PA` (`bmain->particles` kept — blenloader versioning files `versioning_250` through `versioning_400` and `versioning_legacy` iterate it to upgrade old particle data on file load; see ID_PA correction note 2026-05-01).
 
 2. **ID_CU_LEGACY and ID_GD_LEGACY have active migration paths.** CU_LEGACY → CV (Curves), GD_LEGACY → GP (Grease Pencil v3). The migration code in `grease_pencil_convert_legacy.cc` and `blendfile_link_append.cc` must survive removal — only the type registration goes, not the converter.
 
@@ -736,6 +744,38 @@ This is two failures compounded:
 **The failure mode:** Writing a note and then not checking whether anything already in the diff contradicts it. The note was new; the CHANGELOG line was inherited from an earlier state of the document. Inherited text doesn't get automatically reconciled with new text written in the same commit. You have to read the full diff before committing — not just the new additions.
 
 **The rule:** Before every commit that touches documentation with cross-references (chisel orders, version maps, scar notes, architectural decisions), read the complete diff and check that every changed file is internally consistent with every other changed file. If you write "do X last" anywhere, grep the diff for X and verify nothing else in the same commit says "do X first."
+
+---
+
+### Scar 8: dna_parse.cc Silently Voids Struct Members Inside #ifdef __cplusplus
+
+**What happened:** The ID_PA chisel removed `static constexpr ID_Type id_type = ID_PA;` and its `#endif` from `ParticleSettings`, but left the opening `#ifdef __cplusplus` behind. MSVC reported C1070 (mismatched #if/#endif). The first fix placed `#endif /* __cplusplus */` at the end of the struct — that resolved the compiler error. A Codex bot review caught that this was wrong.
+
+**Why the first fix was wrong:** `dna_parse.cc`'s `strip_ignored_tokens()` (lines 271–276) explicitly skips all tokens between `#ifdef __cplusplus` and the next `#endif`. It is not a C++ compatibility guard in the ordinary sense — it is a DNA parser exclusion marker. Placing `#endif` at the end of `ParticleSettings` would have caused `strip_ignored_tokens()` to consume every struct member, producing an empty struct in the SDNA database. Runtime serialization of particle data would have silently broken — no compile error, no assert, just wrong data.
+
+**The correct fix:** Remove the `#ifdef __cplusplus` entirely. When `id_type` is the only content of the block, there is nothing left to guard. The struct members were always outside the `#ifdef __cplusplus` / `#endif` pair; removing the now-empty guard leaves them exactly where they were.
+
+**The rule for all future id_type removals:** When removing `static constexpr ID_Type id_type = X;` from a DNA struct, find the `#ifdef __cplusplus` that opens the block and remove it and its `#endif` together with the constexpr and its comment. Never leave an unclosed or empty `#ifdef __cplusplus` in a DNA file. Verify with `grep -n "__cplusplus" <file>` — the result should either be zero hits or show a balanced open/close pair with real content between them.
+
+**How to check before touching any DNA file:**
+```bash
+grep -n "#ifdef __cplusplus\|#endif" source/blender/makesdna/DNA_<type>_types.h
+```
+If the only content between `#ifdef __cplusplus` and `#endif` is `id_type` (plus comment), remove all three lines together. If there is other C++-only content (constructors, `DNA_DEFINE_CXX_METHODS`, etc.), keep the guard and only remove the `id_type` line.
+
+---
+
+### Scar 9: Blank Continuation Line Silently Terminates a Multi-Line Macro
+
+**What happened:** `TREESTORE_ID_TYPE` in `outliner_intern.hh` is a multi-line `ELEM()` macro. ID_SPK, ID_PA, ID_GD_LEGACY, and ID_LS were removed from the middle of the argument list across four separate chisel sessions. Each removal left the preceding line's backslash continuation intact. But the four IDs were consecutive in the list — removing all of them left a blank line with no `\` in the middle of the expanded call. This silently terminated the macro at the blank line, causing the remaining `ID_LP`, `ID_CV`, `ID_PT`, `ID_VO`, `ID_GP` entries and the `eOLDrawState` enum to be parsed as invalid top-level declarations (C4430, C2059). The error appeared at compile step 6107/8112, far from the chisel.
+
+**Why this is hard to catch:** Each individual removal looked correct. The blank line it left behind only became a problem when combined with the removals from prior sessions. No single session's diff showed the broken macro — only the cumulative result did.
+
+**The rule:** After any chisel session that removes IDs from an `ELEM()` or similar multi-line macro, scan the macro for blank lines with no `\`. One blank line in the middle = broken macro.
+```bash
+grep -n "TREESTORE_ID_TYPE\|ELEM(" source/blender/editors/space_outliner/outliner_intern.hh
+```
+Then read the full macro body and confirm every non-closing line ends with `\`.
 
 ---
 

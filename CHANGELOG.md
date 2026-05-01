@@ -96,7 +96,7 @@ Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEG
 | Layer | Files touched | Status |
 |-------|--------------|--------|
 | `makesdna` | `DNA_ID_enums.h` (enum entry → deprecated `#define`), `DNA_particle_types.h` (id_type constexpr), `DNA_ID.h` (FILTER_ID_PA, INDEX_ID_PA, FILTER_ID_ALL) | ✓ |
-| `blenkernel` | `idtype.cc` (INIT_TYPE + CASE_IDINDEX ×2), `main.cc` (which_libbase, CASE_ID_INDEX, lb[]), `texture.cc` (×2), `particle.cc` (IDTypeInfo + all callbacks + fluid_free_settings), `BKE_idtype.hh`, `BKE_main.hh` (particles field) | ✓ |
+| `blenkernel` | `idtype.cc` (INIT_TYPE + CASE_IDINDEX ×2), `main.cc` (CASE_ID_INDEX, lb[] — KEEP which_libbase routing + particles field as Scar 2), `texture.cc` (×2), `particle.cc` (IDTypeInfo + all callbacks + fluid_free_settings), `BKE_idtype.hh`, `BKE_main.hh` (particles field restored as non-indexed Scar 2 listbase — see correction note), `anim_data_bmain_utils.cc` (missed in original chisel — ANIMDATA_IDS_CB removed) | ✓ |
 | `makesrna` | `rna_ID.cc`, `rna_main_api.cc` (RNA_def_main_particles, rna_Main_particles_new), `rna_main.cc` (listbase macro + table entry), `rna_internal.hh`, `rna_space.cc` (FILTER_ID_PA in asset browser misc category — literal grep miss) | ✓ |
 | `editors` | `buttons_context.cc`, `interface_icons.cc`, `interface_template_id.cc`, `render_shading.cc` (×2), `render_opengl.cc`, `outliner_draw.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc`, `anim_filter.cc`, `anim_channels_defines.cc` | ✓ |
 | `depsgraph` | `depsgraph_tag.cc` (×2), `deg_builder_relations.cc`, `deg_builder_nodes.cc`, `depsgraph.cc` (teardown guard: `!= ID_PA` → `!= ID_SCE`) | ✓ |
@@ -125,6 +125,17 @@ Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEG
 | `editors` | `buttons_texture.cc`, `buttons_context.cc` (linestyle path fn + pinnable fn + dispatch + "line_style" member + FS texture slot), `interface_icons.cc`, `interface_template_id.cc` (×2), `interface_template_preview.cc` (×3), `render_shading.cc` (×3 incl. FreestyleLineStyle paste context), `render_opengl.cc`, `outliner_draw.cc`, `outliner_intern.hh`, `outliner_tools.cc` (×2 + simplified unlink_texture_fn), `tree_element_id.cc`, `tree_element_id_linestyle.cc/.hh` (DELETED), `space_node.cc` (NC_LINESTYLE ×2), `anim_channels_defines.cc` (ACF_DSLINESTYLE 3 fns + struct + table entry), `anim_channels_edit.cc` (ANIMTYPE_DSLINESTYLE ×9), `anim_deps.cc` (×1), `anim_filter.cc` (animdata_filter_ds_linestyle fn + ANIMTYPE case + ANIMCHANNEL_NEW_CHANNEL call), `ED_anim_api.hh` (ANIMTYPE_DSLINESTYLE enum + FILTER_LS_SCED macro), `nla_buttons.cc`, `nla_draw.cc`, `nla_tracks.cc`, `transform_convert_action.cc` | ✓ |
 | `nodes` | `shader_nodes_inline.cc` (ShaderNodeOutputLineStyle case), `node_texture_tree.cc` (SNODE_TEX_LINESTYLE unguarded branch) | ✓ |
 | `depsgraph` | `deg_eval_copy_on_write.cc` (SPECIAL_CASE ×4 + sizeof(FreestyleLineStyle) + DNA include), `deg_builder_relations.cc/.h` (case + fn + forward decl), `deg_builder_nodes.cc/.h` (case + fn + forward decl), `deg_builder_relations_view_layer.cc` (call site), `deg_builder_nodes_view_layer.cc` (call site) | ✓ |
+
+### 0.4.0 Cleanup fixes (2026-05-01)
+
+Three post-chisel bugs found during first full build of the 0.4.0 removal set:
+
+| Fix | File | Root cause |
+|-----|------|-----------|
+| Restore `#endif` balance in `DNA_particle_types.h` — remove dangling `#ifdef __cplusplus` | `makesdna/DNA_particle_types.h` | ID_PA chisel removed `id_type` + comment + `#endif` but left opening `#ifdef __cplusplus`; initial fix of placing `#endif` at end of struct was wrong (dna_parse.cc `strip_ignored_tokens()` would have voided all struct members from SDNA) |
+| Remove blank continuation line in `TREESTORE_ID_TYPE` macro | `editors/space_outliner/outliner_intern.hh` | ID_SPK + ID_PA + ID_GD_LEGACY + ID_LS removed consecutively from middle of `ELEM()` call, leaving blank line with no `\` that silently terminated the macro |
+| Remove `ANIMDATA_IDS_CB(bmain->particles.first)` | `blenkernel/intern/anim_data_bmain_utils.cc` | Missed site — not in literal or true blast radius audit for ID_PA |
+| Apply Scar 2 to ID_PA — restore `bmain->particles` + `which_libbase` routing | `BKE_main.hh`, `blenkernel/intern/main.cc` | 15+ blenloader versioning sites (`versioning_250` through `versioning_400`, `versioning_legacy`) iterate `bmain->particles`; full field removal crashed legacy file loading |
 
 ### ID_MB — MetaBall
 

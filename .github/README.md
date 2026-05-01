@@ -95,9 +95,11 @@ Blended is developed with contributions from both human developers and AI tools.
   and NLA sound strip function removed, ANIMTYPE_DSSPK animation channel removed,
   SPEAKER_EVAL depsgraph opcode removed, versioning pass 502.23 added;
   `ID_PA` (ParticleSettings) removal — 40+ files, IDTypeInfo and all static callbacks
-  removed from particle.cc, BKE_main.hh particles field removed, rna_main.cc listbase
-  unregistered, depsgraph two-pass teardown guard updated, rna_space.cc asset browser
-  filter corrected (literal grep miss — FILTER_ID_PA macro, not string);
+  removed from particle.cc, rna_main.cc listbase unregistered, depsgraph two-pass
+  teardown guard updated, rna_space.cc asset browser filter corrected (literal grep miss);
+  Scar 2 pattern applied post-chisel: bmain->particles and which_libbase routing restored
+  as non-indexed listbase — blenloader versioning_250 through versioning_400 iterate it to
+  upgrade particle data in legacy files; INIT_TYPE and BKE_main_lists_get entry remain removed;
   `ID_GD_LEGACY` (legacy Grease Pencil) removal — 30+ files, IDTypeInfo removed,
   RNA registration (BlendDataAnnotations, rna_Main_annotations_new, gpencils listbase)
   removed, editor dispatch tables cleared; bmain->gpencils and which_libbase routing
