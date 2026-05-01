@@ -65,20 +65,3 @@ def add_quick_liquid():
     t.assertEqual(object.modifiers[0].type, 'FLUID')
     t.assertEqual(object.modifiers[0].flow_settings.flow_type, 'LIQUID')
 
-
-def add_quick_explode():
-    import bpy
-
-    e, t, window = ui.test_window()
-
-    object = bpy.context.object
-    # Just a pre-condition
-    t.assertIsNotNone(object)
-
-    yield from ui.call_operator(e, "Quick Explode")
-    t.assertEqual(object.modifiers[0].type, 'PARTICLE_SYSTEM')
-    t.assertEqual(object.modifiers[1].type, 'EXPLODE')
-
-    # Just start and stop the animation.
-    yield from ui.call_operator(e, "Play Animation")
-    yield from ui.call_operator(e, "Play Animation")

@@ -104,6 +104,18 @@ static PyStructSequence_Field app_info_fields[] = {
      "The release status of this build alpha/beta/rc/release\n"
      "\n"
      ":type: str\n"},
+    {"blended_version_major",
+     "Blended product major version (independent of the upstream Blender version)\n"
+     "\n"
+     ":type: int\n"},
+    {"blended_version_minor",
+     "Blended product minor version\n"
+     "\n"
+     ":type: int\n"},
+    {"blended_version_patch",
+     "Blended product patch version\n"
+     "\n"
+     ":type: int\n"},
     {"background",
      "Boolean, True when blender is running without a user interface (started with -b)\n"
      "\n"
@@ -226,6 +238,9 @@ static PyObject *make_app_info()
   SetStrItem(BKE_blender_version_string());
 
   SetStrItem(STRINGIFY(BLENDER_VERSION_CYCLE));
+  SetIntItem(BLENDED_VERSION_MAJOR);
+  SetIntItem(BLENDED_VERSION_MINOR);
+  SetIntItem(BLENDED_VERSION_PATCH);
   SetObjItem(PyBool_FromLong(G.background));
 #ifdef WITH_PYTHON_MODULE
   SetObjItem(Py_NewRef(Py_True));

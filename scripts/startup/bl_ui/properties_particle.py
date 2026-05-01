@@ -95,7 +95,6 @@ class PARTICLE_MT_context_menu(Menu):
             "particle.duplicate_particle_system",
             icon='DUPLICATE',
         )
-        layout.operator("particle.particle_system_remove_all", text="Remove All Particle Systems")
 
 
 class PARTICLE_PT_hair_dynamics_presets(PresetPanel, Panel):
@@ -186,11 +185,6 @@ class PARTICLE_PT_context_particles(ParticleButtonsPanel, Panel):
             )
 
             col = row.column(align=True)
-            col.operator("object.particle_system_add", icon='ADD', text="")
-            col.operator("object.particle_system_remove", icon='REMOVE', text="")
-
-            col.separator()
-
             col.menu("PARTICLE_MT_context_menu", icon='DOWNARROW_HLT', text="")
 
         if psys is None:

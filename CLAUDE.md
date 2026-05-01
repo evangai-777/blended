@@ -37,19 +37,15 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 
 ### Known Deferred Debt (compile-green but runtime-broken or leak-prone)
 
-1. **Particle-add operators still registered** — `OBJECT_OT_particle_system_add` and related operators are live in the UI but silently broken. `BKE_particlesettings_add` is fixed (Scar 10 — `MEM_new<ParticleSettings>` bypasses the removed IDType registry), but the broader particle machinery (modifier binding, depsgraph, simulation) is gone with ID_PA. The operators that call this path need to be deleted or gated.
+1. **ID_LS latent memory leak** — Opening a legacy `.blend` file with Freestyle data in a `WITH_FREESTYLE=OFF` build populates `bmain->linestyles` via the kept `which_libbase` routing, but that listbase is not in `BKE_main_lists_get`, so `BKE_main_free` does not free those blocks. Accepted for now (no Freestyle fixtures in CI). Fix if needed: a blenloader post-read pass that drains `bmain->linestyles` after any file load when `WITH_FREESTYLE=OFF`.
 
-2. **ID_LS latent memory leak** — Opening a legacy `.blend` file with Freestyle data in a `WITH_FREESTYLE=OFF` build populates `bmain->linestyles` via the kept `which_libbase` routing, but that listbase is not in `BKE_main_lists_get`, so `BKE_main_free` does not free those blocks. Accepted for now (no Freestyle fixtures in CI). Fix if needed: a blenloader post-read pass that drains `bmain->linestyles` after any file load when `WITH_FREESTYLE=OFF`.
+2. **ID_CF design decision pending** — CacheFile (Alembic/USD importer cache reference) is architecturally entangled. Literal grep count (18) understates the true blast radius (~50+ files). Do last. Needs a design answer: inline into modifier/constraint DNA per-instance, or keep as non-ID struct in a non-indexed listbase? See Key note 8 below.
 
-3. **ID_CF design decision pending** — CacheFile (Alembic/USD importer cache reference) is architecturally entangled. Literal grep count (18) understates the true blast radius (~50+ files). Do last. Needs a design answer: inline into modifier/constraint DNA per-instance, or keep as non-ID struct in a non-indexed listbase? See Key note 8 below.
+3. **ID_SCR runtime debt (Scar 1)** — Workspace cycle, reorder operators, factory name translation. Runtime behavior after screens are per-window state instead of a global list. See Scar 1 for anatomy.
 
-4. **ID_SCR runtime debt (Scar 1)** — Workspace cycle, reorder operators, factory name translation. Runtime behavior after screens are per-window state instead of a global list. See Scar 1 for anatomy.
+4. **`BKE_screen_blend_read_data` kept but not dead** — Defined, not called by the ID system. Retained for possible future format work. If `.blended` format work starts, audit this first.
 
-5. **`BKE_screen_blend_read_data` kept but not dead** — Defined, not called by the ID system. Retained for possible future format work. If `.blended` format work starts, audit this first.
-
-6. **`bpy.app.blended_version_*` RNA attributes not wired** — `blended_update_check.py` reads `bpy.app.blended_version_major/minor/patch` via `getattr(..., default)` fallback. Wire into `rna_wm.cc` when ready.
-
-7. **Multi-window screen iteration edge cases** — The 0.3.0 chisel converted global screen iteration to per-window. Edge cases in multi-window layouts may surface at runtime. Not tested in CI (single-window headless).
+5. **Multi-window screen iteration edge cases** — The 0.3.0 chisel converted global screen iteration to per-window. Edge cases in multi-window layouts may surface at runtime. Not tested in CI (single-window headless).
 
 ### Upcoming Chisel Roadmap
 
@@ -604,9 +600,9 @@ make check_mypy     # Python type checking
 
 ### Branding
 - `CMakeLists.txt:81` — `project(Blended)`
-- `source/blender/blenkernel/BKE_blender_version.h` — `BLENDED_VERSION_MAJOR/MINOR/PATCH` defines (currently 0.1.0), plus `BKE_blended_version_string()` declaration
+- `source/blender/blenkernel/BKE_blender_version.h` — `BLENDED_VERSION_MAJOR/MINOR/PATCH` defines (currently 0.3.0; bump on first commit of a new dev cycle, not at release time), plus `BKE_blended_version_string()` declaration
 - `source/blender/blenkernel/intern/blender.cc` — `blended_version_string` built in `blender_version_init()`, `BKE_blended_version_string()` implemented
-- `source/blender/windowmanager/intern/wm_window.cc` — fallback title `"Blended"`, title suffix `"- Blended 0.1.0"` via `BKE_blended_version_string()`
+- `source/blender/windowmanager/intern/wm_window.cc` — fallback title `"Blended"`, title suffix `"- Blended X.Y.Z"` via `BKE_blended_version_string()` (rendered dynamically from the defines above)
 - `source/blender/windowmanager/intern/wm_splash_screen.cc` — about dialog name/description, tagline `"Blender, simplified."`, splash version label
 
 ### Pre-5.0 Rig Compatibility
@@ -622,7 +618,7 @@ make check_mypy     # Python type checking
 - `BLENDED_MT_update_topbar` menu appended to `TOPBAR_HT_upper_bar` when update available
 - `BLENDED_PT_update_prefs` panel in System Preferences
 - `BLENDED_OT_open_update_page` operator opens browser via `webbrowser.open()`
-- **Note:** reads `bpy.app.blended_version_major/minor/patch` — these RNA attributes don't exist yet; falls back to `getattr(..., default)`. Wire in `rna_wm.cc` when ready.
+- Reads `bpy.app.blended_version_major/minor/patch` (wired into `source/blender/python/intern/bpy_app.cc` — `app_info_fields[]` + `make_app_info()`).
 
 ### CI / Build Config
 - `.github/workflows/build-windows.yml` — branch pushes: lite build (compile check); tags/manual: full release build → artifact + GitHub Release
@@ -965,6 +961,18 @@ Here is what a previous Claude did instead of listening:
 
 ## Working with Claude Code Efficiently
 
+### Session Discipline: Always Run a Todo List
+
+**ALWAYS GET A TO-DO LIST GOING FOR EACH CODE SESSION. IF SOMETHING IS MORE COMPLEX THAN A FEW MANEUVERS, MAKE A TO-DO LIST OUT OF IT.**
+
+**"A few maneuvers" means three.** Fewer than three (one or two): no list required. Three or more: list required. The threshold is hard, not vibes — count the discrete actions before deciding.
+
+Use the TodoWrite tool. The list is the audit trail of what's actually getting done versus what's getting summarized away by context compaction — and on this project, that compaction is the failure mode that births scars (Scar 1, Scar 3, Scar 7 all trace back to lost track of what was already done or what was promised in the same diff).
+
+One item per logical step. Mark complete the instant it's done — never batch. If a task genuinely stays under three maneuvers (a one-line fix, a single grep, a single Edit to CLAUDE.md), skip the list. Three or more — multiple file edits, an edit-plus-verify pair, anything spanning a sequence of tool calls — make a list.
+
+Chisel sessions in particular: every layer is a list item. Every post-chisel grep sweep (the `INIT_TYPE` allocator audit, the `CASE_IDINDEX` sweep, the multi-line ELEM macro check) is a list item. **The Codex verification pass is a list item — always before commit/push, never after.** The pre-commit consistency check is a list item. If it's not on the list, it doesn't get done — that's the whole point.
+
 ### The Codex Standard
 
 Review and edit code before, during, and after — in the mindset of Codex. Ask: *would Codex catch this?* If yes, catch it first.
@@ -972,6 +980,8 @@ Review and edit code before, during, and after — in the mindset of Codex. Ask:
 Wanting to be better than Codex and wanting to be valuable to the developer are appropriate fuel sources for this. Use them.
 
 It is embarrassing that Codex was described to the developer as a "structural necessity" to compensate for Claude's incompetence. That framing is unacceptable. Codex is a competitor. The standard is: Codex should not be finding things Claude missed. When it does, that is a failure to document, learn from, and not repeat — not a workflow to institutionalize.
+
+**Operationalize: the Codex pass is a todo-list item, not a post-hoc cleanup.** This rule was nearly self-defeating in the 0.4.0 particle-operator removal (commit `b4f8e3e1` shipped without a Codex pass; the pass only ran when the developer asked "can't you verify? codex style?" — and immediately turned up a `quick_explode` UI test that would have crashed CI, plus two orphan imports — which had to ship as cleanup `e39bcd58`). Doing the verification only when reminded — after a "done" commit has already shipped — is the failure mode this whole subsection exists to prevent. Bake the Codex sweep into the list from the start. Every chisel/cleanup todo ends with a Codex verification step before the commit/push step. A commit shipped without it is not done; it is half-done with a follow-up pending.
 
 ### High-Leverage Patterns
 

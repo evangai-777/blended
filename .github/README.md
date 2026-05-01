@@ -35,7 +35,7 @@ See [`BLENDED.md`](../BLENDED.md) for the full design document: identity, archit
 What's Different Right Now
 --------------------------
 
-- **Branding** — "Blended 0.1.0" in window titles, splash screen, and about dialog. Tagline: *"Blender, simplified."* CMake project renamed to Blended.
+- **Branding** — "Blended 0.3.0" in window titles, splash screen, and about dialog (rendered dynamically from `BLENDED_VERSION_*` defines). Tagline: *"Blender, simplified."* CMake project renamed to Blended.
 - **Pre-5.0 rig compatibility** — `blended_rig_compat.py` restores `action.fcurves` as a compatibility property on `bpy.types.Action`. Pre-Blender-5.0 Rigify rigs (including CGCookie Vonnbots rigs) that access `action.fcurves` directly work again. IK/FK bake operators no longer fail silently.
 - **Update notifications** — Background GitHub Releases check at startup (24-hour cache, non-blocking). Top-bar notification with version string when an update is available. One-click download via browser. "Blended Updates" panel in System Preferences.
 - **CI** — Windows x64 portable `.zip` builds via GitHub Actions. Branch pushes run a fast lite build for compile-error checking. Tags produce a full release artifact. `blended_release.cmake` disables GPU kernel pre-compilation (CUDA/HIP/OneAPI) to keep CI under an hour — runtime compilation covers the same hardware.
@@ -118,6 +118,23 @@ Blended is developed with contributions from both human developers and AI tools.
   patched to use MEM_new<T> + manual ID init bypassing the registry: BKE_particlesettings_add
   (particle.cc), BKE_gpencil_data_addnew (gpencil_legacy.cc), BKE_linestyle_new (linestyle.cc).
   MEM_callocN is wrong for non-trivial types (skips constructors); MEM_new is correct.
+  Version-defines sync: BLENDED_VERSION_* bumped 0.2.0 → 0.3.0 to match the latest tag —
+  the defines had been stuck at 0.2.0 even after 0.3.0 shipped, so without the sync the
+  wired update checker (below) would have flashed "0.3.0 available" to users already on 0.3.0.
+  bpy.app.blended_version_major/minor/patch wired into bpy_app.cc PyStructSequence
+  (app_info_fields[] + make_app_info() SetIntItem calls) — not RNA, as a previous CLAUDE.md
+  note had wrongly suggested. blended_update_check.py simplified: getattr(..., default)
+  fallback dropped (resolves deferred-debt item 6).
+  Particle-add operator removal: OBJECT_OT_particle_system_add/_remove and
+  PARTICLE_OT_particle_system_remove_all (live in UI but silently broken since the ID_PA
+  chisel — the alloc path worked via Scar 10, but the broader particle machinery was gone)
+  + the QuickExplode operator that chained them + the four Python UI sites + the CI test
+  + the manual-ref URL all deleted. -359 lines across 8 files. BKE_particlesettings_add
+  itself stays for fluid.cc Mantaflow particle output (resolves deferred-debt item 1).
+  Session Discipline rule + Codex Standard operationalization added to CLAUDE.md: todo
+  lists are mandatory at three or more maneuvers; the Codex verification pass is a
+  todo-list item before commit/push, not a post-hoc cleanup. The rule cites a real
+  same-session incident as its concrete reference.
   ongoing PR review and integration: 10+ PRs assessed, applied selectively.
   *"Listen to the whole thing before reacting."*
 

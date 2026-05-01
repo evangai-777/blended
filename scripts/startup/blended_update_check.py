@@ -139,14 +139,11 @@ class BLENDED_PT_update_prefs(bpy.types.Panel):
 
 @bpy.app.handlers.persistent
 def _startup_check(_):
-    import bpy.app
-    # Read BLENDED_VERSION_* from bpy.app — these are set from the C defines.
-    # Fall back gracefully if not present (e.g. in older builds).
-    major = getattr(bpy.app, 'blended_version_major', 0)
-    minor = getattr(bpy.app, 'blended_version_minor', 1)
-    patch = getattr(bpy.app, 'blended_version_patch', 0)
-    current = (major, minor, patch)
-
+    current = (
+        bpy.app.blended_version_major,
+        bpy.app.blended_version_minor,
+        bpy.app.blended_version_patch,
+    )
     t = threading.Thread(target=_check_thread, args=(current,), daemon=True)
     t.start()
 

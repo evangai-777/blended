@@ -141,6 +141,19 @@ Three post-chisel bugs found during first full build of the 0.4.0 removal set:
 | Fix `BKE_linestyle_new` allocation crash — bypass IDType registry, use `MEM_new<FreestyleLineStyle>` + manual ID init | `blenkernel/intern/linestyle.cc` | Same pattern: INIT_TYPE(ID_LS) removed. `freestyle.cc` (caller) is unconditionally compiled — not guarded by `WITH_FREESTYLE`. |
 | Fix spurious `}` premature namespace close | `nodes/texture/node_texture_tree.cc` | ID_LS chisel removed `SNODE_TEX_LINESTYLE` else-if block but left a stray `}` that closed `namespace blender` at line 72, stranding 260 lines outside the namespace. All `bke::` references failed. Fix: delete the stray brace. |
 
+### 0.4.0 Deferred-debt resolution + doc protocols (2026-05-01 cont.)
+
+Resolves two deferred-debt items, syncs a stale version define, and adds two operational rules to CLAUDE.md.
+
+| Change | Files | Notes |
+|--------|-------|-------|
+| Sync `BLENDED_VERSION_*` to 0.3.0 | `BKE_blender_version.h` | Defines were stuck at 0.2.0 even after the 0.3.0 tag shipped. Without this bump, the now-wired update checker would have flashed "0.3.0 available" to users already on 0.3.0. Commit `084414e6`. |
+| Wire `bpy.app.blended_version_major/minor/patch` *(resolves deferred-debt item 6)* | `python/intern/bpy_app.cc`, `scripts/startup/blended_update_check.py` | Added three int fields to `app_info_fields[]` + matching `SetIntItem` calls in `make_app_info()`. Python-side `getattr(..., default)` fallback dropped. **Note:** real target was `bpy_app.cc` (PyStructSequence), not `rna_wm.cc` as CLAUDE.md previously claimed — `bpy.app` is a Python `PyStructSequence`, not RNA. CLAUDE.md note corrected. Commit `270760c9`. |
+| Delete particle-add operators + Quick Explode *(resolves deferred-debt item 1)* | `editors/physics/particle_object.cc`, `physics_intern.hh`, `physics_ops.cc`, `bl_ui/properties_particle.py`, `bl_operators/object_quick_effects.py`, `bl_ui/space_view3d.py`, `modules/_rna_manual_reference.py` | `OBJECT_OT_particle_system_add/_remove` + `PARTICLE_OT_particle_system_remove_all` were live in the UI but silently broken since the ID_PA chisel — the operator path allocated ParticleSettings via Scar 10 but the broader machinery (depsgraph relations, modifier eval, simulation) was gone. `QuickExplode` chained `particle_system_add` + Explode modifier — useless without particles, deleted entire. Surgical delete (B option per the audit), -359 lines. `BKE_particlesettings_add` itself stays (still called by `fluid.cc:4433` Mantaflow output). Commit `b4f8e3e1`. |
+| Codex-pass cleanup on the particle removal | `tests/python/ui_simulate/test_quick_effects.py`, `tests/python/CMakeLists.txt`, `bl_operators/object_quick_effects.py` | Post-commit verification turned up: `add_quick_explode()` UI test (would have crashed CI on the deleted operator), CMake test runner registration, two orphan imports (`IntProperty`, `pgettext_rpt as rpt_` only used by QuickExplode). Caught before CI but should have been pre-commit, not post-hoc — see Codex Standard operationalization below. Commit `e39bcd58`. |
+| Doc: Session Discipline rule | `CLAUDE.md` | "Always run a todo list each session. Three+ maneuvers = list required." Hard threshold, not vibes. Commits `bdc8a5e7`, `336b8a60`. |
+| Doc: Codex Standard operationalization | `CLAUDE.md` | The Codex verification pass is a todo-list item before commit/push, never after. Cites the `b4f8e3e1` / `e39bcd58` incident as the concrete reference for future sessions. Commit `3a6d1a8f`. |
+
 ### ID_MB — MetaBall
 
 | Layer | Files touched | Status |
