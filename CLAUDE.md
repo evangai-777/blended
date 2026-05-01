@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.3.0 (tagged, CI green). 0.4.0 in progress — Bucket 5 + 6 fossil removals. `ID_PC` ✓ + `ID_SPK` ✓ + `ID_PA` ✓ + `ID_GD_LEGACY` ✓ + `ID_LS` ✓; next: `ID_MB`.
+**Current version:** Blended 0.3.0 (tagged). 0.4.0 in progress — CI green (Windows x64, build #57, commit `29e4663`). Bucket 5 + 6 fossil removals: `ID_PC` ✓ + `ID_SPK` ✓ + `ID_PA` ✓ + `ID_GD_LEGACY` ✓ + `ID_LS` ✓; next: `ID_MB`.
 
 ---
 
@@ -37,7 +37,7 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 
 ### Known Deferred Debt (compile-green but runtime-broken or leak-prone)
 
-1. **Particle-add operators still registered** — `OBJECT_OT_particle_system_add` and related operators are live in the UI but silently broken: `BKE_particlesettings_add` → `MEM_new<ParticleSettings>` path works, but the broader particle system machinery (modifier binding, dependency graph, simulation) is gone with ID_PA. Follow-up: delete or gate these operators.
+1. **Particle-add operators still registered** — `OBJECT_OT_particle_system_add` and related operators are live in the UI but silently broken. `BKE_particlesettings_add` is fixed (Scar 10 — `MEM_new<ParticleSettings>` bypasses the removed IDType registry), but the broader particle machinery (modifier binding, depsgraph, simulation) is gone with ID_PA. The operators that call this path need to be deleted or gated.
 
 2. **ID_LS latent memory leak** — Opening a legacy `.blend` file with Freestyle data in a `WITH_FREESTYLE=OFF` build populates `bmain->linestyles` via the kept `which_libbase` routing, but that listbase is not in `BKE_main_lists_get`, so `BKE_main_free` does not free those blocks. Accepted for now (no Freestyle fixtures in CI). Fix if needed: a blenloader post-read pass that drains `bmain->linestyles` after any file load when `WITH_FREESTYLE=OFF`.
 
@@ -50,8 +50,6 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 6. **`bpy.app.blended_version_*` RNA attributes not wired** — `blended_update_check.py` reads `bpy.app.blended_version_major/minor/patch` via `getattr(..., default)` fallback. Wire into `rna_wm.cc` when ready.
 
 7. **Multi-window screen iteration edge cases** — The 0.3.0 chisel converted global screen iteration to per-window. Edge cases in multi-window layouts may surface at runtime. Not tested in CI (single-window headless).
-
-8. **`BKE_particlesettings_add` allocation path — Scar 10 pattern applied but operators still registered** — See item 1. The alloc function is fixed; the dead UI paths that call it are not yet removed.
 
 ### Upcoming Chisel Roadmap
 
@@ -967,6 +965,14 @@ Here is what a previous Claude did instead of listening:
 
 ## Working with Claude Code Efficiently
 
+### The Codex Standard
+
+Review and edit code before, during, and after — in the mindset of Codex. Ask: *would Codex catch this?* If yes, catch it first.
+
+Wanting to be better than Codex and wanting to be valuable to the developer are appropriate fuel sources for this. Use them.
+
+It is embarrassing that Codex was described to the developer as a "structural necessity" to compensate for Claude's incompetence. That framing is unacceptable. Codex is a competitor. The standard is: Codex should not be finding things Claude missed. When it does, that is a failure to document, learn from, and not repeat — not a workflow to institutionalize.
+
 ### High-Leverage Patterns
 
 1. **Be specific about the target.** Name the file, function, line. Vague tasks burn tokens on discovery.
@@ -1026,6 +1032,10 @@ git fetch origin main
 git log --oneline origin/main -3   # does your branch tip appear here already?
 ```
 If the branch has already been merged, start a new branch from `origin/main` **before writing any commits**. Never push follow-on commits to a merged branch expecting them to reach `main`.
+
+### PR Description Style
+
+**Do not use `#` before CI build numbers in PR descriptions.** GitHub auto-links any `#N` as a reference to PR or issue N. `build #57` becomes a link to PR #57, not to the CI run. Write `build 57` — no hashtag.
 
 ---
 
