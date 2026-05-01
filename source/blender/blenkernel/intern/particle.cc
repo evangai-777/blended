@@ -64,6 +64,7 @@
 #include "BKE_layer.hh"
 #include "BKE_lib_id.hh"
 #include "BKE_lib_query.hh"
+#include "BKE_main.hh"
 #include "BKE_material.hh"
 #include "BKE_mesh.hh"
 #include "BKE_mesh_legacy_convert.hh"
@@ -3765,10 +3766,22 @@ void object_remove_particle_system(Main *bmain,
 
 ParticleSettings *BKE_particlesettings_add(Main *bmain, const char *name)
 {
-  ParticleSettings *part;
-
-  part = BKE_id_new<ParticleSettings>(bmain, name);
-
+  /* ID_PA is removed from the IDType registry (no INIT_TYPE, no INDEX_ID_PA), so
+   * BKE_libblock_alloc would crash because it can't find the struct size via IDTypeInfo.
+   * Replicate the allocation manually: MEM_new_zeroed gives us the size statically,
+   * then we init the ID header and insert into bmain->particles (Scar 2 listbase). */
+  ParticleSettings *part = MEM_new_zeroed<ParticleSettings>("ParticleSettings");
+  BKE_libblock_runtime_ensure(part->id);
+  *(reinterpret_cast<short *>(part->id.name)) = ID_PA;
+  part->id.us = 1;
+  ListBaseT<ID> *lb = which_libbase(bmain, ID_PA);
+  BKE_main_lock(bmain);
+  BLI_addtail(lb, part);
+  BKE_id_new_name_validate(
+      *bmain, *lb, part->id, name, IDNewNameMode::RenameExistingNever, true);
+  bmain->is_memfile_undo_written = false;
+  BKE_main_unlock(bmain);
+  BKE_lib_libblock_session_uid_ensure(&part->id);
   return part;
 }
 
