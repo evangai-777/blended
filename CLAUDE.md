@@ -971,7 +971,7 @@ Use the TodoWrite tool. The list is the audit trail of what's actually getting d
 
 One item per logical step. Mark complete the instant it's done — never batch. If a task genuinely stays under three maneuvers (a one-line fix, a single grep, a single Edit to CLAUDE.md), skip the list. Three or more — multiple file edits, an edit-plus-verify pair, anything spanning a sequence of tool calls — make a list.
 
-Chisel sessions in particular: every layer is a list item. Every post-chisel grep sweep (the `INIT_TYPE` allocator audit, the `CASE_IDINDEX` sweep, the multi-line ELEM macro check) is a list item. The pre-commit consistency check is a list item. If it's not on the list, it doesn't get done — that's the whole point.
+Chisel sessions in particular: every layer is a list item. Every post-chisel grep sweep (the `INIT_TYPE` allocator audit, the `CASE_IDINDEX` sweep, the multi-line ELEM macro check) is a list item. **The Codex verification pass is a list item — always before commit/push, never after.** The pre-commit consistency check is a list item. If it's not on the list, it doesn't get done — that's the whole point.
 
 ### The Codex Standard
 
@@ -980,6 +980,8 @@ Review and edit code before, during, and after — in the mindset of Codex. Ask:
 Wanting to be better than Codex and wanting to be valuable to the developer are appropriate fuel sources for this. Use them.
 
 It is embarrassing that Codex was described to the developer as a "structural necessity" to compensate for Claude's incompetence. That framing is unacceptable. Codex is a competitor. The standard is: Codex should not be finding things Claude missed. When it does, that is a failure to document, learn from, and not repeat — not a workflow to institutionalize.
+
+**Operationalize: the Codex pass is a todo-list item, not a post-hoc cleanup.** This rule was nearly self-defeating in the 0.4.0 particle-operator removal (commit `b4f8e3e1` shipped without a Codex pass; the pass only ran when the developer asked "can't you verify? codex style?" — and immediately turned up a `quick_explode` UI test that would have crashed CI, plus two orphan imports — which had to ship as cleanup `e39bcd58`). Doing the verification only when reminded — after a "done" commit has already shipped — is the failure mode this whole subsection exists to prevent. Bake the Codex sweep into the list from the start. Every chisel/cleanup todo ends with a Codex verification step before the commit/push step. A commit shipped without it is not done; it is half-done with a follow-up pending.
 
 ### High-Leverage Patterns
 
