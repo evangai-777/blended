@@ -47,7 +47,7 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 
 5. **`BKE_screen_blend_read_data` kept but not dead** — Defined, not called by the ID system. Retained for possible future format work. If `.blended` format work starts, audit this first.
 
-6. **`bpy.app.blended_version_*` RNA attributes not wired** — `blended_update_check.py` reads `bpy.app.blended_version_major/minor/patch` via `getattr(..., default)` fallback. Wire into `rna_wm.cc` when ready.
+6. **`bpy.app.blended_version_*` attributes not wired** — `blended_update_check.py` reads `bpy.app.blended_version_major/minor/patch` via `getattr(..., default)` fallback. Wire into `source/blender/python/intern/bpy_app.cc` (the `app_info_fields[]` array + `make_app_info()` `SetIntItem` calls, matching the existing `version` / `version_file` pattern). Not RNA — `bpy.app` is a Python `PyStructSequence`, not a `bpy.types` RNA struct.
 
 7. **Multi-window screen iteration edge cases** — The 0.3.0 chisel converted global screen iteration to per-window. Edge cases in multi-window layouts may surface at runtime. Not tested in CI (single-window headless).
 
@@ -622,7 +622,7 @@ make check_mypy     # Python type checking
 - `BLENDED_MT_update_topbar` menu appended to `TOPBAR_HT_upper_bar` when update available
 - `BLENDED_PT_update_prefs` panel in System Preferences
 - `BLENDED_OT_open_update_page` operator opens browser via `webbrowser.open()`
-- **Note:** reads `bpy.app.blended_version_major/minor/patch` — these RNA attributes don't exist yet; falls back to `getattr(..., default)`. Wire in `rna_wm.cc` when ready.
+- **Note:** reads `bpy.app.blended_version_major/minor/patch` — these attributes don't exist yet; falls back to `getattr(..., default)`. Wire in `source/blender/python/intern/bpy_app.cc` (`app_info_fields[]` + `make_app_info()`). Not RNA.
 
 ### CI / Build Config
 - `.github/workflows/build-windows.yml` — branch pushes: lite build (compile check); tags/manual: full release build → artifact + GitHub Release
