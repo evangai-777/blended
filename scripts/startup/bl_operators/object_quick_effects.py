@@ -9,10 +9,8 @@ from bpy.props import (
     BoolProperty,
     EnumProperty,
     FloatProperty,
-    IntProperty,
 )
 from bpy.app.translations import (
-    pgettext_rpt as rpt_,
     pgettext_data as data_,
 )
 
