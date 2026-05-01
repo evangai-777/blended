@@ -88,9 +88,6 @@ void BKE_animdata_main_cb(Main *bmain, const FunctionRef<void(ID *, AnimData *)>
   /* meshes */
   ANIMDATA_IDS_CB(bmain->meshes.first);
 
-  /* particles */
-  ANIMDATA_IDS_CB(bmain->particles.first);
-
   /* movie clips */
   ANIMDATA_IDS_CB(bmain->movieclips.first);
 

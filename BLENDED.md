@@ -283,7 +283,7 @@ Blender itself has marked these for replacement. Blended finishes the job.
 | ID | Name | Why cut | Status |
 |---|---|---|---|
 | `ID_TE` | Texture | Blender Internal renderer fossil; residual folds into NodeTree | pending |
-| `ID_PA` | ParticleSettings | Replaced by Geometry Nodes (purest example of §5 Group 5 swamp) | ✓ 0.4.0 |
+| `ID_PA` | ParticleSettings | Replaced by Geometry Nodes (purest example of §5 Group 5 swamp) | ✓ 0.4.0 ² |
 | `ID_MB` | MetaBall | 1990s implicit surfaces; sculpt/remesh covers it | pending |
 | `ID_LS` | FreestyleLineStyle | Niche NPR renderer; NPR via shader nodes / Grease Pencil | ✓ 0.4.0 ¹ |
 | `ID_SPK` | Speaker | 3D positional audio on scene objects; niche. Audio flows through VSE timeline. | ✓ 0.4.0 |
@@ -291,6 +291,8 @@ Blender itself has marked these for replacement. Blended finishes the job.
 | `ID_CF` | CacheFile | External Alembic/USD cache reference — boundary concern, not project data | deferred (design question) |
 
 Removal in progress — 0.4.x. Per-layer file detail in [`CHANGELOG.md`](CHANGELOG.md).
+
+² **ID_PA known artifact:** `bmain->particles` is kept as a non-indexed Scar 2 listbase so blenloader versioning passes (`versioning_250` through `versioning_400`) can upgrade particle data in legacy files. Unlike ID_LS (where the leak is latent), these versioning passes actively need the field — without it, loading any legacy `.blend` with particle data crashes. `INIT_TYPE` and `BKE_main_lists_get` entry removed; field and `which_libbase` routing kept.
 
 ¹ **ID_LS known artifact:** `bmain->linestyles` is kept as a non-indexed listbase (Scar 2 pattern) so `which_libbase` can route legacy file reads. Unlike ID_SCR/ID_WM (runtime-only), linestyle IDs can be loaded from legacy `.blend` files. With `WITH_FREESTYLE=OFF`, those IDs escape `BKE_main_free` and leak for the session. Accepted — no Freestyle fixtures in CI. See CLAUDE.md ID_LS review note for fix path if needed.
 

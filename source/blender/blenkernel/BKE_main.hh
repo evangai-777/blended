@@ -395,6 +395,8 @@ struct Main : NonCopyable, NonMovable {
   ListBaseT<MovieClip> movieclips = {};
   ListBaseT<Mask> masks = {};
   ListBaseT<FreestyleLineStyle> linestyles = {};
+  /** Legacy particle settings — not project data (Scar 2). */
+  ListBaseT<ParticleSettings> particles = {};
   ListBaseT<CacheFile> cachefiles = {};
   /**
    * \note The name `hair_curves` is chosen to be different than `curves`,
