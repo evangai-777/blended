@@ -222,21 +222,21 @@ blenloader (2 files):
 - `versioning_450.cc:5891` — ELEM check; same as above
 
 editors (12 files):
-- `buttons_texture.cc:389` — pin ID GS check
+- `buttons_texture.cc:373` — pin ID GS check
 - `interface_anim.cc:280` — GS check
-- `interface_icons.cc:1933,2095` — icon switch (2 sites)
-- `interface_template_preview.cc:59,68` — preview template ELEM/GS checks
-- `interface_template_id.cc:629,863,1474` — template checks (3 sites)
+- `interface_icons.cc:1933,2084` — icon switch (2 sites)
+- `interface_template_preview.cc:58,67` — preview template ELEM/GS checks
+- `interface_template_id.cc:626,855,1453` — template checks (3 sites)
 - `node_group_operator.cc:772` — returns `ID_TE` as default
-- `render_opengl.cc:612` — render switch
+- `render_opengl.cc:611` — render switch
 - `render_update.cc:359` — render update switch
 - `render_preview.cc:412,543,607,1286,1310` — preview rendering (5 sites)
-- `anim_filter.cc:2806` — animation filter case
-- `anim_channels_defines.cc:325` — channel defines GS check
-- `outliner_draw.cc:780,2506` — outliner draw (2 sites)
-- `outliner_intern.hh:144` — outliner macro
-- `outliner_tools.cc:144,2930` — outliner tools (2 sites)
-- `tree_element_id.cc:52` — tree element
+- `anim_filter.cc:2724` — animation filter case
+- `anim_channels_defines.cc:323` — channel defines GS check
+- `outliner_draw.cc:780,2504` — outliner draw (2 sites)
+- `outliner_intern.hh:143` — outliner macro; verify no blank continuation line after removal (Scar 9)
+- `outliner_tools.cc:140,2890` — outliner tools (2 sites)
+- `tree_element_id.cc:48` — tree element
 
 depsgraph (4 files):
 - `depsgraph_tag.cc:881` — ID type tag
