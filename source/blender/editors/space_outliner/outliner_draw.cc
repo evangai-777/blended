@@ -2482,8 +2482,6 @@ static BIFIconID tree_element_get_icon_from_id(const ID *id)
       }
       break;
     }
-    case ID_MB:
-      return ICON_OUTLINER_DATA_META;
     case ID_LT:
       return ICON_OUTLINER_DATA_LATTICE;
     case ID_LA: {
