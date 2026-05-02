@@ -106,7 +106,6 @@
 #include "BKE_linestyle.h"
 #include "BKE_main.hh"
 #include "BKE_material.hh"
-#include "BKE_mball.hh"
 #include "BKE_mesh.hh"
 #include "BKE_mesh_wrapper.hh"
 #include "BKE_modifier.hh"
@@ -1899,8 +1898,6 @@ bool BKE_object_is_in_editmode(const Object *ob)
       return (id_cast<bArmature *>(ob->data))->edbo != nullptr;
     case OB_FONT:
       return (id_cast<Curve *>(ob->data))->editfont != nullptr;
-    case OB_MBALL:
-      return (id_cast<MetaBall *>(ob->data))->editelems != nullptr;
     case OB_LATTICE:
       return (id_cast<Lattice *>(ob->data))->editlatt != nullptr;
     case OB_SURF:
@@ -1930,8 +1927,6 @@ bool BKE_object_data_is_in_editmode(const Object *ob, const ID *id)
     case ID_CU_LEGACY:
       return (((id_cast<const Curve *>(id))->editnurb != nullptr) ||
               ((id_cast<const Curve *>(id))->editfont != nullptr));
-    case ID_MB:
-      return (id_cast<const MetaBall *>(id))->editelems != nullptr;
     case ID_LT:
       return (id_cast<const Lattice *>(id))->editlatt != nullptr;
     case ID_AR:
@@ -1973,10 +1968,6 @@ char *BKE_object_data_editmode_flush_ptr_get(ID *id)
         }
       }
       break;
-    }
-    case ID_MB: {
-      MetaBall *mb = id_cast<MetaBall *>(id);
-      return &mb->needs_flush_to_id;
     }
     case ID_LT: {
       EditLatt *editlatt = (id_cast<Lattice *>(id))->editlatt;
@@ -2117,8 +2108,6 @@ static const char *get_obdata_defname(int type)
       return DATA_("Surf");
     case OB_FONT:
       return DATA_("Text");
-    case OB_MBALL:
-      return DATA_("Mball");
     case OB_CAMERA:
       return DATA_("Camera");
     case OB_LAMP:
@@ -2186,8 +2175,6 @@ void *BKE_object_obdata_add_from_type(Main *bmain, int type, const char *name)
       return BKE_curve_add(bmain, name, OB_SURF);
     case OB_FONT:
       return BKE_curve_add(bmain, name, OB_FONT);
-    case OB_MBALL:
-      return BKE_mball_add(bmain, name);
     case OB_CAMERA:
       return BKE_camera_add(bmain, name);
     case OB_LAMP:
@@ -2222,8 +2209,6 @@ int BKE_object_obdata_to_type(const ID *id)
       return OB_MESH;
     case ID_CU_LEGACY:
       return reinterpret_cast<const Curve *>(id)->ob_type;
-    case ID_MB:
-      return OB_MBALL;
     case ID_LA:
       return OB_LAMP;
     case ID_CA:
@@ -2706,11 +2691,6 @@ Object *BKE_object_duplicate(Main *bmain,
         id_new = BKE_id_copy_for_duplicate(bmain, id_old, dupflag, copy_flags);
       }
       break;
-    case OB_MBALL:
-      if (dupflag & USER_DUP_MBALL) {
-        id_new = BKE_id_copy_for_duplicate(bmain, id_old, dupflag, copy_flags);
-      }
-      break;
     case OB_LAMP:
       if (dupflag & USER_DUP_LAMP) {
         id_new = BKE_id_copy_for_duplicate(bmain, id_old, dupflag, copy_flags);
@@ -2847,7 +2827,7 @@ void BKE_object_obdata_size_init(Object *ob, const float size)
       lamp->area_sizez *= size;
       break;
     }
-    /* Only lattice (not mesh, curve, mball...),
+    /* Only lattice (not mesh, curve...),
      * because its got data when newly added */
     case OB_LATTICE: {
       Lattice *lt = id_cast<Lattice *>(ob->data);
@@ -3671,8 +3651,6 @@ std::optional<Bounds<float3>> BKE_object_boundbox_get(const Object *ob)
     case OB_SURF:
     case OB_FONT:
       return BKE_curve_minmax(id_cast<const Curve *>(ob->data), true);
-    case OB_MBALL:
-      return BKE_object_evaluated_geometry_bounds(ob);
     case OB_LATTICE:
       return BKE_lattice_minmax(id_cast<const Lattice *>(ob->data));
     case OB_ARMATURE:
@@ -4273,19 +4251,6 @@ bool BKE_object_obdata_texspace_get(Object *ob,
       }
       if (r_texspace_size) {
         *r_texspace_size = cu->texspace_size;
-      }
-      break;
-    }
-    case ID_MB: {
-      MetaBall *mb = id_cast<MetaBall *>(ob->data);
-      if (r_texspace_flag) {
-        *r_texspace_flag = &mb->texspace_flag;
-      }
-      if (r_texspace_location) {
-        *r_texspace_location = mb->texspace_location;
-      }
-      if (r_texspace_size) {
-        *r_texspace_size = mb->texspace_size;
       }
       break;
     }
@@ -5053,7 +5018,6 @@ bool BKE_object_supports_material_slots(Object *ob)
               OB_CURVES_LEGACY,
               OB_SURF,
               OB_FONT,
-              OB_MBALL,
               OB_CURVES,
               OB_POINTCLOUD,
               OB_VOLUME,

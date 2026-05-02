@@ -356,10 +356,6 @@ Material ***BKE_object_material_array_p(Object *ob)
     Curve *cu = id_cast<Curve *>(ob->data);
     return &(cu->mat);
   }
-  if (ob->type == OB_MBALL) {
-    MetaBall *mb = id_cast<MetaBall *>(ob->data);
-    return &(mb->mat);
-  }
   if (ob->type == OB_CURVES) {
     Curves *curves = id_cast<Curves *>(ob->data);
     return &(curves->mat);
@@ -388,10 +384,6 @@ short *BKE_object_material_len_p(Object *ob)
   if (ELEM(ob->type, OB_CURVES_LEGACY, OB_FONT, OB_SURF)) {
     Curve *cu = id_cast<Curve *>(ob->data);
     return &(cu->totcol);
-  }
-  if (ob->type == OB_MBALL) {
-    MetaBall *mb = id_cast<MetaBall *>(ob->data);
-    return &(mb->totcol);
   }
   if (ob->type == OB_CURVES) {
     Curves *curves = id_cast<Curves *>(ob->data);
@@ -422,8 +414,6 @@ Material ***BKE_id_material_array_p(ID *id)
       return &((id_cast<Mesh *>(id))->mat);
     case ID_CU_LEGACY:
       return &((id_cast<Curve *>(id))->mat);
-    case ID_MB:
-      return &((id_cast<MetaBall *>(id))->mat);
     case ID_GD_LEGACY:
       return &((id_cast<bGPdata *>(id))->mat);
     case ID_CV:
@@ -450,8 +440,6 @@ short *BKE_id_material_len_p(ID *id)
       return &((id_cast<Mesh *>(id))->totcol);
     case ID_CU_LEGACY:
       return &((id_cast<Curve *>(id))->totcol);
-    case ID_MB:
-      return &((id_cast<MetaBall *>(id))->totcol);
     case ID_GD_LEGACY:
       return &((id_cast<bGPdata *>(id))->totcol);
     case ID_CV:
@@ -483,7 +471,6 @@ static void material_data_index_remove_id(ID *id, short index)
     case ID_GP:
       BKE_grease_pencil_material_index_remove(reinterpret_cast<GreasePencil *>(id), index);
       break;
-    case ID_MB:
     case ID_CV:
     case ID_PT:
     case ID_VO:
@@ -516,9 +503,6 @@ bool BKE_object_material_slot_used(Object *object, short actcol)
       return BKE_mesh_material_index_used(id_cast<Mesh *>(ob_data), actcol - 1);
     case ID_CU_LEGACY:
       return BKE_curve_material_index_used(id_cast<Curve *>(ob_data), actcol - 1);
-    case ID_MB:
-      /* Meta-elements don't support materials at the moment. */
-      return false;
     case ID_GP:
       return BKE_grease_pencil_material_index_used(reinterpret_cast<GreasePencil *>(ob_data),
                                                    actcol - 1);
@@ -539,7 +523,6 @@ static void material_data_index_clear_id(ID *id)
     case ID_CU_LEGACY:
       BKE_curve_material_index_clear(id_cast<Curve *>(id));
       break;
-    case ID_MB:
     case ID_CV:
     case ID_PT:
     case ID_VO:
@@ -844,7 +827,6 @@ std::optional<int> BKE_id_material_index_max_eval(const ID &id)
     case ID_GP:
       return reinterpret_cast<const GreasePencil &>(id).material_index_max();
     case ID_VO:
-    case ID_MB:
       /* Always use the first material. */
       return 0;
     default:

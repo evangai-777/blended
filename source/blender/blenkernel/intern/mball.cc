@@ -20,9 +20,6 @@
 #include "DNA_ID.h"
 #include "MEM_guardedalloc.h"
 
-/* Allow using deprecated functionality for .blend file I/O. */
-#define DNA_DEPRECATED_ALLOW
-
 #include "DNA_material_types.h"
 #include "DNA_mesh_types.h"
 #include "DNA_meta_types.h"
@@ -40,140 +37,14 @@
 
 #include "BKE_main.hh"
 
-#include "BKE_geometry_set.hh"
-#include "BKE_idtype.hh"
-#include "BKE_lattice.hh"
 #include "BKE_layer.hh"
-#include "BKE_lib_id.hh"
-#include "BKE_lib_query.hh"
-#include "BKE_library.hh"
 #include "BKE_mball.hh"
-#include "BKE_mball_tessellate.hh"
 #include "BKE_object.hh"
 #include "BKE_object_types.hh"
 
-#include "DEG_depsgraph.hh"
-#include "DEG_depsgraph_query.hh"
-
-#include "BLO_read_write.hh"
-
 namespace blender {
 
-static void metaball_init_data(ID *id)
-{
-  MetaBall *metaball = id_cast<MetaBall *>(id);
-  INIT_DEFAULT_STRUCT_AFTER(metaball, id);
-}
-
-static void metaball_copy_data(Main * /*bmain*/,
-                               std::optional<Library *> /*owner_library*/,
-                               ID *id_dst,
-                               const ID *id_src,
-                               const int /*flag*/)
-{
-  MetaBall *metaball_dst = id_cast<MetaBall *>(id_dst);
-  const MetaBall *metaball_src = id_cast<const MetaBall *>(id_src);
-
-  BLI_duplicatelist(&metaball_dst->elems, &metaball_src->elems);
-
-  metaball_dst->mat = MEM_dupalloc(metaball_src->mat);
-
-  metaball_dst->editelems = nullptr;
-  metaball_dst->lastelem = nullptr;
-}
-
-static void metaball_free_data(ID *id)
-{
-  MetaBall *metaball = id_cast<MetaBall *>(id);
-
-  MEM_SAFE_DELETE(metaball->mat);
-
-  BLI_freelistN(&metaball->elems);
-}
-
-static void metaball_foreach_id(ID *id, LibraryForeachIDData *data)
-{
-  MetaBall *metaball = reinterpret_cast<MetaBall *>(id);
-  for (int i = 0; i < metaball->totcol; i++) {
-    BKE_LIB_FOREACHID_PROCESS_IDSUPER(data, metaball->mat[i], IDWALK_CB_USER);
-  }
-}
-
-static void metaball_blend_write(BlendWriter *writer, ID *id, const void *id_address)
-{
-  MetaBall *mb = id_cast<MetaBall *>(id);
-
-  /* Clean up, important in undo case to reduce false detection of changed datablocks. */
-  mb->editelems = nullptr;
-  /* Must always be cleared (meta's don't have their own edit-data). */
-  mb->needs_flush_to_id = 0;
-  mb->lastelem = nullptr;
-
-  /* write LibData */
-  writer->write_id_struct(id_address, mb);
-  BKE_id_blend_write(writer, &mb->id);
-
-  /* direct data */
-  writer->write_pointer_array(mb->totcol, mb->mat);
-
-  for (MetaElem &ml : mb->elems) {
-    writer->write_struct(&ml);
-  }
-}
-
-static void metaball_blend_read_data(BlendDataReader *reader, ID *id)
-{
-  MetaBall *mb = id_cast<MetaBall *>(id);
-
-  BLO_read_pointer_array(reader, mb->totcol, reinterpret_cast<void **>(&mb->mat));
-
-  BLO_read_struct_list(reader, MetaElem, &(mb->elems));
-
-  mb->editelems = nullptr;
-  /* Must always be cleared (meta's don't have their own edit-data). */
-  mb->needs_flush_to_id = 0;
-  // mb->edit_elems.first = mb->edit_elems.last = nullptr;
-  mb->lastelem = nullptr;
-}
-
-IDTypeInfo IDType_ID_MB = {
-    .id_code = MetaBall::id_type,
-    .id_filter = FILTER_ID_MB,
-    .dependencies_id_types = FILTER_ID_MA,
-    .main_listbase_index = INDEX_ID_MB,
-    .struct_size = sizeof(MetaBall),
-    .name = "Metaball",
-    .name_plural = N_("metaballs"),
-    .translation_context = BLT_I18NCONTEXT_ID_METABALL,
-    .flags = IDTYPE_FLAGS_APPEND_IS_REUSABLE,
-    .asset_type_info = nullptr,
-
-    .init_data = metaball_init_data,
-    .copy_data = metaball_copy_data,
-    .free_data = metaball_free_data,
-    .make_local = nullptr,
-    .foreach_id = metaball_foreach_id,
-    .foreach_cache = nullptr,
-    .foreach_path = nullptr,
-    .foreach_working_space_color = nullptr,
-    .owner_pointer_get = nullptr,
-
-    .blend_write = metaball_blend_write,
-    .blend_read_data = metaball_blend_read_data,
-    .blend_read_after_liblink = nullptr,
-
-    .blend_read_undo_preserve = nullptr,
-
-    .lib_override_apply_post = nullptr,
-};
-
 /* Functions */
-
-MetaBall *BKE_mball_add(Main *bmain, const char *name)
-{
-  MetaBall *mb = BKE_id_new<MetaBall>(bmain, name);
-  return mb;
-}
 
 MetaElem *BKE_mball_element_add(MetaBall *mb, const int type)
 {
@@ -643,43 +514,5 @@ bool BKE_mball_select_swap_multi_ex(const Span<Base *> bases)
   }
   return changed_multi;
 }
-
-/* **** Depsgraph evaluation **** */
-
-void BKE_mball_data_update(Depsgraph *depsgraph, Scene *scene, Object *ob)
-{
-  using namespace blender::bke;
-  BLI_assert(ob->type == OB_MBALL);
-
-  BKE_object_free_derived_caches(ob);
-
-  const Object *basis_object = BKE_mball_basis_find(*DEG_get_bmain(depsgraph), scene, ob);
-  if (ob != basis_object) {
-    return;
-  }
-
-  Mesh *mesh = BKE_mball_polygonize(depsgraph, scene, ob);
-  if (mesh == nullptr) {
-    return;
-  }
-
-  const MetaBall *mball = id_cast<MetaBall *>(ob->data);
-  mesh->mat = MEM_dupalloc(mball->mat);
-  mesh->totcol = mball->totcol;
-
-  if (ob->parent && ob->parent->type == OB_LATTICE && ob->partype == PARSKEL) {
-    BKE_lattice_deform_coords(
-        ob->parent,
-        ob,
-        reinterpret_cast<float (*)[3]>(mesh->vert_positions_for_write().data()),
-        mesh->verts_num,
-        0,
-        nullptr,
-        1.0f);
-    mesh->tag_positions_changed();
-  }
-
-  ob->runtime->geometry_set_eval = new GeometrySet(GeometrySet::from_mesh(mesh));
-};
 
 }  // namespace blender

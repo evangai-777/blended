@@ -306,12 +306,7 @@ static DupliObject *make_dupli(const DupliContext *ctx,
     }
   }
 
-  /* Meta-balls never draw in duplis, they are instead merged into one by the basis
-   * meta-ball outside of the group. this does mean that if that meta-ball is not in the
-   * scene, they will not show up at all, limitation that should be solved once. */
-  if (object_data && GS(object_data->name) == ID_MB) {
-    dob->no_draw = true;
-  }
+
 
   /* Random number per instance.
    * The root object in the scene, persistent ID up to the instance object, and the instance object
@@ -415,10 +410,7 @@ static void make_child_duplis(const DupliContext *ctx,
       if ((ob != ctx->obedit) && is_child(ob, parent)) {
         DupliContext pctx;
         if (copy_dupli_context(&pctx, ctx, ctx->object, nullptr, _base_id)) {
-          /* Meta-balls have a different dupli handling. */
-          if (ob->type != OB_MBALL) {
-            ob->flag |= OB_DONE; /* Doesn't render. */
-          }
+          ob->flag |= OB_DONE; /* Doesn't render. */
           make_child_duplis_cb(&pctx, userdata, ob);
           if (pctx.gen->type != GEOMETRY_SET_DUPLI_GENERATOR_TYPE) {
             if (!ctx->dupli_gen_type_stack->is_empty()) {
@@ -444,10 +436,7 @@ static void make_child_duplis(const DupliContext *ctx,
       if ((ob != ctx->obedit) && is_child(ob, parent)) {
         DupliContext pctx;
         if (copy_dupli_context(&pctx, ctx, ctx->object, nullptr, persistent_dupli_id)) {
-          /* Meta-balls have a different dupli-handling. */
-          if (ob->type != OB_MBALL) {
-            ob->flag |= OB_DONE; /* Doesn't render. */
-          }
+          ob->flag |= OB_DONE; /* Doesn't render. */
 
           make_child_duplis_cb(&pctx, userdata, ob);
           if (pctx.gen->type != GEOMETRY_SET_DUPLI_GENERATOR_TYPE) {
@@ -1741,13 +1730,6 @@ static const DupliGenerator *get_dupli_generator(const DupliContext *ctx)
   int visibility_flag = ctx->object->visibility_flag;
 
   if ((transflag & OB_DUPLI) == 0 && ctx->object->runtime->geometry_set_eval == nullptr) {
-    return nullptr;
-  }
-
-  /* Meta-ball objects can't create instances, but the dupli system is used to "instance" their
-   * evaluated mesh to render engines. We need to exit early to avoid recursively instancing the
-   * evaluated meta-ball mesh on meta-ball instances that already contribute to the basis. */
-  if (ctx->object->type == OB_MBALL && ctx->level > 0) {
     return nullptr;
   }
 

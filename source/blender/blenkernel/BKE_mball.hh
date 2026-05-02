@@ -21,8 +21,6 @@ struct MetaElem;
 struct Object;
 struct Scene;
 
-MetaBall *BKE_mball_add(Main *bmain, const char *name);
-
 bool BKE_mball_is_any_selected(const MetaBall *mb);
 bool BKE_mball_is_any_selected_multi(Span<Base *> bases);
 bool BKE_mball_is_any_unselected(const MetaBall *mb);
@@ -104,9 +102,5 @@ bool BKE_mball_deselect_all(MetaBall *mb);
 bool BKE_mball_deselect_all_multi_ex(Span<Base *> bases);
 bool BKE_mball_select_swap(MetaBall *mb);
 bool BKE_mball_select_swap_multi_ex(Span<Base *> bases);
-
-/* **** Depsgraph evaluation **** */
-
-void BKE_mball_data_update(Depsgraph *depsgraph, Scene *scene, Object *ob);
 
 }  // namespace blender
