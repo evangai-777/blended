@@ -218,8 +218,8 @@ blenkernel (9 files):
 - `brush_test.cc:64` — test fixture: `BKE_id_new(bmain, ID_TE, ...)` (test-only; delete with type)
 
 blenloader (2 files):
-- `versioning_500.cc:4494` — ELEM check (shared with ID_LS)
-- `versioning_450.cc:5891` — ELEM check (shared with ID_LS)
+- `versioning_500.cc:4494` — ELEM check; `ID_LS` already removed, remove `ID_TE` from remaining ELEM
+- `versioning_450.cc:5891` — ELEM check; same as above
 
 editors (12 files):
 - `buttons_texture.cc:389` — pin ID GS check
