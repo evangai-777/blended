@@ -368,7 +368,6 @@ class ShapeCache {
   BatchPtr capsule_body;
   BatchPtr capsule_cap;
   BatchPtr arrows;
-  BatchPtr metaball_wire_circle;
 
   BatchPtr speaker;
 

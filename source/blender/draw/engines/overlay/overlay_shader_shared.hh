@@ -275,11 +275,6 @@ struct [[host_shared]] ThemeColors {
 
   float4 bundle_solid;
 
-  float4 mball_radius;
-  float4 mball_radius_select;
-  float4 mball_stiffness;
-  float4 mball_stiffness_select;
-
   float4 current_frame;
   float4 before_frame;
   float4 after_frame;
