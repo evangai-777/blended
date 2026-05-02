@@ -239,13 +239,13 @@ editors (12 files):
 - `tree_element_id.cc:48` — tree element
 
 depsgraph (4 files):
-- `depsgraph_tag.cc:881` — ID type tag
-- `deg_builder_relations.cc:556,3085` — relation builder
-- `deg_builder_nodes.cc:609,2048` — node builder
-- `deg_eval_copy_on_write.cc:112,158,197,233` — COW special cases (nodetree; 4 sites)
+- `depsgraph_tag.cc:866` — ID type tag
+- `deg_builder_relations.cc:553,3032` — relation builder (2 sites)
+- `deg_builder_nodes.cc:608,2020` — node builder (2 sites)
+- `deg_eval_copy_on_write.cc:108,153,191,226` — COW special cases (nodetree; 4 sites)
 
 windowmanager (1 file):
-- `wm_operators.cc:3898,3920` — ELEM checks in operator
+- `wm_operators.cc:3898,3920,4031,4035,4049` — ELEM checks + `FILTER_ID_TE` filter (5 sites)
 
 modifiers (1 file):
 - `MOD_nodes.cc:214` — geometry nodes modifier case
