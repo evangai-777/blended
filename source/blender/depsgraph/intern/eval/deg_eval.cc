@@ -447,9 +447,6 @@ void deg_evaluate_on_refresh(Depsgraph *graph)
    *   something heavy is not currently visible.
    *
    * - Multi-threaded evaluation of all possible nodes.
-   *   Certain operations (and their subtrees) could be ignored. For example, meta-balls are not
-   *   safe from threading point of view, so the threaded evaluation will stop at the metaball
-   *   operation node.
    *
    * - Single-threaded pass of all remaining operations. */
 

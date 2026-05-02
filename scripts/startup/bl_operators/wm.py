@@ -2938,7 +2938,6 @@ class WM_OT_batch_rename(Operator):
         object_data_type_attrs_map = {
             'MESH': ("meshes", iface_("Mesh(es)"), bpy.types.Mesh),
             'CURVE': ("curves", iface_("Curve(s)"), bpy.types.Curve),
-            'META': ("metaballs", iface_("Metaball(s)"), bpy.types.MetaBall),
             'VOLUME': ("volumes", iface_("Volume(s)"), bpy.types.Volume),
             'GREASEPENCIL': ("grease_pencils", iface_("Grease Pencil(s)"), bpy.types.GreasePencil),
             'ARMATURE': ("armatures", iface_("Armature(s)"), bpy.types.Armature),

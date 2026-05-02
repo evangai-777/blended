@@ -214,8 +214,6 @@ class VIEW3D_HT_tool_header(Header):
             layout.popover_group(context=".text_edit", **popover_kw)
         elif mode_string == 'EDIT_ARMATURE':
             layout.popover_group(context=".armature_edit", **popover_kw)
-        elif mode_string == 'EDIT_METABALL':
-            layout.popover_group(context=".mball_edit", **popover_kw)
         elif mode_string == 'EDIT_LATTICE':
             layout.popover_group(context=".lattice_edit", **popover_kw)
         elif mode_string == 'EDIT_CURVE':
@@ -1175,8 +1173,6 @@ class VIEW3D_MT_editor_menus(Menu):
             layout.menu("VIEW3D_MT_edit_curves_add", text="Add", text_ctxt=i18n_contexts.operator_default)
         elif mode_string == 'EDIT_SURFACE':
             layout.menu("VIEW3D_MT_surface_add", text="Add", text_ctxt=i18n_contexts.operator_default)
-        elif mode_string == 'EDIT_METABALL':
-            layout.menu("VIEW3D_MT_metaball_add", text="Add", text_ctxt=i18n_contexts.operator_default)
         elif mode_string == 'EDIT_ARMATURE':
             layout.menu("TOPBAR_MT_edit_armature_add", text="Add", text_ctxt=i18n_contexts.operator_default)
 
@@ -2062,31 +2058,6 @@ class VIEW3D_MT_select_edit_text(Menu):
         layout.operator("font.move_select", text="Next Word").type = 'NEXT_WORD'
 
 
-class VIEW3D_MT_select_edit_metaball(Menu):
-    bl_label = "Select"
-
-    def draw(self, _context):
-        layout = self.layout
-
-        layout.operator("mball.select_all", text="All").action = 'SELECT'
-        layout.operator("mball.select_all", text="None").action = 'DESELECT'
-        layout.operator("mball.select_all", text="Invert").action = 'INVERT'
-
-        layout.separator()
-
-        layout.operator("view3d.select_box")
-        layout.operator("view3d.select_circle")
-        layout.operator_menu_enum("view3d.select_lasso", "mode")
-
-        layout.separator()
-
-        layout.operator("mball.select_random_metaelems")
-
-        layout.separator()
-
-        layout.operator_menu_enum("mball.select_similar", "type")
-
-
 class VIEW3D_MT_edit_lattice_context_menu(Menu):
     bl_label = "Lattice"
 
@@ -2491,42 +2462,6 @@ class VIEW3D_MT_surface_add(Menu):
         layout.operator("surface.primitive_nurbs_surface_torus_add", text="Nurbs Torus", icon='SURFACE_NTORUS')
 
 
-class VIEW3D_MT_edit_metaball_context_menu(Menu):
-    bl_label = "Metaball"
-
-    def draw(self, _context):
-        layout = self.layout
-
-        layout.operator_context = 'INVOKE_REGION_WIN'
-
-        # Add
-        layout.operator("mball.duplicate_move")
-
-        layout.separator()
-
-        # Modify
-        layout.menu("VIEW3D_MT_mirror")
-        layout.menu("VIEW3D_MT_snap")
-
-        layout.separator()
-
-        # Remove
-        layout.operator_context = 'EXEC_REGION_WIN'
-        layout.operator("mball.delete_metaelems", text="Delete")
-
-
-class VIEW3D_MT_metaball_add(Menu):
-    bl_idname = "VIEW3D_MT_metaball_add"
-    bl_label = "Metaball"
-    bl_options = {'SEARCH_ON_KEY_PRESS'}
-
-    def draw(self, _context):
-        layout = self.layout
-
-        layout.operator_context = 'INVOKE_REGION_WIN'
-        layout.operator_enum("object.metaball_add", "type")
-
-
 class TOPBAR_MT_edit_curve_add(Menu):
     bl_idname = "TOPBAR_MT_edit_curve_add"
     bl_label = "Add"
@@ -2701,7 +2636,6 @@ class VIEW3D_MT_add(Menu):
         layout.menu("VIEW3D_MT_curve_add", icon='OUTLINER_OB_CURVE')
         # layout.operator_menu_enum("object.surface_add", "type", text="Surface", icon='OUTLINER_OB_SURFACE')
         layout.menu("VIEW3D_MT_surface_add", icon='OUTLINER_OB_SURFACE')
-        layout.menu("VIEW3D_MT_metaball_add", text="Metaball", icon='OUTLINER_OB_META')
         layout.operator("object.text_add", text="Text", icon='OUTLINER_OB_FONT')
         layout.operator("object.pointcloud_random_add", text="Point Cloud", icon='OUTLINER_OB_POINTCLOUD')
         layout.menu("VIEW3D_MT_volume_add", text="Volume", text_ctxt=i18n_contexts.id_id, icon='OUTLINER_OB_VOLUME')
@@ -3125,7 +3059,6 @@ class VIEW3D_MT_object_context_menu(Menu):
                 'GREASEPENCIL',
                 'LATTICE',
                 'ARMATURE',
-                'META',
                 'FONT',
                 'POINTCLOUD',
             } or (obj.type == 'EMPTY' and obj.instance_collection is not None)):
@@ -5548,39 +5481,6 @@ class VIEW3D_MT_edit_font_context_menu(Menu):
         layout.menu("VIEW3D_MT_edit_font")
 
 
-class VIEW3D_MT_edit_meta(Menu):
-    bl_label = "Metaball"
-
-    def draw(self, _context):
-        layout = self.layout
-
-        layout.menu("VIEW3D_MT_transform")
-        layout.menu("VIEW3D_MT_mirror")
-        layout.menu("VIEW3D_MT_snap")
-
-        layout.separator()
-
-        layout.operator("mball.duplicate_metaelems")
-
-        layout.separator()
-
-        layout.menu("VIEW3D_MT_edit_meta_showhide")
-
-        layout.operator_context = 'EXEC_REGION_WIN'
-        layout.operator("mball.delete_metaelems", text="Delete")
-
-
-class VIEW3D_MT_edit_meta_showhide(Menu):
-    bl_label = "Show/Hide"
-
-    def draw(self, _context):
-        layout = self.layout
-
-        layout.operator("mball.reveal_metaelems")
-        layout.operator("mball.hide_metaelems", text="Hide Selected").unselected = False
-        layout.operator("mball.hide_metaelems", text="Hide Unselected").unselected = True
-
-
 class VIEW3D_MT_edit_lattice(Menu):
     bl_label = "Lattice"
 
@@ -6562,7 +6462,6 @@ class VIEW3D_PT_object_type_visibility(Panel):
             ("mesh", "Mesh", 'OUTLINER_OB_MESH'),
             ("curve", "Curve", 'OUTLINER_OB_CURVE'),
             ("surf", "Surface", 'OUTLINER_OB_SURFACE'),
-            ("meta", "Meta", 'OUTLINER_OB_META'),
             ("font", "Text", 'OUTLINER_OB_FONT'),
             ("curves", "Hair Curves", 'OUTLINER_OB_CURVES'),
             ("pointcloud", "Point Cloud", 'OUTLINER_OB_POINTCLOUD'),
@@ -7799,7 +7698,7 @@ class VIEW3D_PT_snapping(Panel):
         if obj:
             col.label(text="Target Selection")
             col_targetsel = col.column(align=True)
-            if object_mode == 'EDIT' and obj.type not in {'LATTICE', 'META', 'FONT'}:
+            if object_mode == 'EDIT' and obj.type not in {'LATTICE', 'FONT'}:
                 col_targetsel.prop(
                     tool_settings,
                     "use_snap_self",
@@ -9288,7 +9187,6 @@ classes = (
     VIEW3D_MT_select_edit_curve,
     VIEW3D_MT_select_edit_surface,
     VIEW3D_MT_select_edit_text,
-    VIEW3D_MT_select_edit_metaball,
     VIEW3D_MT_edit_lattice_context_menu,
     VIEW3D_MT_select_edit_lattice,
     VIEW3D_MT_select_edit_armature,
@@ -9302,8 +9200,6 @@ classes = (
     VIEW3D_MT_mesh_add,
     VIEW3D_MT_curve_add,
     VIEW3D_MT_surface_add,
-    VIEW3D_MT_edit_metaball_context_menu,
-    VIEW3D_MT_metaball_add,
     TOPBAR_MT_edit_curve_add,
     TOPBAR_MT_edit_armature_add,
     VIEW3D_MT_armature_add,
@@ -9417,8 +9313,6 @@ classes = (
     VIEW3D_MT_edit_font_kerning,
     VIEW3D_MT_edit_font_delete,
     VIEW3D_MT_edit_font_context_menu,
-    VIEW3D_MT_edit_meta,
-    VIEW3D_MT_edit_meta_showhide,
     VIEW3D_MT_edit_lattice,
     VIEW3D_MT_edit_armature,
     VIEW3D_MT_armature_context_menu,

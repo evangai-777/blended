@@ -56,8 +56,8 @@ carries a one-liner status per active item.
 
 ## Unreleased — 0.4.0
 
-Bucket 5 + 6 fossil removals. 9 ID types, 357 hits, same chisel pattern as 0.3.0. CI green (Windows x64, build #57, commit `29e4663`) — 5 of 9 types complete.
-Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEGACY ✓** → **ID_LS ✓** → ID_MB → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision — see CLAUDE.md Key note 8).
+Bucket 5 + 6 fossil removals. 9 ID types, 357 hits, same chisel pattern as 0.3.0. CI green (Windows x64, build #57, commit `29e4663`) — 6 of 9 types complete.
+Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEGACY ✓** → **ID_LS ✓** → **ID_MB ✓** → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision — see CLAUDE.md Key note 8).
 *(Order corrected in PR #126 fix — initial commit had ID_CF first, contradicting CLAUDE.md Key note 8. Scar 7.)*
 
 **Key notes:**
@@ -155,16 +155,26 @@ Resolves two deferred-debt items, syncs a stale version define, and adds two ope
 | Doc: Codex Standard operationalization | `CLAUDE.md` | The Codex verification pass is a todo-list item before commit/push, never after. Cites the `b4f8e3e1` / `e39bcd58` incident as the concrete reference for future sessions. Commit `3a6d1a8f`. |
 | Consolidate `PHILOSOPHY.md` into `CLAUDE.md` | `CLAUDE.md`, `PHILOSOPHY.md` (deleted), `UPSTREAM_SYNC.md` | Spliced the 12 principles + mapping table + "For AI Assistants" checklist + Charlie attribution into a new `## Development Philosophy` section in `CLAUDE.md`, before `## Key Documentation`. So a session loads operational principles alongside operational rules. `PHILOSOPHY.md` deleted. `UPSTREAM_SYNC.md` epigraph link updated to point at the new section. The 0.1.0 historical release entry below still references `PHILOSOPHY.md` — kept intentionally as accurate-as-of-then. |
 
-### ID_MB — MetaBall
+### ID_MB — MetaBall ✓ (0.4.0)
 
 | Layer | Files touched | Status |
 |-------|--------------|--------|
-| `makesdna` | `DNA_ID_enums.h`, `DNA_meta_types.h` (id_type constexpr), `DNA_object_types.h` (macros shared w/ ID_CU_LEGACY) | ☐ |
-| `blenkernel` | `idtype.cc`, `main.cc`, `material.cc`, `object.cc`, `object_dupli.cc`, `lib_remap.cc` | ☐ |
-| `makesrna` | `rna_ID.cc`, `rna_main_api.cc` | ☐ |
-| `editors` | `interface_icons.cc`, `interface_template_id.cc`, `object_data_transform.cc`, `transform_convert_object_texspace.cc` (shared ELEM w/ CU_LEGACY), `render_opengl.cc`, `outliner_draw.cc`, `outliner_select.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc` | ☐ |
-| `draw` | `overlay_bounds.hh`, `draw_resource.hh` | ☐ |
-| `depsgraph` | `depsgraph_tag.cc`, `deg_eval_copy_on_write.cc`, `deg_builder_relations.cc`, `deg_builder_nodes.cc`, `depsgraph_query_iter.cc` | ☐ |
+| `makesdna` | `DNA_ID_enums.h` (deprecated `#define`), `DNA_meta_types.h` (id_type constexpr removed), `DNA_object_types.h` (3 macros patched; `OB_MBALL=5` kept for .blend compat) | ✓ |
+| `blenkernel` | `idtype.cc`, `main.cc`, `BKE_main.hh` (`bmain->metaballs` removed — true fossil), `material.cc`, `object.cc`, `object_dupli.cc`, `lib_remap.cc`, `anim_sys.cc`, `anim_data_bmain_utils.cc`, `context.cc`, `lib_id.cc`, `mesh_convert.cc`, `object_update.cc`; **DELETED**: `mball.cc`, `mball_tessellate.cc`, `BKE_mball.hh`, `BKE_mball_tessellate.hh`; `CMakeLists.txt` updated | ✓ |
+| `makesrna` | `rna_ID.cc`, `rna_main_api.cc`, `rna_main.cc`, `rna_internal.hh`, `rna_action.cc`, `rna_space.cc`, `makesrna.cc`; **DELETED**: `rna_meta.cc`, `rna_meta_api.cc` | ✓ |
+| `editors/metaball` | **DELETED** entire subsystem: `mball_edit.cc`, `mball_ops.cc`, `editmball_undo.cc`, `mball_intern.hh`, `CMakeLists.txt`; `undo_system_types.cc` updated; **DELETED**: `ED_mball.hh`; `CMakeLists.txt` (editors) updated | ✓ |
+| `editors/animation` | `anim_channels_defines.cc` (ACF_DSMBALL + 3 callbacks removed), `anim_filter.cc` (animdata_filter_ds_metaball + ANIMTYPE_DSMBALL case removed), `ED_anim_api.hh` (ANIMTYPE_DSMBALL + FILTER_MBALL_OBJD removed), `anim_channels_edit.cc` (9 ANIMTYPE_DSMBALL fallthrough cases) + NLA/transform fallthrough sites | ✓ |
+| `editors/outliner` | `outliner_draw.cc`, `outliner_select.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc`; **DELETED**: `tree_element_id_metaball.cc/.hh`; `CMakeLists.txt` updated | ✓ |
+| `editors/interface` | `interface_icons.cc`, `interface_template_id.cc` | ✓ |
+| `editors/object` | `object_data_transform.cc`, `object_add.cc`, `object_bake_api.cc`, `object_edit.cc`, `object_hook.cc`, `object_modes.cc`, `object_modifier.cc`, `object_relations.cc`, `object_transform.cc`, `object_utils.cc`, `render_opengl.cc`, `screen_ops.cc`; `info_stats.cc`, `view3d_buttons.cc`, `view3d_iterators.cc`, `view3d_select.cc`, `view3d_snap.cc`, `buttons_context.cc` | ✓ |
+| `editors/transform` | `transform.cc`, `transform_convert.cc`, `transform_convert.hh`, `transform_gizmo_3d.cc`, `transform_mode.cc`, `transform_orientations.cc`, `transform_snap.cc`; **DELETED**: `transform_convert_mball.cc`; `CMakeLists.txt` updated; `ed_transverts.cc` (`MetaElem *ml` removed); `transform.hh` (comment removed) | ✓ |
+| `draw` | `overlay_bounds.hh`, `draw_resource.hh`, `draw_context.cc`, `draw_handle.hh`, `overlay_instance.cc/.hh`, `overlay_private.hh`, `overlay_shader_shared.hh`, `overlay_shape.cc`; **DELETED**: `overlay_metaball.hh` | ✓ |
+| `depsgraph` | `depsgraph_tag.cc`, `deg_eval.cc` (`is_metaball_object_operation()` removed), `deg_eval_copy_on_write.cc`, `deg_builder_relations.cc` (basis machinery removed), `deg_builder_nodes.cc`, `depsgraph_query_iter.cc` | ✓ |
+| `io` | `abc_hierarchy_iterator.cc`, `abstract_hierarchy_iterator.cc`, `usd_hierarchy_iterator.cc`, `usd/hydra/object.cc`; **DELETED**: `abc_writer_mball.cc/.h`, `usd_writer_metaball.cc/.hh`; both CMakeLists.txt updated | ✓ |
+| `windowmanager` | `WM_types.hh`, `wm_keymap_utils.cc`, `wm_init_exit.cc` | ✓ |
+| `modifiers` | `MOD_lineart.cc`, `lineart_cpu.cc` (OB_MBALL removed from ELEM checks) | ✓ |
+| `blentranslation` | `BLT_translation.hh` (BLT_I18NCONTEXT_ID_METABALL define + ITEM entry removed) | ✓ |
+| `python/scripts` | `bl_ui/properties_data_metaball.py` deleted; `bl_ui/__init__.py`, `space_view3d.py` (5 classes deleted + menu refs removed), `space_dopesheet.py`, `space_outliner.py`, `space_userpref.py`, `bl_operators/wm.py`, `modules/_bpy_types.py`, `addons_core/rigify/utils/objects.py` | ✓ |
 
 ### ID_TE — Texture
 

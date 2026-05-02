@@ -12,7 +12,6 @@
 #include "DNA_action_types.h"
 #include "DNA_layer_types.h"
 #include "DNA_lightprobe_types.h"
-#include "DNA_meta_types.h"
 #include "DNA_object_types.h"
 
 #include "BLI_math_rotation.h"

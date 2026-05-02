@@ -693,7 +693,7 @@ struct ObHook {
 
 /* check if the object type supports materials */
 #define OB_TYPE_SUPPORT_MATERIAL(_type) \
-  (((_type) >= OB_MESH && (_type) <= OB_MBALL) || \
+  (ELEM(_type, OB_MESH, OB_CURVES_LEGACY, OB_SURF, OB_FONT) || \
    ((_type) >= OB_CURVES && (_type) <= OB_GREASE_PENCIL))
 
 /**
@@ -705,7 +705,6 @@ struct ObHook {
         OB_MESH, \
         OB_SURF, \
         OB_FONT, \
-        OB_MBALL, \
         OB_CURVES_LEGACY, \
         OB_CURVES, \
         OB_POINTCLOUD, \
@@ -720,7 +719,6 @@ struct ObHook {
         OB_FONT, \
         OB_CURVES_LEGACY, \
         OB_SURF, \
-        OB_MBALL, \
         OB_LATTICE, \
         OB_ARMATURE, \
         OB_CURVES, \

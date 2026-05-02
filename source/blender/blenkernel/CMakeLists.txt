@@ -183,8 +183,6 @@ set(SRC
   intern/mask_evaluate.cc
   intern/mask_rasterize.cc
   intern/material.cc
-  intern/mball.cc
-  intern/mball_tessellate.cc
   intern/mesh.cc
   intern/mesh_attributes.cc
   intern/mesh_calc_edges.cc
@@ -444,8 +442,6 @@ set(SRC
   BKE_main_namemap.hh
   BKE_mask.hh
   BKE_material.hh
-  BKE_mball.hh
-  BKE_mball_tessellate.hh
   BKE_mesh.h
   BKE_mesh.hh
   BKE_mesh_fair.hh

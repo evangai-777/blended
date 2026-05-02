@@ -35,7 +35,6 @@ struct EditBone;
 struct GPUSelectBuffer;
 struct ID;
 struct Main;
-struct MetaElem;
 struct Nurb;
 struct Object;
 struct RV3DMatrixStore;
