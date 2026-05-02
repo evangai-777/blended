@@ -16,7 +16,6 @@
 #include "DNA_grease_pencil_types.h"
 #include "DNA_lattice_types.h"
 #include "DNA_mesh_types.h"
-#include "DNA_meta_types.h"
 #include "DNA_pointcloud_types.h"
 #include "DNA_scene_types.h"
 #include "DNA_space_enums.h"
@@ -317,17 +316,6 @@ static void stats_object_edit(Object *obedit, SceneStats *stats)
       }
       stats->totcurves++;
       stats->totcurvesel += selection_count;
-    }
-  }
-  else if (obedit->type == OB_MBALL) {
-    /* MetaBall Edit */
-    MetaBall *mball = id_cast<MetaBall *>(obedit->data);
-
-    for (MetaElem &ml : *mball->editelems) {
-      stats->totvert++;
-      if (ml.flag & SELECT) {
-        stats->totvertsel++;
-      }
     }
   }
   else if (obedit->type == OB_LATTICE) {

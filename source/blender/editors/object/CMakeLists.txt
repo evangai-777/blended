@@ -64,7 +64,6 @@ set(LIB
   PRIVATE bf::depsgraph
   PRIVATE bf::dna
   bf_editor_mesh
-  bf_editor_metaball
   bf_editor_grease_pencil
   PRIVATE bf::functions
   PRIVATE bf::geometry

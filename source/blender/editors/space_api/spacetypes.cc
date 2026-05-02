@@ -37,7 +37,6 @@
 #include "ED_lattice.hh"
 #include "ED_markers.hh"
 #include "ED_mask.hh"
-#include "ED_mball.hh"
 #include "ED_mesh.hh"
 #include "ED_node.hh"
 #include "ED_object.hh"
@@ -111,7 +110,6 @@ void ED_spacetypes_init()
   pointcloud::operatortypes_pointcloud();
   ED_operatortypes_armature();
   ED_operatortypes_marker();
-  ED_operatortypes_metaball();
   ED_operatortypes_sound();
   ED_operatortypes_render();
   ED_operatortypes_mask();
@@ -157,7 +155,6 @@ void ED_spacemacros_init()
   ED_operatormacros_armature();
   ED_operatormacros_mesh();
   ED_operatormacros_uvedit();
-  ED_operatormacros_metaball();
   ED_operatormacros_node();
   object::operatormacros_object();
   ED_operatormacros_file();
@@ -199,7 +196,6 @@ void ED_spacetypes_keymap(wmKeyConfig *keyconf)
   pointcloud::keymap_pointcloud(keyconf);
   ED_keymap_armature(keyconf);
   ED_keymap_physics(keyconf);
-  ED_keymap_metaball(keyconf);
   ED_keymap_paint(keyconf);
   ED_keymap_mask(keyconf);
   ED_keymap_marker(keyconf);
