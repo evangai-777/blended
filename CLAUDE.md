@@ -787,7 +787,7 @@ A chisel session that touches 7 layers and 60 files in one unbounded run is a co
 
 1. **Layer boundary = commit AND PUSH boundary.** When a layer compiles cleanly (even if the overall removal is incomplete), commit it AND PUSH IT immediately. Not commit-and-hold. Commit and push. A committed-but-not-pushed layer exists only on the local environment — if the session dies, the environment resets, or the instance is killed, that commit is gone. A pushed layer is safe. An unpushed commit is not a checkpoint; it is a liability with extra steps.
 
-   **This is the rule that was learned the hardest way.** The ID_MB session had 17 commits across multiple context deaths, $70 in extra usage, and multiple instances spawned and killed. The sessions that died mid-surgery — those were survivable precisely because pushed commits existed as safe restore points. An unpushed commit in a dead session is worth nothing.
+   **This rule was violated throughout the ID_MB session — that is why it is written here.** The ID_MB session had 17 commits across multiple context deaths, $70 in extra usage, and multiple instances spawned and killed. Almost none of those commits were pushed until the developer issued an emergency interrupt mid-session: *"push everything NOW, do not ask questions, this is not optional."* The work nearly died. It was saved by the developer's intervention, not by the model following the protocol. An unpushed commit in a dead session is worth nothing — and that is exactly what almost happened.
 
    **The rule, unambiguous: commit → push → then continue. Never commit without pushing.**
 
