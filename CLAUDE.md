@@ -250,13 +250,15 @@ windowmanager (1 file):
 modifiers (1 file):
 - `MOD_nodes.cc:214` — geometry nodes modifier case
 
-makesrna (6 files):
-- `rna_ID.cc:65,466,550` — RNA enum entry and switch cases
-- `rna_color.cc:371` — color ramp case
+makesrna (8 files):
+- `rna_ID.cc:61,166,426,500` — RNA enum item, filter item, and switch cases (4 sites)
+- `rna_color.cc:352` — color ramp case
 - `rna_image.cc:291` — image RNA GS check
-- `rna_space.cc:2264` — space RNA case
+- `rna_space.cc:2264,3960` — space RNA case + `FILTER_ID_TE` in asset browser shading filter (2 sites; line 3960 is a grep-miss — uses macro, not string `ID_TE`)
 - `rna_texture.cc:177` — texture RNA GS check
-- `rna_main_api.cc:848` — `RNA_MAIN_ID_TAG_FUNCS_DEF(textures, textures, ID_TE)`
+- `rna_main_api.cc:779` — `RNA_MAIN_ID_TAG_FUNCS_DEF(textures, textures, ID_TE)` + `rna_Main_textures_new()` + `RNA_def_main_textures()` — remove
+- `rna_main.cc:180,400,405` — `RNA_MAIN_LISTBASE_FUNCS_DEF(textures)` + table entry — remove (grep-miss; no `ID_TE` string)
+- `rna_internal.hh:539` — `void RNA_def_main_textures(BlenderRNA *brna, PropertyRNA *cprop)` declaration — remove (grep-miss)
 
 ---
 
