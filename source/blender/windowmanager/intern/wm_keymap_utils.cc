@@ -114,9 +114,6 @@ wmKeyMap *WM_keymap_guess_from_context(const bContext *C)
       case CTX_MODE_EDIT_ARMATURE:
         km_id = "Armature";
         break;
-      case CTX_MODE_EDIT_METABALL:
-        km_id = "Metaball";
-        break;
       case CTX_MODE_EDIT_LATTICE:
         km_id = "Lattice";
         break;

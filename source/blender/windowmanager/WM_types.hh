@@ -536,7 +536,6 @@ struct wmNotifier {
 #define ND_GPENCIL_EDITMODE (85 << 16)
 
 /* NC_GEOM Geometry. */
-/* Mesh, Curve, MetaBall, Armature, etc. */
 #define ND_SELECT (90 << 16)
 #define ND_DATA (91 << 16)
 #define ND_VERTEX_GROUP (92 << 16)
@@ -600,7 +599,6 @@ struct wmNotifier {
 #define NS_EDITMODE_CURVE (3 << 8)
 #define NS_EDITMODE_SURFACE (4 << 8)
 #define NS_EDITMODE_TEXT (5 << 8)
-#define NS_EDITMODE_MBALL (6 << 8)
 #define NS_EDITMODE_LATTICE (7 << 8)
 #define NS_EDITMODE_ARMATURE (8 << 8)
 #define NS_MODE_POSE (9 << 8)
