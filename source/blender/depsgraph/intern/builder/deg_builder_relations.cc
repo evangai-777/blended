@@ -68,7 +68,6 @@
 #include "BKE_layer.hh"
 #include "BKE_lib_query.hh"
 #include "BKE_material.hh"
-#include "BKE_mball.hh"
 #include "BKE_modifier.hh"
 #include "BKE_nla.hh"
 #include "BKE_node.hh"
@@ -231,7 +230,7 @@ OperationCode bone_target_opcode(ID *target,
 
 bool object_have_geometry_component(const Object *object)
 {
-  return ELEM(object->type, OB_MESH, OB_CURVES_LEGACY, OB_FONT, OB_SURF, OB_MBALL, OB_LATTICE);
+  return ELEM(object->type, OB_MESH, OB_CURVES_LEGACY, OB_FONT, OB_SURF, OB_LATTICE);
 }
 
 }  // namespace
@@ -567,7 +566,6 @@ void DepsgraphRelationBuilder::build_id(ID *id)
       build_movieclip(id_cast<MovieClip *>(id));
       break;
     case ID_ME:
-    case ID_MB:
     case ID_CU_LEGACY:
     case ID_LT:
     case ID_CV:
@@ -986,7 +984,6 @@ void DepsgraphRelationBuilder::build_object_data(Object *object)
     case OB_CURVES_LEGACY:
     case OB_FONT:
     case OB_SURF:
-    case OB_MBALL:
     case OB_LATTICE:
     case OB_CURVES:
     case OB_POINTCLOUD:
@@ -1161,13 +1158,6 @@ void DepsgraphRelationBuilder::build_object_parent(Object *object)
    * instance-list (formerly known as dupli-list) during evaluation. This is
    * their way of interacting with all instanced surfaces, making a nice
    * effect when is used form particle system. */
-  if (object->type == OB_MBALL && parent->transflag & OB_DUPLI) {
-    ComponentKey parent_geometry_key(parent_id, NodeType::GEOMETRY);
-    /* NOTE: Meta-balls are evaluating geometry only after their transform,
-     * so we only hook up to transform channel here. */
-    add_relation(parent_geometry_key, object_transform_key, "Parent");
-  }
-
   /* Dupliverts uses original vertex index. */
   if (parent->transflag & OB_DUPLIVERTS) {
     add_customdata_mask(parent, DEGCustomDataMeshMasks::MaskVert(CD_MASK_ORIGINDEX));
@@ -2519,10 +2509,6 @@ void DepsgraphRelationBuilder::build_particle_system_visualization_object(Object
   OperationKey obdata_ubereval_key(&object->id, NodeType::GEOMETRY, OperationCode::GEOMETRY_EVAL);
   ComponentKey dup_ob_key(&draw_object->id, NodeType::TRANSFORM);
   add_relation(dup_ob_key, psys_key, "Particle Object Visualization");
-  if (draw_object->type == OB_MBALL) {
-    ComponentKey dup_geometry_key(&draw_object->id, NodeType::GEOMETRY);
-    add_relation(obdata_ubereval_key, dup_geometry_key, "Particle MBall Visualization");
-  }
 }
 
 /* Shapekeys */
@@ -2622,20 +2608,6 @@ void DepsgraphRelationBuilder::build_object_data_geometry(Object *object)
         &object->id, NodeType::GEOMETRY, OperationCode::GEOMETRY_EVAL);
     add_relation(geom_init_key, obdata_ubereval_key, "Object Geometry UberEval");
   }
-  if (object->type == OB_MBALL) {
-    Object *mom = BKE_mball_basis_find(*bmain_, scene_, object);
-    ComponentKey mom_geom_key(&mom->id, NodeType::GEOMETRY);
-    /* motherball - mom depends on children! */
-    if (mom == object) {
-      ComponentKey mom_transform_key(&mom->id, NodeType::TRANSFORM);
-      add_relation(mom_transform_key, mom_geom_key, "Metaball Motherball Transform -> Geometry");
-    }
-    else {
-      ComponentKey transform_key(&object->id, NodeType::TRANSFORM);
-      add_relation(geom_key, mom_geom_key, "Metaball Motherball");
-      add_relation(transform_key, mom_geom_key, "Metaball Motherball");
-    }
-  }
   /* NOTE: This is compatibility code to support particle systems
    *
    * for viewport being properly rendered in final render mode.
@@ -2712,8 +2684,6 @@ void DepsgraphRelationBuilder::build_object_data_geometry_datablock(ID *obdata)
   const ID_Type id_type = GS(obdata->name);
   switch (id_type) {
     case ID_ME:
-      break;
-    case ID_MB:
       break;
     case ID_CU_LEGACY: {
       Curve *cu = id_cast<Curve *>(obdata);

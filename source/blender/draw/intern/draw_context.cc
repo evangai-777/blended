@@ -38,7 +38,6 @@
 #include "BKE_lattice.hh"
 #include "BKE_layer.hh"
 #include "BKE_main.hh"
-#include "BKE_mball.hh"
 #include "BKE_mesh.hh"
 #include "BKE_mesh_wrapper.hh"
 #include "BKE_modifier.hh"

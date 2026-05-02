@@ -25,7 +25,6 @@
 #include "BKE_lib_remap.hh"
 #include "BKE_main.hh"
 #include "BKE_material.hh"
-#include "BKE_mball.hh"
 #include "BKE_modifier.hh"
 #include "BKE_multires.hh"
 #include "BKE_node.hh"
@@ -373,25 +372,6 @@ static void libblock_remap_data_postprocess_object_update(Main *bmain,
     BKE_main_collection_sync_remap(bmain);
   }
 
-  if (old_ob == nullptr) {
-    for (Object *ob = static_cast<Object *>(bmain->objects.first); ob != nullptr;
-         ob = static_cast<Object *>(ob->id.next))
-    {
-      if (ob->type == OB_MBALL && BKE_mball_is_basis(ob)) {
-        DEG_id_tag_update(&ob->id, ID_RECALC_GEOMETRY);
-      }
-    }
-  }
-  else {
-    for (Object *ob = static_cast<Object *>(bmain->objects.first); ob != nullptr;
-         ob = static_cast<Object *>(ob->id.next))
-    {
-      if (ob->type == OB_MBALL && BKE_mball_is_basis_for(ob, old_ob)) {
-        DEG_id_tag_update(&ob->id, ID_RECALC_GEOMETRY);
-        break; /* There is only one basis... */
-      }
-    }
-  }
 }
 
 /* Can be called with both old_collection and new_collection being nullptr,
@@ -624,7 +604,6 @@ static void libblock_remap_foreach_idpair(ID *old_id, ID *new_id, Main *bmain, i
       break;
     case ID_ME:
     case ID_CU_LEGACY:
-    case ID_MB:
     case ID_CV:
     case ID_PT:
     case ID_VO:

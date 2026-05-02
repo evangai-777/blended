@@ -73,9 +73,6 @@ void BKE_animdata_main_cb(Main *bmain, const FunctionRef<void(ID *, AnimData *)>
   /* shapekeys */
   ANIMDATA_IDS_CB(bmain->shapekeys.first);
 
-  /* metaballs */
-  ANIMDATA_IDS_CB(bmain->metaballs.first);
-
   /* curves */
   ANIMDATA_IDS_CB(bmain->curves.first);
 

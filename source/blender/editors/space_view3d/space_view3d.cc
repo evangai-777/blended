@@ -1170,9 +1170,6 @@ void ED_view3d_buttons_region_layout_ex(const bContext *C,
     case CTX_MODE_EDIT_ARMATURE:
       ARRAY_SET_ITEMS(contexts, ".armature_edit");
       break;
-    case CTX_MODE_EDIT_METABALL:
-      ARRAY_SET_ITEMS(contexts, ".mball_edit");
-      break;
     case CTX_MODE_EDIT_LATTICE:
       ARRAY_SET_ITEMS(contexts, ".lattice_edit");
       break;

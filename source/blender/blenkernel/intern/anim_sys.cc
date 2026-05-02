@@ -4131,9 +4131,6 @@ void BKE_animsys_evaluate_all_animation(Main *main, Depsgraph *depsgraph, float 
   /* shapekeys */
   EVAL_ANIM_IDS(main->shapekeys.first, ADT_RECALC_ANIM);
 
-  /* metaballs */
-  EVAL_ANIM_IDS(main->metaballs.first, ADT_RECALC_ANIM);
-
   /* curves */
   EVAL_ANIM_IDS(main->curves.first, ADT_RECALC_ANIM);
 

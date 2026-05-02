@@ -19,7 +19,6 @@
 #include "DNA_light_types.h"
 #include "DNA_material_types.h"
 #include "DNA_mesh_types.h"
-#include "DNA_meta_types.h"
 #include "DNA_modifier_types.h"
 #include "DNA_object_types.h"
 #include "DNA_pointcloud_types.h"
@@ -133,7 +132,6 @@ static void get_element_operation_type(
 
       case ID_ME:
       case ID_CU_LEGACY:
-      case ID_MB:
       case ID_LT:
       case ID_LA:
       case ID_AR:
@@ -282,12 +280,6 @@ static void unlink_material_fn(bContext * /*C*/,
       Curve *cu = id_cast<Curve *>(tsep->id);
       totcol = cu->totcol;
       matar = cu->mat;
-      break;
-    }
-    case ID_MB: {
-      MetaBall *mb = id_cast<MetaBall *>(tsep->id);
-      totcol = mb->totcol;
-      matar = mb->mat;
       break;
     }
     case ID_CV: {

@@ -12,7 +12,6 @@
 #include "DNA_action_types.h"
 #include "DNA_layer_types.h"
 #include "DNA_lightprobe_types.h"
-#include "DNA_meta_types.h"
 #include "DNA_object_types.h"
 
 #include "BLI_math_rotation.h"
@@ -219,7 +218,6 @@ const EnumPropertyItem rna_enum_object_type_items[] = {
     {OB_MESH, "MESH", ICON_OUTLINER_OB_MESH, "Mesh", ""},
     OBTYPE_CU_CURVE,
     OBTYPE_CU_SURF,
-    {OB_MBALL, "META", ICON_OUTLINER_OB_META, "Metaball", ""},
     OBTYPE_CU_FONT,
     {OB_CURVES, "CURVES", ICON_OUTLINER_OB_CURVES, "Hair Curves", ""},
     {OB_POINTCLOUD, "POINTCLOUD", ICON_OUTLINER_OB_POINTCLOUD, "Point Cloud", ""},
@@ -592,8 +590,6 @@ static StructRNA *rna_Object_data_typef(PointerRNA *ptr)
       return RNA_Curve;
     case OB_FONT:
       return RNA_Curve;
-    case OB_MBALL:
-      return RNA_MetaBall;
     case OB_LAMP:
       return RNA_Light;
     case OB_CAMERA:

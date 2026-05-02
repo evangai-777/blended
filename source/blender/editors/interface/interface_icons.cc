@@ -2063,8 +2063,6 @@ int icon_from_idcode(const int idcode)
       return ICON_LATTICE_DATA;
     case ID_MA:
       return ICON_MATERIAL_DATA;
-    case ID_MB:
-      return ICON_META_DATA;
     case ID_MC:
       return ICON_TRACKER;
     case ID_ME:
@@ -2150,8 +2148,6 @@ int icon_from_object_type(const Object *object)
       return ICON_OUTLINER_OB_CAMERA;
     case OB_CURVES_LEGACY:
       return ICON_OUTLINER_OB_CURVE;
-    case OB_MBALL:
-      return ICON_OUTLINER_OB_META;
     case OB_LATTICE:
       return ICON_OUTLINER_OB_LATTICE;
     case OB_ARMATURE:

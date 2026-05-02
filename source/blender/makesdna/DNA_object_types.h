@@ -693,7 +693,7 @@ struct ObHook {
 
 /* check if the object type supports materials */
 #define OB_TYPE_SUPPORT_MATERIAL(_type) \
-  (((_type) >= OB_MESH && (_type) <= OB_MBALL) || \
+  (ELEM(_type, OB_MESH, OB_CURVES_LEGACY, OB_SURF, OB_FONT) || \
    ((_type) >= OB_CURVES && (_type) <= OB_GREASE_PENCIL))
 
 /**
@@ -705,7 +705,6 @@ struct ObHook {
         OB_MESH, \
         OB_SURF, \
         OB_FONT, \
-        OB_MBALL, \
         OB_CURVES_LEGACY, \
         OB_CURVES, \
         OB_POINTCLOUD, \
@@ -720,7 +719,6 @@ struct ObHook {
         OB_FONT, \
         OB_CURVES_LEGACY, \
         OB_SURF, \
-        OB_MBALL, \
         OB_LATTICE, \
         OB_ARMATURE, \
         OB_CURVES, \
@@ -732,14 +730,13 @@ struct ObHook {
 
 /** Matches #OB_TYPE_SUPPORT_EDITMODE. */
 #define OB_DATA_SUPPORT_EDITMODE(_type) \
-  (ELEM(_type, ID_ME, ID_CU_LEGACY, ID_MB, ID_LT, ID_AR, ID_CV, ID_GP))
+  (ELEM(_type, ID_ME, ID_CU_LEGACY, ID_LT, ID_AR, ID_CV, ID_GP))
 
 /* is this ID type used as object data */
 #define OB_DATA_SUPPORT_ID(_id_type) \
   (ELEM(_id_type, \
         ID_ME, \
         ID_CU_LEGACY, \
-        ID_MB, \
         ID_LA, \
         ID_LP, \
         ID_CA, \
@@ -753,7 +750,6 @@ struct ObHook {
 #define OB_DATA_SUPPORT_ID_CASE \
   ID_ME: \
   case ID_CU_LEGACY: \
-  case ID_MB: \
   case ID_LA: \
   case ID_LP: \
   case ID_CA: \

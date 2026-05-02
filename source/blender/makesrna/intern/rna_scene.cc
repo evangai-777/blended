@@ -1932,7 +1932,7 @@ static void rna_Scene_mesh_quality_update(Main *bmain, Scene * /*scene*/, Pointe
   Scene *scene = id_cast<Scene *>(ptr->owner_id);
 
   FOREACH_SCENE_OBJECT_BEGIN (scene, ob) {
-    if (ELEM(ob->type, OB_MESH, OB_CURVES_LEGACY, OB_VOLUME, OB_MBALL)) {
+    if (ELEM(ob->type, OB_MESH, OB_CURVES_LEGACY, OB_VOLUME)) {
       DEG_id_tag_update(&ob->id, ID_RECALC_GEOMETRY);
     }
   }

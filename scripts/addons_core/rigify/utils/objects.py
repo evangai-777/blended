@@ -25,8 +25,6 @@ def create_object_data(obj_type, name):
         return bpy.data.meshes.new(name)
     if obj_type in ('CURVE', 'SURFACE', 'FONT'):
         return bpy.data.curves.new(name, obj_type)
-    if obj_type == 'META':
-        return bpy.data.metaballs.new(name)
     if obj_type == 'CURVES':
         return bpy.data.hair_curves.new(name)
     if obj_type == 'POINTCLOUD':

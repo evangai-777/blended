@@ -290,7 +290,6 @@ void ANIM_set_active_channel(bAnimContext *ac,
       case ANIMTYPE_DSSKEY:
       case ANIMTYPE_DSWOR:
       case ANIMTYPE_DSPART:
-      case ANIMTYPE_DSMBALL:
       case ANIMTYPE_DSARM:
       case ANIMTYPE_DSMESH:
       case ANIMTYPE_DSTEX:
@@ -371,7 +370,6 @@ void ANIM_set_active_channel(bAnimContext *ac,
       case ANIMTYPE_DSSKEY:
       case ANIMTYPE_DSWOR:
       case ANIMTYPE_DSPART:
-      case ANIMTYPE_DSMBALL:
       case ANIMTYPE_DSARM:
       case ANIMTYPE_DSMESH:
       case ANIMTYPE_DSLAT:
@@ -425,7 +423,6 @@ bool ANIM_is_active_channel(bAnimListElem *ale)
     case ANIMTYPE_DSSKEY:
     case ANIMTYPE_DSWOR:
     case ANIMTYPE_DSPART:
-    case ANIMTYPE_DSMBALL:
     case ANIMTYPE_DSARM:
     case ANIMTYPE_DSMESH:
     case ANIMTYPE_DSNTREE:
@@ -585,7 +582,6 @@ static eAnimChannels_SetFlag anim_channels_selection_flag_for_toggle(
       case ANIMTYPE_DSSKEY:
       case ANIMTYPE_DSWOR:
       case ANIMTYPE_DSPART:
-      case ANIMTYPE_DSMBALL:
       case ANIMTYPE_DSARM:
       case ANIMTYPE_DSMESH:
       case ANIMTYPE_DSNTREE:
@@ -755,7 +751,6 @@ static void anim_channels_select_set(bAnimContext *ac,
       case ANIMTYPE_DSSKEY:
       case ANIMTYPE_DSWOR:
       case ANIMTYPE_DSPART:
-      case ANIMTYPE_DSMBALL:
       case ANIMTYPE_DSARM:
       case ANIMTYPE_DSMESH:
       case ANIMTYPE_DSNTREE:
@@ -2650,7 +2645,6 @@ static bool animchannels_delete_containers(const bContext *C, bAnimContext *ac)
       case ANIMTYPE_DSWOR:
       case ANIMTYPE_DSNTREE:
       case ANIMTYPE_DSPART:
-      case ANIMTYPE_DSMBALL:
       case ANIMTYPE_DSARM:
       case ANIMTYPE_DSMESH:
       case ANIMTYPE_DSTEX:
@@ -2829,7 +2823,6 @@ static wmOperatorStatus animchannels_delete_exec(bContext *C, wmOperator * /*op*
       case ANIMTYPE_DSWOR:
       case ANIMTYPE_DSNTREE:
       case ANIMTYPE_DSPART:
-      case ANIMTYPE_DSMBALL:
       case ANIMTYPE_DSARM:
       case ANIMTYPE_DSMESH:
       case ANIMTYPE_DSTEX:
@@ -3658,7 +3651,6 @@ static void box_select_anim_channels(bAnimContext *ac, const rcti &rect, short s
         case ANIMTYPE_DSWOR:
         case ANIMTYPE_DSNTREE:
         case ANIMTYPE_DSPART:
-        case ANIMTYPE_DSMBALL:
         case ANIMTYPE_DSARM:
         case ANIMTYPE_DSMESH:
         case ANIMTYPE_DSTEX:
@@ -4531,7 +4523,6 @@ static int mouse_anim_channels(bContext *C,
     case ANIMTYPE_DSSKEY:
     case ANIMTYPE_DSWOR:
     case ANIMTYPE_DSPART:
-    case ANIMTYPE_DSMBALL:
     case ANIMTYPE_DSARM:
     case ANIMTYPE_DSMESH:
     case ANIMTYPE_DSNTREE:

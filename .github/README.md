@@ -39,7 +39,7 @@ What's Different Right Now
 - **Pre-5.0 rig compatibility** — `blended_rig_compat.py` restores `action.fcurves` as a compatibility property on `bpy.types.Action`. Pre-Blender-5.0 Rigify rigs (including CGCookie Vonnbots rigs) that access `action.fcurves` directly work again. IK/FK bake operators no longer fail silently.
 - **Update notifications** — Background GitHub Releases check at startup (24-hour cache, non-blocking). Top-bar notification with version string when an update is available. One-click download via browser. "Blended Updates" panel in System Preferences.
 - **CI** — Windows x64 portable `.zip` builds via GitHub Actions. Branch pushes run a fast lite build for compile-error checking. Tags produce a full release artifact. `blended_release.cmake` disables GPU kernel pre-compilation (CUDA/HIP/OneAPI) to keep CI under an hour — runtime compilation covers the same hardware.
-- **Datablock audit — 0.4.x in progress.** Target: 39 → ~19 ID types. Removed so far: `ID_WS` ✓ (0.2.0), `ID_SCR` + `ID_WM` ✓ (0.3.0), `ID_PC` + `ID_SPK` + `ID_PA` + `ID_GD_LEGACY` + `ID_LS` ✓ (0.4.0). Next: `ID_MB`. See [`CHANGELOG.md`](../CHANGELOG.md) for per-layer file detail.
+- **Datablock audit — 0.4.x in progress.** Target: 39 → ~19 ID types. Removed so far: `ID_WS` ✓ (0.2.0), `ID_SCR` + `ID_WM` ✓ (0.3.0), `ID_PC` + `ID_SPK` + `ID_PA` + `ID_GD_LEGACY` + `ID_LS` + `ID_MB` ✓ (0.4.0). Next: `ID_TE`. See [`CHANGELOG.md`](../CHANGELOG.md) for per-layer file detail.
 
 On the Horizon
 --------------
@@ -135,6 +135,16 @@ Blended is developed with contributions from both human developers and AI tools.
   lists are mandatory at three or more maneuvers; the Codex verification pass is a
   todo-list item before commit/push, not a post-hoc cleanup. The rule cites a real
   same-session incident as its concrete reference.
+  `ID_MB` (MetaBall) removal — ~130+ files (vs 60 literal hits), 16 layers:
+  editors/metaball subsystem deleted (mball_edit/ops/undo), overlay_metaball.hh deleted,
+  transform_convert_mball.cc deleted, abc_writer_mball and usd_writer_metaball deleted
+  (WITH_ALEMBIC + WITH_USD both ON in CI), ANIMTYPE_DSMBALL chain across 7 files,
+  MetaBall basis machinery in depsgraph builder, MetaBall single-thread evaluation
+  workaround removed (is_metaball_object_operation), rna_meta.cc/rna_meta_api.cc deleted,
+  tree_element_id_metaball.cc/.hh deleted, Python startup cleaned (properties_data_metaball
+  deleted, 5 space_view3d classes removed, space_dopesheet/outliner/userpref/wm patched,
+  rigify metaball.new() removed); OB_MBALL=5 enum value kept for .blend compat;
+  bmain->metaballs fully removed (true fossil — no versioning pass iterates it).
   ongoing PR review and integration: 10+ PRs assessed, applied selectively.
   *"Listen to the whole thing before reacting."*
 

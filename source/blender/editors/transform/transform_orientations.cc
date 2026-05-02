@@ -14,7 +14,6 @@
 
 #include "DNA_armature_types.h"
 #include "DNA_curve_types.h"
-#include "DNA_meta_types.h"
 #include "DNA_object_types.h"
 #include "DNA_scene_types.h"
 #include "DNA_screen_types.h"
@@ -1332,35 +1331,6 @@ int getTransformOrientation_ex(const Main &bmain,
 
       if (!is_zero_v3(r_normal)) {
         result = ORIENTATION_FACE;
-      }
-    }
-    else if (obedit->type == OB_MBALL) {
-      MetaBall *mb = id_cast<MetaBall *>(obedit->data);
-      MetaElem *ml;
-      bool ok = false;
-      float tmat[3][3];
-
-      if (activeOnly && (ml = mb->lastelem)) {
-        quat_to_mat3(tmat, ml->quat);
-        add_v3_v3(r_normal, tmat[2]);
-        add_v3_v3(r_plane, tmat[1]);
-        ok = true;
-      }
-      else {
-        for (MetaElem &ml : *mb->editelems) {
-          if (ml.flag & SELECT) {
-            quat_to_mat3(tmat, ml.quat);
-            add_v3_v3(r_normal, tmat[2]);
-            add_v3_v3(r_plane, tmat[1]);
-            ok = true;
-          }
-        }
-      }
-
-      if (ok) {
-        if (!is_zero_v3(r_plane)) {
-          result = ORIENTATION_FACE;
-        }
       }
     }
     else if (obedit->type == OB_ARMATURE) {

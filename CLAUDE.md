@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.3.0 (tagged). 0.4.0 in progress — CI green (Windows x64, build #57, commit `29e4663`). Bucket 5 + 6 fossil removals: `ID_PC` ✓ + `ID_SPK` ✓ + `ID_PA` ✓ + `ID_GD_LEGACY` ✓ + `ID_LS` ✓; next: `ID_MB`.
+**Current version:** Blended 0.3.0 (tagged). 0.4.0 in progress — CI green (Windows x64, build #57, commit `29e4663`). Bucket 5 + 6 fossil removals: `ID_PC` ✓ + `ID_SPK` ✓ + `ID_PA` ✓ + `ID_GD_LEGACY` ✓ + `ID_LS` ✓ + `ID_MB` ✓; next: `ID_TE`.
 
 ---
 
@@ -25,7 +25,7 @@ The old approach (tiered UI, smart defaults, Emscripten) was prototyping toward 
 
 **`ID_SCR` and `ID_WM` removal — compile-clean, pending CI.** All layers merged. The blast radius was enormous — see Scar 2 below. Key architectural outcome: `bmain->screens` and `bmain->wm` kept as non-indexed runtime listbases; `ID_SCR_LEGACY` / `ID_WM_LEGACY` defines route through `which_libbase` for allocation but are excluded from `BKE_main_lists_get`. Branch: `claude/remove-id-scr-id-wm`. Layer-by-layer status in [`CHANGELOG.md`](CHANGELOG.md).
 
-**In progress: Bucket 5 + 6 fossil removals (0.4.x)** — `ID_CU_LEGACY`, `ID_GD_LEGACY`, `ID_TE`, `ID_MB`, `ID_LS`, `ID_CF`. `ID_PC` ✓. `ID_SPK` ✓. `ID_PA` ✓. `ID_GD_LEGACY` ✓. `ID_LS` ✓. Next: `ID_MB`. See roadmap in CHANGELOG.md.
+**In progress: Bucket 5 + 6 fossil removals (0.4.x)** — `ID_CU_LEGACY`, `ID_GD_LEGACY`, `ID_TE`, `ID_MB`, `ID_LS`, `ID_CF`. `ID_PC` ✓. `ID_SPK` ✓. `ID_PA` ✓. `ID_GD_LEGACY` ✓. `ID_LS` ✓. `ID_MB` ✓. Next: `ID_TE`. See roadmap in CHANGELOG.md.
 
 Pattern for each pending layer: `grep -rn "ID_WS"` the directory, delete or redirect every hit. The breakage is the audit — follow the compile errors, don't paper over them.
 
@@ -51,9 +51,9 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 
 | Order | ID type | Literal hits | Status |
 |-------|---------|-------------|--------|
-| Next | `ID_MB` — MetaBall | 60 hits / 32 files | ☐ |
-| 2 | `ID_TE` — Texture | 58 hits / 39 files | ☐ |
-| 3 | `ID_CU_LEGACY` — Legacy Curve | 74 hits / 33 files | ☐ (active migration path to ID_CV must survive) |
+| ~~Done~~ | `ID_MB` — MetaBall | 60 hits / 32 files | ✓ |
+| Next | `ID_TE` — Texture | 58 hits / 39 files | ☐ |
+| 2 | `ID_CU_LEGACY` — Legacy Curve | 74 hits / 33 files | ☐ (active migration path to ID_CV must survive) |
 | Last | `ID_CF` — CacheFile | 18 literal / ~50+ true | ☐ (needs design decision first) |
 
 ### Foundation Layer Roadmap
@@ -308,7 +308,11 @@ makesrna (7 files):
 
 ---
 
-**ID_MB — 60 hits, 32 files**
+**ID_MB — ✓ COMPLETE (0.4.0)** *(true blast radius: ~130+ files across 16 layers — editors/metaball subsystem, ABC/USD writers, overlay_metaball.hh, transform_convert_mball.cc, depsgraph MetaBall basis machinery, ANIMTYPE_DSMBALL channel, Python startup menus)*
+
+> **Session note (2026-05-02):** True blast radius significantly exceeded the ~110-file pre-chisel estimate. Key additions beyond the literal audit: (1) `editors/metaball/` subsystem deleted (mball_edit.cc, mball_ops.cc, editmball_undo.cc, mball_intern.hh + CMakeLists.txt); (2) `overlay_metaball.hh` entire MetaBall draw overlay deleted; (3) `transform_convert_mball.cc` entire file deleted; (4) `abc_writer_mball.cc/.h` and `usd_writer_metaball.cc/.hh` deleted (WITH_ALEMBIC and WITH_USD both ON in CI); (5) `ANIMTYPE_DSMBALL` enum + `ACF_DSMBALL` animation channel (3 callbacks + struct + table entry) in `anim_channels_defines.cc` + `anim_filter.cc`; (6) MetaBall basis machinery in `deg_builder_relations.cc` (mother-ball geometry, parent dupli, particle MBall visualization); (7) MetaBall single-thread evaluation workaround (`is_metaball_object_operation()`) in `deg_eval.cc`; (8) Scar 9 (TREESTORE_ID_TYPE blank line) applied correctly; (9) Python startup: `properties_data_metaball.py` deleted, 5 space_view3d.py classes removed (VIEW3D_MT_select_edit_metaball, VIEW3D_MT_edit_metaball_context_menu, VIEW3D_MT_metaball_add, VIEW3D_MT_edit_meta, VIEW3D_MT_edit_meta_showhide), bl_ui/__init__.py import cleaned, space_dopesheet/outliner/userpref/wm.py patched, rigify metaball.new() call removed; (10) `makesrna.cc` rna_meta entry removed (rna_meta.cc and rna_meta_api.cc deleted in earlier session); (11) `ed_transverts.cc` dead `MetaElem *ml;` variable removed; (12) `ED_view3d.hh` orphaned `struct MetaElem;` forward decl removed; (13) `BLT_I18NCONTEXT_ID_METABALL` define and ITEM entry removed from `BLT_translation.hh`; (14) `OB_MBALL` removed from `OB_TYPE_SUPPORT_MATERIAL`, `OB_TYPE_IS_GEOMETRY`, `OB_TYPE_SUPPORT_EDITMODE` macros in `DNA_object_types.h` — `OB_MBALL = 5` enum value kept for .blend compat. Scar 2 rule: `bmain->metaballs` was fully removed (true fossil — no blenloader versioning pass iterates it; verified in versioning_legacy.cc which had a `idproperties_fix_group_lengths(bmain->metaballs)` that was removed in an earlier layer). `DNA_meta_types.h` and `dna_rename_defs.h` MetaBall entries kept for SDNA read-skip on old .blend files.
+
+> **Pre-chisel note (2026-05-02):** Literal grep confirms 60 hits across 32 files. Broader pattern grep (`grep -rln "OB_MBALL\|MetaBall\|metaball\|mball\|rna_meta\|BKE_mball\|DNA_meta"`) surfaces ~110 additional files that carry no `ID_MB` string but will break in the chisel. Key scope not in literal: (1) entire `editors/metaball/` tree — `mball_edit.cc`, `mball_ops.cc`, `editmball_undo.cc`, `mball_intern.hh` (MetaBall has its own editor subsystem like Armature); (2) `ANIMTYPE_DSMBALL` enum + `ACF_DSMBALL` animation channel (3 callbacks + struct + `animchannelTypeInfo` table entry) in `anim_channels_defines.cc` + `anim_filter.cc` OB_MBALL dispatch — same pattern as ID_LS's ANIMTYPE_DSLINESTYLE; (3) `tree_element_id_metaball.cc/.hh` — dedicated outliner tree element files to delete; (4) entire `io/alembic/exporter/abc_writer_mball.cc` and `io/usd/intern/usd_writer_metaball.cc` — WITH_ALEMBIC and WITH_USD are both ON in CI; (5) `draw/engines/overlay/overlay_metaball.hh` — entire metaball draw overlay; (6) `transform/transform_convert_mball.cc` — entire mball transform convert file; (7) `BKE_main.hh:369` — `bmain->metaballs` field; (8) `anim_data_bmain_utils.cc:77` — `ANIMDATA_IDS_CB(bmain->metaballs.first)` — same missed-site pattern as ID_PA/`anim_data_bmain_utils.cc:92`; (9) `anim_sys.cc:4135` — `EVAL_ANIM_IDS(main->metaballs.first, ...)`; (10) `object_update.cc:157,291` — OB_MBALL update dispatch. Scar 9 (TREESTORE_ID_TYPE blank continuation line) applies: after removing ID_MB from `outliner_intern.hh` macro, verify no blank lines remain in the ELEM body.
 
 Core definition:
 - `makesdna/DNA_ID_enums.h:134` — enum entry `ID_MB = MAKE_ID2('M', 'B')`
@@ -317,42 +321,116 @@ Core definition:
 - `makesdna/DNA_ID.h:1169,1196,1274` — `FILTER_ID_MB` define, `FILTER_ID_ALL` inclusion, `INDEX_ID_MB` enum entry
 - `blenkernel/BKE_idtype.hh:307` — `extern IDTypeInfo IDType_ID_MB`
 - `blenkernel/intern/idtype.cc:144` — `INIT_TYPE(ID_MB)`
-- `blenkernel/intern/main.cc:149,991,1086` — `CASE_ID_INDEX(INDEX_ID_MB)`, `which_libbase` case, `lb[]` assignment
+- `blenkernel/intern/main.cc:149,991,1088` — `CASE_ID_INDEX(INDEX_ID_MB)`, `which_libbase` case, `lb[]` assignment
 
-blenkernel (5 files):
-- `mball.cc:139,141,143` — `IDTypeInfo IDType_ID_MB` definition + `.id_filter` + `.main_listbase_index`
-- `material.cc:425,453,486,519,542,847` — material slot handling (6 sites)
-- `object.cc:1933,1977,2225,4279` — object data dispatch (4 sites)
-- `object_dupli.cc:312` — dupli GS check
-- `lib_remap.cc:627` — library remapping
+blenkernel (~12 files in literal + additional in true blast radius):
+- `BKE_main.hh:369` — `ListBaseT<MetaBall> metaballs = {}` field — remove (no Scar 2 rescue; true fossil)
+- `BKE_mball.hh` — entire BKE_mball API header — **DELETE** when all callers are gone
+- `BKE_mball_tessellate.hh` — tessellation API header — **DELETE** with mball_tessellate.cc
+- `mball.cc:139,141,143` — `IDTypeInfo IDType_ID_MB` definition + `.id_filter` + `.main_listbase_index` — remove IDTypeInfo block; check `BKE_mball_add` for Scar 10 allocator fix
+- `mball_tessellate.cc` — entire tessellation implementation — **DELETE** (MetaBall-only; computes marching-cubes isosurface)
+- `material.cc:425,453,486,519,542,847` — material slot handling (6 sites) — remove `case ID_MB:` blocks
+- `object.cc:1933,1977,2225,4279` — object data dispatch (4 sites) — remove `case ID_MB:` branches
+- `object_update.cc:157,291` — OB_MBALL update dispatch (2 sites) — remove cases
+- `object_dupli.cc:312` — dupli GS check — remove
+- `lib_remap.cc:627` — library remapping — remove case
+- `mesh_convert.cc:921,989` — `OB_MBALL` in mesh conversion (BKE_mesh_new_from_object path; shared ELEM with FONT/CURVES_LEGACY/SURF) — remove
+- `context.cc:1415,1498` — mball edit mode context (`"mball_edit"` context string) — remove case and string
+- `lib_id.cc:2412` — `ob.type == OB_MBALL` check — remove
+- `anim_sys.cc:4135` — `EVAL_ANIM_IDS(main->metaballs.first, ADT_RECALC_ANIM)` — remove line
+- `anim_data_bmain_utils.cc:77` — `ANIMDATA_IDS_CB(bmain->metaballs.first)` — remove line (same missed-site pattern as ID_PA)
 
-editors (10 files):
-- `interface_icons.cc:2066` — icon case
-- `interface_template_id.cc:583,854` — template checks
-- `object_data_transform.cc:442,612,736,810` — data transform dispatch (4 sites)
-- `transform_convert_object_texspace.cc:52` — `ELEM(GS(id->name), ID_ME, ID_CU_LEGACY, ID_MB)` (shared with CU_LEGACY)
-- `render_opengl.cc:610` — render switch
-- `outliner_select.cc:1289` — outliner select
-- `outliner_draw.cc:2485` — outliner draw
-- `outliner_intern.hh:141` — outliner macro
-- `outliner_tools.cc:136,287` — outliner tools
-- `tree_element_id.cc:49` — tree element
+blenloader (1 file — **KEEP**):
+- `versioning_legacy.cc:2382` — `idproperties_fix_group_lengths(bmain->metaballs)` — **KEEP** (versioning iterates bmain->metaballs to fix legacy ID properties; must survive even after INIT_TYPE removal — same Scar 2 pattern as ID_PA/versioning_250–400)
 
-draw (2 files):
-- `overlay_bounds.hh:188` — bounds overlay
-- `draw_resource.hh:157` — draw resource
+editors (~40+ files in true blast radius):
+- `interface_icons.cc:2066` — icon case — remove
+- `interface_template_id.cc:583,854` — template checks — remove
+- `object_data_transform.cc:442,612,736,810` — data transform dispatch (4 sites) — remove
+- `transform_convert_object_texspace.cc:52` — `ELEM(GS(id->name), ID_ME, ID_CU_LEGACY, ID_MB)` (shared with CU_LEGACY) — remove `ID_MB` from ELEM
+- `render_opengl.cc:610` — render switch — remove
+- `outliner_select.cc:1289` — outliner select — remove
+- `outliner_draw.cc:2485` — outliner draw — remove
+- `outliner_intern.hh:141` — outliner macro `TREESTORE_ID_TYPE` — remove; verify no blank continuation line left (Scar 9)
+- `outliner_tools.cc:136,287` — outliner tools — remove
+- `tree_element_id.cc:49` — tree element dispatch — remove `case ID_MB:`
+- `tree_element_id_metaball.cc` — **DELETE** entire file
+- `tree_element_id_metaball.hh` — **DELETE** entire file; update CMakeLists.txt
+- `metaball/mball_edit.cc` — **DELETE** entire file (MetaBall element editing operators)
+- `metaball/mball_ops.cc` — **DELETE** entire file (operator registration: `MBALL_OT_*`)
+- `metaball/editmball_undo.cc` — **DELETE** entire file; `ED_mball_undosys_type` referenced from `undo_system_types.cc`
+- `metaball/mball_intern.hh` — **DELETE** internal header
+- `include/ED_mball.hh` — **DELETE** entire header; remove all includes of it
+- `animation/anim_channels_defines.cc` — `ACF_DSMBALL` struct + 3 callbacks (`acf_dsmball_icon`, `acf_dsmball_setting_flag`, `acf_dsmball_setting_ptr`) + `animchannelTypeInfo` entry — remove all
+- `animation/anim_filter.cc:2899` — `case OB_MBALL:` in object animdata filter — remove
+- `include/ED_anim_api.hh:209,457` — `ANIMTYPE_DSMBALL` enum value; `FILTER_MBALL_OBJD` macro — remove both
+- `object/object_add.cc` — `OBJECT_OT_metaball_add` operator + `add_metaball_exec` — remove; also remove from `object_ops.cc` registration
+- `object/object_bake_api.cc` — OB_MBALL case in baking dispatch — remove
+- `object/object_edit.cc:746,945` — mball edit mode enter/exit dispatch — remove cases
+- `object/object_hook.cc` — OB_MBALL hook dispatch — remove
+- `object/object_modes.cc` — OB_MBALL mode switching — remove
+- `object/object_modifier.cc` — OB_MBALL modifier dispatch — remove
+- `object/object_relations.cc` — OB_MBALL relations — remove
+- `object/object_transform.cc` — OB_MBALL transform — remove
+- `object/object_utils.cc` — OB_MBALL utils — remove
+- `screen/screen_ops.cc` — OB_MBALL screen mode ops — remove
+- `space_api/spacetypes.cc` — mball editor space type registration — remove
+- `space_buttons/buttons_context.cc` — OB_MBALL properties panel dispatch — remove
+- `space_info/info_stats.cc` — mball count in scene statistics — remove
+- `space_view3d/view3d_buttons.cc` — OB_MBALL N panel — remove
+- `space_view3d/view3d_iterators.cc` — OB_MBALL iterators — remove
+- `space_view3d/view3d_select.cc` — OB_MBALL selection — remove
+- `space_view3d/view3d_snap.cc` — OB_MBALL snap — remove
+- `transform/transform.cc` — OB_MBALL transform dispatch — remove
+- `transform/transform_convert.cc` — OB_MBALL in convert dispatch — remove
+- `transform/transform_convert.hh` — OB_MBALL convert header — remove
+- `transform/transform_convert_mball.cc` — **DELETE** entire file (MetaBall-only transform convert)
+- `transform/transform_gizmo_3d.cc` — OB_MBALL gizmo — remove
+- `transform/transform_mode.cc` — OB_MBALL mode — remove
+- `transform/transform_orientations.cc` — OB_MBALL orientations — remove
+- `transform/transform_snap.cc` — OB_MBALL snap — remove
+- `undo/undo_system_types.cc:40` — `BKE_undosys_type_append(ED_mball_undosys_type)` — remove; cascades to editmball_undo.cc delete
+- `util/ed_transverts.cc` — OB_MBALL transverts — remove
+
+draw (~9 files in true blast radius):
+- `overlay_bounds.hh:188` — bounds overlay `case ID_MB:` — remove
+- `draw_resource.hh:157` — draw resource `case ID_MB:` — remove
+- `draw/engines/overlay/overlay_metaball.hh` — **entire file**: MetaBall draw overlay (radius/stiffness/negative element drawing) — **DELETE**
+- `draw/engines/overlay/overlay_instance.cc` — calls metaball overlay functions — remove
+- `draw/engines/overlay/overlay_instance.hh` — metaball overlay include/declaration — remove
+- `draw/engines/overlay/overlay_private.hh` — MetaBall overlay forward decls — remove
+- `draw/engines/overlay/overlay_shape.cc` — OB_MBALL shape drawing — remove
+- `draw/intern/draw_context.cc` — OB_MBALL draw context dispatch — remove
+- `draw/intern/draw_handle.hh` — OB_MBALL handle — remove
 
 depsgraph (5 files):
-- `depsgraph_tag.cc:72,618` — tag dispatch (line 72 shared ELEM with CU_LEGACY/GD_LEGACY; GD_LEGACY kept per session note)
-- `deg_eval_copy_on_write.cc:557,938` — COW special cases
-- `deg_builder_relations.cc:570,2716` — relation builder
-- `deg_builder_nodes.cc:624,1769` — node builder
-- `depsgraph_query_iter.cc:479` — dupli ob_data GS check
+- `depsgraph_tag.cc:72,618` — tag dispatch; line 72 is `ELEM(id_type, ID_ME, ID_CU_LEGACY, ID_MB, ID_LT, ID_GD_LEGACY, ID_CV, ID_PT, ID_VO)` — remove `ID_MB` from ELEM (keep ID_GD_LEGACY per session note); line 618 is the full case — remove
+- `deg_eval_copy_on_write.cc:557,938` — COW special cases `case ID_MB:` — remove both
+- `deg_builder_relations.cc:570,2716` — relation builder (2 sites) — remove
+- `deg_builder_nodes.cc:624,1769` — node builder (2 sites) — remove
+- `depsgraph_query_iter.cc:479` — dupli ob_data GS check `GS(...) == ID_MB` — remove
 
-makesrna (3 files):
-- `rna_ID.cc:53,150,398,485` — RNA enum entry, filter item, and switch cases (4 sites)
-- `rna_main_api.cc:794` — `RNA_MAIN_ID_TAG_FUNCS_DEF(metaballs, metaballs, ID_MB)`
-- `rna_space.cc:3954` — `FILTER_ID_MB` in asset browser geometry filter
+makesrna (~8 files in true blast radius):
+- `rna_ID.cc:53,150,398,485` — RNA enum entry, filter item, and switch cases (4 sites) — remove all
+- `rna_main_api.cc:794` — `RNA_MAIN_ID_TAG_FUNCS_DEF(metaballs, metaballs, ID_MB)` + `rna_Main_metaballs_new()` + `RNA_def_main_metaballs()` — remove
+- `rna_main.cc` — `RNA_MAIN_LISTBASE_FUNCS_DEF(metaballs)` + table entry (`"metaballs"`, `RNA_def_main_metaballs`) — remove
+- `rna_internal.hh:538` — `void RNA_def_main_metaballs(BlenderRNA *brna, PropertyRNA *cprop)` declaration — remove
+- `rna_action.cc:1521` — `show_metaballs` RNA property (ADS filter flag) — remove
+- `rna_space.cc:3954` — `FILTER_ID_MB` in asset browser geometry filter — remove
+- `rna_meta.cc` — **entire file**: MetaBall RNA struct definitions (no `ID_MB` string but entire RNA layer) — **DELETE**
+- `rna_meta_api.cc` — **entire file**: MetaBall RNA API — **DELETE**
+
+io (~6 files in true blast radius):
+- `io/alembic/exporter/abc_writer_mball.cc` — **DELETE** entire file (WITH_ALEMBIC is ON in CI — this will surface)
+- `io/alembic/exporter/abc_hierarchy_iterator.cc:205` — `case OB_MBALL:` dispatch to abc_writer_mball — remove; update include
+- `io/common/intern/abstract_hierarchy_iterator.cc:840` — `ELEM(dupli_object->ob->type, OB_MBALL, OB_FONT)` dupli check — remove `OB_MBALL` from ELEM
+- `io/usd/intern/usd_writer_metaball.cc` — **DELETE** entire file (WITH_USD is ON in CI)
+- `io/usd/intern/usd_hierarchy_iterator.cc:61,321` — `case OB_MBALL:` dispatch (2 sites) — remove; update include
+- `io/usd/hydra/object.cc:37,69,87` — `case OB_MBALL:` dispatch (3 sites) — remove
+
+windowmanager (2 files):
+- `WM_types.hh:603` — `#define NS_EDITMODE_MBALL (6 << 8)` edit mode namespace define — remove
+- `wm_init_exit.cc:566` — `BKE_mball_cubeTable_free()` on application exit — remove (only needed when mball tessellation exists)
 
 ---
 
@@ -536,9 +614,9 @@ Additional files NOT in the literal grep (discovered 2026-04-29):
 
 6. **`depsgraph.cc:160` had a `!= ID_PA` guard** in `clear_id_nodes_conditional` — resolved in 0.4.0. The two-pass teardown (scenes first, then everything-except-particles) ensured particle COW copies outlived the objects referencing them. With ID_PA gone, the guard was changed to `!= ID_SCE` (scenes already destroyed in pass 1 are caught by the `id_cow == nullptr` guard in pass 2).
 
-7. **Remaining chisel order (smallest blast radius first):** **ID_GD_LEGACY ✓** → **ID_LS ✓** → ID_MB (60) → ID_TE (58) → ID_CU_LEGACY (74) → ID_CF (last, design decision). ~192 hits across 3 types remaining. ID_PC (21) ✓ 0.4.0. ID_SPK (23) ✓ 0.4.0. ID_PA (35) ✓ 0.4.0. ID_GD_LEGACY (56) ✓ 0.4.0. ID_LS (~50) ✓ 0.4.0. ID_CF deferred — see note 8.
+7. **Remaining chisel order (smallest blast radius first):** **ID_GD_LEGACY ✓** → **ID_LS ✓** → **ID_MB ✓** → ID_TE (58) → ID_CU_LEGACY (74) → ID_CF (last, design decision). ~132 hits across 2 types remaining. ID_PC (21) ✓ 0.4.0. ID_SPK (23) ✓ 0.4.0. ID_PA (35) ✓ 0.4.0. ID_GD_LEGACY (56) ✓ 0.4.0. ID_LS (~50) ✓ 0.4.0. ID_MB (~130+) ✓ 0.4.0. ID_CF deferred — see note 8.
 
-8. **ID_CF is architecturally entangled — do it last or separately.** The literal grep count (18) dramatically understates the true blast radius. `CacheFile` as a struct is woven into: the Alembic importer (`io/alembic/`), the USD importer (`io/usd/`), the Mesh Sequence Cache modifier (`MOD_meshsequencecache.cc`), the constraint system, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. The Mesh Sequence Cache modifier holds a `CacheFile *` ID pointer so multiple objects can share one cache reference — removing the ID type means deciding what replaces that pointer. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI builds, so breakage here will surface. **Revised chisel order: ID_MB → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision). ID_PC ✓ (0.4.0). ID_SPK ✓ (0.4.0). ID_PA ✓ (0.4.0). ID_GD_LEGACY ✓ (0.4.0). ID_LS ✓ (0.4.0).** The open question: does the cache-file reference mechanism get inlined into the modifier/constraint DNA per-instance, or does CacheFile stay as a non-ID struct in a non-indexed listbase (like ID_SCR_LEGACY/ID_WM_LEGACY pattern)? Answer this before chiseling ID_CF.
+8. **ID_CF is architecturally entangled — do it last or separately.** The literal grep count (18) dramatically understates the true blast radius. `CacheFile` as a struct is woven into: the Alembic importer (`io/alembic/`), the USD importer (`io/usd/`), the Mesh Sequence Cache modifier (`MOD_meshsequencecache.cc`), the constraint system, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. The Mesh Sequence Cache modifier holds a `CacheFile *` ID pointer so multiple objects can share one cache reference — removing the ID type means deciding what replaces that pointer. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI builds, so breakage here will surface. **Revised chisel order: ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision). ID_PC ✓ (0.4.0). ID_SPK ✓ (0.4.0). ID_PA ✓ (0.4.0). ID_GD_LEGACY ✓ (0.4.0). ID_LS ✓ (0.4.0). ID_MB ✓ (0.4.0).** The open question: does the cache-file reference mechanism get inlined into the modifier/constraint DNA per-instance, or does CacheFile stay as a non-ID struct in a non-indexed listbase (like ID_SCR_LEGACY/ID_WM_LEGACY pattern)? Answer this before chiseling ID_CF.
 
 ---
 
@@ -628,7 +706,7 @@ make check_mypy     # Python type checking
 Target: 39 → ~19 ID types.
 - **Bucket 4 (UI state, remove):** `ID_WS` ✓ (0.2.0), `ID_SCR` ✓ (0.3.0 WIP), `ID_WM` ✓ (0.3.0 WIP)
 - **Bucket 5 (upstream deprecations, finish):** `ID_CU_LEGACY`, `ID_GD_LEGACY` ✓ (0.4.0)
-- **Bucket 6 (fossils, cut):** `ID_TE`, `ID_MB`, `ID_CF` — in progress; `ID_PC` ✓ (0.4.0); `ID_SPK` ✓ (0.4.0); `ID_PA` ✓ (0.4.0); `ID_LS` ✓ (0.4.0)
+- **Bucket 6 (fossils, cut):** `ID_TE`, `ID_CF` — in progress; `ID_PC` ✓ (0.4.0); `ID_SPK` ✓ (0.4.0); `ID_PA` ✓ (0.4.0); `ID_LS` ✓ (0.4.0); `ID_MB` ✓ (0.4.0)
 
 ---
 

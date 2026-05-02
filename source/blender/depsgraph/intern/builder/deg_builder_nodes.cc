@@ -621,7 +621,6 @@ void DepsgraphNodeBuilder::build_id(ID *id, const bool force_be_visible)
       build_movieclip(id_cast<MovieClip *>(id));
       break;
     case ID_ME:
-    case ID_MB:
     case ID_CU_LEGACY:
     case ID_LT:
     case ID_GD_LEGACY:
@@ -980,7 +979,6 @@ void DepsgraphNodeBuilder::build_object_data(Object *object)
     case OB_CURVES_LEGACY:
     case OB_FONT:
     case OB_SURF:
-    case OB_MBALL:
     case OB_LATTICE:
     case OB_CURVES:
     case OB_POINTCLOUD:
@@ -1763,11 +1761,6 @@ void DepsgraphNodeBuilder::build_object_data_geometry_datablock(ID *obdata)
                                      BKE_mesh_eval_geometry(depsgraph,
                                                             id_cast<Mesh *>(obdata_cow));
                                    });
-      op_node->set_as_entry();
-      break;
-    }
-    case ID_MB: {
-      op_node = add_operation_node(obdata, NodeType::GEOMETRY, OperationCode::GEOMETRY_EVAL);
       op_node->set_as_entry();
       break;
     }

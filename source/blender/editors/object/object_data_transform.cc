@@ -19,7 +19,6 @@
 #include "DNA_gpencil_legacy_types.h"
 #include "DNA_lattice_types.h"
 #include "DNA_mesh_types.h"
-#include "DNA_meta_types.h"
 #include "DNA_object_types.h"
 #include "DNA_pointcloud_types.h"
 
@@ -36,7 +35,6 @@
 #include "BKE_grease_pencil.hh"
 #include "BKE_key.hh"
 #include "BKE_lattice.hh"
-#include "BKE_mball.hh"
 #include "BKE_mesh_types.hh"
 
 #include "bmesh.hh"
@@ -206,49 +204,6 @@ static void edit_armature_coords_and_quats_apply(bArmature *arm,
   edit_armature_coords_and_quats_apply_with_mat4(arm, elem_array, float4x4::identity());
 }
 
-/* MetaBall */
-
-struct ElemData_MetaBall {
-  float co[3];
-  float quat[4];
-  float exp[3];
-  float rad;
-};
-
-static void metaball_coords_and_quats_get(const MetaBall *mb,
-                                          MutableSpan<ElemData_MetaBall> elem_array)
-{
-  ElemData_MetaBall *elem = elem_array.data();
-  for (const MetaElem *ml = static_cast<const MetaElem *>(mb->elems.first); ml;
-       ml = ml->next, elem++)
-  {
-    copy_v3_v3(elem->co, &ml->x);
-    copy_qt_qt(elem->quat, ml->quat);
-    copy_v3_v3(elem->exp, &ml->expx);
-    elem->rad = ml->rad;
-  }
-}
-
-static void metaball_coords_and_quats_apply_with_mat4(MetaBall *mb,
-                                                      const Span<ElemData_MetaBall> elem_array,
-                                                      const float4x4 &transform)
-{
-  const ElemData_MetaBall *elem = elem_array.data();
-  for (MetaElem *ml = static_cast<MetaElem *>(mb->elems.first); ml; ml = ml->next, elem++) {
-    copy_v3_v3(&ml->x, elem->co);
-    copy_qt_qt(ml->quat, elem->quat);
-    copy_v3_v3(&ml->expx, elem->exp);
-    ml->rad = elem->rad;
-  }
-  BKE_mball_transform(mb, transform.ptr(), true);
-}
-
-static void metaball_coords_and_quats_apply(MetaBall *mb, const Span<ElemData_MetaBall> elem_array)
-{
-  /* Avoid code duplication by using a unit matrix. */
-  metaball_coords_and_quats_apply_with_mat4(mb, elem_array, float4x4::identity());
-}
-
 /** \} */
 
 /* -------------------------------------------------------------------- */
@@ -287,12 +242,6 @@ struct XFormObjectData_Armature : public XFormObjectData {
   Array<ElemData_Armature> elems;
   bool is_edit_mode = false;
   ~XFormObjectData_Armature() override = default;
-};
-
-struct XFormObjectData_MetaBall : public XFormObjectData {
-  Array<ElemData_MetaBall> elems;
-  bool is_edit_mode = false;
-  ~XFormObjectData_MetaBall() override = default;
 };
 
 struct XFormObjectData_GreasePencil : public XFormObjectData {
@@ -437,16 +386,6 @@ static std::unique_ptr<XFormObjectData> data_xform_create_ex(ID *id, bool is_edi
       xod->is_edit_mode = is_edit_mode;
       xod->elems.reinitialize(BKE_armature_bonelist_count(&arm->bonebase));
       armature_coords_and_quats_get(arm, xod->elems);
-      return xod;
-    }
-    case ID_MB: {
-      /* Edit mode and object mode are shared. */
-      MetaBall *mb = id_cast<MetaBall *>(id);
-      auto xod = std::make_unique<XFormObjectData_MetaBall>();
-      xod->id = id;
-      xod->is_edit_mode = is_edit_mode;
-      xod->elems.reinitialize(BLI_listbase_count(&mb->elems));
-      metaball_coords_and_quats_get(mb, xod->elems);
       return xod;
     }
     case ID_GP: {
@@ -609,13 +548,6 @@ void data_xform_by_mat4(XFormObjectData &xod_base, const float4x4 &transform)
       }
       break;
     }
-    case ID_MB: {
-      /* Meta-balls are a special case, edit-mode and object mode data is shared. */
-      MetaBall *mb = id_cast<MetaBall *>(xod_base.id);
-      const auto &xod = reinterpret_cast<XFormObjectData_MetaBall &>(xod_base);
-      metaball_coords_and_quats_apply_with_mat4(mb, xod.elems, transform);
-      break;
-    }
     case ID_GP: {
       GreasePencil *grease_pencil = id_cast<GreasePencil *>(xod_base.id);
       const auto &xod = reinterpret_cast<XFormObjectData_GreasePencil &>(xod_base);
@@ -733,13 +665,6 @@ void data_xform_restore(XFormObjectData &xod_base)
       }
       break;
     }
-    case ID_MB: {
-      /* Meta-balls are a special case, edit-mode and object mode data is shared. */
-      MetaBall *mb = id_cast<MetaBall *>(xod_base.id);
-      const auto &xod = reinterpret_cast<XFormObjectData_MetaBall &>(xod_base);
-      metaball_coords_and_quats_apply(mb, xod.elems);
-      break;
-    }
     case ID_GP: {
       GreasePencil *grease_pencil = id_cast<GreasePencil *>(xod_base.id);
       const auto &xod = reinterpret_cast<XFormObjectData_GreasePencil &>(xod_base);
@@ -805,12 +730,6 @@ void data_xform_tag_update(XFormObjectData &xod_base)
       bArmature *arm = id_cast<bArmature *>(xod_base.id);
       /* XXX, zero is needed, no other flags properly update this. */
       DEG_id_tag_update(&arm->id, 0);
-      break;
-    }
-    case ID_MB: {
-      /* Generic update. */
-      MetaBall *mb = id_cast<MetaBall *>(xod_base.id);
-      DEG_id_tag_update(&mb->id, ID_RECALC_GEOMETRY | ID_RECALC_SYNC_TO_EVAL);
       break;
     }
     case ID_GP: {

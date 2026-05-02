@@ -31,7 +31,6 @@
 #include "DNA_lattice_types.h"
 #include "DNA_material_types.h"
 #include "DNA_mesh_types.h"
-#include "DNA_meta_types.h"
 #include "DNA_object_force_types.h"
 #include "DNA_object_types.h"
 #include "DNA_scene_types.h"
@@ -54,7 +53,6 @@
 #include "BKE_library.hh"
 #include "BKE_main.hh"
 #include "BKE_material.hh"
-#include "BKE_mball.hh"
 #include "BKE_mesh.hh"
 #include "BKE_modifier.hh"
 #include "BKE_node_runtime.hh"
@@ -81,7 +79,6 @@
 #include "ED_image.hh"
 #include "ED_keyframes_keylist.hh"
 #include "ED_lattice.hh"
-#include "ED_mball.hh"
 #include "ED_mesh.hh"
 #include "ED_object.hh"
 #include "ED_outliner.hh"
@@ -743,20 +740,6 @@ static bool editmode_load_free_ex(Main *bmain,
       BKE_editlattice_free(obedit);
     }
   }
-  else if (obedit->type == OB_MBALL) {
-    const MetaBall *mb = id_cast<const MetaBall *>(obedit->data);
-    if (mb->editelems == nullptr) {
-      return false;
-    }
-
-    if (load_data) {
-      ED_mball_editmball_load(obedit);
-    }
-
-    if (free_data) {
-      ED_mball_editmball_free(obedit);
-    }
-  }
   else if (ELEM(obedit->type, OB_CURVES, OB_GREASE_PENCIL, OB_POINTCLOUD)) {
     /* Object doesn't have specific edit mode data, so pass. */
   }
@@ -941,16 +924,6 @@ bool editmode_enter_ex(Main *bmain, Scene *scene, Object *ob, int flag)
     ED_curve_editfont_make(ob);
 
     WM_main_add_notifier(NC_SCENE | ND_MODE | NS_EDITMODE_TEXT, scene);
-  }
-  else if (ob->type == OB_MBALL) {
-    MetaBall *mb = id_cast<MetaBall *>(ob->data);
-
-    ok = true;
-    ED_mball_editmball_make(ob);
-
-    mb->needs_flush_to_id = 0;
-
-    WM_main_add_notifier(NC_SCENE | ND_MODE | NS_EDITMODE_MBALL, scene);
   }
   else if (ob->type == OB_LATTICE) {
     ok = true;
