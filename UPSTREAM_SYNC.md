@@ -3,7 +3,7 @@
 Blended is a fork of [Blender](https://www.blender.org/). This document describes
 how to manually merge upstream Blender changes into Blended.
 
-> *"Appreciate what already is."* — [PHILOSOPHY.md](PHILOSOPHY.md)
+> *"Appreciate what already is."* — Development Philosophy §1, [`CLAUDE.md`](CLAUDE.md)
 >
 > Upstream Blender is the foundation we build on. Syncing is an act of
 > appreciation — integrating the work of hundreds of contributors while
