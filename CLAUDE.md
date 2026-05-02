@@ -785,17 +785,21 @@ A chisel session that touches 7 layers and 60 files in one unbounded run is a co
 
 **For any removal session touching more than 3 files:**
 
-1. **Layer boundary = commit boundary.** When a layer compiles cleanly (even if the overall removal is incomplete), commit and push it. Don't hold changes for "when it all works." A partial-but-compiling state is a safe checkpoint. An all-or-nothing run is a liability.
+1. **Layer boundary = commit AND PUSH boundary.** When a layer compiles cleanly (even if the overall removal is incomplete), commit it AND PUSH IT immediately. Not commit-and-hold. Commit and push. A committed-but-not-pushed layer exists only on the local environment — if the session dies, the environment resets, or the instance is killed, that commit is gone. A pushed layer is safe. An unpushed commit is not a checkpoint; it is a liability with extra steps.
+
+   **This rule was violated throughout the ID_MB session — that is why it is written here.** The ID_MB session had 17 commits across multiple context deaths, $70 in extra usage, and multiple instances spawned and killed. Almost none of those commits were pushed until the developer issued an emergency interrupt mid-session: *"push everything NOW, do not ask questions, this is not optional."* The work nearly died. It was saved by the developer's intervention, not by the model following the protocol. An unpushed commit in a dead session is worth nothing — and that is exactly what almost happened.
+
+   **The rule, unambiguous: commit → push → then continue. Never commit without pushing.**
 
 2. **Commit message discipline.** Name the layer: `"Blended 0.3.0 [makesdna]: remove ID_SCR enum entries and FILTER/INDEX macros"`. That's a safe rollback point. One line in git log tells the next session exactly what's done.
 
-3. **After every push, do a context check.** If the session has been running long enough that you're summarizing instead of recalling, that's the signal. Commit whatever is clean. Document what remains in CHANGELOG.md (even a one-liner stub). Stop. The next session starts from a clean base.
+3. **After every push, do a context check.** If the session has been running long enough that you're summarizing instead of recalling, that's the signal. Commit and push whatever is clean. Document what remains in CHANGELOG.md (even a one-liner stub). Stop. The next session starts from a clean base.
 
 4. **Pre-chisel order matters.** Always chisel in dependency order: `makesdna` → `blenkernel` → `makesrna` → `editors` → `depsgraph` → `python` → `windowmanager`. Each layer can be compiled and committed independently. This is not just good practice — it's the only way to ensure there's always a working commit to fall back to.
 
-5. **Never hold 7 layers of changes in a single uncommitted working tree.** If you're about to start layer 4 and layers 1–3 aren't committed, stop and commit first.
+5. **Never hold 7 layers of changes in a single uncommitted working tree.** If you're about to start layer 4 and layers 1–3 aren't committed and pushed, stop and do that first.
 
-**Why this matters:** Context compaction is lossy. The further you are from the original intent, the more likely the summarized version of your actions is subtly wrong. The smaller the commit unit, the less damage a wrong summary can cause. One layer per commit = one layer of damage on worst case. Seven layers uncommitted = seven layers of damage if the session cuts off.
+**Why this matters:** Context compaction is lossy. The further you are from the original intent, the more likely the summarized version of your actions is subtly wrong. The smaller the commit unit, the less damage a wrong summary can cause. One layer per commit+push = one layer of damage on worst case. Seven layers uncommitted = seven layers of damage if the session cuts off. Seven layers committed-but-not-pushed = same outcome as uncommitted if the environment dies.
 
 ---
 
