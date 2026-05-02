@@ -322,6 +322,8 @@ makesrna (7 files):
 
 > **Session note (2026-05-02):** True blast radius significantly exceeded the ~110-file pre-chisel estimate. Key additions beyond the literal audit: (1) `editors/metaball/` subsystem deleted (mball_edit.cc, mball_ops.cc, editmball_undo.cc, mball_intern.hh + CMakeLists.txt); (2) `overlay_metaball.hh` entire MetaBall draw overlay deleted; (3) `transform_convert_mball.cc` entire file deleted; (4) `abc_writer_mball.cc/.h` and `usd_writer_metaball.cc/.hh` deleted (WITH_ALEMBIC and WITH_USD both ON in CI); (5) `ANIMTYPE_DSMBALL` enum + `ACF_DSMBALL` animation channel (3 callbacks + struct + table entry) in `anim_channels_defines.cc` + `anim_filter.cc`; (6) MetaBall basis machinery in `deg_builder_relations.cc` (mother-ball geometry, parent dupli, particle MBall visualization); (7) MetaBall single-thread evaluation workaround (`is_metaball_object_operation()`) in `deg_eval.cc`; (8) Scar 9 (TREESTORE_ID_TYPE blank line) applied correctly; (9) Python startup: `properties_data_metaball.py` deleted, 5 space_view3d.py classes removed (VIEW3D_MT_select_edit_metaball, VIEW3D_MT_edit_metaball_context_menu, VIEW3D_MT_metaball_add, VIEW3D_MT_edit_meta, VIEW3D_MT_edit_meta_showhide), bl_ui/__init__.py import cleaned, space_dopesheet/outliner/userpref/wm.py patched, rigify metaball.new() call removed; (10) `makesrna.cc` rna_meta entry removed (rna_meta.cc and rna_meta_api.cc deleted in earlier session); (11) `ed_transverts.cc` dead `MetaElem *ml;` variable removed; (12) `ED_view3d.hh` orphaned `struct MetaElem;` forward decl removed; (13) `BLT_I18NCONTEXT_ID_METABALL` define and ITEM entry removed from `BLT_translation.hh`; (14) `OB_MBALL` removed from `OB_TYPE_SUPPORT_MATERIAL`, `OB_TYPE_IS_GEOMETRY`, `OB_TYPE_SUPPORT_EDITMODE` macros in `DNA_object_types.h` — `OB_MBALL = 5` enum value kept for .blend compat. Scar 2 rule: `bmain->metaballs` was fully removed (true fossil — no blenloader versioning pass iterates it; verified in versioning_legacy.cc which had a `idproperties_fix_group_lengths(bmain->metaballs)` that was removed in an earlier layer). `DNA_meta_types.h` and `dna_rename_defs.h` MetaBall entries kept for SDNA read-skip on old .blend files.
 
+> **Correction note (2026-05-02):** Post-merge CI catch at step 5233/8099: `rna_object.cc:195` defined `rna_enum_metaelem_type_items[]` using `MB_BALL`, `MB_TUBE`, `MB_PLANE`, `MB_ELIPSOID`, `MB_CUBE` — MetaBall element type enum values from `DNA_meta_types.h` (kept for SDNA read-skip). The array contained no `ID_MB` or `OB_MBALL` string, so it was invisible to both the literal grep and the broader pattern grep (`grep -rln "OB_MBALL\|MetaBall\|metaball\|mball\|rna_meta\|BKE_mball\|DNA_meta"`). Fix: removed the 9-line array definition from `rna_object.cc` and its `DEF_ENUM(rna_enum_metaelem_type_items)` entry from `RNA_enum_items.hh`. The detection method: grep `source/blender/makesrna/` for type-specific constant prefixes (`MB_`, `SPK_`, `PA_`, etc.) after each chisel — RNA enum item arrays using those constants will surface immediately. See Scar 11.
+
 > **Pre-chisel note (2026-05-02):** Literal grep confirms 60 hits across 32 files. Broader pattern grep (`grep -rln "OB_MBALL\|MetaBall\|metaball\|mball\|rna_meta\|BKE_mball\|DNA_meta"`) surfaces ~110 additional files that carry no `ID_MB` string but will break in the chisel. Key scope not in literal: (1) entire `editors/metaball/` tree — `mball_edit.cc`, `mball_ops.cc`, `editmball_undo.cc`, `mball_intern.hh` (MetaBall has its own editor subsystem like Armature); (2) `ANIMTYPE_DSMBALL` enum + `ACF_DSMBALL` animation channel (3 callbacks + struct + `animchannelTypeInfo` table entry) in `anim_channels_defines.cc` + `anim_filter.cc` OB_MBALL dispatch — same pattern as ID_LS's ANIMTYPE_DSLINESTYLE; (3) `tree_element_id_metaball.cc/.hh` — dedicated outliner tree element files to delete; (4) entire `io/alembic/exporter/abc_writer_mball.cc` and `io/usd/intern/usd_writer_metaball.cc` — WITH_ALEMBIC and WITH_USD are both ON in CI; (5) `draw/engines/overlay/overlay_metaball.hh` — entire metaball draw overlay; (6) `transform/transform_convert_mball.cc` — entire mball transform convert file; (7) `BKE_main.hh:369` — `bmain->metaballs` field; (8) `anim_data_bmain_utils.cc:77` — `ANIMDATA_IDS_CB(bmain->metaballs.first)` — same missed-site pattern as ID_PA/`anim_data_bmain_utils.cc:92`; (9) `anim_sys.cc:4135` — `EVAL_ANIM_IDS(main->metaballs.first, ...)`; (10) `object_update.cc:157,291` — OB_MBALL update dispatch. Scar 9 (TREESTORE_ID_TYPE blank continuation line) applies: after removing ID_MB from `outliner_intern.hh` macro, verify no blank lines remain in the ELEM body.
 
 Core definition:
@@ -956,6 +958,43 @@ The rule that would have caught #2 immediately: **read the struct before choosin
 grep -rn "BKE_libblock_alloc.*ID_XX" source/ --include="*.cc" --include="*.c"
 ```
 Every hit is a potential crash. Each allocation function must be patched to the manual pattern above, or the caller must be removed entirely if the path is truly dead.
+
+---
+
+### Scar 11: RNA Enum Item Arrays Using Type-Specific Constants Are Invisible to ID Grep
+
+**What happened:** The ID_MB chisel removed `rna_meta.cc`, `rna_meta_api.cc`, and all `ID_MB` references from `rna_object.cc`. But `rna_object.cc:195` also contained `rna_enum_metaelem_type_items[]` — a `const EnumPropertyItem` array listing MetaBall element types using `MB_BALL`, `MB_TUBE`, `MB_PLANE`, `MB_ELIPSOID`, `MB_CUBE`. The array had no `ID_MB` string and no `OB_MBALL` string. It was invisible to both the literal grep and the pre-chisel broader pattern grep. CI caught it at step 5233/8099 with C2065 (`MB_BALL: undeclared identifier`) and C2737 (`rna_enum_metaelem_type_items: const object must be initialized`). Fix: remove the array definition and its `DEF_ENUM(rna_enum_metaelem_type_items)` entry in `RNA_enum_items.hh`.
+
+**Why this is a distinct failure mode:** `DNA_meta_types.h` was intentionally kept for SDNA read-skip on old .blend files — the `MB_*` enum values still exist in the header. The issue is that nothing in the RNA compilation path includes `DNA_meta_types.h` anymore after the chisel. The array compiled fine before the chisel (something in the old include chain pulled in the meta types header). After the chisel, the include chain is broken but the array is still there. No `ID_MB` string. No compiler warning until that translation unit is actually compiled.
+
+**The pattern:** Any RNA file can contain `EnumPropertyItem` arrays that enumerate values from a removed type's DNA header. These arrays:
+- Contain no `ID_XX` token string
+- Contain no `OB_TYPENAME` string  
+- Are not covered by the pre-chisel broader pattern grep unless the type-specific constant prefix appears in the broader grep pattern
+- Surface only when the translation unit compiles and the include chain is broken
+
+**The detection method — run this after every chisel, before committing the final layer:**
+```bash
+# Replace MB_ with the type's constant prefix (SPK_, PA_, CU_, TE_, CF_, etc.)
+grep -rn "MB_BALL\|MB_TUBE\|MB_PLANE\|MB_ELIPSOID\|MB_CUBE" source/blender/makesrna/
+```
+More generally:
+```bash
+# Grep makesrna/ for any surviving constant from the removed type's DNA header
+grep -rn "<TYPE_PREFIX>_" source/blender/makesrna/ --include="*.cc" --include="*.hh"
+```
+Any hit that is not inside a `#ifdef` guard for the old type and is not explicitly kept is a candidate for removal.
+
+**The `DEF_ENUM` entry is always paired.** Every `const EnumPropertyItem foo[]` definition in an `.cc` file has a matching `DEF_ENUM(foo)` line in `RNA_enum_items.hh`. When you remove the array, also remove the `DEF_ENUM` entry. Grep: `grep -n "DEF_ENUM.*<partial_name>" source/blender/makesrna/RNA_enum_items.hh`.
+
+**Add to the mandatory post-chisel checklist (runs before every commit of the final layer):**
+```bash
+# Scar 11: RNA enum item arrays with type-specific constants
+grep -rn "OB_MBALL\|MB_BALL\|MB_CUBE"  source/blender/makesrna/  # example for ID_MB
+# For ID_TE: grep for TEX_CLOUDS, TEX_WOOD, TEX_MARBLE, TEX_MAGIC, TEX_BLEND,
+#            TEX_STUCCI, TEX_NOISE, TEX_IMAGE, TEX_MUSGRAVE, TEX_VORONOI, TEX_DISTNOISE
+grep -rn "TEX_CLOUDS\|TEX_WOOD\|TEX_MARBLE\|TEX_MAGIC\|TEX_BLEND\|TEX_STUCCI\|TEX_NOISE\b\|TEX_IMAGE\|TEX_MUSGRAVE\|TEX_VORONOI\|TEX_DISTNOISE" source/blender/makesrna/
+```
 
 ---
 
