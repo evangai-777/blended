@@ -193,14 +193,15 @@ makesrna (4 files):
 
 ---
 
-**ID_TE — 58 hits, 39 files**
+**ID_TE — 76 hits, 45 files**
 
 Core definition:
-- `makesdna/DNA_ID_enums.h:136` — enum entry `ID_TE = MAKE_ID2('T', 'E')`
+- `makesdna/DNA_ID_enums.h:135` — enum entry `ID_TE = MAKE_ID2('T', 'E')`
 - `makesdna/DNA_texture_types.h:350` — `static constexpr ID_Type id_type = ID_TE`
-- `makesdna/DNA_ID.h:655` — `ELEM(id_type, ID_BR, ID_TE, ID_NT, ID_IM, ID_PC, ID_MA)` shared macro
-- `blenkernel/intern/idtype.cc:146` — `INIT_TYPE(ID_TE)`
-- `blenkernel/intern/main.cc:998` — `which_libbase` case
+- `makesdna/DNA_ID.h:655,1177,1197,1258` — shared ELEM macro; `FILTER_ID_TE` define; `FILTER_ID_ALL` inclusion; `INDEX_ID_TE` enum entry
+- `blenkernel/BKE_idtype.hh:308` — `extern IDTypeInfo IDType_ID_TE;` declaration
+- `blenkernel/intern/idtype.cc:145` — `INIT_TYPE(ID_TE)`; also sweep both `CASE_IDINDEX(TE)` entries per Scar 4 protocol
+- `blenkernel/intern/main.cc:139,992,1073` — `CASE_ID_INDEX(INDEX_ID_TE)`, `which_libbase` case, `lb[]` assignment
 
 blenkernel (4 files):
 - `preview_image.cc:218,283` — preview image handling
