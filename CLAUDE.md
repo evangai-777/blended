@@ -193,62 +193,72 @@ makesrna (4 files):
 
 ---
 
-**ID_TE — 58 hits, 39 files**
+**ID_TE — 76 hits, 45 files**
 
 Core definition:
-- `makesdna/DNA_ID_enums.h:136` — enum entry `ID_TE = MAKE_ID2('T', 'E')`
+- `makesdna/DNA_ID_enums.h:135` — enum entry `ID_TE = MAKE_ID2('T', 'E')`
 - `makesdna/DNA_texture_types.h:350` — `static constexpr ID_Type id_type = ID_TE`
-- `makesdna/DNA_ID.h:655` — `ELEM(id_type, ID_BR, ID_TE, ID_NT, ID_IM, ID_PC, ID_MA)` shared macro
-- `blenkernel/intern/idtype.cc:146` — `INIT_TYPE(ID_TE)`
-- `blenkernel/intern/main.cc:998` — `which_libbase` case
+- `makesdna/DNA_ID.h:655,1177,1197,1258` — shared ELEM macro; `FILTER_ID_TE` define; `FILTER_ID_ALL` inclusion; `INDEX_ID_TE` enum entry
+- `blenkernel/BKE_idtype.hh:308` — `extern IDTypeInfo IDType_ID_TE;` declaration
+- `blenkernel/intern/idtype.cc:145` — `INIT_TYPE(ID_TE)`; also sweep both `CASE_IDINDEX(TE)` entries per Scar 4 protocol
+- `blenkernel/intern/main.cc:139,992,1073` — `CASE_ID_INDEX(INDEX_ID_TE)`, `which_libbase` case, `lb[]` assignment
 
-blenkernel (4 files):
-- `preview_image.cc:218,283` — preview image handling
+blenkernel (9 files):
+- `texture.cc:183,185,187` — `IDTypeInfo IDType_ID_TE` definition + `.id_filter` + `.main_listbase_index` — remove IDTypeInfo block
+- `preview_image.cc:218,283` — preview image handling (2 sites)
 - `image.cc:2903` — image switch case
 - `compositor.cc:280` — compositor case
 - `node.cc:5148` — node tree case
-- `brush_test.cc:65` — test fixture: `BKE_id_new(bmain, ID_TE, ...)` (test-only; delete with type)
+- `light.cc:173` — `FILTER_ID_TE` in `dependencies_id_types` — remove
+- `material.cc:249` — `FILTER_ID_TE` in `dependencies_id_types` — remove
+- `brush.cc:549` — `FILTER_ID_TE` in `dependencies_id_types` — remove
+- `world.cc:192` — `FILTER_ID_TE` in `dependencies_id_types` — remove
+- `anim_data_bmain_utils.cc:62` — `ANIMDATA_NODETREE_IDS_CB(bmain->textures.first, Tex)` — remove (grep-miss; uses field name not ID_TE)
+- `BKE_main.hh:368` — `ListBaseT<Tex> textures = {}` field — remove
+- `brush_test.cc:64` — test fixture: `BKE_id_new(bmain, ID_TE, ...)` (test-only; delete with type)
 
 blenloader (2 files):
-- `versioning_500.cc:4494` — ELEM check (shared with ID_LS)
-- `versioning_450.cc:5891` — ELEM check (shared with ID_LS)
+- `versioning_500.cc:4494` — ELEM check; `ID_LS` already removed, remove `ID_TE` from remaining ELEM
+- `versioning_450.cc:5891` — ELEM check; same as above
 
 editors (12 files):
-- `buttons_texture.cc:389` — pin ID GS check
+- `buttons_texture.cc:373` — pin ID GS check
 - `interface_anim.cc:280` — GS check
-- `interface_icons.cc:1933,2095` — icon switch (2 sites)
-- `interface_template_preview.cc:59,68` — preview template ELEM/GS checks
-- `interface_template_id.cc:629,863,1474` — template checks (3 sites)
+- `interface_icons.cc:1933,2084` — icon switch (2 sites)
+- `interface_template_preview.cc:58,67` — preview template ELEM/GS checks
+- `interface_template_id.cc:626,855,1453` — template checks (3 sites)
 - `node_group_operator.cc:772` — returns `ID_TE` as default
-- `render_opengl.cc:612` — render switch
+- `render_opengl.cc:611` — render switch
 - `render_update.cc:359` — render update switch
 - `render_preview.cc:412,543,607,1286,1310` — preview rendering (5 sites)
-- `anim_filter.cc:2806` — animation filter case
-- `anim_channels_defines.cc:325` — channel defines GS check
-- `outliner_draw.cc:780,2506` — outliner draw (2 sites)
-- `outliner_intern.hh:144` — outliner macro
-- `outliner_tools.cc:144,2930` — outliner tools (2 sites)
-- `tree_element_id.cc:52` — tree element
+- `anim_filter.cc:2724` — animation filter case
+- `anim_channels_defines.cc:323` — channel defines GS check
+- `outliner_draw.cc:780,2504` — outliner draw (2 sites)
+- `outliner_intern.hh:143` — outliner macro; verify no blank continuation line after removal (Scar 9)
+- `outliner_tools.cc:140,2890` — outliner tools (2 sites)
+- `tree_element_id.cc:48` — tree element
 
 depsgraph (4 files):
-- `depsgraph_tag.cc:881` — ID type tag
-- `deg_builder_relations.cc:556,3085` — relation builder
-- `deg_builder_nodes.cc:609,2048` — node builder
-- `deg_eval_copy_on_write.cc:112,158,197,233` — COW special cases (nodetree; 4 sites)
+- `depsgraph_tag.cc:866` — ID type tag
+- `deg_builder_relations.cc:553,3032` — relation builder (2 sites)
+- `deg_builder_nodes.cc:608,2020` — node builder (2 sites)
+- `deg_eval_copy_on_write.cc:108,153,191,226` — COW special cases (nodetree; 4 sites)
 
 windowmanager (1 file):
-- `wm_operators.cc:3898,3920` — ELEM checks in operator
+- `wm_operators.cc:3898,3920,4031,4035,4049` — ELEM checks + `FILTER_ID_TE` filter (5 sites)
 
 modifiers (1 file):
 - `MOD_nodes.cc:214` — geometry nodes modifier case
 
-makesrna (6 files):
-- `rna_ID.cc:65,466,550` — RNA enum entry and switch cases
-- `rna_color.cc:371` — color ramp case
+makesrna (8 files):
+- `rna_ID.cc:61,166,426,500` — RNA enum item, filter item, and switch cases (4 sites)
+- `rna_color.cc:352` — color ramp case
 - `rna_image.cc:291` — image RNA GS check
-- `rna_space.cc:2264` — space RNA case
+- `rna_space.cc:2264,3960` — space RNA case + `FILTER_ID_TE` in asset browser shading filter (2 sites; line 3960 is a grep-miss — uses macro, not string `ID_TE`)
 - `rna_texture.cc:177` — texture RNA GS check
-- `rna_main_api.cc:848` — `RNA_MAIN_ID_TAG_FUNCS_DEF(textures, textures, ID_TE)`
+- `rna_main_api.cc:779` — `RNA_MAIN_ID_TAG_FUNCS_DEF(textures, textures, ID_TE)` + `rna_Main_textures_new()` + `RNA_def_main_textures()` — remove
+- `rna_main.cc:180,400,405` — `RNA_MAIN_LISTBASE_FUNCS_DEF(textures)` + table entry — remove (grep-miss; no `ID_TE` string)
+- `rna_internal.hh:539` — `void RNA_def_main_textures(BlenderRNA *brna, PropertyRNA *cprop)` declaration — remove (grep-miss)
 
 ---
 
