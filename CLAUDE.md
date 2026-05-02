@@ -961,6 +961,43 @@ Every hit is a potential crash. Each allocation function must be patched to the 
 
 ---
 
+### Scar 11: RNA Enum Item Arrays Using Type-Specific Constants Are Invisible to ID Grep
+
+**What happened:** The ID_MB chisel removed `rna_meta.cc`, `rna_meta_api.cc`, and all `ID_MB` references from `rna_object.cc`. But `rna_object.cc:195` also contained `rna_enum_metaelem_type_items[]` — a `const EnumPropertyItem` array listing MetaBall element types using `MB_BALL`, `MB_TUBE`, `MB_PLANE`, `MB_ELIPSOID`, `MB_CUBE`. The array had no `ID_MB` string and no `OB_MBALL` string. It was invisible to both the literal grep and the pre-chisel broader pattern grep. CI caught it at step 5233/8099 with C2065 (`MB_BALL: undeclared identifier`) and C2737 (`rna_enum_metaelem_type_items: const object must be initialized`). Fix: remove the array definition and its `DEF_ENUM(rna_enum_metaelem_type_items)` entry in `RNA_enum_items.hh`.
+
+**Why this is a distinct failure mode:** `DNA_meta_types.h` was intentionally kept for SDNA read-skip on old .blend files — the `MB_*` enum values still exist in the header. The issue is that nothing in the RNA compilation path includes `DNA_meta_types.h` anymore after the chisel. The array compiled fine before the chisel (something in the old include chain pulled in the meta types header). After the chisel, the include chain is broken but the array is still there. No `ID_MB` string. No compiler warning until that translation unit is actually compiled.
+
+**The pattern:** Any RNA file can contain `EnumPropertyItem` arrays that enumerate values from a removed type's DNA header. These arrays:
+- Contain no `ID_XX` token string
+- Contain no `OB_TYPENAME` string  
+- Are not covered by the pre-chisel broader pattern grep unless the type-specific constant prefix appears in the broader grep pattern
+- Surface only when the translation unit compiles and the include chain is broken
+
+**The detection method — run this after every chisel, before committing the final layer:**
+```bash
+# Replace MB_ with the type's constant prefix (SPK_, PA_, CU_, TE_, CF_, etc.)
+grep -rn "MB_BALL\|MB_TUBE\|MB_PLANE\|MB_ELIPSOID\|MB_CUBE" source/blender/makesrna/
+```
+More generally:
+```bash
+# Grep makesrna/ for any surviving constant from the removed type's DNA header
+grep -rn "<TYPE_PREFIX>_" source/blender/makesrna/ --include="*.cc" --include="*.hh"
+```
+Any hit that is not inside a `#ifdef` guard for the old type and is not explicitly kept is a candidate for removal.
+
+**The `DEF_ENUM` entry is always paired.** Every `const EnumPropertyItem foo[]` definition in an `.cc` file has a matching `DEF_ENUM(foo)` line in `RNA_enum_items.hh`. When you remove the array, also remove the `DEF_ENUM` entry. Grep: `grep -n "DEF_ENUM.*<partial_name>" source/blender/makesrna/RNA_enum_items.hh`.
+
+**Add to the mandatory post-chisel checklist (runs before every commit of the final layer):**
+```bash
+# Scar 11: RNA enum item arrays with type-specific constants
+grep -rn "OB_MBALL\|MB_BALL\|MB_CUBE"  source/blender/makesrna/  # example for ID_MB
+# For ID_TE: grep for TEX_CLOUDS, TEX_WOOD, TEX_MARBLE, TEX_MAGIC, TEX_BLEND,
+#            TEX_STUCCI, TEX_NOISE, TEX_IMAGE, TEX_MUSGRAVE, TEX_VORONOI, TEX_DISTNOISE
+grep -rn "TEX_CLOUDS\|TEX_WOOD\|TEX_MARBLE\|TEX_MAGIC\|TEX_BLEND\|TEX_STUCCI\|TEX_NOISE\b\|TEX_IMAGE\|TEX_MUSGRAVE\|TEX_VORONOI\|TEX_DISTNOISE" source/blender/makesrna/
+```
+
+---
+
 ### Pre-Commit Consistency Check (Mandatory — No Exceptions)
 
 **This is not a reminder. It is a required step before every `git add`. Do it even when you think it's unnecessary. Especially when you think it's unnecessary.**
