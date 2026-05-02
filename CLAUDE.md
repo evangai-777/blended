@@ -203,12 +203,19 @@ Core definition:
 - `blenkernel/intern/idtype.cc:145` — `INIT_TYPE(ID_TE)`; also sweep both `CASE_IDINDEX(TE)` entries per Scar 4 protocol
 - `blenkernel/intern/main.cc:139,992,1073` — `CASE_ID_INDEX(INDEX_ID_TE)`, `which_libbase` case, `lb[]` assignment
 
-blenkernel (4 files):
-- `preview_image.cc:218,283` — preview image handling
+blenkernel (9 files):
+- `texture.cc:183,185,187` — `IDTypeInfo IDType_ID_TE` definition + `.id_filter` + `.main_listbase_index` — remove IDTypeInfo block
+- `preview_image.cc:218,283` — preview image handling (2 sites)
 - `image.cc:2903` — image switch case
 - `compositor.cc:280` — compositor case
 - `node.cc:5148` — node tree case
-- `brush_test.cc:65` — test fixture: `BKE_id_new(bmain, ID_TE, ...)` (test-only; delete with type)
+- `light.cc:173` — `FILTER_ID_TE` in `dependencies_id_types` — remove
+- `material.cc:249` — `FILTER_ID_TE` in `dependencies_id_types` — remove
+- `brush.cc:549` — `FILTER_ID_TE` in `dependencies_id_types` — remove
+- `world.cc:192` — `FILTER_ID_TE` in `dependencies_id_types` — remove
+- `anim_data_bmain_utils.cc:62` — `ANIMDATA_NODETREE_IDS_CB(bmain->textures.first, Tex)` — remove (grep-miss; uses field name not ID_TE)
+- `BKE_main.hh:368` — `ListBaseT<Tex> textures = {}` field — remove
+- `brush_test.cc:64` — test fixture: `BKE_id_new(bmain, ID_TE, ...)` (test-only; delete with type)
 
 blenloader (2 files):
 - `versioning_500.cc:4494` — ELEM check (shared with ID_LS)
