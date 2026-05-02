@@ -25,7 +25,7 @@ enum eDupli_ID_Flags {
   USER_DUP_CURVE = (1 << 1),
   USER_DUP_SURF = (1 << 2),
   USER_DUP_FONT = (1 << 3),
-  USER_DUP_MBALL = (1 << 4),
+  /* USER_DUP_MBALL = (1 << 4), */ /* Removed in Blended 0.4.0 — MetaBall (ID_MB) removed */
   USER_DUP_LAMP = (1 << 5),
   /* USER_DUP_FCURVE = (1 << 6), */ /* UNUSED, keep because we may implement. */
   USER_DUP_MAT = (1 << 7),

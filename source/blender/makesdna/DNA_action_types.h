@@ -407,7 +407,6 @@ enum eDopeSheet_FilterFlag {
   ADS_FILTER_NOWOR = (1 << 14),
   ADS_FILTER_NOSCE = (1 << 15),
   ADS_FILTER_NOPART = (1 << 16),
-  ADS_FILTER_NOMBA = (1 << 17),
   ADS_FILTER_NOARM = (1 << 18),
   ADS_FILTER_NONTREE = (1 << 19),
   ADS_FILTER_NOTEX = (1 << 20),

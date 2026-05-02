@@ -167,7 +167,6 @@ RNA_MAIN_LISTBASE_FUNCS_DEF(lights)
 RNA_MAIN_LISTBASE_FUNCS_DEF(masks)
 RNA_MAIN_LISTBASE_FUNCS_DEF(materials)
 RNA_MAIN_LISTBASE_FUNCS_DEF(meshes)
-RNA_MAIN_LISTBASE_FUNCS_DEF(metaballs)
 RNA_MAIN_LISTBASE_FUNCS_DEF(movieclips)
 RNA_MAIN_LISTBASE_FUNCS_DEF(nodetrees)
 RNA_MAIN_LISTBASE_FUNCS_DEF(objects)
@@ -392,12 +391,6 @@ void RNA_def_main(BlenderRNA *brna)
        "Curves",
        "Curve data-blocks",
        RNA_def_main_curves},
-      {"metaballs",
-       "MetaBall",
-       "rna_Main_metaballs_begin",
-       "Metaballs",
-       "Metaball data-blocks",
-       RNA_def_main_metaballs},
       {"fonts",
        "VectorFont",
        "rna_Main_fonts_begin",

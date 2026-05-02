@@ -43,7 +43,6 @@
 #  include "BKE_main_invariants.hh"
 #  include "BKE_mask.hh"
 #  include "BKE_material.hh"
-#  include "BKE_mball.hh"
 #  include "BKE_mesh.hh"
 #  include "BKE_movieclip.hh"
 #  include "BKE_node.hh"
@@ -344,7 +343,6 @@ static Mesh *rna_Main_meshes_new_from_object(Main *bmain,
     case OB_FONT:
     case OB_CURVES_LEGACY:
     case OB_SURF:
-    case OB_MBALL:
     case OB_MESH:
       break;
     default:
@@ -459,19 +457,6 @@ static Curve *rna_Main_curves_new(Main *bmain, const char *name, int type)
   WM_main_add_notifier(NC_ID | NA_ADDED, nullptr);
 
   return cu;
-}
-
-static MetaBall *rna_Main_metaballs_new(Main *bmain, const char *name)
-{
-  char safe_name[MAX_ID_NAME - 2];
-  rna_idname_validate(name, safe_name);
-
-  MetaBall *mb = BKE_mball_add(bmain, safe_name);
-  id_us_min(&mb->id);
-
-  WM_main_add_notifier(NC_ID | NA_ADDED, nullptr);
-
-  return mb;
 }
 
 static VFont *rna_Main_fonts_load(Main *bmain,
@@ -791,7 +776,6 @@ RNA_MAIN_ID_TAG_FUNCS_DEF(libraries, libraries, ID_LI)
 RNA_MAIN_ID_TAG_FUNCS_DEF(images, images, ID_IM)
 RNA_MAIN_ID_TAG_FUNCS_DEF(lattices, lattices, ID_LT)
 RNA_MAIN_ID_TAG_FUNCS_DEF(curves, curves, ID_CU_LEGACY)
-RNA_MAIN_ID_TAG_FUNCS_DEF(metaballs, metaballs, ID_MB)
 RNA_MAIN_ID_TAG_FUNCS_DEF(fonts, fonts, ID_VF)
 RNA_MAIN_ID_TAG_FUNCS_DEF(textures, textures, ID_TE)
 RNA_MAIN_ID_TAG_FUNCS_DEF(brushes, brushes, ID_BR)
@@ -1399,49 +1383,6 @@ void RNA_def_main_curves(BlenderRNA *brna, PropertyRNA *cprop)
       func, "do_ui_user", true, "", "Make sure interface does not reference this curve data");
 
   func = RNA_def_function(srna, "tag", "rna_Main_curves_tag");
-  parm = RNA_def_boolean(func, "value", false, "Value", "");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-}
-void RNA_def_main_metaballs(BlenderRNA *brna, PropertyRNA *cprop)
-{
-  StructRNA *srna;
-  FunctionRNA *func;
-  PropertyRNA *parm;
-
-  RNA_def_property_srna(cprop, "BlendDataMetaBalls");
-  srna = RNA_def_struct(brna, "BlendDataMetaBalls", nullptr);
-  RNA_def_struct_sdna(srna, "Main");
-  RNA_def_struct_ui_text(srna, "Main Metaballs", "Collection of metaballs");
-
-  func = RNA_def_function(srna, "new", "rna_Main_metaballs_new");
-  RNA_def_function_ui_description(func, "Add a new metaball to the main database");
-  parm = RNA_def_string(func, "name", "MetaBall", 0, "", "New name for the data-block");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-  /* return type */
-  parm = RNA_def_pointer(func, "metaball", "MetaBall", "", "New metaball data-block");
-  RNA_def_function_return(func, parm);
-
-  func = RNA_def_function(srna, "remove", "rna_Main_ID_remove");
-  RNA_def_function_flag(func, FUNC_USE_REPORTS);
-  RNA_def_function_ui_description(func, "Remove a metaball from the current blendfile");
-  parm = RNA_def_pointer(func, "metaball", "MetaBall", "", "Metaball to remove");
-  RNA_def_parameter_flags(parm, PROP_NEVER_NULL, PARM_REQUIRED | PARM_RNAPTR);
-  RNA_def_parameter_clear_flags(parm, PROP_THICK_WRAP, ParameterFlag(0));
-  RNA_def_boolean(func,
-                  "do_unlink",
-                  true,
-                  "",
-                  "Unlink all usages of this metaball before deleting it "
-                  "(WARNING: will also delete objects instancing that metaball data)");
-  RNA_def_boolean(func,
-                  "do_id_user",
-                  true,
-                  "",
-                  "Decrement user counter of all data-blocks used by this metaball data");
-  RNA_def_boolean(
-      func, "do_ui_user", true, "", "Make sure interface does not reference this metaball data");
-
-  func = RNA_def_function(srna, "tag", "rna_Main_metaballs_tag");
   parm = RNA_def_boolean(func, "value", false, "Value", "");
   RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
 }
