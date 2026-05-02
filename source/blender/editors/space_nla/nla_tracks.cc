@@ -163,7 +163,6 @@ static int mouse_nla_tracks(bContext *C, bAnimContext *ac, int track_index, shor
     case ANIMTYPE_DSWOR:
     case ANIMTYPE_DSNTREE:
     case ANIMTYPE_DSPART:
-    case ANIMTYPE_DSMBALL:
     case ANIMTYPE_DSARM:
     case ANIMTYPE_DSMESH:
     case ANIMTYPE_DSTEX:
