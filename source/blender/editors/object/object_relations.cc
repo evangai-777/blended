@@ -1493,7 +1493,6 @@ static bool has_geometry_visibility(const Object &object)
            OB_CURVES_LEGACY,
            OB_SURF,
            OB_FONT,
-           OB_MBALL,
            OB_LAMP,
            OB_VOLUME,
            OB_POINTCLOUD,
@@ -1980,13 +1979,6 @@ static void single_obdata_users(
           }
           case OB_MESH:
             /* Needed to remap texcomesh below. */
-            ob->data = ID_NEW_SET(ob->data,
-                                  BKE_id_copy_ex(bmain,
-                                                 static_cast<const ID *>(ob->data),
-                                                 nullptr,
-                                                 LIB_ID_COPY_DEFAULT | LIB_ID_COPY_ACTIONS));
-            break;
-          case OB_MBALL:
             ob->data = ID_NEW_SET(ob->data,
                                   BKE_id_copy_ex(bmain,
                                                  static_cast<const ID *>(ob->data),
