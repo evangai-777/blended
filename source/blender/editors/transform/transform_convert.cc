@@ -979,9 +979,6 @@ static TransConvertTypeInfo *convert_type_get(const TransInfo *t, Object **r_obj
     if (t->obedit_type == OB_LATTICE) {
       return &TransConvertType_Lattice;
     }
-    if (t->obedit_type == OB_MBALL) {
-      return &TransConvertType_MBall;
-    }
     if (t->obedit_type == OB_ARMATURE) {
       return &TransConvertType_EditArmature;
     }
