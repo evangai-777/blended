@@ -56,7 +56,7 @@ carries a one-liner status per active item.
 
 ## Unreleased — 0.4.0
 
-Bucket 5 + 6 fossil removals. 9 ID types, 357 hits, same chisel pattern as 0.3.0. CI green (Windows x64, build #57, commit `29e4663`) — 6 of 9 types complete.
+Bucket 5 + 6 fossil removals. 9 ID types, 357 hits, same chisel pattern as 0.3.0. CI green (Windows x64, build #62, commit `7423dae`) — 6 of 9 types complete.
 Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEGACY ✓** → **ID_LS ✓** → **ID_MB ✓** → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision — see CLAUDE.md Key note 8).
 *(Order corrected in PR #126 fix — initial commit had ID_CF first, contradicting CLAUDE.md Key note 8. Scar 7.)*
 
