@@ -1,6 +1,6 @@
 # BLENDED — Identity & Design Agreements
 
-**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.4.0 in progress — CI green (Windows x64, build #57).
+**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.4.0 in progress — CI green (Windows x64, build #62).
 **Purpose:** So any future session, contributor, or Claude instance can pick up without re-litigating what's already been decided. Read this first before proposing changes to scope, identity, or architecture.
 
 ---
