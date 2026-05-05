@@ -988,7 +988,8 @@ ListBaseT<ID> *which_libbase(Main *bmain, short type)
       return &(bmain->curves.cast<ID>());
     case ID_MA:
       return &(bmain->materials.cast<ID>());
-
+    case ID_TE:
+      return &(bmain->textures.cast<ID>());
     case ID_IM:
       return &(bmain->images.cast<ID>());
     case ID_LT:

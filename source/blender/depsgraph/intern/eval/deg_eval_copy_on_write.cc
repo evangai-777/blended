@@ -186,7 +186,6 @@ void nested_id_hack_restore_pointers(const ID *old_id, ID *new_id)
 
     SPECIAL_CASE(ID_LA, Light, nodetree)
     SPECIAL_CASE(ID_MA, Material, nodetree)
-    SPECIAL_CASE(ID_TE, Tex, nodetree)
     SPECIAL_CASE(ID_WO, World, nodetree)
 
     SPECIAL_CASE(ID_CU_LEGACY, Curve, key)

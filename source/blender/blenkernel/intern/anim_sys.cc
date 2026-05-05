@@ -4116,9 +4116,6 @@ void BKE_animsys_evaluate_all_animation(Main *main, Depsgraph *depsgraph, float 
   /* nodes */
   EVAL_ANIM_IDS(main->nodetrees.first, ADT_RECALC_ANIM);
 
-  /* textures */
-  EVAL_ANIM_NODETREE_IDS(main->textures.first, Tex, ADT_RECALC_ANIM);
-
   /* lights */
   EVAL_ANIM_NODETREE_IDS(main->lights.first, Light, ADT_RECALC_ANIM);
 
