@@ -652,7 +652,7 @@ struct PreviewImage {
 #define ID_IS_PACKED(_id) (ID_IS_LINKED(_id) && ((_id)->flag & ID_FLAG_LINKED_AND_PACKED))
 
 #define ID_TYPE_SUPPORTS_ASSET_EDITABLE(id_type) \
-  ELEM(id_type, ID_BR, ID_TE, ID_NT, ID_IM, ID_MA)
+  ELEM(id_type, ID_BR, ID_NT, ID_IM, ID_MA)
 
 #define ID_IS_EDITABLE(_id) \
   ((id_cast<const ID *>(_id)->lib == NULL) || \
@@ -1174,7 +1174,7 @@ enum IDRecalcFlag {
 #define FILTER_ID_PAL (1ULL << 18)
 #define FILTER_ID_SCE (1ULL << 20)
 #define FILTER_ID_SO (1ULL << 22)
-#define FILTER_ID_TE (1ULL << 23)
+
 #define FILTER_ID_TXT (1ULL << 24)
 #define FILTER_ID_VF (1ULL << 25)
 #define FILTER_ID_WO (1ULL << 26)
@@ -1194,7 +1194,7 @@ enum IDRecalcFlag {
    FILTER_ID_GR | FILTER_ID_IM | FILTER_ID_LA | \
    FILTER_ID_LT | FILTER_ID_MA | FILTER_ID_MC | FILTER_ID_ME | FILTER_ID_MSK | \
    FILTER_ID_NT | FILTER_ID_OB | FILTER_ID_PAL | FILTER_ID_SCE | \
-   FILTER_ID_SO | FILTER_ID_TE | FILTER_ID_TXT | FILTER_ID_VF | FILTER_ID_WO | \
+   FILTER_ID_SO | FILTER_ID_TXT | FILTER_ID_VF | FILTER_ID_WO | \
    FILTER_ID_CF | FILTER_ID_LP | FILTER_ID_CV | FILTER_ID_PT | FILTER_ID_VO | \
    FILTER_ID_SIM | FILTER_ID_KE | FILTER_ID_LI | FILTER_ID_GP | \
    FILTER_ID_IP)
@@ -1255,7 +1255,6 @@ enum eID_Index {
   INDEX_ID_MC,
 
   /* Shading types. */
-  INDEX_ID_TE,
   INDEX_ID_MA,
 
   INDEX_ID_WO,
