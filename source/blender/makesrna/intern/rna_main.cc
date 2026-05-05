@@ -177,7 +177,6 @@ RNA_MAIN_LISTBASE_FUNCS_DEF(screens)
 RNA_MAIN_LISTBASE_FUNCS_DEF(shapekeys)
 RNA_MAIN_LISTBASE_FUNCS_DEF(sounds)
 RNA_MAIN_LISTBASE_FUNCS_DEF(texts)
-RNA_MAIN_LISTBASE_FUNCS_DEF(textures)
 RNA_MAIN_LISTBASE_FUNCS_DEF(volumes)
 RNA_MAIN_LISTBASE_FUNCS_DEF(wm)
 RNA_MAIN_LISTBASE_FUNCS_DEF(worlds)
@@ -397,12 +396,6 @@ void RNA_def_main(BlenderRNA *brna)
        "Vector Fonts",
        "Vector font data-blocks",
        RNA_def_main_fonts},
-      {"textures",
-       "Texture",
-       "rna_Main_textures_begin",
-       "Textures",
-       "Texture data-blocks",
-       RNA_def_main_textures},
       {"brushes",
        "Brush",
        "rna_Main_brushes_begin",

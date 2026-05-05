@@ -174,15 +174,7 @@ static void rna_Texture_update(Main *bmain, Scene * /*scene*/, PointerRNA *ptr)
 {
   ID *id = ptr->owner_id;
 
-  if (GS(id->name) == ID_TE) {
-    Tex *tex = id_cast<Tex *>(ptr->owner_id);
-
-    DEG_id_tag_update(&tex->id, 0);
-    DEG_id_tag_update(&tex->id, ID_RECALC_EDITORS);
-    WM_main_add_notifier(NC_TEXTURE, tex);
-    WM_main_add_notifier(NC_MATERIAL | ND_SHADING_DRAW, nullptr);
-  }
-  else if (GS(id->name) == ID_NT) {
+  if (GS(id->name) == ID_NT) {
     bNodeTree *ntree = id_cast<bNodeTree *>(ptr->owner_id);
     BKE_main_ensure_invariants(*bmain, ntree->id);
   }

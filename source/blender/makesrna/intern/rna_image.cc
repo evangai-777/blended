@@ -288,7 +288,6 @@ static std::optional<std::string> rna_ImageUser_path(const PointerRNA *ptr)
   if (ptr->owner_id) {
     switch (GS(ptr->owner_id->name)) {
       case ID_OB:
-      case ID_TE:
         return "image_user";
       case ID_NT:
         return rna_Node_ImageUser_path(ptr);
