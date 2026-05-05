@@ -39,7 +39,7 @@ What's Different Right Now
 - **Pre-5.0 rig compatibility** — `blended_rig_compat.py` restores `action.fcurves` as a compatibility property on `bpy.types.Action`. Pre-Blender-5.0 Rigify rigs (including CGCookie Vonnbots rigs) that access `action.fcurves` directly work again. IK/FK bake operators no longer fail silently.
 - **Update notifications** — Background GitHub Releases check at startup (24-hour cache, non-blocking). Top-bar notification with version string when an update is available. One-click download via browser. "Blended Updates" panel in System Preferences.
 - **CI** — Windows x64 portable `.zip` builds via GitHub Actions. Branch pushes run a fast lite build for compile-error checking. Tags produce a full release artifact. `blended_release.cmake` disables GPU kernel pre-compilation (CUDA/HIP/OneAPI) to keep CI under an hour — runtime compilation covers the same hardware.
-- **Datablock audit — 0.4.x in progress.** Target: 39 → ~19 ID types. Removed so far: `ID_WS` ✓ (0.2.0), `ID_SCR` + `ID_WM` ✓ (0.3.0), `ID_PC` + `ID_SPK` + `ID_PA` + `ID_GD_LEGACY` + `ID_LS` + `ID_MB` ✓ (0.4.0). Next: `ID_TE`. See [`CHANGELOG.md`](../CHANGELOG.md) for per-layer file detail.
+- **Datablock audit — 0.4.x in progress.** Target: 39 → ~19 ID types. Removed so far: `ID_WS` ✓ (0.2.0), `ID_SCR` + `ID_WM` ✓ (0.3.0), `ID_PC` + `ID_SPK` + `ID_PA` + `ID_GD_LEGACY` + `ID_LS` + `ID_MB` + `ID_TE` ✓ (0.4.0). Next: `ID_CU_LEGACY`. See [`CHANGELOG.md`](../CHANGELOG.md) for per-layer file detail.
 
 On the Horizon
 --------------
@@ -145,6 +145,18 @@ Blended is developed with contributions from both human developers and AI tools.
   deleted, 5 space_view3d classes removed, space_dopesheet/outliner/userpref/wm patched,
   rigify metaball.new() removed); OB_MBALL=5 enum value kept for .blend compat;
   bmain->metaballs fully removed (true fossil — no versioning pass iterates it).
+  `ID_TE` (Texture / Blender Internal) removal — ~76 hits, 45 files, 9 source layers:
+  IDTypeInfo removed (texture.cc), INIT_TYPE removed, INDEX_ID_TE and FILTER_ID_TE removed,
+  SPECIAL_CASE entries removed from depsgraph COW (deg_eval_copy_on_write.cc — 4 blocks),
+  build_texture calls removed from deg_builder_nodes/relations, render_preview.cc Blender
+  Internal preview path removed (5 sites), PREVIEW_FILTER_TEXTURE removed from wm_operators,
+  tree_element_id_texture.cc/.hh deleted, anim_filter.cc texture animation filter removed,
+  rna_main.cc/rna_main_api.cc/rna_internal.hh texture RNA unregistered; Scar 2 pattern:
+  bmain->textures and which_libbase routing restored as non-indexed listbase — versioning_250,
+  versioning_260, versioning_280, versioning_legacy all iterate it to upgrade Blender Internal
+  texture data in legacy files; INIT_TYPE and BKE_main_lists_get entry remain removed;
+  anim_sys.cc field-name grep-miss caught post-chisel (EVAL_ANIM_NODETREE_IDS uses field name
+  not ID_TE string).
   ongoing PR review and integration: 10+ PRs assessed, applied selectively.
   *"Listen to the whole thing before reacting."*
 

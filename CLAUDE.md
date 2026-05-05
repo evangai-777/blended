@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.3.0 (tagged). 0.4.0 in progress — CI green (Windows x64, build #62, commit `7423dae`). Bucket 5 + 6 fossil removals: `ID_PC` ✓ + `ID_SPK` ✓ + `ID_PA` ✓ + `ID_GD_LEGACY` ✓ + `ID_LS` ✓ + `ID_MB` ✓; next: `ID_TE`.
+**Current version:** Blended 0.3.0 (tagged). 0.4.0 in progress — CI green (Windows x64, build #62, commit `7423dae`). Bucket 5 + 6 fossil removals: `ID_PC` ✓ + `ID_SPK` ✓ + `ID_PA` ✓ + `ID_GD_LEGACY` ✓ + `ID_LS` ✓ + `ID_MB` ✓ + `ID_TE` ✓; next: `ID_CU_LEGACY`.
 
 ---
 
@@ -25,7 +25,7 @@ The old approach (tiered UI, smart defaults, Emscripten) was prototyping toward 
 
 **`ID_SCR` and `ID_WM` removal — compile-clean, pending CI.** All layers merged. The blast radius was enormous — see Scar 2 below. Key architectural outcome: `bmain->screens` and `bmain->wm` kept as non-indexed runtime listbases; `ID_SCR_LEGACY` / `ID_WM_LEGACY` defines route through `which_libbase` for allocation but are excluded from `BKE_main_lists_get`. Branch: `claude/remove-id-scr-id-wm`. Layer-by-layer status in [`CHANGELOG.md`](CHANGELOG.md).
 
-**In progress: Bucket 5 + 6 fossil removals (0.4.x)** — `ID_CU_LEGACY`, `ID_GD_LEGACY`, `ID_TE`, `ID_MB`, `ID_LS`, `ID_CF`. `ID_PC` ✓. `ID_SPK` ✓. `ID_PA` ✓. `ID_GD_LEGACY` ✓. `ID_LS` ✓. `ID_MB` ✓. Next: `ID_TE`. See roadmap in CHANGELOG.md.
+**In progress: Bucket 5 + 6 fossil removals (0.4.x)** — `ID_CU_LEGACY`, `ID_GD_LEGACY`, `ID_TE`, `ID_MB`, `ID_LS`, `ID_CF`. `ID_PC` ✓. `ID_SPK` ✓. `ID_PA` ✓. `ID_GD_LEGACY` ✓. `ID_LS` ✓. `ID_MB` ✓. `ID_TE` ✓. Next: `ID_CU_LEGACY`. See roadmap in CHANGELOG.md.
 
 Pattern for each pending layer: `grep -rn "ID_WS"` the directory, delete or redirect every hit. The breakage is the audit — follow the compile errors, don't paper over them.
 
