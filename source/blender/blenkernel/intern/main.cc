@@ -136,7 +136,6 @@ void BKE_main_clear(Main &bmain)
         CASE_ID_INDEX(INDEX_ID_MSK);
         CASE_ID_INDEX(INDEX_ID_IM);
         CASE_ID_INDEX(INDEX_ID_MC);
-        CASE_ID_INDEX(INDEX_ID_TE);
         CASE_ID_INDEX(INDEX_ID_MA);
 
         CASE_ID_INDEX(INDEX_ID_WO);
@@ -989,8 +988,7 @@ ListBaseT<ID> *which_libbase(Main *bmain, short type)
       return &(bmain->curves.cast<ID>());
     case ID_MA:
       return &(bmain->materials.cast<ID>());
-    case ID_TE:
-      return &(bmain->textures.cast<ID>());
+
     case ID_IM:
       return &(bmain->images.cast<ID>());
     case ID_LT:
@@ -1070,7 +1068,6 @@ MainListsArray BKE_main_lists_get(Main &bmain)
 
   lb[INDEX_ID_NT] = &(bmain.nodetrees.cast<ID>());
   lb[INDEX_ID_IM] = &(bmain.images.cast<ID>());
-  lb[INDEX_ID_TE] = &(bmain.textures.cast<ID>());
   lb[INDEX_ID_MA] = &(bmain.materials.cast<ID>());
   lb[INDEX_ID_VF] = &(bmain.fonts.cast<ID>());
 

@@ -365,7 +365,6 @@ struct Main : NonCopyable, NonMovable {
   ListBaseT<Mesh> meshes = {};
   ListBaseT<Curve> curves = {};
   ListBaseT<Material> materials = {};
-  ListBaseT<Tex> textures = {};
   ListBaseT<Image> images = {};
   ListBaseT<Lattice> lattices = {};
   ListBaseT<Light> lights = {};
