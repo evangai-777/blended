@@ -2900,16 +2900,6 @@ static void image_walk_id_all_users(
       image_walk_gpu_materials(id, &world->gpumaterial, customdata, callback);
       break;
     }
-    case ID_TE: {
-      Tex *tex = id_cast<Tex *>(id);
-      if (tex->type == TEX_IMAGE && tex->ima) {
-        callback(tex->ima, &tex->id, &tex->iuser, customdata);
-      }
-      if (tex->nodetree && tex->use_nodes && !skip_nested_nodes) {
-        image_walk_ntree_all_users(tex->nodetree, &tex->id, customdata, callback);
-      }
-      break;
-    }
     case ID_NT: {
       bNodeTree *ntree = id_cast<bNodeTree *>(id);
       image_walk_ntree_all_users(ntree, &ntree->id, customdata, callback);

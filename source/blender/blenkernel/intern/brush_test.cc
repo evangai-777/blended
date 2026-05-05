@@ -60,22 +60,10 @@ TEST_F(BrushTest, deep_copy)
    * once that has been fixed. */
   id_us_min(&brush->id);
 
-  /* Normal Linked Data */
-  brush->mtex.tex = static_cast<Tex *>(BKE_id_new(bmain, ID_TE, "UnitTestTexture"));
-  brush->mtex.tex->ima = static_cast<Image *>(BKE_id_new(bmain, ID_IM, "UnitTestImage"));
-
-  /* Embedded Data */
-  brush->mtex.tex->nodetree = BKE_id_new_nomain<bNodeTree>("UnitTestNodeTree");
-  brush->mtex.tex->nodetree->id.flag |= ID_FLAG_EMBEDDED_DATA;
-
   Brush *duplicated_brush = BKE_brush_duplicate(
       bmain, brush, USER_DUP_OBDATA | USER_DUP_LINKED_ID, LIB_ID_DUPLICATE_IS_ROOT_ID);
 
   check_id_and_name(&brush->id, &duplicated_brush->id);
-  check_id_and_name(&brush->mtex.tex->id, &duplicated_brush->mtex.tex->id);
-  check_id_and_name(&brush->mtex.tex->ima->id, &duplicated_brush->mtex.tex->ima->id);
-
-  check_embedded_copy(&brush->mtex.tex->nodetree->id, &duplicated_brush->mtex.tex->nodetree->id);
 
   EXPECT_TRUE(BLI_listbase_is_empty(&bmain->nodetrees));
 }
