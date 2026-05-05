@@ -1930,7 +1930,6 @@ int id_icon_get(const bContext *C, ID *id, const bool big)
   /* icon */
   switch (GS(id->name)) {
     case ID_MA: /* fall through */
-    case ID_TE: /* fall through */
     case ID_IM: /* fall through */
     case ID_WO: /* fall through */
     case ID_LA: /* fall through */
@@ -2081,8 +2080,6 @@ int icon_from_idcode(const int idcode)
       return ICON_SCENE_DATA;
     case ID_SO:
       return ICON_SOUND;
-    case ID_TE:
-      return ICON_TEXTURE_DATA;
     case ID_TXT:
       return ICON_TEXT;
     case ID_VF:

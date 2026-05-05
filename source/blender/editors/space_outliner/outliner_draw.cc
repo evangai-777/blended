@@ -777,9 +777,6 @@ static void namebutton_fn(bContext *C, void *tsep, char *oldname)
         case ID_MA:
           WM_event_add_notifier(C, NC_MATERIAL, nullptr);
           break;
-        case ID_TE:
-          WM_event_add_notifier(C, NC_TEXTURE, nullptr);
-          break;
         case ID_IM:
           WM_event_add_notifier(C, NC_IMAGE, nullptr);
           break;
@@ -2501,8 +2498,6 @@ static BIFIconID tree_element_get_icon_from_id(const ID *id)
     }
     case ID_MA:
       return ICON_MATERIAL_DATA;
-    case ID_TE:
-      return ICON_TEXTURE_DATA;
     case ID_IM:
       return ICON_IMAGE_DATA;
     case ID_SO:

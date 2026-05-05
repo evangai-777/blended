@@ -319,12 +319,8 @@ static short acf_generic_group_offset(bAnimContext *ac, bAnimListElem *ale)
 
     /* Other editors. */
 
-    /* texture animdata */
-    if (GS(ale->id->name) == ID_TE) {
-      offset += U.widget_unit;
-    }
     /* materials and particles animdata */
-    else if (ELEM(GS(ale->id->name), ID_MA)) {
+    if (ELEM(GS(ale->id->name), ID_MA)) {
       offset += short(0.7f * U.widget_unit);
     }
     /* If not in Action Editor mode, action-groups (and their children)
