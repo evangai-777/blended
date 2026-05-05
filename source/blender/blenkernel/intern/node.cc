@@ -5145,8 +5145,6 @@ bNodeTree **node_tree_ptr_from_id(ID *id)
       return &reinterpret_cast<Light *>(id)->nodetree;
     case ID_WO:
       return &reinterpret_cast<World *>(id)->nodetree;
-    case ID_TE:
-      return &reinterpret_cast<Tex *>(id)->nodetree;
     case ID_SCE:
       /* Needed for backward compatibility. */
       return &reinterpret_cast<Scene *>(id)->nodetree;

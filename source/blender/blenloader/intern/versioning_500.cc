@@ -4491,7 +4491,7 @@ void blo_do_versions_500(FileData *fd, Library * /*lib*/, Main *bmain)
 
   if (!MAIN_VERSION_FILE_ATLEAST(bmain, 500, 115)) {
     FOREACH_NODETREE_BEGIN (bmain, node_tree, id) {
-      if (ELEM(GS(id->name), ID_MA, ID_LA, ID_WO, ID_TE, ID_SCE)) {
+      if (ELEM(GS(id->name), ID_MA, ID_LA, ID_WO, ID_SCE)) {
         /* These node trees should not have interface sockets. However, in some files they were
          * added through the Python API. Remove these interface sockets here before they cause
          * problems further down the line. */

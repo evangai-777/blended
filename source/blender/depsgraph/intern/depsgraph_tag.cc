@@ -863,7 +863,6 @@ void DEG_graph_id_type_tag(Depsgraph *depsgraph, short id_type)
     /* Stupid workaround so parent data-blocks of nested node-tree get looped
      * over when we loop over tagged data-block types. */
     DEG_graph_id_type_tag(depsgraph, ID_MA);
-    DEG_graph_id_type_tag(depsgraph, ID_TE);
     DEG_graph_id_type_tag(depsgraph, ID_LA);
     DEG_graph_id_type_tag(depsgraph, ID_WO);
     DEG_graph_id_type_tag(depsgraph, ID_SCE);

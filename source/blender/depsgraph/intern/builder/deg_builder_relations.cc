@@ -550,9 +550,6 @@ void DepsgraphRelationBuilder::build_id(ID *id)
     case ID_MA:
       build_material(id_cast<Material *>(id));
       break;
-    case ID_TE:
-      build_texture(id_cast<Tex *>(id));
-      break;
     case ID_IM:
       build_image(id_cast<Image *>(id));
       break;
@@ -3028,11 +3025,6 @@ void DepsgraphRelationBuilder::build_nodetree(bNodeTree *ntree)
       build_material(id_cast<Material *>(id));
       ComponentKey material_key(id, NodeType::SHADING);
       add_relation(material_key, ntree_output_key, "Material -> Node");
-    }
-    else if (id_type == ID_TE) {
-      build_texture(id_cast<Tex *>(id));
-      ComponentKey texture_key(id, NodeType::GENERIC_DATABLOCK);
-      add_relation(texture_key, ntree_output_key, "Texture -> Node");
     }
     else if (id_type == ID_IM) {
       build_image(id_cast<Image *>(id));

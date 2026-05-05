@@ -623,7 +623,6 @@ ID *template_id_liboverride_hierarchy_make(
       }
       break;
     case ID_MA:
-    case ID_TE:
     case ID_IM:
       WM_global_reportf(RPT_WARNING, "The type of data-block %s is not yet implemented", id->name);
       break;
@@ -852,8 +851,6 @@ static StringRef template_id_browse_tip(const StructRNA *type)
         return N_("Browse Curve Data to be linked");
       case ID_MA:
         return N_("Browse Material to be linked");
-      case ID_TE:
-        return N_("Browse Texture to be linked");
       case ID_IM:
         return N_("Browse Image to be linked");
       case ID_LT:
@@ -983,7 +980,6 @@ static Button *template_id_def_new_but(Block *block,
                             BLT_I18NCONTEXT_ID_SCENE,
                             BLT_I18NCONTEXT_ID_SOUND,
                             BLT_I18NCONTEXT_ID_TEXT,
-                            BLT_I18NCONTEXT_ID_TEXTURE,
                             BLT_I18NCONTEXT_ID_VOLUME,
                             BLT_I18NCONTEXT_ID_WORKSPACE,
                             BLT_I18NCONTEXT_ID_WORLD, );
@@ -1450,9 +1446,6 @@ static void template_ID(const bContext *C,
     }
   }
 
-  if (template_ui.idcode == ID_TE) {
-    uiTemplateTextureShow(&layout, C, &template_ui.ptr, template_ui.prop);
-  }
   block_align_end(block);
 }
 

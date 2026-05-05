@@ -246,7 +246,7 @@ static void material_blend_read_data(BlendDataReader *reader, ID *id)
 IDTypeInfo IDType_ID_MA = {
     .id_code = Material::id_type,
     .id_filter = FILTER_ID_MA,
-    .dependencies_id_types = FILTER_ID_TE | FILTER_ID_GR,
+    .dependencies_id_types = FILTER_ID_GR,
     .main_listbase_index = INDEX_ID_MA,
     .struct_size = sizeof(Material),
     .name = "Material",

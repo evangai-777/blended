@@ -409,7 +409,6 @@ static ID *duplicate_ids(ID *id, const bool allow_failure)
   switch (GS(id->name)) {
     case ID_OB:
     case ID_MA:
-    case ID_TE:
     case ID_LA:
     case ID_WO: {
       BLI_assert(BKE_previewimg_id_supports_jobs(id));
@@ -540,11 +539,6 @@ static Scene *preview_prepare_scene(
     sce->world = ED_preview_prepare_world(
         pr_main, sce, scene->world, static_cast<ID_Type>(id_type), sp->pr_method);
 
-    if (id_type == ID_TE) {
-      /* Texture is not actually rendered with engine, just set dummy value. */
-      STRNCPY_UTF8(sce->r.engine, RE_engine_id_BLENDER_EEVEE);
-    }
-
     if (id_type == ID_MA) {
       Material *mat = nullptr, *origmat = id_cast<Material *>(id);
 
@@ -602,16 +596,6 @@ static Scene *preview_prepare_scene(
             base.flag |= BASE_ENABLED_AND_MAYBE_VISIBLE_IN_VIEWPORT;
           }
         }
-      }
-    }
-    else if (id_type == ID_TE) {
-      Tex *tex = nullptr, *origtex = id_cast<Tex *>(id);
-
-      if (origtex) {
-        BLI_assert(sp->id_copy != nullptr);
-        tex = sp->texcopy = id_cast<Tex *>(sp->id_copy);
-        sp->id_copy = nullptr;
-        BLI_addtail(&pr_main->textures, tex);
       }
     }
     else if (id_type == ID_LA) {
@@ -1283,13 +1267,8 @@ static void shader_preview_render(ShaderPreview *sp, ID *id, int split, int firs
   }
 
   /* entire cycle for render engine */
-  if (idtype == ID_TE) {
-    shader_preview_texture(sp, id_cast<Tex *>(id), sce, re);
-  }
-  else {
-    /* Render preview scene */
-    RE_PreviewRender(re, pr_main, sce);
-  }
+  /* Render preview scene */
+  RE_PreviewRender(re, pr_main, sce);
 
   (id_cast<Camera *>(sce->camera->data))->lens = oldlens;
 

@@ -3895,7 +3895,7 @@ struct PreviewsIDEnsureData {
 
 static void previews_id_ensure(bContext *C, Scene *scene, ID *id)
 {
-  BLI_assert(ELEM(GS(id->name), ID_MA, ID_TE, ID_IM, ID_WO, ID_LA));
+  BLI_assert(ELEM(GS(id->name), ID_MA, ID_IM, ID_WO, ID_LA));
 
   /* Only preview non-library datablocks, lib ones do not pertain to this .blend file!
    * Same goes for ID with no user. */
@@ -3917,7 +3917,7 @@ static int previews_id_ensure_callback(LibraryIDLinkCallbackData *cb_data)
   ID *id = *cb_data->id_pointer;
 
   if (id && (id->tag & ID_TAG_DOIT)) {
-    BLI_assert(ELEM(GS(id->name), ID_MA, ID_TE, ID_IM, ID_WO, ID_LA));
+    BLI_assert(ELEM(GS(id->name), ID_MA, ID_IM, ID_WO, ID_LA));
     previews_id_ensure(data->C, data->scene, id);
     id->tag &= ~ID_TAG_DOIT;
   }
@@ -3992,7 +3992,6 @@ enum PreviewFilterID {
   PREVIEW_FILTER_MATERIAL,
   PREVIEW_FILTER_LIGHT,
   PREVIEW_FILTER_WORLD,
-  PREVIEW_FILTER_TEXTURE,
   PREVIEW_FILTER_IMAGE,
 };
 
@@ -4015,7 +4014,6 @@ static const EnumPropertyItem preview_id_type_items[] = {
     {PREVIEW_FILTER_MATERIAL, "MATERIAL", 0, "Materials", ""},
     {PREVIEW_FILTER_LIGHT, "LIGHT", 0, "Lights", ""},
     {PREVIEW_FILTER_WORLD, "WORLD", 0, "Worlds", ""},
-    {PREVIEW_FILTER_TEXTURE, "TEXTURE", 0, "Textures", ""},
     {PREVIEW_FILTER_IMAGE, "IMAGE", 0, "Images", ""},
 #if 0 /* XXX: TODO. */
     {PREVIEW_FILTER_BRUSH, "BRUSH", 0, "Brushes", ""},
@@ -4028,11 +4026,11 @@ static uint preview_filter_to_idfilter(enum PreviewFilterID filter)
   switch (filter) {
     case PREVIEW_FILTER_ALL:
       return FILTER_ID_SCE | FILTER_ID_GR | FILTER_ID_OB | FILTER_ID_MA | FILTER_ID_LA |
-             FILTER_ID_WO | FILTER_ID_TE | FILTER_ID_IM;
+             FILTER_ID_WO | FILTER_ID_IM;
     case PREVIEW_FILTER_GEOMETRY:
       return FILTER_ID_SCE | FILTER_ID_GR | FILTER_ID_OB;
     case PREVIEW_FILTER_SHADING:
-      return FILTER_ID_MA | FILTER_ID_LA | FILTER_ID_WO | FILTER_ID_TE | FILTER_ID_IM;
+      return FILTER_ID_MA | FILTER_ID_LA | FILTER_ID_WO | FILTER_ID_IM;
     case PREVIEW_FILTER_SCENE:
       return FILTER_ID_SCE;
     case PREVIEW_FILTER_COLLECTION:
@@ -4045,8 +4043,6 @@ static uint preview_filter_to_idfilter(enum PreviewFilterID filter)
       return FILTER_ID_LA;
     case PREVIEW_FILTER_WORLD:
       return FILTER_ID_WO;
-    case PREVIEW_FILTER_TEXTURE:
-      return FILTER_ID_TE;
     case PREVIEW_FILTER_IMAGE:
       return FILTER_ID_IM;
   }

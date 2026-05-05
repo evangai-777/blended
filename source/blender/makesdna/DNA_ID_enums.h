@@ -132,7 +132,6 @@ enum ID_Type {
   ID_ME = MAKE_ID2('M', 'E'),        /* Mesh */
   ID_CU_LEGACY = MAKE_ID2('C', 'U'), /* Curve. ID_CV should be used in the future (see #95355). */
   ID_MA = MAKE_ID2('M', 'A'),        /* Material */
-  ID_TE = MAKE_ID2('T', 'E'),        /* Tex (Texture) */
   ID_IM = MAKE_ID2('I', 'M'),        /* Image */
   ID_LT = MAKE_ID2('L', 'T'),        /* Lattice */
   ID_LA = MAKE_ID2('L', 'A'),        /* Light */
@@ -170,6 +169,7 @@ enum ID_Type {
 #define ID_GD_LEGACY MAKE_ID2('G', 'D') /* bGPdata (legacy Grease Pencil) — removed in Blended 0.4.0 */
 #define ID_LS MAKE_ID2('L', 'S')        /* FreestyleLineStyle — removed in Blended 0.4.0 */
 #define ID_MB MAKE_ID2('M', 'B')        /* MetaBall — removed in Blended 0.4.0 */
+#define ID_TE MAKE_ID2('T', 'E')        /* Tex (Texture) — removed in Blended 0.4.0 */
 
 /* NOTE: Fake IDs, needed for `g.sipo->blocktype` or outliner. */
 #define ID_SEQ MAKE_ID2('S', 'Q')

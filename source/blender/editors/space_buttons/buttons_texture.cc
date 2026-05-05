@@ -370,11 +370,7 @@ void buttons_texture_context_compute(const bContext *C, SpaceProperties *sbuts)
 
   buttons_texture_users_from_context(&ct->users, C, sbuts);
 
-  if (pinid && GS(pinid->name) == ID_TE) {
-    ct->user = nullptr;
-    ct->texture = id_cast<Tex *>(pinid);
-  }
-  else {
+  {
     /* set one user as active based on active index */
     if (ct->index >= BLI_listbase_count_at_most(&ct->users, ct->index + 1)) {
       ct->index = 0;

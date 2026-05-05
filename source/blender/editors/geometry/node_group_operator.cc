@@ -768,8 +768,6 @@ static std::optional<ID_Type> socket_type_to_id_type(const eNodeSocketDatatype s
       return ID_IM;
     case SOCK_COLLECTION:
       return ID_GR;
-    case SOCK_TEXTURE:
-      return ID_TE;
     case SOCK_MATERIAL:
       return ID_MA;
     case SOCK_FONT:

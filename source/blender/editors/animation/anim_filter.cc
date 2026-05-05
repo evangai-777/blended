@@ -2721,16 +2721,6 @@ static void animfilter_modifier_idpoin_cb(void *afm_ptr,
 
   /* check if this is something we're interested in... */
   switch (GS(id->name)) {
-    case ID_TE: /* Textures */
-    {
-      Tex *tex = reinterpret_cast<Tex *>(id);
-      if (!(afm->ac->filters.flag & ADS_FILTER_NOTEX)) {
-        BLI_assert(afm->ac->ads == afm->ads);
-        afm->items += animdata_filter_ds_texture(
-            afm->ac, &afm->tmp_data, tex, owner_id, afm->filter_mode);
-      }
-      break;
-    }
     case ID_NT: {
       bNodeTree *node_tree = reinterpret_cast<bNodeTree *>(id);
       if (!(afm->ac->filters.flag & ADS_FILTER_NONTREE)) {

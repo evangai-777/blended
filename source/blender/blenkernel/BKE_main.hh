@@ -365,7 +365,6 @@ struct Main : NonCopyable, NonMovable {
   ListBaseT<Mesh> meshes = {};
   ListBaseT<Curve> curves = {};
   ListBaseT<Material> materials = {};
-  ListBaseT<Tex> textures = {};
   ListBaseT<Image> images = {};
   ListBaseT<Lattice> lattices = {};
   ListBaseT<Light> lights = {};
@@ -394,6 +393,8 @@ struct Main : NonCopyable, NonMovable {
   ListBaseT<FreestyleLineStyle> linestyles = {};
   /** Legacy particle settings — not project data (Scar 2). */
   ListBaseT<ParticleSettings> particles = {};
+  /** Legacy Blender Internal textures — not project data (Scar 2). */
+  ListBaseT<Tex> textures = {};
   ListBaseT<CacheFile> cachefiles = {};
   /**
    * \note The name `hair_curves` is chosen to be different than `curves`,

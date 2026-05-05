@@ -140,7 +140,6 @@ struct TreeElementIcon {
         ID_CU_LEGACY, \
         ID_NT, \
         ID_MA, \
-        ID_TE, \
         ID_IM, \
         ID_LT, \
         ID_LA, \

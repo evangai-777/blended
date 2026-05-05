@@ -486,20 +486,6 @@ static VFont *rna_Main_fonts_load(Main *bmain,
   return font;
 }
 
-static Tex *rna_Main_textures_new(Main *bmain, const char *name, int type)
-{
-  char safe_name[MAX_ID_NAME - 2];
-  rna_idname_validate(name, safe_name);
-
-  Tex *tex = BKE_texture_add(bmain, safe_name);
-  BKE_texture_type_set(tex, type);
-  id_us_min(&tex->id);
-
-  WM_main_add_notifier(NC_ID | NA_ADDED, nullptr);
-
-  return tex;
-}
-
 static Brush *rna_Main_brushes_new(Main *bmain, const char *name, int mode)
 {
   char safe_name[MAX_ID_NAME - 2];
@@ -776,7 +762,6 @@ RNA_MAIN_ID_TAG_FUNCS_DEF(images, images, ID_IM)
 RNA_MAIN_ID_TAG_FUNCS_DEF(lattices, lattices, ID_LT)
 RNA_MAIN_ID_TAG_FUNCS_DEF(curves, curves, ID_CU_LEGACY)
 RNA_MAIN_ID_TAG_FUNCS_DEF(fonts, fonts, ID_VF)
-RNA_MAIN_ID_TAG_FUNCS_DEF(textures, textures, ID_TE)
 RNA_MAIN_ID_TAG_FUNCS_DEF(brushes, brushes, ID_BR)
 RNA_MAIN_ID_TAG_FUNCS_DEF(worlds, worlds, ID_WO)
 RNA_MAIN_ID_TAG_FUNCS_DEF(collections, collections, ID_GR)
@@ -1425,48 +1410,6 @@ void RNA_def_main_fonts(BlenderRNA *brna, PropertyRNA *cprop)
       func, "do_ui_user", true, "", "Make sure interface does not reference this font");
 
   func = RNA_def_function(srna, "tag", "rna_Main_fonts_tag");
-  parm = RNA_def_boolean(func, "value", false, "Value", "");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-}
-void RNA_def_main_textures(BlenderRNA *brna, PropertyRNA *cprop)
-{
-  StructRNA *srna;
-  FunctionRNA *func;
-  PropertyRNA *parm;
-
-  RNA_def_property_srna(cprop, "BlendDataTextures");
-  srna = RNA_def_struct(brna, "BlendDataTextures", nullptr);
-  RNA_def_struct_sdna(srna, "Main");
-  RNA_def_struct_ui_text(srna, "Main Textures", "Collection of textures");
-
-  func = RNA_def_function(srna, "new", "rna_Main_textures_new");
-  RNA_def_function_ui_description(func, "Add a new texture to the main database");
-  parm = RNA_def_string(func, "name", "Texture", 0, "", "New name for the data-block");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-  parm = RNA_def_enum(
-      func, "type", rna_enum_texture_type_items, 0, "Type", "The type of texture to add");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-  /* return type */
-  parm = RNA_def_pointer(func, "texture", "Texture", "", "New texture data-block");
-  RNA_def_function_return(func, parm);
-
-  func = RNA_def_function(srna, "remove", "rna_Main_ID_remove");
-  RNA_def_function_flag(func, FUNC_USE_REPORTS);
-  RNA_def_function_ui_description(func, "Remove a texture from the current blendfile");
-  parm = RNA_def_pointer(func, "texture", "Texture", "", "Texture to remove");
-  RNA_def_parameter_flags(parm, PROP_NEVER_NULL, PARM_REQUIRED | PARM_RNAPTR);
-  RNA_def_parameter_clear_flags(parm, PROP_THICK_WRAP, ParameterFlag(0));
-  RNA_def_boolean(
-      func, "do_unlink", true, "", "Unlink all usages of this texture before deleting it");
-  RNA_def_boolean(func,
-                  "do_id_user",
-                  true,
-                  "",
-                  "Decrement user counter of all data-blocks used by this texture");
-  RNA_def_boolean(
-      func, "do_ui_user", true, "", "Make sure interface does not reference this texture");
-
-  func = RNA_def_function(srna, "tag", "rna_Main_textures_tag");
   parm = RNA_def_boolean(func, "value", false, "Value", "");
   RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
 }

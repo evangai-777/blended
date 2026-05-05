@@ -2261,9 +2261,6 @@ static void rna_SpaceProperties_pin_id_update(Main * /*bmain*/, Scene * /*scene*
     case ID_MA:
       WM_main_add_notifier(NC_MATERIAL | ND_SHADING, nullptr);
       break;
-    case ID_TE:
-      WM_main_add_notifier(NC_TEXTURE, nullptr);
-      break;
     case ID_WO:
       WM_main_add_notifier(NC_WORLD, nullptr);
       break;
@@ -3957,11 +3954,11 @@ static IDFilterEnumPropertyItem rna_enum_space_file_id_filter_categories[] = {
      ICON_GEOMETRY_NODES,
      "Geometry",
      "Show meshes, curves, lattice and armatures data"},
-    {FILTER_ID_MA | FILTER_ID_NT | FILTER_ID_TE,
+    {FILTER_ID_MA | FILTER_ID_NT,
      "category_shading",
      ICON_MATERIAL_DATA,
      "Shading",
-     "Show materials, node-trees, textures and Freestyle's line-styles"},
+     "Show materials and node-trees"},
     {FILTER_ID_IM | FILTER_ID_MC | FILTER_ID_MSK | FILTER_ID_SO,
      "category_image",
      ICON_IMAGE_DATA,

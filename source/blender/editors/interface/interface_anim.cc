@@ -277,7 +277,7 @@ bool button_anim_expression_create(Button *but, const char *str)
   /* FIXME: until materials can be handled by depsgraph,
    * don't allow drivers to be created for them. */
   id = but->rnapoin.owner_id;
-  if ((id == nullptr) || (GS(id->name) == ID_MA) || (GS(id->name) == ID_TE)) {
+  if ((id == nullptr) || (GS(id->name) == ID_MA)) {
     if (G.debug & G_DEBUG) {
       printf("ERROR: create expression failed - invalid data-block for adding drivers (%p)\n", id);
     }

@@ -58,9 +58,6 @@ void BKE_animdata_main_cb(Main *bmain, const FunctionRef<void(ID *, AnimData *)>
   /* nodes */
   ANIMDATA_IDS_CB(bmain->nodetrees.first);
 
-  /* textures */
-  ANIMDATA_NODETREE_IDS_CB(bmain->textures.first, Tex);
-
   /* lights */
   ANIMDATA_NODETREE_IDS_CB(bmain->lights.first, Light);
 

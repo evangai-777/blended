@@ -349,13 +349,6 @@ static void rna_ColorRamp_update(Main *bmain, Scene * /*scene*/, PointerRNA *ptr
         }
         break;
       }
-      case ID_TE: {
-        Tex *tex = id_cast<Tex *>(ptr->owner_id);
-
-        DEG_id_tag_update(&tex->id, 0);
-        WM_main_add_notifier(NC_TEXTURE, tex);
-        break;
-      }
       /* Color Ramp for particle display is owned by the object (see #54422) */
       case ID_OB:
       case ID_PA: {

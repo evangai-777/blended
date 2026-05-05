@@ -605,9 +605,6 @@ void DepsgraphNodeBuilder::build_id(ID *id, const bool force_be_visible)
     case ID_MA:
       build_material(id_cast<Material *>(id));
       break;
-    case ID_TE:
-      build_texture(id_cast<Tex *>(id));
-      break;
     case ID_IM:
       build_image(id_cast<Image *>(id));
       break;
@@ -2016,9 +2013,6 @@ void DepsgraphNodeBuilder::build_nodetree(bNodeTree *ntree)
     ID_Type id_type = GS(id->name);
     if (id_type == ID_MA) {
       build_material(id_cast<Material *>(id));
-    }
-    else if (id_type == ID_TE) {
-      build_texture(id_cast<Tex *>(id));
     }
     else if (id_type == ID_IM) {
       build_image(id_cast<Image *>(id));

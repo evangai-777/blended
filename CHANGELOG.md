@@ -56,15 +56,15 @@ carries a one-liner status per active item.
 
 ## Unreleased — 0.4.0
 
-Bucket 5 + 6 fossil removals. 9 ID types, 357 hits, same chisel pattern as 0.3.0. CI green (Windows x64, build #62, commit `7423dae`) — 6 of 9 types complete.
-Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEGACY ✓** → **ID_LS ✓** → **ID_MB ✓** → ID_TE → ID_CU_LEGACY → ID_CF (last, needs design decision — see CLAUDE.md Key note 8).
+Bucket 5 + 6 fossil removals. 9 ID types, 357 hits, same chisel pattern as 0.3.0. CI green (Windows x64, build #62, commit `7423dae`) — 7 of 9 types complete.
+Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEGACY ✓** → **ID_LS ✓** → **ID_MB ✓** → **ID_TE ✓** → ID_CU_LEGACY → ID_CF (last, needs design decision — see CLAUDE.md Key note 8).
 *(Order corrected in PR #126 fix — initial commit had ID_CF first, contradicting CLAUDE.md Key note 8. Scar 7.)*
 
 **Key notes:**
 - `ID_CU_LEGACY` and `ID_GD_LEGACY` have active migration paths — only the type *registration* goes, not the converters.
 - ~~`ID_LS` is already guarded by `#ifdef WITH_FREESTYLE`~~ — verified false for core registration files; `linestyle.cc` and render_shading.cc ID_LS cases are outside the guard. Full removal required.
 - `ID_LS` known latent leak: opening a legacy `.blend` with Freestyle data in a `WITH_FREESTYLE=OFF` build populates `bmain->linestyles` via the kept `which_libbase` routing, but that listbase is not in `BKE_main_lists_get`, so `BKE_main_free` does not free those IDs. Accepted artifact — no Freestyle fixtures in CI, does not affect release builds. Fix if needed: blenloader post-read pass draining `bmain->linestyles` when `WITH_FREESTYLE=OFF`.
-- `brush_test.cc` uses `ID_TE` in test fixtures — those tests get deleted with the type. (ID_PC fixtures rewritten in 0.4.0.)
+- ~~`brush_test.cc` uses `ID_TE` in test fixtures~~ — test fixtures deleted in makesdna/blenkernel layers.
 - ~~`depsgraph.cc:160` has a `!= ID_PA` guard~~ — resolved in ID_PA chisel; guard changed to `!= ID_SCE`.
 
 ### ID_PC — PaintCurve ✓ complete
@@ -176,18 +176,20 @@ Resolves two deferred-debt items, syncs a stale version define, and adds two ope
 | `blentranslation` | `BLT_translation.hh` (BLT_I18NCONTEXT_ID_METABALL define + ITEM entry removed) | ✓ |
 | `python/scripts` | `bl_ui/properties_data_metaball.py` deleted; `bl_ui/__init__.py`, `space_view3d.py` (5 classes deleted + menu refs removed), `space_dopesheet.py`, `space_outliner.py`, `space_userpref.py`, `bl_operators/wm.py`, `modules/_bpy_types.py`, `addons_core/rigify/utils/objects.py` | ✓ |
 
-### ID_TE — Texture
+### ID_TE — Texture ✓ complete
 
 | Layer | Files touched | Status |
 |-------|--------------|--------|
-| `makesdna` | `DNA_ID_enums.h`, `DNA_texture_types.h` (id_type constexpr), `DNA_ID.h` (shared macro) | ☐ |
-| `blenkernel` | `idtype.cc`, `main.cc`, `preview_image.cc`, `image.cc`, `compositor.cc`, `node.cc`, `brush_test.cc` (test fixtures deleted) | ☐ |
-| `blenloader` | `versioning_500.cc`, `versioning_450.cc` | ☐ |
-| `makesrna` | `rna_ID.cc`, `rna_color.cc`, `rna_image.cc`, `rna_space.cc`, `rna_texture.cc`, `rna_main_api.cc` | ☐ |
-| `editors` | `buttons_texture.cc`, `interface_anim.cc`, `interface_icons.cc`, `interface_template_preview.cc`, `interface_template_id.cc`, `node_group_operator.cc`, `render_opengl.cc`, `render_update.cc`, `render_preview.cc`, `anim_filter.cc`, `anim_channels_defines.cc`, `outliner_draw.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc` | ☐ |
-| `depsgraph` | `depsgraph_tag.cc`, `deg_builder_relations.cc`, `deg_builder_nodes.cc`, `deg_eval_copy_on_write.cc` | ☐ |
-| `windowmanager` | `wm_operators.cc` | ☐ |
-| `modifiers` | `MOD_nodes.cc` | ☐ |
+| `makesdna` | `DNA_ID_enums.h` (enum removed; deprecated `#define` added), `DNA_texture_types.h` (id_type constexpr removed; `#ifdef __cplusplus` / `DNA_DEFINE_CXX_METHODS` kept per Scar 8), `DNA_ID.h` (shared ELEM macro, FILTER_ID_TE, FILTER_ID_ALL, INDEX_ID_TE) | ✓ |
+| `blenkernel` | `idtype.cc` (INIT_TYPE + both CASE_IDINDEX removed per Scar 4), `BKE_idtype.hh`, `BKE_main.hh` (textures restored as Scar 2 non-indexed listbase — versioning_250/260/280/legacy iterate it), `main.cc` (CASE_ID_INDEX + lb[] removed; which_libbase routing kept per Scar 2), `texture.cc` (IDTypeInfo block removed), `preview_image.cc`, `image.cc`, `compositor.cc`, `node.cc`, `light.cc`, `material.cc`, `brush.cc`, `world.cc` (FILTER_ID_TE removed from dependencies_id_types), `anim_data_bmain_utils.cc` (ANIMDATA_NODETREE_IDS grep-miss), `anim_sys.cc` (EVAL_ANIM_NODETREE_IDS grep-miss), `brush_test.cc` (test fixtures deleted) | ✓ |
+| `blenloader` | `versioning_500.cc`, `versioning_450.cc` (ID_TE removed from ELEM checks) | ✓ |
+| `makesrna` | `rna_ID.cc` (enum item, filter item, base_type check, case), `rna_color.cc`, `rna_image.cc`, `rna_space.cc` (2 sites), `rna_texture.cc` (rna_Texture_update ID_TE branch), `rna_main_api.cc` (rna_Main_textures_new, RNA_MAIN_ID_TAG_FUNCS_DEF, RNA_def_main_textures), `rna_main.cc` (listbase funcs + table entry), `rna_internal.hh` | ✓ |
+| `editors` | `buttons_texture.cc` (pinid GS check), `interface_anim.cc`, `interface_icons.cc` (2 sites), `interface_template_preview.cc` (ELEM + ID_TE block), `interface_template_id.cc` (3 sites), `node_group_operator.cc`, `render_opengl.cc`, `render_update.cc`, `render_preview.cc` (4 sites), `anim_filter.cc`, `anim_channels_defines.cc`, `outliner_draw.cc` (2 sites), `outliner_intern.hh` (Scar 9 clean), `outliner_tools.cc` (2 sites), `tree_element_id.cc`; `tree_element_id_texture.cc/.hh` deleted; `CMakeLists.txt` updated | ✓ |
+| `depsgraph` | `depsgraph_tag.cc`, `deg_builder_relations.cc` (2 sites), `deg_builder_nodes.cc` (2 sites), `deg_eval_copy_on_write.cc` (4 SPECIAL_CASE sites; 3rd block was a missed site fixed in scar-fix commit) | ✓ |
+| `windowmanager` | `wm_operators.cc` (5 sites: 2 BLI_assert, PREVIEW_FILTER_TEXTURE enum + item, FILTER_ID_TE from 2 bitmasks) | ✓ |
+| `modifiers` | `MOD_nodes.cc` | ✓ |
+
+**Scar 2 applied:** `bmain->textures` kept as non-indexed listbase (not in `BKE_main_lists_get`). `which_libbase(ID_TE)` routing restored. Legacy versioning files (`versioning_250.cc`, `versioning_260.cc`, `versioning_280.cc`, `versioning_legacy.cc`) iterate `bmain->textures` to upgrade old texture data — without the field those file loads crash.
 
 ### ID_CU_LEGACY — Legacy Curve
 

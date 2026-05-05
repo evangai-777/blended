@@ -356,9 +356,6 @@ void ED_render_id_flush_update(const DEGEditorUpdateContext *update_ctx, ID *id)
     case ID_MA:
       material_changed(bmain, id_cast<Material *>(id));
       break;
-    case ID_TE:
-      texture_changed(bmain, id_cast<Tex *>(id));
-      break;
     case ID_WO:
       world_changed(bmain, id_cast<World *>(id));
       break;

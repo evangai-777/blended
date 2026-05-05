@@ -137,7 +137,6 @@ static void get_element_operation_type(
       case ID_AR:
       case ID_CA:
       case ID_MA:
-      case ID_TE:
       case ID_IM:
       case ID_SO:
       case ID_KE:
@@ -2886,12 +2885,6 @@ static wmOperatorStatus outliner_id_operation_exec(bContext *C, wmOperator *op)
 
           WM_event_add_notifier(C, NC_OBJECT | ND_OB_SHADING, nullptr);
           ED_undo_push(C, "Unlink material");
-          break;
-        case ID_TE:
-          outliner_do_libdata_operation(C, op->reports, scene, space_outliner, unlink_texture_fn);
-
-          WM_event_add_notifier(C, NC_OBJECT | ND_OB_SHADING, nullptr);
-          ED_undo_push(C, "Unlink texture");
           break;
         case ID_WO:
           outliner_do_libdata_operation(C, op->reports, scene, space_outliner, unlink_world_fn);

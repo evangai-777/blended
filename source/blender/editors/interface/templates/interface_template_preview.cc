@@ -55,35 +55,14 @@ void template_preview(Layout *layout,
 
   char _preview_id[sizeof(uiPreview::preview_id)];
 
-  if (id && !ELEM(GS(id->name), ID_MA, ID_TE, ID_WO, ID_LA)) {
-    RNA_warning("Expected ID of type material, texture, light or world");
+  if (id && !ELEM(GS(id->name), ID_MA, ID_WO, ID_LA)) {
+    RNA_warning("Expected ID of type material, light or world");
     return;
   }
 
   /* decide what to render */
   ID *pid = id;
   ID *pparent = nullptr;
-
-  if (id && (GS(id->name) == ID_TE)) {
-    if (parent && (GS(parent->name) == ID_MA)) {
-      pr_texture = &(id_cast<Material *>(parent))->pr_texture;
-    }
-    else if (parent && (GS(parent->name) == ID_WO)) {
-      pr_texture = &(id_cast<World *>(parent))->pr_texture;
-    }
-    else if (parent && (GS(parent->name) == ID_LA)) {
-      pr_texture = &(id_cast<Light *>(parent))->pr_texture;
-    }
-
-    if (pr_texture) {
-      if (*pr_texture == TEX_PR_OTHER) {
-        pid = parent;
-      }
-      else if (*pr_texture == TEX_PR_BOTH) {
-        pparent = parent;
-      }
-    }
-  }
 
   if (!preview_id || (preview_id[0] == '\0')) {
     /* If no identifier given, generate one from ID type. */

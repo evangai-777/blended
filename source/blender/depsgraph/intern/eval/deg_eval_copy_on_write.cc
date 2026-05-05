@@ -105,7 +105,6 @@ void nested_id_hack_discard_pointers(ID *id_cow)
 
     SPECIAL_CASE(ID_LA, Light, nodetree)
     SPECIAL_CASE(ID_MA, Material, nodetree)
-    SPECIAL_CASE(ID_TE, Tex, nodetree)
     SPECIAL_CASE(ID_WO, World, nodetree)
 
     SPECIAL_CASE(ID_CU_LEGACY, Curve, key)
@@ -150,7 +149,6 @@ const ID *nested_id_hack_get_discarded_pointers(void *storage, const ID *id)
 
     SPECIAL_CASE(ID_LA, Light, nodetree, lamp)
     SPECIAL_CASE(ID_MA, Material, nodetree, material)
-    SPECIAL_CASE(ID_TE, Tex, nodetree, tex)
     SPECIAL_CASE(ID_WO, World, nodetree, world)
 
     SPECIAL_CASE(ID_CU_LEGACY, Curve, key, curve)
@@ -188,7 +186,6 @@ void nested_id_hack_restore_pointers(const ID *old_id, ID *new_id)
 
     SPECIAL_CASE(ID_LA, Light, nodetree)
     SPECIAL_CASE(ID_MA, Material, nodetree)
-    SPECIAL_CASE(ID_TE, Tex, nodetree)
     SPECIAL_CASE(ID_WO, World, nodetree)
 
     SPECIAL_CASE(ID_CU_LEGACY, Curve, key)
@@ -223,7 +220,6 @@ void ntree_hack_remap_pointers(const Depsgraph *depsgraph, ID *id_cow)
 
     SPECIAL_CASE(ID_LA, Light, nodetree, bNodeTree)
     SPECIAL_CASE(ID_MA, Material, nodetree, bNodeTree)
-    SPECIAL_CASE(ID_TE, Tex, nodetree, bNodeTree)
     SPECIAL_CASE(ID_WO, World, nodetree, bNodeTree)
 
     SPECIAL_CASE(ID_CU_LEGACY, Curve, key, Key)
