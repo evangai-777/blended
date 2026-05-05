@@ -2105,32 +2105,12 @@ void DepsgraphNodeBuilder::build_materials(Material **materials, int num_materia
   }
 }
 
-void DepsgraphNodeBuilder::build_texture(Tex *texture)
+void DepsgraphNodeBuilder::build_texture(Tex * /*texture*/)
 {
-  if (built_map_.check_is_built_and_tag(texture)) {
-    return;
-  }
-  /* Texture itself. */
-  add_id_node(&texture->id);
-  Tex *texture_cow = get_cow_datablock(texture);
-  build_idproperties(texture->id.properties);
-  build_idproperties(texture->id.system_properties);
-  build_animdata(&texture->id);
-  build_parameters(&texture->id);
-  /* Texture's nodetree. */
-  build_nodetree(texture->nodetree);
-  /* Special cases for different IDs which texture uses. */
-  if (texture->type == TEX_IMAGE) {
-    if (texture->ima != nullptr) {
-      build_image(texture->ima);
-    }
-  }
-  add_operation_node(&texture->id,
-                     NodeType::GENERIC_DATABLOCK,
-                     OperationCode::GENERIC_DATABLOCK_UPDATE,
-                     [texture_cow](blender::Depsgraph *depsgraph) {
-                       texture_cow->runtime.last_update = DEG_get_update_count(depsgraph);
-                     });
+  /* ID_TE is no longer a registered ID type in Blended. Tex datablocks from legacy
+   * files must not be added to the depsgraph: BKE_idtype_idcode_to_index(ID_TE)
+   * returns -1 since CASE_IDINDEX(TE) was removed (Scar 4), and add_id_node() writes
+   * id_type_exist[index] with no bounds guard — an OOB write on index -1. */
 }
 
 void DepsgraphNodeBuilder::build_image(Image *image)
