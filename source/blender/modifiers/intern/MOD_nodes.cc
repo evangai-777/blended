@@ -210,8 +210,7 @@ static void update_depsgraph(ModifierData *md, const ModifierUpdateDepsgraphCont
         add_collection_relation(ctx, *collection);
         break;
       }
-      case ID_IM:
-      case ID_TE: {
+      case ID_IM: {
         DEG_add_generic_id_relation(ctx->node, id, "Nodes Modifier");
         break;
       }
