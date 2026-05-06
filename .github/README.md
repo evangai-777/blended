@@ -157,8 +157,9 @@ Blended is developed with contributions from both human developers and AI tools.
   texture data in legacy files; INIT_TYPE and BKE_main_lists_get entry remain removed;
   anim_sys.cc field-name grep-miss caught post-chisel (EVAL_ANIM_NODETREE_IDS uses field name
   not ID_TE string).
-  `ID_CU_LEGACY` (Legacy Curve) removal — 74 hits, 33 files, 5 source layers (makesdna,
-  blenkernel, makesrna, depsgraph; editors/draw zero compile errors via #define preservation):
+  `ID_CU_LEGACY` (Legacy Curve) removal — ~86 hits, 36 files, 6 layers (makesdna,
+  blenkernel, makesrna, depsgraph active; editors/draw audited — zero compile errors
+  via #define preservation; pre-chisel literal count was 74/33):
   IDTypeInfo removed (curve.cc), INIT_TYPE + both CASE_IDINDEX(CU_LEGACY) removed (Scar 4),
   INDEX_ID_CU_LEGACY and FILTER_ID_CU_LEGACY removed, OB_DATA_SUPPORT_EDITMODE/ID/ID_CASE
   macros cleaned; Scar 2: bmain->curves and which_libbase routing kept — 23+ versioning

@@ -47,7 +47,7 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 
 5. **Multi-window screen iteration edge cases** — The 0.3.0 chisel converted global screen iteration to per-window. Edge cases in multi-window layouts may surface at runtime. Not tested in CI (single-window headless).
 
-6. **Scar 2 listbase memory leaks (ID_PA, ID_TE)** — `bmain->particles` and `bmain->textures` are kept as non-indexed listbases for versioning-pass compatibility, but are NOT in `BKE_main_lists_get`. When a legacy `.blend` file is loaded and then a new file is loaded (or the application exits), `BKE_main_free` does not free those ID blocks. They accumulate for the session. Same root cause as item 1 (ID_LS). Same fix pattern: post-read drain pass. `bmain->gpencils` (ID_GD_LEGACY) has the same structure but gpencil data is actively used at runtime — needs separate audit to confirm it's freed by the right path.
+6. **Scar 2 listbase memory leaks (ID_PA, ID_TE, ID_CU_LEGACY)** — `bmain->particles`, `bmain->textures`, and `bmain->curves` are kept as non-indexed listbases for versioning-pass compatibility, but are NOT in `BKE_main_lists_get`. When a legacy `.blend` file is loaded and then a new file is loaded (or the application exits), `BKE_main_free` does not free those ID blocks. They accumulate for the session. Same root cause as item 1 (ID_LS). Same fix pattern: post-read drain pass. **ID_CU_LEGACY leak is more active than ID_PA/ID_TE:** Alembic NURBS reader and OBJ NURBS importer call `BKE_curve_add` at runtime (not just on legacy file load), creating new Curve blocks in `bmain->curves` that are never freed when scenes are cleared or files are re-opened. `bmain->gpencils` (ID_GD_LEGACY) has the same structure but gpencil data is actively used at runtime — needs separate audit to confirm it's freed by the right path.
 
 ---
 
@@ -82,6 +82,7 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 | Load legacy `.blend` with Freestyle LineStyle data (`WITH_FREESTYLE=OFF`) | `bmain->linestyles` populated, not freed by `BKE_main_free`. Blocks accumulate per file load, freed on process exit. | 0.4.0 (ID_LS) | Post-read drain pass on `bmain->linestyles` |
 | Load legacy `.blend` with ParticleSettings data | `bmain->particles` populated (Scar 2), not in `BKE_main_lists_get`. Same leak shape as ID_LS. | 0.4.0 (ID_PA) | Post-read drain pass on `bmain->particles` |
 | Load legacy `.blend` with Blender Internal texture data | `bmain->textures` populated (Scar 2), not in `BKE_main_lists_get`. Same leak shape. | 0.4.0 (ID_TE) | Post-read drain pass on `bmain->textures` |
+| Load legacy `.blend` with Curve data, OR import NURBS via Alembic/OBJ | `bmain->curves` populated (Scar 2), not in `BKE_main_lists_get`. More active than other Scar 2 leaks: `BKE_curve_add` is called at runtime by Alembic NURBS reader and OBJ NURBS importer, so curves accumulate not just on legacy file load but on every NURBS import. | 0.4.0 (ID_CU_LEGACY) | Post-read/post-import drain pass on `bmain->curves` |
 
 **When a post-read drain pass is needed (template):** In `blenloader/intern/readfile.cc` or a post-read callback, after `BKE_blendfile_read()` completes, iterate and free the relevant non-indexed listbase:
 ```cpp
