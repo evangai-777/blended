@@ -1149,8 +1149,13 @@ struct bObjectSolverConstraint {
 
 /* Transform matrix cache constraint */
 struct bTransformCacheConstraint {
-  struct CacheFile *cache_file = nullptr;
+  /* Path to the Alembic/USD archive file (replaces CacheFile ID reference). */
+  char filepath[/*FILE_MAX*/ 1024] = "";
   char object_path[/*FILE_MAX*/ 1024] = "";
+
+  char type = 0;  /* eCacheFileType: 1=Alembic, 2=USD */
+  char _pad[3] = {};
+  float scale = 1.0f;
 
   /* Runtime. */
   struct CacheReader *reader = nullptr;

@@ -436,7 +436,6 @@ ENUM_OPERATORS(eDopeSheet_FilterFlag);
 
 /* DopeSheet filter-flags - Overflow (filterflag2) */
 enum eDopeSheet_FilterFlag2 {
-  ADS_FILTER_NOCACHEFILES = (1 << 1),
   ADS_FILTER_NOMOVIECLIPS = (1 << 2),
   ADS_FILTER_NOHAIR = (1 << 3),
   ADS_FILTER_NOPOINTCLOUD = (1 << 4),
@@ -519,8 +518,6 @@ enum eAnimEdit_Context {
   SACTCONT_DOPESHEET = 3,
   /** Mask. */
   SACTCONT_MASK = 4,
-  /** Cache file */
-  SACTCONT_CACHEFILE = 5,
   /** Timeline. */
   SACTCONT_TIMELINE = 6,
 };
