@@ -59,7 +59,7 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 
 | Trigger | What happens | Introduced |
 |---------|-------------|------------|
-| Object with `PFIELD_TEXTURE` force field in legacy file | Texture displacement silently dead. `build_texture()` is a no-op — Tex IDNodes never enter the depsgraph. Force field evaluates but ignores the texture parameter entirely. | 0.4.0 (ID_TE) |
+| Object with `PFIELD_TEXTURE` force field in legacy file | Texture displacement silently dead. `build_texture()` is a no-op — Tex IDNodes never enter the depsgraph. Force field evaluates but ignores the texture parameter entirely. *(Post-chisel fix `c320633b`: two direct `add_relation()` calls in `deg_builder_relations.cc` that bypassed the no-op were removed — without the fix these logged repeated "Failed to add relation" errors at graph-build time. See Scar 12.)* | 0.4.0 (ID_TE) |
 | Object with particle system that has texture slots (legacy file) | Texture slots silently ignored. Particle system otherwise evaluates (geometry nodes path). | 0.4.0 (ID_TE) |
 | Node with `SOCK_TEXTURE` socket and a `Tex *` default value (legacy file) | Socket's texture not depsgraph-tracked; texture changes don't trigger node re-evaluation. | 0.4.0 (ID_TE) |
 | Brush with `paint_curve` assigned in legacy file | `Brush::paint_curve` field no longer exists in DNA; SDNA remapping skips it on load. Brush uses default stroke shape. No crash. | 0.4.0 (ID_PC) |
@@ -1050,6 +1050,37 @@ grep -rn "OB_MBALL\|MB_BALL\|MB_CUBE"  source/blender/makesrna/  # example for I
 # For ID_TE: grep for TEX_CLOUDS, TEX_WOOD, TEX_MARBLE, TEX_MAGIC, TEX_BLEND,
 #            TEX_STUCCI, TEX_NOISE, TEX_IMAGE, TEX_MUSGRAVE, TEX_VORONOI, TEX_DISTNOISE
 grep -rn "TEX_CLOUDS\|TEX_WOOD\|TEX_MARBLE\|TEX_MAGIC\|TEX_BLEND\|TEX_STUCCI\|TEX_NOISE\b\|TEX_IMAGE\|TEX_MUSGRAVE\|TEX_VORONOI\|TEX_DISTNOISE" source/blender/makesrna/
+```
+
+---
+
+### Scar 12: build_X() No-Op in Node Builder Does Not Silence Direct add_relation() Calls in Relations Builder
+
+**What happened:** The ID_TE chisel made `build_texture()` a no-op in `deg_builder_nodes.cc` — Tex datablocks never get IDNodes. But `deg_builder_relations.cc` had two sites that called `add_relation()` with `ComponentKey(&tex->id, NodeType::GENERIC_DATABLOCK)` directly, without going through `build_texture()`:
+
+1. Effector relations loop (~line 464): PFIELD_TEXTURE force-field relation
+2. RigidBody effector loop (~line 2272): PFIELD_TEXTURE force-field relation
+
+Since no IDNode existed for `tex->id`, these `add_relation()` calls failed at runtime on any legacy file containing a PFIELD_TEXTURE force field — logging repeated "Failed to add relation" errors during graph build. Caught by Codex review on PR #154 (post-chisel fix commit `c320633b`).
+
+**Why it's easy to miss:** The no-op in the nodes builder looks complete — `build_texture()` is the single public entry point for texture depsgraph work, so it appears to be a clean boundary. But the relations builder has its own separate `ComponentKey`/`add_relation()` blocks that directly reference `tex->id` without calling `build_texture()` at all. Both files must be checked independently.
+
+**The fix:** Remove the direct `add_relation()` blocks in `deg_builder_relations.cc`. The force-field texture displacement remains silently dead (the force field evaluates but the texture parameter is ignored and no error logs are emitted).
+
+**The detection pattern — run this after making any `build_X()` a no-op in either depsgraph builder:**
+```bash
+# Replace 'tex' with the type's field name (part, mball, etc.)
+grep -n "tex->id\|tex_key" source/blender/depsgraph/intern/builder/deg_builder_relations.cc
+# General form:
+grep -n "X->id\|X_key" source/blender/depsgraph/intern/builder/deg_builder_relations.cc
+```
+Any `ComponentKey` or `add_relation()` site that references the removed type's `->id` directly — without going through `build_X()` — is a latent "Failed to add relation" error that surfaces at runtime on legacy files.
+
+**Add to the mandatory post-chisel checklist:**
+```bash
+# Scar 12: direct add_relation() calls in relations builder bypassing the no-op
+# Run after making build_X() a no-op in either depsgraph builder
+grep -n "tex->id\|tex_key" source/blender/depsgraph/intern/builder/deg_builder_relations.cc
 ```
 
 ---

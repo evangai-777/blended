@@ -156,7 +156,10 @@ Blended is developed with contributions from both human developers and AI tools.
   versioning_260, versioning_280, versioning_legacy all iterate it to upgrade Blender Internal
   texture data in legacy files; INIT_TYPE and BKE_main_lists_get entry remain removed;
   anim_sys.cc field-name grep-miss caught post-chisel (EVAL_ANIM_NODETREE_IDS uses field name
-  not ID_TE string).
+  not ID_TE string); post-chisel Codex fix: two direct add_relation() calls in
+  deg_builder_relations.cc bypassing the build_texture() no-op (PFIELD_TEXTURE effector
+  and RigidBody effector loops) removed — without fix these logged "Failed to add relation"
+  errors on every legacy file with a texture force field (Scar 12, commit c320633b).
   `ID_CU_LEGACY` (Legacy Curve) removal — ~86 hits, 36 files, 6 layers (makesdna,
   blenkernel, makesrna, depsgraph active; editors/draw audited — zero compile errors
   via #define preservation; pre-chisel literal count was 74/33):
