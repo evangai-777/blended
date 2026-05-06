@@ -4,7 +4,6 @@
 
 #include "usd_reader_geom.hh"
 
-#include "BKE_lib_id.hh"
 #include "BKE_modifier.hh"
 
 #include "BLI_listbase.h"
@@ -18,7 +17,7 @@ namespace blender::io::usd {
 
 void USDGeomReader::add_cache_modifier()
 {
-  if (!settings_->get_cache_file) {
+  if (settings_->filepath[0] == '\0') {
     return;
   }
 
@@ -28,8 +27,10 @@ void USDGeomReader::add_cache_modifier()
 
   MeshSeqCacheModifierData *mcmd = reinterpret_cast<MeshSeqCacheModifierData *>(md);
 
-  mcmd->cache_file = settings_->get_cache_file();
-  id_us_plus(&mcmd->cache_file->id);
+  STRNCPY(mcmd->filepath, settings_->filepath);
+  mcmd->is_sequence = settings_->is_sequence;
+  mcmd->type = char(CACHEFILE_TYPE_USD);
+  mcmd->scale = settings_->scale;
   mcmd->read_flag = import_params_.mesh_read_flag;
 
   STRNCPY(mcmd->object_path, prim_.GetPath().GetString().c_str());

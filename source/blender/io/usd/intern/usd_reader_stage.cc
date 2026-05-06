@@ -193,13 +193,19 @@ static void determine_blender_compat(pxr::UsdStageRefPtr stage, ImportSettings &
 
 USDStageReader::USDStageReader(pxr::UsdStageRefPtr stage,
                                const USDImportParams &params,
-                               const std::function<CacheFile *()> &get_cache_file_fn)
+                               const char *filepath,
+                               bool is_sequence,
+                               float scale)
     : stage_(stage), params_(params)
 {
   determine_blender_compat(stage_, settings_);
   convert_to_z_up(stage_, settings_);
   find_prefix_to_skip(stage_, settings_);
-  settings_.get_cache_file = get_cache_file_fn;
+  if (filepath) {
+    STRNCPY(settings_.filepath, filepath);
+  }
+  settings_.is_sequence = is_sequence;
+  settings_.scale = scale;
   settings_.stage_meters_per_unit = pxr::UsdGeomGetStageMetersPerUnit(stage);
   settings_.scene_scale = params.scale;
   if (params.apply_unit_conversion_scale) {

@@ -21,7 +21,6 @@
 
 namespace blender {
 
-struct CacheFile;
 struct Main;
 struct Material;
 struct Object;
@@ -37,7 +36,9 @@ struct ImportSettings {
   /* From MeshSeqCacheModifierData.read_flag */
   int read_flag = 0;
 
-  std::function<CacheFile *()> get_cache_file{};
+  char filepath[/*FILE_MAX*/ 1024] = "";
+  bool is_sequence = false;
+  float scale = 1.0f;
 
   /*
    * The fields below are mutable because they are used to keep track

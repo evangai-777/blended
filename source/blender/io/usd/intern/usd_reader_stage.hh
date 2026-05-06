@@ -58,7 +58,9 @@ class USDStageReader {
  public:
   USDStageReader(pxr::UsdStageRefPtr stage,
                  const USDImportParams &params,
-                 const std::function<CacheFile *()> &get_cache_file_fn = {});
+                 const char *filepath = nullptr,
+                 bool is_sequence = false,
+                 float scale = 1.0f);
 
   ~USDStageReader();
 

@@ -16,7 +16,6 @@
 #include "DNA_object_types.h"
 
 #include "BKE_constraint.h"
-#include "BKE_lib_id.hh"
 #include "BKE_modifier.hh"
 #include "BKE_object.hh"
 #include "BKE_object_types.hh"
@@ -185,8 +184,9 @@ void AbcObjectReader::setupObjectTransform(const chrono_t time)
     bTransformCacheConstraint *data = static_cast<bTransformCacheConstraint *>(con->data);
     STRNCPY(data->object_path, m_iobject.getFullName().c_str());
 
-    data->cache_file = m_settings->cache_file;
-    id_us_plus(&data->cache_file->id);
+    STRNCPY(data->filepath, m_settings->filepath);
+    data->type = char(CACHEFILE_TYPE_ALEMBIC);
+    data->scale = m_settings->scale;
   }
 }
 
@@ -277,8 +277,10 @@ void AbcObjectReader::addCacheModifier()
 
   MeshSeqCacheModifierData *mcmd = reinterpret_cast<MeshSeqCacheModifierData *>(md);
 
-  mcmd->cache_file = m_settings->cache_file;
-  id_us_plus(&mcmd->cache_file->id);
+  STRNCPY(mcmd->filepath, m_settings->filepath);
+  mcmd->is_sequence = m_settings->is_sequence;
+  mcmd->type = char(CACHEFILE_TYPE_ALEMBIC);
+  mcmd->scale = m_settings->scale;
 
   STRNCPY(mcmd->object_path, m_iobject.getFullName().c_str());
 }

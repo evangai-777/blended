@@ -18,7 +18,6 @@
 
 namespace blender {
 
-struct CacheFile;
 struct Main;
 struct Mesh;
 struct Object;
@@ -57,7 +56,7 @@ struct ImportSettings {
   bool validate_meshes = false;
   bool always_add_cache_reader = false;
 
-  CacheFile *cache_file = nullptr;
+  char filepath[/*FILE_MAX*/ 1024] = "";
 
   ImportSettings() = default;
 };

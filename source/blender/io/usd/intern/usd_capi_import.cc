@@ -10,7 +10,6 @@
 #include "usd_reader_prim.hh"
 #include "usd_reader_stage.hh"
 
-#include "BKE_cachefile.hh"
 #include "BKE_collection.hh"
 #include "BKE_context.hh"
 #include "BKE_global.hh"
@@ -110,7 +109,6 @@ struct ImportJobData {
   bool is_background_job;
   timeit::TimePoint start_time;
 
-  CacheFile *cache_file;
 };
 
 static void report_job_duration(const ImportJobData *data)
@@ -127,7 +125,6 @@ static void import_startjob(void *customdata, wmJobWorkerStatus *worker_status)
   data->was_canceled = false;
   data->archive = nullptr;
   data->start_time = timeit::Clock::now();
-  data->cache_file = nullptr;
 
   data->params.worker_status = worker_status;
 
@@ -172,29 +169,14 @@ static void import_startjob(void *customdata, wmJobWorkerStatus *worker_status)
     scene_scale *= pxr::UsdGeomGetStageMetersPerUnit(stage);
   }
 
-  /* Callback function to lazily create a cache file when converting
-   * time varying data. */
-  auto get_cache_file = [data, scene_scale]() {
-    if (!data->cache_file) {
-      data->cache_file = static_cast<CacheFile *>(
-          BKE_cachefile_add(data->bmain, BLI_path_basename(data->filepath)));
+  char abs_filepath[FILE_MAX];
+  STRNCPY(abs_filepath, data->filepath);
+  if (data->params.relative_path && !BLI_path_is_rel(abs_filepath)) {
+    BLI_path_rel(abs_filepath, BKE_main_blendfile_path_from_global());
+  }
 
-      /* Decrement the ID ref-count because it is going to be incremented for each
-       * modifier and constraint that it will be attached to, so since currently
-       * it is not used by anyone, its use count will off by one. */
-      id_us_min(&data->cache_file->id);
-
-      data->cache_file->is_sequence = data->params.is_sequence;
-      data->cache_file->scale = scene_scale;
-      STRNCPY(data->cache_file->filepath, data->filepath);
-      if (data->params.relative_path && !BLI_path_is_rel(data->cache_file->filepath)) {
-        BLI_path_rel(data->cache_file->filepath, BKE_main_blendfile_path_from_global());
-      }
-    }
-    return data->cache_file;
-  };
-
-  USDStageReader *archive = new USDStageReader(stage, data->params, get_cache_file);
+  USDStageReader *archive = new USDStageReader(
+      stage, data->params, abs_filepath, data->params.is_sequence, float(scene_scale));
   data->archive = archive;
 
   /* Ensure Python types for invoking hooks are registered. */
