@@ -119,7 +119,12 @@ IDNode *Depsgraph::add_id_node(ID *id, ID *id_cow_hint)
     id_hash.add_new(id, id_node);
     id_nodes.append(id_node);
 
-    id_type_exist[BKE_idtype_idcode_to_index(GS(id->name))] = 1;
+    /* Guard against removed ID types (e.g. ID_CU_LEGACY) whose CASE_IDINDEX
+     * was removed by the Blended chisel — BKE_idtype_idcode_to_index returns -1. */
+    const int id_type_index = BKE_idtype_idcode_to_index(GS(id->name));
+    if (id_type_index >= 0) {
+      id_type_exist[id_type_index] = 1;
+    }
   }
   return id_node;
 }

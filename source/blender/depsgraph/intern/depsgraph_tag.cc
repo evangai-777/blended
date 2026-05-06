@@ -868,6 +868,10 @@ void DEG_graph_id_type_tag(Depsgraph *depsgraph, short id_type)
     DEG_graph_id_type_tag(depsgraph, ID_SCE);
   }
   const int id_type_index = BKE_idtype_idcode_to_index(id_type);
+  /* Guard against removed ID types (e.g. ID_CU_LEGACY) whose CASE_IDINDEX was removed. */
+  if (id_type_index < 0) {
+    return;
+  }
   deg::Depsgraph *deg_graph = reinterpret_cast<deg::Depsgraph *>(depsgraph);
   deg_graph->id_type_updated[id_type_index] = 1;
 }
