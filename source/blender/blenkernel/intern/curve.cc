@@ -46,6 +46,7 @@
 #include "BKE_idtype.hh"
 #include "BKE_key.hh"
 #include "BKE_lib_id.hh"
+#include "BKE_main.hh"
 #include "BKE_lib_query.hh"
 #include "BKE_object_types.hh"
 #include "BKE_vfont.hh"
@@ -274,36 +275,8 @@ static void curve_blend_read_data(BlendDataReader *reader, ID *id)
   }
 }
 
-IDTypeInfo IDType_ID_CU_LEGACY = {
-    .id_code = Curve::id_type,
-    .id_filter = FILTER_ID_CU_LEGACY,
-    .dependencies_id_types = FILTER_ID_OB | FILTER_ID_MA | FILTER_ID_VF | FILTER_ID_KE,
-    .main_listbase_index = INDEX_ID_CU_LEGACY,
-    .struct_size = sizeof(Curve),
-    .name = "Curve",
-    .name_plural = N_("curves"),
-    .translation_context = BLT_I18NCONTEXT_ID_CURVE_LEGACY,
-    .flags = IDTYPE_FLAGS_APPEND_IS_REUSABLE,
-    .asset_type_info = nullptr,
-
-    .init_data = curve_init_data,
-    .copy_data = curve_copy_data,
-    .free_data = curve_free_data,
-    .make_local = nullptr,
-    .foreach_id = curve_foreach_id,
-    .foreach_cache = nullptr,
-    .foreach_path = nullptr,
-    .foreach_working_space_color = nullptr,
-    .owner_pointer_get = nullptr,
-
-    .blend_write = curve_blend_write,
-    .blend_read_data = curve_blend_read_data,
-    .blend_read_after_liblink = nullptr,
-
-    .blend_read_undo_preserve = nullptr,
-
-    .lib_override_apply_post = nullptr,
-};
+/* IDType_ID_CU_LEGACY removed — Blended 0.4.0. Registration callbacks still exist below
+ * for use by blenloader versioning passes (blend_read_data, blend_write). */
 
 void BKE_curve_editfont_free(Curve *cu)
 {
@@ -404,10 +377,23 @@ void BKE_curve_init(Curve *cu, const short curve_type)
 
 Curve *BKE_curve_add(Main *bmain, const char *name, int type)
 {
-  Curve *cu;
-
-  /* We cannot use #BKE_id_new here as we need some custom initialization code. */
-  cu = static_cast<Curve *>(BKE_libblock_alloc(bmain, ID_CU_LEGACY, name, 0));
+  /* ID_CU_LEGACY is removed from the IDType registry (no INIT_TYPE, no INDEX_ID_CU_LEGACY),
+   * so BKE_libblock_alloc would crash (size=0, null IDTypeInfo). Use the Scar 10 pattern:
+   * MEM_new runs the default constructor (Curve has DNA_DEFINE_CXX_METHODS + in-class
+   * initializers); insert into bmain->curves via the Scar 2 which_libbase routing. */
+  Curve *cu = MEM_new<Curve>(__func__);
+  BKE_libblock_runtime_ensure(cu->id);
+  *(reinterpret_cast<short *>(cu->id.name)) = ID_CU_LEGACY;
+  cu->id.us = 1;
+  {
+    ListBaseT<ID> *lb = which_libbase(bmain, ID_CU_LEGACY);
+    BKE_main_lock(bmain);
+    BLI_addtail(lb, cu);
+    BKE_id_new_name_validate(*bmain, *lb, cu->id, name, IDNewNameMode::RenameExistingNever, true);
+    bmain->is_memfile_undo_written = false;
+    BKE_main_unlock(bmain);
+  }
+  BKE_lib_libblock_session_uid_ensure(&cu->id);
 
   BKE_curve_init(cu, type);
 
