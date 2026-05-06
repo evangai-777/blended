@@ -56,8 +56,8 @@ carries a one-liner status per active item.
 
 ## Unreleased — 0.4.0
 
-Bucket 5 + 6 fossil removals. 9 ID types, 357 hits, same chisel pattern as 0.3.0. CI green (Windows x64, build #62, commit `7423dae`) — 7 of 9 types complete.
-Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEGACY ✓** → **ID_LS ✓** → **ID_MB ✓** → **ID_TE ✓** → ID_CU_LEGACY → ID_CF (last, needs design decision — see CLAUDE.md Key note 8).
+Bucket 5 + 6 fossil removals. 9 ID types, 357 hits, same chisel pattern as 0.3.0. CI green (Windows x64, build #62, commit `7423dae`) — 8 of 9 types complete.
+Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEGACY ✓** → **ID_LS ✓** → **ID_MB ✓** → **ID_TE ✓** → **ID_CU_LEGACY ✓** → ID_CF (last, needs design decision — see CLAUDE.md Key note 8).
 *(Order corrected in PR #126 fix — initial commit had ID_CF first, contradicting CLAUDE.md Key note 8. Scar 7.)*
 
 **Key notes:**
@@ -191,16 +191,18 @@ Resolves two deferred-debt items, syncs a stale version define, and adds two ope
 
 **Scar 2 applied:** `bmain->textures` kept as non-indexed listbase (not in `BKE_main_lists_get`). `which_libbase(ID_TE)` routing restored. Legacy versioning files (`versioning_250.cc`, `versioning_260.cc`, `versioning_280.cc`, `versioning_legacy.cc`) iterate `bmain->textures` to upgrade old texture data — without the field those file loads crash.
 
-### ID_CU_LEGACY — Legacy Curve
+### ID_CU_LEGACY — Legacy Curve ✓ complete
+
+*Session note (2026-05-06): True blast radius ~86 hits / 36 files vs. 74/33 pre-chisel estimate. Scar 2 applied (bmain->curves + which_libbase routing kept; 23+ versioning iterations). Scar 8 applied (DNA_DEFINE_CXX_METHODS kept in Curve #ifdef block; only id_type line removed). Scar 10 applied to BKE_curve_add (live callers: object.cc, Alembic NURBS, OBJ NURBS, mesh_convert.cc, rna_main_api.cc). Two depsgraph OOB guards added to add_id_node() and DEG_graph_id_type_tag() instead of no-op (legacy curves still created by importers). All case ID_CU_LEGACY: sites in editors/draw/blenkernel compile as-is since ID_CU_LEGACY remains a valid #define; those case statements left in place for correct runtime behavior. grep-miss sites: key.cc:173 FILTER_ID_CU_LEGACY in IDType_ID_KE.dependencies_id_types; rna_space.cc:3951 FILTER_ID_CU_LEGACY in asset browser geometry filter.*
 
 | Layer | Files touched | Status |
 |-------|--------------|--------|
-| `makesdna` | `DNA_ID_enums.h`, `DNA_curve_types.h` (id_type constexpr), `DNA_object_types.h` (macros shared w/ ID_MB) | ☐ |
-| `blenkernel` | `idtype.cc`, `main.cc`, `curve.cc`, `key.cc`, `material.cc`, `object.cc`, `mesh_convert.cc`, `lib_remap.cc`, `object_update.cc` | ☐ |
-| `makesrna` | `rna_ID.cc`, `rna_key.cc`, `rna_object.cc`, `rna_main_api.cc` | ☐ |
-| `editors` | `interface_icons.cc`, `interface_template_id.cc`, `object_data_transform.cc`, `object_edit.cc`, `render_opengl.cc`, `transform_convert_object_texspace.cc`, `outliner_draw.cc`, `outliner_select.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc` | ☐ |
-| `draw` | `overlay_bounds.hh`, `draw_resource.hh` | ☐ |
-| `depsgraph` | `depsgraph_tag.cc`, `deg_eval_copy_on_write.cc`, `deg_builder_relations.cc`, `deg_builder_nodes.cc` | ☐ |
+| `makesdna` | `DNA_ID_enums.h`, `DNA_curve_types.h` (id_type constexpr only; kept #ifdef/__cplusplus/DNA_DEFINE_CXX_METHODS), `DNA_object_types.h` (3 macros), `DNA_ID.h` (FILTER, INDEX, FILTER_ID_ALL) | ✓ |
+| `blenkernel` | `idtype.cc` (INIT_TYPE + both CASE_IDINDEX), `BKE_idtype.hh`, `main.cc` (CASE_ID_INDEX + lb[] only; kept which_libbase case), `curve.cc` (IDTypeInfo removed; BKE_curve_add Scar 10 fixed; BKE_main.hh added), `key.cc` (FILTER_ID_CU_LEGACY from dependencies_id_types) | ✓ |
+| `makesrna` | `rna_ID.cc` (enum item + FILTER_ID_CU_LEGACY filter item), `rna_space.cc` (geometry filter), `rna_main_api.cc` (rna_Main_curves_new + RNA_def_main_curves + RNA_MAIN_ID_TAG_FUNCS_DEF), `rna_main.cc` (listbase funcs + table entry), `rna_internal.hh` (declaration) | ✓ |
+| `editors` | No compile errors — all case ID_CU_LEGACY: sites compile as-is; kept for importer runtime correctness | ✓ |
+| `draw` | No compile errors | ✓ |
+| `depsgraph` | `depsgraph.cc` (add_id_node OOB guard), `depsgraph_tag.cc` (DEG_graph_id_type_tag OOB guard) | ✓ |
 
 ### ID_CF — CacheFile *(do last — needs design decision, see CLAUDE.md Key note 8)*
 

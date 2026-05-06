@@ -273,7 +273,7 @@ Property bags pretending to be first-class entities:
 
 | ID | Name | Status |
 |---|---|---|
-| `ID_CU_LEGACY` | Curve — tagged LEGACY by upstream, replaced by `ID_CV` | pending |
+| `ID_CU_LEGACY` | Curve — tagged LEGACY by upstream, replaced by `ID_CV` | ✓ 0.4.0 |
 | `ID_GD_LEGACY` | Old Grease Pencil — tagged LEGACY, replaced by `ID_GP` | ✓ 0.4.0 |
 
 Blender itself has marked these for replacement. Blended finishes the job.

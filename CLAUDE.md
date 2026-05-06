@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.3.0 (tagged). 0.4.0 in progress — CI green (Windows x64, build #62, commit `7423dae`). Bucket 5 + 6 fossil removals: `ID_PC` ✓ + `ID_SPK` ✓ + `ID_PA` ✓ + `ID_GD_LEGACY` ✓ + `ID_LS` ✓ + `ID_MB` ✓ + `ID_TE` ✓; next: `ID_CU_LEGACY`.
+**Current version:** Blended 0.3.0 (tagged). 0.4.0 in progress — CI green (Windows x64, build #62, commit `7423dae`). Bucket 5 + 6 fossil removals: `ID_PC` ✓ + `ID_SPK` ✓ + `ID_PA` ✓ + `ID_GD_LEGACY` ✓ + `ID_LS` ✓ + `ID_MB` ✓ + `ID_TE` ✓ + `ID_CU_LEGACY` ✓; next: `ID_CF` (design decision needed first).
 
 ---
 
@@ -25,7 +25,7 @@ The old approach (tiered UI, smart defaults, Emscripten) was prototyping toward 
 
 **`ID_SCR` and `ID_WM` removal — compile-clean, pending CI.** All layers merged. The blast radius was enormous — see Scar 2 below. Key architectural outcome: `bmain->screens` and `bmain->wm` kept as non-indexed runtime listbases; `ID_SCR_LEGACY` / `ID_WM_LEGACY` defines route through `which_libbase` for allocation but are excluded from `BKE_main_lists_get`. Branch: `claude/remove-id-scr-id-wm`. Layer-by-layer status in [`CHANGELOG.md`](CHANGELOG.md).
 
-**In progress: Bucket 5 + 6 fossil removals (0.4.x)** — `ID_CU_LEGACY`, `ID_GD_LEGACY`, `ID_TE`, `ID_MB`, `ID_LS`, `ID_CF`. `ID_PC` ✓. `ID_SPK` ✓. `ID_PA` ✓. `ID_GD_LEGACY` ✓. `ID_LS` ✓. `ID_MB` ✓. `ID_TE` ✓. Next: `ID_CU_LEGACY`. See roadmap in CHANGELOG.md.
+**In progress: Bucket 5 + 6 fossil removals (0.4.x)** — `ID_GD_LEGACY`, `ID_TE`, `ID_MB`, `ID_LS`, `ID_CF`. `ID_PC` ✓. `ID_SPK` ✓. `ID_PA` ✓. `ID_GD_LEGACY` ✓. `ID_LS` ✓. `ID_MB` ✓. `ID_TE` ✓. `ID_CU_LEGACY` ✓. Next: `ID_CF` (design decision needed — see Key note 8). See roadmap in CHANGELOG.md.
 
 Pattern for each pending layer: `grep -rn "ID_WS"` the directory, delete or redirect every hit. The breakage is the audit — follow the compile errors, don't paper over them.
 
@@ -98,7 +98,7 @@ Exact implementation depends on whether the blocks have ID-system runtime state 
 |-------|---------|-------------|--------|
 | ~~Done~~ | `ID_MB` — MetaBall | 60 hits / 32 files | ✓ |
 | ~~Done~~ | `ID_TE` — Texture | 76 hits / 45 files | ✓ |
-| Next | `ID_CU_LEGACY` — Legacy Curve | 74 hits / 33 files | ☐ (active migration path to ID_CV must survive) |
+| ~~Done~~ | `ID_CU_LEGACY` — Legacy Curve | 74 hits / 33 files | ✓ |
 | Last | `ID_CF` — CacheFile | 18 literal / ~50+ true | ☐ (needs design decision first) |
 
 ### Foundation Layer Roadmap
@@ -132,7 +132,11 @@ When the true blast radius diverges from the literal count, **update the CLAUDE.
 
 **The rule:** The pre-chisel grep count is a starting map, not a final answer. The editing phase is always the real audit. Always update the documentation to reflect the true scope — future sessions calibrate their estimates off these numbers. If they're systematically low, every future blast radius estimate will be wrong in the same direction.
 
-**ID_CU_LEGACY — 74 hits, 33 files**
+**ID_CU_LEGACY — ✓ COMPLETE (0.4.0)** *(true blast radius: ~86 hits / 36 files — Scar 2 applied, Scar 10 on BKE_curve_add, two depsgraph OOB guards)*
+
+> **Session note (2026-05-06):** 6 layers committed (editors/draw had zero compile errors; all `case ID_CU_LEGACY:` sites in those layers compile fine because `ID_CU_LEGACY` is kept as a `#define` with the same value). Key decisions vs. pre-chisel audit: (1) **Scar 2 mandatory** — `bmain->curves` field and `which_libbase` routing kept; 23+ `bmain->curves` iterations across versioning files 250–520 + `anim_data_bmain_utils.cc` + `anim_sys.cc`. (2) **Scar 8 applied correctly** — `DNA_curve_types.h` `Curve` struct has `DNA_DEFINE_CXX_METHODS(Curve)` AND `id_type` in the same `#ifdef __cplusplus` block; removed only the `id_type` line, kept the rest. (3) **Scar 10** — `BKE_curve_add` calls `BKE_libblock_alloc(bmain, ID_CU_LEGACY, ...)` which crashes after INIT_TYPE removal; applied MEM_new<Curve> + manual-insert pattern; added `BKE_main.hh` include; `BKE_curve_add` has live callers: object.cc (3 types), Alembic NURBS reader, OBJ NURBS importer, mesh_convert.cc, rna_main_api.cc. (4) **Active migration path preserved** — `blenfile_link_append.cc` converter code untouched; case statements in `object.cc`, `material.cc`, `key.cc`, etc. left in place because Alembic/OBJ importers still create legacy curve objects at runtime. (5) **Two depsgraph OOB guards added** — same crash path as ID_TE `build_texture()` but different fix: `add_id_node()` in `depsgraph.cc` guarded with `id_type_index >= 0` check (legacy curves still get IDNodes; only `id_type_exist` write skipped), `DEG_graph_id_type_tag()` in `depsgraph_tag.cc` guarded with early return. (6) **makesrna cleanup** — `rna_Main_curves_new()`, `RNA_def_main_curves()`, `RNA_MAIN_ID_TAG_FUNCS_DEF(curves)`, listbase funcs, and table entry all removed. `rna_space.cc:3951` `FILTER_ID_CU_LEGACY |` in geometry filter removed (same grep-miss pattern). (7) **`FILTER_ID_CU_LEGACY`** was the primary compile-error source in non-core files; once removed from `DNA_ID.h`, `key.cc:173` `.dependencies_id_types` and `rna_space.cc:3951` were the two non-obvious grep-miss sites. (8) Deferred: `rna_curve.cc` entirely intact — `CU_BEZIER/CU_POLY/CU_NURBS` RNA enum arrays stay since `DNA_curve_types.h` is kept for runtime use.
+
+**ID_CU_LEGACY — 74 hits, 33 files** *(pre-chisel record below)*
 
 Core definition:
 - `makesdna/DNA_ID_enums.h:133` — enum entry `ID_CU_LEGACY = MAKE_ID2('C', 'U')`
@@ -665,7 +669,7 @@ Additional files NOT in the literal grep (discovered 2026-04-29):
 
 **Key notes for the chisel session:**
 
-1. **These are true fossils — no runtime rescue.** Unlike ID_SCR/ID_WM, none of these stay as runtime structs. Full removal: enum, DNA `id_type` constexpr, `IDTypeInfo`, `INIT_TYPE`, `which_libbase` case, `BKE_main_lists_get` entry, and `bmain->*` field. **Exceptions — Scar 2 pattern applies to:** `ID_GD_LEGACY` (`bmain->gpencils` kept — OB_GPENCIL_LEGACY objects and annotations still use bGPdata at runtime), `ID_LS` (`bmain->linestyles` kept — legacy file loads populate it; see ID_LS review note), `ID_PA` (`bmain->particles` kept — blenloader versioning files `versioning_250` through `versioning_400` and `versioning_legacy` iterate it to upgrade old particle data on file load; see ID_PA correction note 2026-05-01), and `ID_TE` (`bmain->textures` kept — `versioning_250.cc`, `versioning_260.cc`, `versioning_280.cc`, `versioning_legacy.cc` iterate it to upgrade Blender Internal texture data in legacy files; see ID_TE session note 2026-05-05).
+1. **These are true fossils — no runtime rescue.** Unlike ID_SCR/ID_WM, none of these stay as runtime structs. Full removal: enum, DNA `id_type` constexpr, `IDTypeInfo`, `INIT_TYPE`, `which_libbase` case, `BKE_main_lists_get` entry, and `bmain->*` field. **Exceptions — Scar 2 pattern applies to:** `ID_GD_LEGACY` (`bmain->gpencils` kept — OB_GPENCIL_LEGACY objects and annotations still use bGPdata at runtime), `ID_LS` (`bmain->linestyles` kept — legacy file loads populate it; see ID_LS review note), `ID_PA` (`bmain->particles` kept — blenloader versioning files `versioning_250` through `versioning_400` and `versioning_legacy` iterate it to upgrade old particle data on file load; see ID_PA correction note 2026-05-01), and `ID_TE` (`bmain->textures` kept — `versioning_250.cc`, `versioning_260.cc`, `versioning_280.cc`, `versioning_legacy.cc` iterate it to upgrade Blender Internal texture data in legacy files; see ID_TE session note 2026-05-05), and `ID_CU_LEGACY` (`bmain->curves` kept — 23+ `bmain->curves` iterations across `versioning_250` through `versioning_520` and `versioning_legacy`, plus `anim_data_bmain_utils.cc` and `anim_sys.cc`; see ID_CU_LEGACY session note 2026-05-06).
 
 2. **ID_CU_LEGACY and ID_GD_LEGACY have active migration paths.** CU_LEGACY → CV (Curves), GD_LEGACY → GP (Grease Pencil v3). The migration code in `grease_pencil_convert_legacy.cc` and `blendfile_link_append.cc` must survive removal — only the type registration goes, not the converter.
 
@@ -677,9 +681,9 @@ Additional files NOT in the literal grep (discovered 2026-04-29):
 
 6. **`depsgraph.cc:160` had a `!= ID_PA` guard** in `clear_id_nodes_conditional` — resolved in 0.4.0. The two-pass teardown (scenes first, then everything-except-particles) ensured particle COW copies outlived the objects referencing them. With ID_PA gone, the guard was changed to `!= ID_SCE` (scenes already destroyed in pass 1 are caught by the `id_cow == nullptr` guard in pass 2).
 
-7. **Remaining chisel order (smallest blast radius first):** **ID_GD_LEGACY ✓** → **ID_LS ✓** → **ID_MB ✓** → **ID_TE ✓** → ID_CU_LEGACY (74) → ID_CF (last, design decision). ~74 hits across 1 type remaining. ID_PC (21) ✓ 0.4.0. ID_SPK (23) ✓ 0.4.0. ID_PA (35) ✓ 0.4.0. ID_GD_LEGACY (56) ✓ 0.4.0. ID_LS (~50) ✓ 0.4.0. ID_MB (~130+) ✓ 0.4.0. ID_TE (~76) ✓ 0.4.0. ID_CF deferred — see note 8.
+7. **Remaining chisel order (smallest blast radius first):** **ID_GD_LEGACY ✓** → **ID_LS ✓** → **ID_MB ✓** → **ID_TE ✓** → **ID_CU_LEGACY ✓** → ID_CF (last, design decision). 0 types remaining. ID_PC (21) ✓ 0.4.0. ID_SPK (23) ✓ 0.4.0. ID_PA (35) ✓ 0.4.0. ID_GD_LEGACY (56) ✓ 0.4.0. ID_LS (~50) ✓ 0.4.0. ID_MB (~130+) ✓ 0.4.0. ID_TE (~76) ✓ 0.4.0. ID_CU_LEGACY (~86) ✓ 0.4.0. ID_CF deferred — see note 8.
 
-8. **ID_CF is architecturally entangled — do it last or separately.** The literal grep count (18) dramatically understates the true blast radius. `CacheFile` as a struct is woven into: the Alembic importer (`io/alembic/`), the USD importer (`io/usd/`), the Mesh Sequence Cache modifier (`MOD_meshsequencecache.cc`), the constraint system, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. The Mesh Sequence Cache modifier holds a `CacheFile *` ID pointer so multiple objects can share one cache reference — removing the ID type means deciding what replaces that pointer. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI builds, so breakage here will surface. **Revised chisel order: ID_TE ✓ → ID_CU_LEGACY → ID_CF (last, needs design decision). ID_PC ✓ (0.4.0). ID_SPK ✓ (0.4.0). ID_PA ✓ (0.4.0). ID_GD_LEGACY ✓ (0.4.0). ID_LS ✓ (0.4.0). ID_MB ✓ (0.4.0). ID_TE ✓ (0.4.0).** The open question: does the cache-file reference mechanism get inlined into the modifier/constraint DNA per-instance, or does CacheFile stay as a non-ID struct in a non-indexed listbase (like ID_SCR_LEGACY/ID_WM_LEGACY pattern)? Answer this before chiseling ID_CF.
+8. **ID_CF is architecturally entangled — do it last or separately.** The literal grep count (18) dramatically understates the true blast radius. `CacheFile` as a struct is woven into: the Alembic importer (`io/alembic/`), the USD importer (`io/usd/`), the Mesh Sequence Cache modifier (`MOD_meshsequencecache.cc`), the constraint system, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. The Mesh Sequence Cache modifier holds a `CacheFile *` ID pointer so multiple objects can share one cache reference — removing the ID type means deciding what replaces that pointer. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI builds, so breakage here will surface. **Revised chisel order: ID_TE ✓ → ID_CU_LEGACY ✓ → ID_CF (last, needs design decision). ID_PC ✓ (0.4.0). ID_SPK ✓ (0.4.0). ID_PA ✓ (0.4.0). ID_GD_LEGACY ✓ (0.4.0). ID_LS ✓ (0.4.0). ID_MB ✓ (0.4.0). ID_TE ✓ (0.4.0). ID_CU_LEGACY ✓ (0.4.0).** The open question: does the cache-file reference mechanism get inlined into the modifier/constraint DNA per-instance, or does CacheFile stay as a non-ID struct in a non-indexed listbase (like ID_SCR_LEGACY/ID_WM_LEGACY pattern)? Answer this before chiseling ID_CF.
 
 ---
 
@@ -768,7 +772,7 @@ make check_mypy     # Python type checking
 ### Datablock Cuts in Progress (BLENDED.md §10)
 Target: 39 → ~19 ID types.
 - **Bucket 4 (UI state, remove):** `ID_WS` ✓ (0.2.0), `ID_SCR` ✓ (0.3.0 WIP), `ID_WM` ✓ (0.3.0 WIP)
-- **Bucket 5 (upstream deprecations, finish):** `ID_CU_LEGACY`, `ID_GD_LEGACY` ✓ (0.4.0)
+- **Bucket 5 (upstream deprecations, finish):** `ID_CU_LEGACY` ✓ (0.4.0), `ID_GD_LEGACY` ✓ (0.4.0)
 - **Bucket 6 (fossils, cut):** `ID_CF` — pending (design decision); `ID_PC` ✓ (0.4.0); `ID_SPK` ✓ (0.4.0); `ID_PA` ✓ (0.4.0); `ID_LS` ✓ (0.4.0); `ID_MB` ✓ (0.4.0); `ID_TE` ✓ (0.4.0)
 
 ---
