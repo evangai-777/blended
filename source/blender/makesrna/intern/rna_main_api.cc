@@ -762,7 +762,6 @@ RNA_MAIN_ID_TAG_FUNCS_DEF(grease_pencils, grease_pencils, ID_GP)
 RNA_MAIN_ID_TAG_FUNCS_DEF(movieclips, movieclips, ID_MC)
 RNA_MAIN_ID_TAG_FUNCS_DEF(masks, masks, ID_MSK)
 
-RNA_MAIN_ID_TAG_FUNCS_DEF(cachefiles, cachefiles, ID_CF)
 RNA_MAIN_ID_TAG_FUNCS_DEF(lightprobes, lightprobes, ID_LP)
 RNA_MAIN_ID_TAG_FUNCS_DEF(hair_curves, hair_curves, ID_CV)
 RNA_MAIN_ID_TAG_FUNCS_DEF(pointclouds, pointclouds, ID_PT)
@@ -1702,21 +1701,6 @@ void RNA_def_main_palettes(BlenderRNA *brna, PropertyRNA *cprop)
       func, "do_ui_user", true, "", "Make sure interface does not reference this palette");
 
   func = RNA_def_function(srna, "tag", "rna_Main_palettes_tag");
-  parm = RNA_def_boolean(func, "value", false, "Value", "");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-}
-void RNA_def_main_cachefiles(BlenderRNA *brna, PropertyRNA *cprop)
-{
-  StructRNA *srna;
-  FunctionRNA *func;
-  PropertyRNA *parm;
-
-  RNA_def_property_srna(cprop, "BlendDataCacheFiles");
-  srna = RNA_def_struct(brna, "BlendDataCacheFiles", nullptr);
-  RNA_def_struct_sdna(srna, "Main");
-  RNA_def_struct_ui_text(srna, "Main Cache Files", "Collection of cache files");
-
-  func = RNA_def_function(srna, "tag", "rna_Main_cachefiles_tag");
   parm = RNA_def_boolean(func, "value", false, "Value", "");
   RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
 }

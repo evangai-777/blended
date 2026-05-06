@@ -4010,7 +4010,6 @@ static RNAProcessItem PROCESS_ITEMS[] = {
     {"rna_asset.cc", nullptr, RNA_def_asset},
     {"rna_boid.cc", nullptr, RNA_def_boid},
     {"rna_brush.cc", nullptr, RNA_def_brush},
-    {"rna_cachefile.cc", nullptr, RNA_def_cachefile},
     {"rna_camera.cc", "rna_camera_api.cc", RNA_def_camera},
     {"rna_cloth.cc", nullptr, RNA_def_cloth},
     {"rna_collection.cc", nullptr, RNA_def_collections},

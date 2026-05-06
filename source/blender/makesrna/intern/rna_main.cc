@@ -150,7 +150,6 @@ static bool rna_MainColorspace_is_missing_opencolorio_config_get(PointerRNA *ptr
 RNA_MAIN_LISTBASE_FUNCS_DEF(actions)
 RNA_MAIN_LISTBASE_FUNCS_DEF(armatures)
 RNA_MAIN_LISTBASE_FUNCS_DEF(brushes)
-RNA_MAIN_LISTBASE_FUNCS_DEF(cachefiles)
 RNA_MAIN_LISTBASE_FUNCS_DEF(cameras)
 RNA_MAIN_LISTBASE_FUNCS_DEF(collections)
 RNA_MAIN_LISTBASE_FUNCS_DEF(fonts)
@@ -453,12 +452,6 @@ void RNA_def_main(BlenderRNA *brna)
        RNA_def_main_movieclips},
       {"masks", "Mask", "rna_Main_masks_begin", "Masks", "Masks data-blocks", RNA_def_main_masks},
 
-      {"cache_files",
-       "CacheFile",
-       "rna_Main_cachefiles_begin",
-       "Cache Files",
-       "Cache Files data-blocks",
-       RNA_def_main_cachefiles},
       {"lightprobes",
        "LightProbe",
        "rna_Main_lightprobes_begin",

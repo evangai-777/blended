@@ -853,7 +853,6 @@ static const EnumPropertyItem grease_pencil_build_time_mode_items[] = {
 #  include "BLI_string.h"
 #  include "BLI_string_utf8.h"
 
-#  include "BKE_cachefile.hh"
 #  include "BKE_compute_contexts.hh"
 #  include "BKE_context.hh"
 #  include "BKE_curveprofile.h"
@@ -7060,11 +7059,9 @@ static void rna_def_modifier_meshseqcache(BlenderRNA *brna)
 
   RNA_define_lib_overridable(true);
 
-  prop = RNA_def_property(srna, "cache_file", PROP_POINTER, PROP_NONE);
-  RNA_def_property_pointer_sdna(prop, nullptr, "cache_file");
-  RNA_def_property_struct_type(prop, "CacheFile");
-  RNA_def_property_ui_text(prop, "Cache File", "");
-  RNA_def_property_flag(prop, PROP_EDITABLE | PROP_ID_SELF_CHECK);
+  prop = RNA_def_property(srna, "filepath", PROP_STRING, PROP_FILEPATH);
+  RNA_def_property_string_sdna(prop, nullptr, "filepath");
+  RNA_def_property_ui_text(prop, "File Path", "Path to the Alembic or USD archive");
   RNA_def_property_update(prop, 0, "rna_Modifier_dependency_update");
 
   prop = RNA_def_property(srna, "object_path", PROP_STRING, PROP_NONE);
