@@ -2329,20 +2329,36 @@ enum MeshSeqCacheModifierReadFlag {
 struct MeshSeqCacheModifierData {
   ModifierData modifier;
 
-  struct CacheFile *cache_file = nullptr;
+  /* Path to the Alembic/USD archive file (replaces CacheFile ID reference). */
+  char filepath[/*FILE_MAX*/ 1024] = "";
   char object_path[/*FILE_MAX*/ 1024] = "";
 
   /** #MeshSeqCacheModifierReadFlag. */
   char read_flag = MOD_MESHSEQ_READ_VERT | MOD_MESHSEQ_READ_POLY | MOD_MESHSEQ_READ_UV |
                    MOD_MESHSEQ_READ_COLOR | MOD_MESHSEQ_INTERPOLATE_VERTICES |
                    MOD_MESHSEQ_READ_ATTRIBUTES;
-  char _pad[3] = {};
 
+  char is_sequence = false;
+  char override_frame = false;
+  char type = 0; /* eCacheFileType: 1=Alembic, 2=USD */
+  char velocity_unit = 0; /* CACHEFILE_VELOCITY_UNIT_FRAME or CACHEFILE_VELOCITY_UNIT_SECOND */
+
+  float frame = 0.0f;
+  float frame_offset = 0.0f;
+  float scale = 1.0f;
   float velocity_scale = 1.0f;
+
+  char forward_axis = 0;
+  char up_axis = 0;
+  char _pad[2] = {};
+
+  char velocity_name[64] = "";
 
   /* Runtime. */
   struct CacheReader *reader = nullptr;
   char reader_object_path[/*FILE_MAX*/ 1024] = "";
+  void *archive_handle = nullptr;
+  char archive_handle_filepath[/*FILE_MAX*/ 1024] = "";
 };
 
 /** Surface Deform modifier flags. */

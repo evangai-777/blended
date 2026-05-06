@@ -27,7 +27,6 @@
 namespace blender {
 
 struct BoneCollection;
-struct CacheFile;
 struct Camera;
 struct Collection;
 struct FCurve;
@@ -275,7 +274,6 @@ class DepsgraphNodeBuilder : public DepsgraphBuilder {
   virtual void build_image(Image *image);
   /** Recursively build graph for world. */
   virtual void build_world(World *world);
-  virtual void build_cachefile(CacheFile *cache_file);
   virtual void build_mask(Mask *mask);
   virtual void build_movieclip(MovieClip *clip);
   virtual void build_lightprobe(LightProbe *probe);

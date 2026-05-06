@@ -117,10 +117,6 @@ void DepsgraphRelationBuilder::build_view_layer(Scene *scene,
   if (scene->world != nullptr) {
     build_world(scene->world);
   }
-  /* Cache file. */
-  for (CacheFile &cachefile : bmain_->cachefiles) {
-    build_cachefile(&cachefile);
-  }
   /* Masks. */
   for (Mask &mask : bmain_->masks) {
     build_mask(&mask);

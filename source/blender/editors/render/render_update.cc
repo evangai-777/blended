@@ -11,7 +11,6 @@
 
 #include "DNA_anim_types.h"
 #include "DNA_brush_types.h"
-#include "DNA_cachefile_types.h"
 #include "DNA_light_types.h"
 #include "DNA_material_types.h"
 #include "DNA_node_types.h"

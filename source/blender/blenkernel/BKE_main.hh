@@ -76,14 +76,12 @@ struct GreasePencil;
 struct MovieClip;
 struct Mask;
 struct FreestyleLineStyle;
-struct CacheFile;
 struct WorkSpace;
 struct Curves;
 struct PointCloud;
 struct Volume;
 
 struct Brush;
-struct CacheFile;
 struct Camera;
 struct Collection;
 struct Curve;
@@ -395,7 +393,6 @@ struct Main : NonCopyable, NonMovable {
   ListBaseT<ParticleSettings> particles = {};
   /** Legacy Blender Internal textures — not project data (Scar 2). */
   ListBaseT<Tex> textures = {};
-  ListBaseT<CacheFile> cachefiles = {};
   /**
    * \note The name `hair_curves` is chosen to be different than `curves`,
    * but they are generic curve data-blocks, not just for hair.

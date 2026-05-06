@@ -139,7 +139,6 @@ void BKE_main_clear(Main &bmain)
         CASE_ID_INDEX(INDEX_ID_MA);
 
         CASE_ID_INDEX(INDEX_ID_WO);
-        CASE_ID_INDEX(INDEX_ID_CF);
         CASE_ID_INDEX(INDEX_ID_SIM);
         CASE_ID_INDEX(INDEX_ID_KE);
         CASE_ID_INDEX(INDEX_ID_AR);
@@ -1033,8 +1032,6 @@ ListBaseT<ID> *which_libbase(Main *bmain, short type)
       return &(bmain->particles.cast<ID>());
     case ID_PAL:
       return &(bmain->palettes.cast<ID>());
-    case ID_CF:
-      return &(bmain->cachefiles.cast<ID>());
     case ID_CV:
       return &(bmain->hair_curves.cast<ID>());
     case ID_PT:
@@ -1076,7 +1073,6 @@ MainListsArray BKE_main_lists_get(Main &bmain)
 
   lb[INDEX_ID_AR] = &(bmain.armatures.cast<ID>());
 
-  lb[INDEX_ID_CF] = &(bmain.cachefiles.cast<ID>());
   lb[INDEX_ID_ME] = &(bmain.meshes.cast<ID>());
   lb[INDEX_ID_CV] = &(bmain.hair_curves.cast<ID>());
   lb[INDEX_ID_PT] = &(bmain.pointclouds.cast<ID>());

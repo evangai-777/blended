@@ -827,58 +827,6 @@ void rna_template_list(Layout *layout,
                       flags);
 }
 
-static void rna_template_cache_file(Layout *layout,
-                                    bContext *C,
-                                    PointerRNA *ptr,
-                                    const char *propname)
-{
-  PropertyRNA *prop = RNA_struct_find_property(ptr, propname);
-
-  if (!prop) {
-    RNA_warning_bare("UILayout.template_cache_file(): property not found: %s.%s",
-                     RNA_struct_identifier(ptr->type),
-                     propname);
-    return;
-  }
-
-  ui::template_cache_file(layout, C, ptr, propname);
-}
-
-static void rna_template_cache_file_velocity(Layout *layout, PointerRNA *ptr, const char *propname)
-{
-  PointerRNA fileptr;
-  if (!ui::template_cache_file_pointer(ptr, propname, &fileptr)) {
-    return;
-  }
-
-  ui::template_cache_file_velocity(layout, &fileptr);
-}
-
-static void rna_template_cache_file_time_settings(Layout *layout,
-                                                  PointerRNA *ptr,
-                                                  const char *propname)
-{
-  PointerRNA fileptr;
-  if (!ui::template_cache_file_pointer(ptr, propname, &fileptr)) {
-    return;
-  }
-
-  ui::template_cache_file_time_settings(layout, &fileptr);
-}
-
-static void rna_template_uilist_flags(Layout *layout,
-                                      bContext *C,
-                                      PointerRNA *ptr,
-                                      const char *propname)
-{
-  PointerRNA fileptr;
-  if (!ui::template_cache_file_pointer(ptr, propname, &fileptr)) {
-    return;
-  }
-
-  ui::template_uilist_flags(layout, C, &fileptr);
-}
-
 static void rna_uiTemplatePathBuilder(Layout *layout,
                                       PointerRNA *ptr,
                                       const char *propname,
@@ -2403,27 +2351,6 @@ void RNA_api_ui_layout(StructRNA *srna)
   RNA_def_function_flag(func, FUNC_USE_CONTEXT);
   RNA_def_float_array(
       func, "color", 4, node_socket_color_default, 0.0f, 1.0f, "Color", "", 0.0f, 1.0f);
-
-  func = RNA_def_function(srna, "template_cache_file", "rna_template_cache_file");
-  RNA_def_function_ui_description(
-      func, "Item(s). User interface for selecting cache files and their source paths");
-  RNA_def_function_flag(func, FUNC_USE_CONTEXT);
-  api_ui_item_rna_common(func);
-
-  func = RNA_def_function(
-      srna, "template_cache_file_velocity", "rna_template_cache_file_velocity");
-  RNA_def_function_ui_description(func, "Show cache files velocity properties");
-  api_ui_item_rna_common(func);
-
-  func = RNA_def_function(
-      srna, "template_cache_file_time_settings", "rna_template_cache_file_time_settings");
-  RNA_def_function_ui_description(func, "Show cache files time settings");
-  api_ui_item_rna_common(func);
-
-  func = RNA_def_function(srna, "template_cache_file_layers", "rna_template_uilist_flags");
-  RNA_def_function_ui_description(func, "Show cache files override layers properties");
-  RNA_def_function_flag(func, FUNC_USE_CONTEXT);
-  api_ui_item_rna_common(func);
 
   func = RNA_def_function(srna, "template_recent_files", "template_recent_files");
   RNA_def_function_ui_description(func, "Show list of recently saved .blend files");

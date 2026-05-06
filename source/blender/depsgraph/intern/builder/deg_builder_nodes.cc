@@ -23,7 +23,6 @@
 #include "DNA_action_types.h"
 #include "DNA_anim_types.h"
 #include "DNA_armature_types.h"
-#include "DNA_cachefile_types.h"
 #include "DNA_camera_types.h"
 #include "DNA_collection_types.h"
 #include "DNA_constraint_types.h"
@@ -53,7 +52,6 @@
 #include "BKE_animsys.h"
 #include "BKE_armature.hh"
 #include "BKE_bake_geometry_nodes_modifier.hh"
-#include "BKE_cachefile.hh"
 #include "BKE_collection.hh"
 #include "BKE_constraint.h"
 #include "BKE_curve.hh"
@@ -632,9 +630,6 @@ void DepsgraphNodeBuilder::build_id(ID *id, const bool force_be_visible)
       break;
     case ID_TXT:
       /* Not a part of dependency graph. */
-      break;
-    case ID_CF:
-      build_cachefile(id_cast<CacheFile *>(id));
       break;
     case ID_SCE:
       build_scene_parameters(id_cast<Scene *>(id));
@@ -2123,28 +2118,6 @@ void DepsgraphNodeBuilder::build_image(Image *image)
   build_idproperties(image->id.system_properties);
   add_operation_node(
       &image->id, NodeType::GENERIC_DATABLOCK, OperationCode::GENERIC_DATABLOCK_UPDATE);
-}
-
-void DepsgraphNodeBuilder::build_cachefile(CacheFile *cache_file)
-{
-  if (built_map_.check_is_built_and_tag(cache_file)) {
-    return;
-  }
-  ID *cache_file_id = &cache_file->id;
-  add_id_node(cache_file_id);
-  CacheFile *cache_file_cow = get_cow_datablock(cache_file);
-  build_idproperties(cache_file_id->properties);
-  build_idproperties(cache_file_id->system_properties);
-  /* Animation, */
-  build_animdata(cache_file_id);
-  build_parameters(cache_file_id);
-  /* Cache evaluation itself. */
-  add_operation_node(cache_file_id,
-                     NodeType::CACHE,
-                     OperationCode::FILE_CACHE_UPDATE,
-                     [bmain = bmain_, cache_file_cow](blender::Depsgraph *depsgraph) {
-                       BKE_cachefile_eval(bmain, depsgraph, cache_file_cow);
-                     });
 }
 
 void DepsgraphNodeBuilder::build_mask(Mask *mask)

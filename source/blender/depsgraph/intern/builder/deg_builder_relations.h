@@ -32,7 +32,6 @@
 
 namespace blender {
 
-struct CacheFile;
 struct Camera;
 struct Collection;
 struct EffectorWeights;
@@ -248,7 +247,6 @@ class DepsgraphRelationBuilder : public DepsgraphBuilder {
   virtual void build_freestyle_lineset(FreestyleLineSet *fls);
   virtual void build_texture(Tex *tex);
   virtual void build_image(Image *image);
-  virtual void build_cachefile(CacheFile *cache_file);
   virtual void build_mask(Mask *mask);
   virtual void build_movieclip(MovieClip *clip);
   virtual void build_lightprobe(LightProbe *probe);

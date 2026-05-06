@@ -19,7 +19,6 @@
 namespace blender {
 
 struct AnimData;
-struct CacheFile;
 struct FCurve;
 struct GreasePencil;
 struct GreasePencilLayer;
@@ -205,11 +204,6 @@ void action_to_keylist(
 /* Object */
 void ob_to_keylist(
     bDopeSheet *ads, Object *ob, AnimKeylist *keylist, int saction_flag, float2 range);
-/* Cache File */
-void cachefile_to_keylist(bDopeSheet *ads,
-                          CacheFile *cache_file,
-                          AnimKeylist *keylist,
-                          int saction_flag);
 /* Scene */
 void scene_to_keylist(
     bDopeSheet *ads, Scene *sce, AnimKeylist *keylist, int saction_flag, float2 range);

@@ -722,7 +722,6 @@ static const EnumPropertyItem eevee_resolution_scale_items[] = {
 #  include "BLI_string_utils.hh"
 
 #  include "DNA_anim_types.h"
-#  include "DNA_cachefile_types.h"
 #  include "DNA_color_types.h"
 #  include "DNA_grease_pencil_types.h"
 #  include "DNA_linestyle_types.h"

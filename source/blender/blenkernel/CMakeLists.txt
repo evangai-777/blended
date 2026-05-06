@@ -71,7 +71,6 @@ set(SRC
   intern/bpath.cc
   intern/brush.cc
   intern/bvhutils.cc
-  intern/cachefile.cc
   intern/callbacks.cc
   intern/camera.cc
   intern/cloth.cc
@@ -352,7 +351,6 @@ set(SRC
   BKE_bpath.hh
   BKE_brush.hh
   BKE_bvhutils.hh
-  BKE_cachefile.hh
   BKE_callbacks.hh
   BKE_camera.h
   BKE_ccg.hh

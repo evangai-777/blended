@@ -8,7 +8,6 @@
 #include "usd_reader_xform.hh"
 
 #include "BKE_constraint.h"
-#include "BKE_lib_id.hh"
 #include "BKE_object.hh"
 
 #include "BLI_math_matrix.hh"
@@ -40,7 +39,7 @@ void USDXformReader::read_object_data(Main * /*bmain*/, const pxr::UsdTimeCode t
 
   read_matrix(transform_from_usd, time, settings_->scene_scale, &is_constant);
 
-  if (!is_constant && settings_->get_cache_file) {
+  if (!is_constant && settings_->filepath[0] != '\0') {
     bConstraint *con = BKE_constraint_add_for_object(
         object_, nullptr, CONSTRAINT_TYPE_TRANSFORM_CACHE);
     bTransformCacheConstraint *data = static_cast<bTransformCacheConstraint *>(con->data);
@@ -48,9 +47,9 @@ void USDXformReader::read_object_data(Main * /*bmain*/, const pxr::UsdTimeCode t
     pxr::SdfPath object_path = use_parent_xform_ ? prim_.GetParent().GetPath() : this->prim_path();
 
     STRNCPY(data->object_path, object_path.GetAsString().c_str());
-
-    data->cache_file = settings_->get_cache_file();
-    id_us_plus(&data->cache_file->id);
+    STRNCPY(data->filepath, settings_->filepath);
+    data->type = char(CACHEFILE_TYPE_USD);
+    data->scale = settings_->scale;
   }
 
   BKE_object_apply_mat4(object_, transform_from_usd.ptr(), true, false);

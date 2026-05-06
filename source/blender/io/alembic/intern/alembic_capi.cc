@@ -32,7 +32,6 @@
 #include "DNA_object_types.h"
 #include "DNA_scene_types.h"
 
-#include "BKE_cachefile.hh"
 #include "BKE_context.hh"
 #include "BKE_global.hh"
 #include "BKE_layer.hh"
@@ -395,8 +394,6 @@ static std::pair<bool, AbcObjectReader *> visit_object(
     readers.push_back(reader);
     reader->incref();
 
-    add_object_path(&settings.cache_file->object_paths, object);
-
     /* We can now assign this reader as parent for our children. */
     if (nonclaiming_child_readers.size() + assign_as_parent.size() > 0) {
       for (AbcObjectReader *child_reader : nonclaiming_child_readers) {
@@ -508,20 +505,9 @@ static void import_file(ImportJobData *data, const char *filepath, float progres
     return;
   }
 
-  CacheFile *cache_file = static_cast<CacheFile *>(
-      BKE_cachefile_add(data->bmain, BLI_path_basename(filepath)));
-
-  /* Decrement the ID ref-count because it is going to be incremented for each
-   * modifier and constraint that it will be attached to, so since currently
-   * it is not used by anyone, its use count will be off by one. */
-  id_us_min(&cache_file->id);
-
-  cache_file->is_sequence = data->settings.is_sequence;
-  cache_file->scale = data->settings.scale;
-  STRNCPY(cache_file->filepath, filepath);
+  STRNCPY(data->settings.filepath, filepath);
 
   data->archives.append(archive);
-  data->settings.cache_file = cache_file;
   data->settings.blender_archive_version_prior_44 = archive->is_blender_archive_version_prior_44();
 
   *data->do_update = true;

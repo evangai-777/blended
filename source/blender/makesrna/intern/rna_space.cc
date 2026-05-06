@@ -241,12 +241,6 @@ const EnumPropertyItem rna_enum_space_file_browse_mode_items[] = {
    "Edit timings for all Grease Pencil sketches in file"}
 #define SACT_ITEM_MASK \
   {SACTCONT_MASK, "MASK", ICON_MOD_MASK, "Mask", "Edit timings for Mask Editor splines"}
-#define SACT_ITEM_CACHEFILE \
-  {SACTCONT_CACHEFILE, \
-   "CACHEFILE", \
-   ICON_FILE, \
-   "Cache File", \
-   "Edit timings for Cache File data-blocks"}
 #define SACT_ITEM_TIMELINE \
   {SACTCONT_TIMELINE, \
    "TIMELINE", \
@@ -264,7 +258,6 @@ static EnumPropertyItem rna_enum_space_action_mode_all_items[] = {
     SACT_ITEM_SHAPEKEY,
     SACT_ITEM_GPENCIL,
     SACT_ITEM_MASK,
-    SACT_ITEM_CACHEFILE,
     SACT_ITEM_TIMELINE,
     {0, nullptr, 0, nullptr, nullptr},
 };
@@ -274,7 +267,6 @@ static EnumPropertyItem rna_enum_space_action_ui_mode_items[] = {
     SACT_ITEM_SHAPEKEY,
     SACT_ITEM_GPENCIL,
     SACT_ITEM_MASK,
-    SACT_ITEM_CACHEFILE,
     {0, nullptr, 0, nullptr, nullptr},
 };
 #endif
@@ -290,7 +282,6 @@ const EnumPropertyItem rna_enum_space_action_mode_items[] = {
 #undef SACT_ITEM_SHAPEKEY
 #undef SACT_ITEM_GPENCIL
 #undef SACT_ITEM_MASK
-#undef SACT_ITEM_CACHEFILE
 #undef SACT_ITEM_TIMELINE
 
 #define SI_ITEM_VIEW(identifier, name, icon) \
@@ -3970,7 +3961,7 @@ static IDFilterEnumPropertyItem rna_enum_space_file_id_filter_categories[] = {
      "Environment",
      "Show worlds, lights and cameras"},
     {FILTER_ID_BR | FILTER_ID_PAL |
-         FILTER_ID_TXT | FILTER_ID_VF | FILTER_ID_CF,
+         FILTER_ID_TXT | FILTER_ID_VF,
      "category_misc",
      ICON_GREASEPENCIL,
      "Miscellaneous",

@@ -32,7 +32,6 @@ const EnumPropertyItem rna_enum_id_type_items[] = {
     {ID_AC, "ACTION", ICON_ACTION, "Action", ""},
     {ID_AR, "ARMATURE", ICON_ARMATURE_DATA, "Armature", ""},
     {ID_BR, "BRUSH", ICON_BRUSH_DATA, "Brush", ""},
-    {ID_CF, "CACHEFILE", ICON_FILE, "Cache File", ""},
     {ID_CA, "CAMERA", ICON_CAMERA_DATA, "Camera", ""},
     {ID_GR, "COLLECTION", ICON_OUTLINER_COLLECTION, "Collection", ""},
     {ID_CV, "CURVES", ICON_CURVES_DATA, "Curves", ""},
@@ -116,7 +115,6 @@ const IDFilterEnumPropertyItem rna_enum_id_type_filter_items[] = {
      "Show Armature data-blocks"},
     {FILTER_ID_BR, "filter_brush", ICON_BRUSH_DATA, "Brushes", "Show Brushes data-blocks"},
     {FILTER_ID_CA, "filter_camera", ICON_CAMERA_DATA, "Cameras", "Show Camera data-blocks"},
-    {FILTER_ID_CF, "filter_cachefile", ICON_FILE, "Cache Files", "Show Cache File data-blocks"},
     {FILTER_ID_GP,
      "filter_grease_pencil",
      ICON_GREASEPENCIL,
@@ -349,9 +347,6 @@ short RNA_type_to_ID_code(const StructRNA *type)
   if (base_type == RNA_Brush) {
     return ID_BR;
   }
-  if (base_type == RNA_CacheFile) {
-    return ID_CF;
-  }
   if (base_type == RNA_Camera) {
     return ID_CA;
   }
@@ -445,8 +440,6 @@ StructRNA *ID_code_to_RNA_type(short idcode)
       return RNA_Brush;
     case ID_CA:
       return RNA_Camera;
-    case ID_CF:
-      return RNA_CacheFile;
     case ID_CU_LEGACY:
       return RNA_Curve;
 

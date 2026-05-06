@@ -25,7 +25,6 @@
 
 #include "DNA_anim_types.h"
 #include "DNA_armature_types.h"
-#include "DNA_cachefile_types.h"
 #include "DNA_camera_types.h"
 #include "DNA_curves_types.h"
 #include "DNA_gpencil_legacy_types.h"
@@ -1952,93 +1951,6 @@ static bAnimChannelType ACF_DSTEX = {
     /*has_setting*/ acf_generic_dataexpand_setting_valid,
     /*setting_flag*/ acf_dstex_setting_flag,
     /*setting_ptr*/ acf_dstex_setting_ptr,
-    /*setting_post_update*/ nullptr,
-};
-
-/* Camera Expander  ------------------------------------------- */
-
-/* TODO: just get this from RNA? */
-static int acf_dscachefile_icon(bAnimListElem *ale)
-{
-  UNUSED_VARS(ale);
-  return ICON_FILE;
-}
-
-/* Get the appropriate flag(s) for the setting when it is valid. */
-static int acf_dscachefile_setting_flag(bAnimContext *ac,
-                                        eAnimChannel_Settings setting,
-                                        bool *r_neg)
-{
-  /* Clear extra return data first. */
-  *r_neg = false;
-
-  switch (setting) {
-    case ACHANNEL_SETTING_EXPAND: /* expanded */
-      return CACHEFILE_DS_EXPAND;
-
-    case ACHANNEL_SETTING_MUTE: /* mute (only in NLA) */
-      return ADT_NLA_EVAL_OFF;
-
-    case ACHANNEL_SETTING_VISIBLE: /* visible (only in Graph Editor) */
-      *r_neg = true;
-      return ADT_CURVES_NOT_VISIBLE;
-
-    case ACHANNEL_SETTING_SELECT: /* selected */
-      return ADT_UI_SELECTED;
-
-    default: /* unsupported */
-      return 0;
-  }
-
-  UNUSED_VARS(ac);
-}
-
-/* get pointer to the setting */
-static void *acf_dscachefile_setting_ptr(bAnimListElem *ale,
-                                         eAnimChannel_Settings setting,
-                                         short *r_type)
-{
-  CacheFile *cache_file = static_cast<CacheFile *>(ale->data);
-
-  /* Clear extra return data first. */
-  *r_type = 0;
-
-  switch (setting) {
-    case ACHANNEL_SETTING_EXPAND: /* expanded */
-      return GET_ACF_FLAG_PTR(cache_file->flag, r_type);
-
-    case ACHANNEL_SETTING_SELECT:  /* selected */
-    case ACHANNEL_SETTING_MUTE:    /* muted (for NLA only) */
-    case ACHANNEL_SETTING_VISIBLE: /* visible (for Graph Editor only) */
-      if (cache_file->adt) {
-        return GET_ACF_FLAG_PTR(cache_file->adt->flag, r_type);
-      }
-
-      return nullptr;
-
-    default: /* unsupported */
-      return nullptr;
-  }
-}
-
-/** CacheFile expander type define.. */
-static bAnimChannelType ACF_DSCACHEFILE = {
-    /*channel_type_name*/ "Cache File Expander",
-    /*channel_role*/ ACHANNEL_ROLE_EXPANDER,
-
-    /*get_backdrop_color*/ acf_generic_dataexpand_color,
-    /*get_channel_color*/ nullptr,
-    /*draw_backdrop*/ acf_generic_dataexpand_backdrop,
-    /*get_indent_level*/ acf_generic_indentation_1,
-    /*get_offset*/ acf_generic_basic_offset,
-
-    /*name*/ acf_generic_idblock_name,
-    /*name_prop*/ acf_generic_idfill_name_prop,
-    /*icon*/ acf_dscachefile_icon,
-
-    /*has_setting*/ acf_generic_dataexpand_setting_valid,
-    /*setting_flag*/ acf_dscachefile_setting_flag,
-    /*setting_ptr*/ acf_dscachefile_setting_ptr,
     /*setting_post_update*/ nullptr,
 };
 
@@ -4455,7 +4367,6 @@ static void ANIM_init_channel_typeinfo_data()
     animchannelTypeInfo[type++] = &ACF_DSMAT;        /* Material Channel */
     animchannelTypeInfo[type++] = &ACF_DSLIGHT;      /* Light Channel */
     animchannelTypeInfo[type++] = &ACF_DSCAM;        /* Camera Channel */
-    animchannelTypeInfo[type++] = &ACF_DSCACHEFILE;  /* CacheFile Channel */
     animchannelTypeInfo[type++] = &ACF_DSCUR;        /* Curve Channel */
     animchannelTypeInfo[type++] = &ACF_DSSKEY;       /* ShapeKey Channel */
     animchannelTypeInfo[type++] = &ACF_DSWOR;        /* World Channel */

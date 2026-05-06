@@ -1176,7 +1176,6 @@ enum IDRecalcFlag {
 #define FILTER_ID_TXT (1ULL << 24)
 #define FILTER_ID_VF (1ULL << 25)
 #define FILTER_ID_WO (1ULL << 26)
-#define FILTER_ID_CF (1ULL << 28)
 #define FILTER_ID_LP (1ULL << 31)
 #define FILTER_ID_CV (1ULL << 32)
 #define FILTER_ID_PT (1ULL << 33)
@@ -1193,7 +1192,7 @@ enum IDRecalcFlag {
    FILTER_ID_LT | FILTER_ID_MA | FILTER_ID_MC | FILTER_ID_ME | FILTER_ID_MSK | \
    FILTER_ID_NT | FILTER_ID_OB | FILTER_ID_PAL | FILTER_ID_SCE | \
    FILTER_ID_SO | FILTER_ID_TXT | FILTER_ID_VF | FILTER_ID_WO | \
-   FILTER_ID_CF | FILTER_ID_LP | FILTER_ID_CV | FILTER_ID_PT | FILTER_ID_VO | \
+   FILTER_ID_LP | FILTER_ID_CV | FILTER_ID_PT | FILTER_ID_VO | \
    FILTER_ID_SIM | FILTER_ID_KE | FILTER_ID_LI | FILTER_ID_GP | \
    FILTER_ID_IP)
 
@@ -1256,9 +1255,6 @@ enum eID_Index {
   INDEX_ID_MA,
 
   INDEX_ID_WO,
-
-  /* Simulation-related types. */
-  INDEX_ID_CF,
 
   /* Shape Keys snow-flake, can be used by several obdata types. */
   INDEX_ID_KE,

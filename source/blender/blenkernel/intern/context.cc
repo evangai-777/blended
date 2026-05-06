@@ -1660,11 +1660,6 @@ EditBone *CTX_data_active_bone(const bContext *C)
   return static_cast<EditBone *>(ctx_data_pointer_get(C, "active_bone"));
 }
 
-CacheFile *CTX_data_edit_cachefile(const bContext *C)
-{
-  return static_cast<CacheFile *>(ctx_data_pointer_get(C, "edit_cachefile"));
-}
-
 bool CTX_data_selected_bones(const bContext *C, Vector<PointerRNA> *list)
 {
   return ctx_data_collection_get(C, "selected_bones", list);

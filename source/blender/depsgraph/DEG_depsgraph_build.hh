@@ -20,7 +20,6 @@ namespace blender {
 
 /* ------------------------------------------------ */
 
-struct CacheFile;
 struct Collection;
 struct CustomData_MeshMasks;
 struct Depsgraph;
@@ -148,10 +147,6 @@ void DEG_add_bone_relation(DepsNodeHandle *handle,
                            const char *bone_name,
                            eDepsObjectComponentType component,
                            const char *description);
-void DEG_add_object_cache_relation(DepsNodeHandle *handle,
-                                   CacheFile *cache_file,
-                                   eDepsObjectComponentType component,
-                                   const char *description);
 void DEG_add_vfont_relation(DepsNodeHandle *handle, VFont *vfont, const char *description);
 /**
  * Adds relation from #DEG_OPCODE_GENERIC_DATABLOCK_UPDATE of a given ID.

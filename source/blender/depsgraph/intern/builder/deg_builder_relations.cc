@@ -25,7 +25,6 @@
 #include "DNA_action_types.h"
 #include "DNA_anim_types.h"
 #include "DNA_armature_types.h"
-#include "DNA_cachefile_types.h"
 #include "DNA_camera_types.h"
 #include "DNA_cloth_types.h"
 #include "DNA_collection_types.h"
@@ -572,9 +571,6 @@ void DepsgraphRelationBuilder::build_id(ID *id)
       break;
     case ID_TXT:
       /* Not a part of dependency graph. */
-      break;
-    case ID_CF:
-      build_cachefile(id_cast<CacheFile *>(id));
       break;
     case ID_SCE:
       build_scene_parameters(id_cast<Scene *>(id));
@@ -1426,15 +1422,8 @@ void DepsgraphRelationBuilder::build_constraints(ID *id,
       add_relation(time_src_key, constraint_op_key, "TimeSrc -> Animation");
     }
     else if (cti->type == CONSTRAINT_TYPE_TRANSFORM_CACHE) {
-      /* TODO(kevin): This is more a TimeSource -> CacheFile -> Constraint
-       * dependency chain. */
       TimeSourceKey time_src_key;
       add_relation(time_src_key, constraint_op_key, "TimeSrc -> Animation");
-      bTransformCacheConstraint *data = static_cast<bTransformCacheConstraint *>(con.data);
-      if (data->cache_file) {
-        ComponentKey cache_key(&data->cache_file->id, NodeType::CACHE);
-        add_relation(cache_key, constraint_op_key, cti->name);
-      }
     }
     else if (BKE_constraint_targets_get(&con, &targets)) {
       for (bConstraintTarget &ct : targets) {
@@ -3159,39 +3148,6 @@ void DepsgraphRelationBuilder::build_image(Image *image)
   build_parameters(&image->id);
 }
 
-void DepsgraphRelationBuilder::build_cachefile(CacheFile *cache_file)
-{
-  if (built_map_.check_is_built_and_tag(cache_file)) {
-    return;
-  }
-
-  const BuilderStack::ScopedEntry stack_entry = stack_.trace(cache_file->id);
-
-  build_idproperties(cache_file->id.properties);
-  build_idproperties(cache_file->id.system_properties);
-  /* Animation. */
-  build_animdata(&cache_file->id);
-  build_parameters(&cache_file->id);
-  if (check_id_has_anim_component(&cache_file->id)) {
-    ComponentKey animation_key(&cache_file->id, NodeType::ANIMATION);
-    ComponentKey datablock_key(&cache_file->id, NodeType::CACHE);
-    add_relation(animation_key, datablock_key, "Datablock Animation");
-  }
-  if (check_id_has_driver_component(&cache_file->id)) {
-    ComponentKey animation_key(&cache_file->id, NodeType::PARAMETERS);
-    ComponentKey datablock_key(&cache_file->id, NodeType::CACHE);
-    add_relation(animation_key, datablock_key, "Drivers -> Cache Eval");
-  }
-
-  /* Cache file updates */
-  if (cache_file->is_sequence) {
-    OperationKey cache_update_key(
-        &cache_file->id, NodeType::CACHE, OperationCode::FILE_CACHE_UPDATE);
-    TimeSourceKey time_src_key;
-    add_relation(time_src_key, cache_update_key, "TimeSrc -> Cache File Eval");
-  }
-}
-
 void DepsgraphRelationBuilder::build_mask(Mask *mask)
 {
   if (built_map_.check_is_built_and_tag(mask)) {
@@ -3468,9 +3424,7 @@ void DepsgraphRelationBuilder::build_copy_on_write_relations(IDNode *id_node)
       continue;
     }
     int rel_flag = (RELATION_FLAG_NO_FLUSH | RELATION_FLAG_GODMODE);
-    if ((ELEM(id_type, ID_ME, ID_CV, ID_PT, ID_VO) && comp_node->type == NodeType::GEOMETRY) ||
-        (id_type == ID_CF && comp_node->type == NodeType::CACHE))
-    {
+    if (ELEM(id_type, ID_ME, ID_CV, ID_PT, ID_VO) && comp_node->type == NodeType::GEOMETRY) {
       rel_flag &= ~RELATION_FLAG_NO_FLUSH;
     }
     /* TODO(sergey): Needs better solution for this. */

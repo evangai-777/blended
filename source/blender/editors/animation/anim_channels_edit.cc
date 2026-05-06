@@ -285,7 +285,6 @@ void ANIM_set_active_channel(bAnimContext *ac,
       case ANIMTYPE_DSMAT:           /* Datablock AnimData Expanders */
       case ANIMTYPE_DSLAM:
       case ANIMTYPE_DSCAM:
-      case ANIMTYPE_DSCACHEFILE:
       case ANIMTYPE_DSCUR:
       case ANIMTYPE_DSSKEY:
       case ANIMTYPE_DSWOR:
@@ -365,7 +364,6 @@ void ANIM_set_active_channel(bAnimContext *ac,
       case ANIMTYPE_DSMAT:           /* Datablock AnimData Expanders */
       case ANIMTYPE_DSLAM:
       case ANIMTYPE_DSCAM:
-      case ANIMTYPE_DSCACHEFILE:
       case ANIMTYPE_DSCUR:
       case ANIMTYPE_DSSKEY:
       case ANIMTYPE_DSWOR:
@@ -418,7 +416,6 @@ bool ANIM_is_active_channel(bAnimListElem *ale)
     case ANIMTYPE_DSMAT:           /* Datablock AnimData Expanders */
     case ANIMTYPE_DSLAM:
     case ANIMTYPE_DSCAM:
-    case ANIMTYPE_DSCACHEFILE:
     case ANIMTYPE_DSCUR:
     case ANIMTYPE_DSSKEY:
     case ANIMTYPE_DSWOR:
@@ -577,7 +574,6 @@ static eAnimChannels_SetFlag anim_channels_selection_flag_for_toggle(
       case ANIMTYPE_DSMAT:           /* Datablock AnimData Expanders */
       case ANIMTYPE_DSLAM:
       case ANIMTYPE_DSCAM:
-      case ANIMTYPE_DSCACHEFILE:
       case ANIMTYPE_DSCUR:
       case ANIMTYPE_DSSKEY:
       case ANIMTYPE_DSWOR:
@@ -746,7 +742,6 @@ static void anim_channels_select_set(bAnimContext *ac,
       case ANIMTYPE_DSMAT:           /* Datablock AnimData Expanders */
       case ANIMTYPE_DSLAM:
       case ANIMTYPE_DSCAM:
-      case ANIMTYPE_DSCACHEFILE:
       case ANIMTYPE_DSCUR:
       case ANIMTYPE_DSSKEY:
       case ANIMTYPE_DSWOR:
@@ -2639,7 +2634,6 @@ static bool animchannels_delete_containers(const bContext *C, bAnimContext *ac)
       case ANIMTYPE_DSMAT:
       case ANIMTYPE_DSLAM:
       case ANIMTYPE_DSCAM:
-      case ANIMTYPE_DSCACHEFILE:
       case ANIMTYPE_DSCUR:
       case ANIMTYPE_DSSKEY:
       case ANIMTYPE_DSWOR:
@@ -2817,7 +2811,6 @@ static wmOperatorStatus animchannels_delete_exec(bContext *C, wmOperator * /*op*
       case ANIMTYPE_DSMAT:
       case ANIMTYPE_DSLAM:
       case ANIMTYPE_DSCAM:
-      case ANIMTYPE_DSCACHEFILE:
       case ANIMTYPE_DSCUR:
       case ANIMTYPE_DSSKEY:
       case ANIMTYPE_DSWOR:
@@ -3645,7 +3638,6 @@ static void box_select_anim_channels(bAnimContext *ac, const rcti &rect, short s
         case ANIMTYPE_DSMAT:
         case ANIMTYPE_DSLAM:
         case ANIMTYPE_DSCAM:
-        case ANIMTYPE_DSCACHEFILE:
         case ANIMTYPE_DSCUR:
         case ANIMTYPE_DSSKEY:
         case ANIMTYPE_DSWOR:
@@ -4518,7 +4510,6 @@ static int mouse_anim_channels(bContext *C,
     case ANIMTYPE_DSMAT:           /* Datablock AnimData Expanders */
     case ANIMTYPE_DSLAM:
     case ANIMTYPE_DSCAM:
-    case ANIMTYPE_DSCACHEFILE:
     case ANIMTYPE_DSCUR:
     case ANIMTYPE_DSSKEY:
     case ANIMTYPE_DSWOR:

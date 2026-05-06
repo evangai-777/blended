@@ -34,7 +34,6 @@ set(DEFSRC
   rna_blendfile_import.cc
   rna_boid.cc
   rna_brush.cc
-  rna_cachefile.cc
   rna_camera.cc
   rna_cloth.cc
   rna_collection.cc

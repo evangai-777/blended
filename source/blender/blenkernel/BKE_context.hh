@@ -28,7 +28,6 @@ struct bGPDframe;
 struct bGPDlayer;
 struct bPoseChannel;
 struct bScreen;
-struct CacheFile;
 struct Collection;
 struct Depsgraph;
 struct EditBone;
@@ -430,8 +429,6 @@ Image *CTX_data_edit_image(const bContext *C);
 Text *CTX_data_edit_text(const bContext *C);
 MovieClip *CTX_data_edit_movieclip(const bContext *C);
 Mask *CTX_data_edit_mask(const bContext *C);
-
-CacheFile *CTX_data_edit_cachefile(const bContext *C);
 
 bool CTX_data_selected_nodes(const bContext *C, Vector<PointerRNA> *list);
 
