@@ -288,7 +288,7 @@ Blender itself has marked these for replacement. Blended finishes the job.
 | `ID_LS` | FreestyleLineStyle | Niche NPR renderer; NPR via shader nodes / Grease Pencil | ✓ 0.4.0 ¹ |
 | `ID_SPK` | Speaker | 3D positional audio on scene objects; niche. Audio flows through VSE timeline. | ✓ 0.4.0 |
 | `ID_PC` | PaintCurve | Niche stroke guide | ✓ 0.4.0 |
-| `ID_CF` | CacheFile | External Alembic/USD cache reference — boundary concern, not project data | deferred (design question) |
+| `ID_CF` | CacheFile | External Alembic/USD cache reference — boundary concern, not project data | design settled — inline per-instance; chisel in progress (branch `claude/chisel-id-cf`) |
 
 Removal in progress — 0.4.x. Per-layer file detail in [`CHANGELOG.md`](CHANGELOG.md).
 

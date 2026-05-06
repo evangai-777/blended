@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.3.0 (tagged). 0.4.0 in progress — CI green (Windows x64, build #62, commit `7423dae`). Bucket 5 + 6 fossil removals: `ID_PC` ✓ + `ID_SPK` ✓ + `ID_PA` ✓ + `ID_GD_LEGACY` ✓ + `ID_LS` ✓ + `ID_MB` ✓ + `ID_TE` ✓ + `ID_CU_LEGACY` ✓; next: `ID_CF` (design decision needed first).
+**Current version:** Blended 0.3.0 (tagged). 0.4.0 in progress — CI green (Windows x64, build #62, commit `7423dae`). Bucket 5 + 6 fossil removals: `ID_PC` ✓ + `ID_SPK` ✓ + `ID_PA` ✓ + `ID_GD_LEGACY` ✓ + `ID_LS` ✓ + `ID_MB` ✓ + `ID_TE` ✓ + `ID_CU_LEGACY` ✓; `ID_CF` in progress (design settled: inline per-instance, branch `claude/chisel-id-cf`).
 
 ---
 
@@ -39,7 +39,7 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 
 1. **ID_LS latent memory leak** — Opening a legacy `.blend` file with Freestyle data in a `WITH_FREESTYLE=OFF` build populates `bmain->linestyles` via the kept `which_libbase` routing, but that listbase is not in `BKE_main_lists_get`, so `BKE_main_free` does not free those blocks. Accepted for now (no Freestyle fixtures in CI). Fix if needed: a blenloader post-read pass that drains `bmain->linestyles` after any file load when `WITH_FREESTYLE=OFF`.
 
-2. **ID_CF design decision pending** — CacheFile (Alembic/USD importer cache reference) is architecturally entangled. Literal grep count (18) understates the true blast radius (~50+ files). Do last. Needs a design answer: inline into modifier/constraint DNA per-instance, or keep as non-ID struct in a non-indexed listbase? See Key note 8 below.
+2. **ID_CF chisel in progress** — Design decision settled (2026-05-06): inline per-instance. `CacheFile *` in `MeshSeqCacheModifierData` and `bTransformCacheConstraint` replaced with inlined fields; `bmain->cachefiles` removed entirely (no Scar 2). True blast radius ~76 files. Branch: `claude/chisel-id-cf`. See Key note 8.
 
 3. **ID_SCR runtime debt (Scar 1)** — Workspace cycle, reorder operators, factory name translation. Runtime behavior after screens are per-window state instead of a global list. See Scar 1 for anatomy.
 
@@ -100,7 +100,7 @@ Exact implementation depends on whether the blocks have ID-system runtime state 
 | ~~Done~~ | `ID_MB` — MetaBall | 60 hits / 32 files | ✓ |
 | ~~Done~~ | `ID_TE` — Texture | 76 hits / 45 files | ✓ |
 | ~~Done~~ | `ID_CU_LEGACY` — Legacy Curve | 74 hits / 33 files | ✓ |
-| Last | `ID_CF` — CacheFile | 18 literal / ~50+ true | ☐ (needs design decision first) |
+| In progress | `ID_CF` — CacheFile | 29 literal / ~76 true | ☐ (design settled: inline per-instance) |
 
 ### Foundation Layer Roadmap
 
@@ -623,48 +623,107 @@ makesrna (4 files):
 
 ---
 
-**ID_CF — 18 literal hits, 15 files — CAUTION: true blast radius is much larger**
+**ID_CF — 29 literal hits, ~15 files — true blast radius: ~76 files across 12 layers**
 
-> **Session note (2026-04-29):** The "18 hits" count is literal `ID_CF` string occurrences only. Actual removal blast radius spans ~50+ files because `CacheFile` (the struct) is deeply embedded in the Alembic/USD I/O stack, the Mesh Sequence Cache modifier, constraint system, and animation editor. See Key note 8 below before starting this chisel. Decision on approach deferred.
+> **Pre-chisel audit (2026-05-06):** Literal `ID_CF` grep: 29 hits. Broader pattern grep (`CacheFile`, `cachefile`, `MeshSeqCache`, `bTransformCacheConstraint`, `ANIMTYPE_DSCACHEFILE`, `BKE_cachefile`, `rna_cachefile`, `io_cache`, etc.): 76 files after removing 3 false-positive categories (`blenlib/memory_cache_file_load.cc` — BLI memory cache, unrelated; `gpu/vulkan/vk_pipeline_pool.cc` — GPU pipeline cache, unrelated; `nodes/geometry/nodes/node_geo_import_*.cc` — 5 files, 0 CacheFile struct hits).
+>
+> **Design decision settled (2026-05-06): inline per-instance.** `CacheFile *` pointers in `MeshSeqCacheModifierData` and `bTransformCacheConstraint` are replaced with the relevant fields inlined directly into those structs — filepath, override_frame flag, frame_offset, velocity settings, is_sequence flag, type (Alembic vs. USD). Precedent: VSE sequence strips store external file paths directly in the strip struct without a shared ID. The "shared reference" feature of `CacheFile` is not load-bearing — two objects pointing at the same `.abc` file can both store the path; the file is on disk. **`bmain->cachefiles` is removed entirely — no Scar 2 rescue. True fossil.** `which_libbase` routing goes away. No versioning file iterates `bmain->cachefiles` (verified: `versioning_290.cc` creates CacheFile IDs but does not iterate the listbase for upgrade purposes — those blocks get SDNA-read-skipped on load after removal).
+>
+> **DNA migration targets:**
+> - `MeshSeqCacheModifierData.cache_file` (`DNA_modifier_types.h:2332`) → inline `char filepath[FILE_MAX]` + `override_frame`, `frame`, `frame_offset`, `velocity_unit`, `velocity_name`, `is_sequence`, `type` from `CacheFile` struct
+> - `bTransformCacheConstraint.cache_file` (`DNA_constraint_types.h:1152`) → same inline pattern; `object_path[FILE_MAX]` already present in both structs
+>
+> **Files to DELETE entirely:** `editors/io/io_cache.cc`, `editors/io/io_cache.hh`, `editors/interface/templates/interface_template_cache_file.cc`, `makesrna/intern/rna_cachefile.cc`, `blenkernel/BKE_cachefile.hh`, `blenkernel/intern/cachefile.cc` (after inlining any utility functions needed by MOD_meshsequencecache or constraint.cc)
 
 Core definition:
-- `makesdna/DNA_ID_enums.h:159` — enum entry `ID_CF = MAKE_ID2('C', 'F')`
-- `makesdna/DNA_cachefile_types.h:69` — `static constexpr ID_Type id_type = ID_CF`
-- `blenkernel/intern/idtype.cc:169` — `INIT_TYPE(ID_CF)`
-- `blenkernel/intern/main.cc:1048` — `which_libbase` case
+- `makesdna/DNA_ID_enums.h:153` — enum entry `ID_CF = MAKE_ID2('C', 'F')`
+- `makesdna/DNA_cachefile_types.h:69` — `static constexpr ID_Type id_type = ID_CF`; entire struct definition stays as SDNA read-skip anchor (same pattern as `DNA_meta_types.h` for ID_MB)
+- `makesdna/DNA_ID.h:1179,1196,1261` — `FILTER_ID_CF`, `FILTER_ID_ALL` inclusion, `INDEX_ID_CF`
+- `blenkernel/BKE_idtype.hh:326` — `extern IDTypeInfo IDType_ID_CF`
+- `blenkernel/intern/idtype.cc:163` — `INIT_TYPE(ID_CF)`; sweep both `CASE_IDINDEX(CF)` entries (Scar 4)
+- `blenkernel/intern/main.cc:142,1036,1079` — `CASE_ID_INDEX(INDEX_ID_CF)`, `which_libbase` case, `lb[]` assignment — remove all three; no Scar 2 routing kept
+- `blenkernel/BKE_main.hh` — `ListBaseT<CacheFile> cachefiles` field — remove (no Scar 2)
 
-editors (6 files):
-- `interface_icons.cc:2051` — icon case
-- `interface_template_id.cc:903` — template check
-- `render_opengl.cc:644` — render switch
-- `io_cache.cc:94` — `BKE_libblock_alloc(bmain, ID_CF, ...)` — cache file creation; **entire `io_cache.cc` (323 lines) and `io_cache.hh` are CacheFile-only, both get deleted**
-- `outliner_intern.hh:169` — outliner macro
-- `outliner_tools.cc:163` — outliner tools
-- `tree_element_id.cc:90` — tree element
+blenkernel (6 files):
+- `cachefile.cc` — `IDTypeInfo IDType_ID_CF` block removed; `BKE_cachefile_add` allocator removed; utility functions needed by modifier/constraint migrated inline or removed; file likely deleted after
+- `BKE_cachefile.hh` — entire API header deleted
+- `constraint.cc` — `bTransformCacheConstraint` uses `cache_file->filepath`; replace with `con->cache_file` → inline field
+- `anim_data_bmain_utils.cc` — `ANIMDATA_IDS_CB(bmain->cachefiles.first)` — field-name grep-miss; remove
+- `anim_sys.cc` — `EVAL_ANIM_IDS(main->cachefiles.first, ...)` — field-name grep-miss; remove
+- `pointcache.cc`, `path_templates.cc` — CacheFile references; remove/inline
 
-depsgraph (2 files):
-- `deg_builder_relations.cc:594,3643` — relation builder (2 sites)
-- `deg_builder_nodes.cc:647` — node builder
+blenloader (1 file):
+- `versioning_290.cc` — creates CacheFile IDs via `BKE_libblock_alloc(ID_CF)`; after removal, those versioning paths need to be no-ops or create inline structs instead
 
-makesrna (2 files):
-- `rna_ID.cc:35,382,496` — RNA enum entry and switch cases
-- `rna_main_api.cc:865` — `RNA_MAIN_ID_TAG_FUNCS_DEF(cachefiles, cachefiles, ID_CF)`
+editors (10 files):
+- `interface_icons.cc:2050` — icon case — remove
+- `interface_template_id.cc:883` — template check — remove
+- `interface_template_cache_file.cc` — **DELETE** entire file (CacheFile-only UI template)
+- `render_opengl.cc:638` — render switch — remove
+- `io_cache.cc` — **DELETE** entire file (CacheFile operators: `WM_OT_cache_file_open`, `WM_OT_cache_file_reload`, etc.)
+- `io_cache.hh` — **DELETE**
+- `io_ops.cc` — remove io_cache registration calls
+- `outliner_intern.hh:163` — outliner macro — remove (Scar 9 check)
+- `outliner_tools.cc:154` — case — remove
+- `tree_element_id.cc:76` — case — remove
+- `anim_channels_defines.cc` — `ACF_DSCACHEFILE` struct + 3 callbacks + `animchannelTypeInfo` entry — remove
+- `anim_channels_edit.cc` — `ANIMTYPE_DSCACHEFILE` fallthrough cases — remove
+- `anim_deps.cc`, `nla_buttons.cc`, `nla_draw.cc`, `nla_tracks.cc`, `transform_convert_action.cc` — fallthrough cases — remove
+- `anim_filter.cc` — `animdata_filter_ds_cachefile` function + call site — remove
+- `keyframes_keylist.cc` — `cachefile_to_keylist` function — remove
+- `ED_anim_api.hh` — `ANIMTYPE_DSCACHEFILE` enum + `FILTER_CACHEFILE_OBJD` macro — remove
+- `ED_keyframes_keylist.hh` — forward decl — remove
+- `UI_interface_c.hh` — `uiTemplateCacheFile` declaration — remove
+- `object_constraint.cc` — CacheFile constraint UI operators — remove/inline
+- `render_update.cc` — CacheFile notifier case — remove
+- `space_file/filelist/filelist.cc` — CacheFile filelist entry — remove
 
-Additional files NOT in the literal grep (discovered 2026-04-29):
-- `editors/interface/templates/interface_template_cache_file.cc` — entire file is CacheFile UI
-- `editors/animation/anim_channels_defines.cc` — `ACF_DSCACHEFILE` channel type + callbacks
-- `editors/animation/anim_filter.cc` — `animdata_filter_ds_cachefile`, iterates `bmain->cachefiles`
-- `editors/animation/keyframes_keylist.cc` — `cachefile_to_keylist`
-- `editors/include/ED_keyframes_keylist.hh`, `ED_anim_api.hh` — forward decls + macros
-- `modifiers/intern/MOD_meshsequencecache.cc` — holds `CacheFile *` (ID pointer) for Alembic/USD reads
-- `makesdna/DNA_modifier_types.h`, `DNA_constraint_types.h` — `CacheFile *` fields in modifier/constraint DNA
-- `depsgraph/intern/builder/deg_builder_nodes_view_layer.cc`, `deg_builder_relations_view_layer.cc`
-- `depsgraph/intern/depsgraph_build.cc`
-- `blenkernel/intern/anim_sys.cc`, `constraint.cc`, `pointcache.cc`, `path_templates.cc`, `anim_data_bmain_utils.cc`
-- `io/alembic/intern/alembic_capi.cc`, `abc_reader_object.cc` — Alembic importer uses CacheFile as cache reference
-- `io/usd/intern/usd_capi_import.cc`, `usd_reader_stage.cc`, `usd_reader_geom.cc`, `usd_reader_xform.cc` — USD importer same
-- `makesrna/intern/rna_cachefile.cc`, `rna_constraint.cc`, `rna_modifier.cc`, `rna_scene.cc`, `rna_main.cc`
-- `blenloader/intern/versioning_290.cc`
+depsgraph (6 files):
+- `deg_builder_nodes.cc:636` — `case ID_CF:` + `build_cachefile()` — remove
+- `deg_builder_nodes.h` — `build_cachefile` declaration — remove
+- `deg_builder_nodes_view_layer.cc` — `build_cachefile` call — remove
+- `deg_builder_relations.cc:576,3472` — `case ID_CF:` + CACHE comp_node check — remove both
+- `deg_builder_relations.h` — `build_cachefile_relations` declaration — remove
+- `deg_builder_relations_view_layer.cc` — `build_cachefile_relations` call — remove
+- `depsgraph_build.cc` — CacheFile build call — remove
+- `DEG_depsgraph_build.hh` — public API declaration if present — remove
+
+makesdna (5 files):
+- `DNA_ID_enums.h` — enum entry removed; deprecated `#define ID_CF MAKE_ID2('C', 'F')` added
+- `DNA_cachefile_types.h` — `id_type` constexpr removed (Scar 8); struct body kept for SDNA read-skip
+- `DNA_ID.h` — `FILTER_ID_CF`, `FILTER_ID_ALL` inclusion, `INDEX_ID_CF` removed
+- `DNA_modifier_types.h` — `MeshSeqCacheModifierData.cache_file` pointer replaced with inline fields
+- `DNA_constraint_types.h` — `bTransformCacheConstraint.cache_file` pointer replaced with inline fields
+- `DNA_action_types.h` — `ADS_FILTER_NOCACHEFILES` bitmask removed
+
+modifiers (1 file):
+- `MOD_meshsequencecache.cc` — `CacheFile *cache_file` pointer replaced with inline fields throughout; `BKE_cachefile_*` API calls replaced with direct field access
+
+io/alembic (~10 files):
+- `alembic_capi.cc` — CacheFile parameter replaced with inline path/settings struct or individual args
+- `abc_reader_object.cc/.h` — reader base class holds `CacheFile *`; replace with path string
+- `abc_reader_mesh.cc/.h`, `abc_reader_curves.h`, `abc_reader_nurbs.h`, `abc_reader_camera.h`, `abc_reader_points.h`, `abc_reader_transform.h`, `abc_util.h`, `ABC_alembic.h` — all carry `CacheFile *` in reader/import API
+
+io/usd (~8 files):
+- `usd_capi_import.cc` — CacheFile parameter → inline path/settings
+- `usd_reader_stage.cc/.hh` — reader holds `CacheFile *`; replace
+- `usd_reader_geom.cc/.hh`, `usd_reader_xform.cc`, `usd_reader_prim.hh`, `usd_private.hh` — API chain carries CacheFile pointer
+
+makesrna (8 files):
+- `rna_ID.cc:35,119,353,448` — RNA enum item, filter item, base_type check, switch case — remove all
+- `rna_cachefile.cc` — **DELETE** entire file
+- `rna_constraint.cc` — `bTransformCacheConstraint` RNA updated to inline fields
+- `rna_modifier.cc` — `MeshSeqCacheModifierData` RNA updated to inline fields
+- `rna_action.cc:1537` — `show_cachefiles` RNA property (ADS_FILTER_NOCACHEFILES) — remove
+- `rna_space.cc:3973` — `FILTER_ID_CF` in asset browser miscellaneous filter — remove
+- `rna_main_api.cc:765` — `RNA_MAIN_ID_TAG_FUNCS_DEF(cachefiles, cachefiles, ID_CF)` + `RNA_def_main_cachefiles()` — remove
+- `rna_main.cc` — `RNA_MAIN_LISTBASE_FUNCS_DEF(cachefiles)` + table entry — remove
+- `rna_internal.hh` — `RNA_def_main_cachefiles` declaration — remove
+- `rna_ui_api.cc` — `uiTemplateCacheFile` RNA binding — remove
+- `makesrna.cc` — `rna_cachefile` entry — remove
+
+blentranslation (1 file):
+- `BLT_translation.hh` — `BLT_I18NCONTEXT_ID_CACHEFILE` define + ITEM entry — remove
 
 ---
 
@@ -682,9 +741,9 @@ Additional files NOT in the literal grep (discovered 2026-04-29):
 
 6. **`depsgraph.cc:160` had a `!= ID_PA` guard** in `clear_id_nodes_conditional` — resolved in 0.4.0. The two-pass teardown (scenes first, then everything-except-particles) ensured particle COW copies outlived the objects referencing them. With ID_PA gone, the guard was changed to `!= ID_SCE` (scenes already destroyed in pass 1 are caught by the `id_cow == nullptr` guard in pass 2).
 
-7. **Remaining chisel order (smallest blast radius first):** **ID_GD_LEGACY ✓** → **ID_LS ✓** → **ID_MB ✓** → **ID_TE ✓** → **ID_CU_LEGACY ✓** → ID_CF (last, design decision). 0 types remaining. ID_PC (21) ✓ 0.4.0. ID_SPK (23) ✓ 0.4.0. ID_PA (35) ✓ 0.4.0. ID_GD_LEGACY (56) ✓ 0.4.0. ID_LS (~50) ✓ 0.4.0. ID_MB (~130+) ✓ 0.4.0. ID_TE (~76) ✓ 0.4.0. ID_CU_LEGACY (~86) ✓ 0.4.0. ID_CF deferred — see note 8.
+7. **Remaining chisel order (smallest blast radius first):** **ID_GD_LEGACY ✓** → **ID_LS ✓** → **ID_MB ✓** → **ID_TE ✓** → **ID_CU_LEGACY ✓** → **ID_CF** (in progress — design settled, see note 8). ID_PC (21) ✓ 0.4.0. ID_SPK (23) ✓ 0.4.0. ID_PA (35) ✓ 0.4.0. ID_GD_LEGACY (56) ✓ 0.4.0. ID_LS (~50) ✓ 0.4.0. ID_MB (~130+) ✓ 0.4.0. ID_TE (~76) ✓ 0.4.0. ID_CU_LEGACY (~86) ✓ 0.4.0. ID_CF (~76) — branch `claude/chisel-id-cf`.
 
-8. **ID_CF is architecturally entangled — do it last or separately.** The literal grep count (18) dramatically understates the true blast radius. `CacheFile` as a struct is woven into: the Alembic importer (`io/alembic/`), the USD importer (`io/usd/`), the Mesh Sequence Cache modifier (`MOD_meshsequencecache.cc`), the constraint system, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. The Mesh Sequence Cache modifier holds a `CacheFile *` ID pointer so multiple objects can share one cache reference — removing the ID type means deciding what replaces that pointer. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI builds, so breakage here will surface. **Revised chisel order: ID_TE ✓ → ID_CU_LEGACY ✓ → ID_CF (last, needs design decision). ID_PC ✓ (0.4.0). ID_SPK ✓ (0.4.0). ID_PA ✓ (0.4.0). ID_GD_LEGACY ✓ (0.4.0). ID_LS ✓ (0.4.0). ID_MB ✓ (0.4.0). ID_TE ✓ (0.4.0). ID_CU_LEGACY ✓ (0.4.0).** The open question: does the cache-file reference mechanism get inlined into the modifier/constraint DNA per-instance, or does CacheFile stay as a non-ID struct in a non-indexed listbase (like ID_SCR_LEGACY/ID_WM_LEGACY pattern)? Answer this before chiseling ID_CF.
+8. **ID_CF design decision settled: inline per-instance.** True blast radius is ~76 files (vs. 18 literal hits, ~50+ first estimate). `CacheFile` is woven into the Alembic importer, USD importer, Mesh Sequence Cache modifier, `bTransformCacheConstraint`, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI. **Design decision (2026-05-06):** inline per-instance. `CacheFile *` pointers in `MeshSeqCacheModifierData` and `bTransformCacheConstraint` are replaced with the `CacheFile` fields inlined directly. Precedent: VSE sequence strips carry file paths directly in the strip struct — no shared ID needed. The "shared reference" feature is not load-bearing; two objects can both store the same path string. `bmain->cachefiles` removed entirely — no Scar 2 rescue, true fossil. `versioning_290.cc` creates CacheFile IDs but does not iterate `bmain->cachefiles` for upgrades (verified), so no versioning dependency blocks the removal. **Chisel order: ID_TE ✓ → ID_CU_LEGACY ✓ → ID_CF (in progress). ID_PC ✓ (0.4.0). ID_SPK ✓ (0.4.0). ID_PA ✓ (0.4.0). ID_GD_LEGACY ✓ (0.4.0). ID_LS ✓ (0.4.0). ID_MB ✓ (0.4.0). ID_TE ✓ (0.4.0). ID_CU_LEGACY ✓ (0.4.0). ID_CF branch: `claude/chisel-id-cf`.**
 
 ---
 

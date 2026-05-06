@@ -57,7 +57,7 @@ carries a one-liner status per active item.
 ## Unreleased — 0.4.0
 
 Bucket 5 + 6 fossil removals. 9 ID types, 357 hits, same chisel pattern as 0.3.0. CI green (Windows x64, build #62, commit `7423dae`) — 8 of 9 types complete.
-Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEGACY ✓** → **ID_LS ✓** → **ID_MB ✓** → **ID_TE ✓** → **ID_CU_LEGACY ✓** → ID_CF (last, needs design decision — see CLAUDE.md Key note 8).
+Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEGACY ✓** → **ID_LS ✓** → **ID_MB ✓** → **ID_TE ✓** → **ID_CU_LEGACY ✓** → **ID_CF** (design settled — inline per-instance; in progress on branch `claude/chisel-id-cf`).
 *(Order corrected in PR #126 fix — initial commit had ID_CF first, contradicting CLAUDE.md Key note 8. Scar 7.)*
 
 **Key notes:**
@@ -205,15 +205,22 @@ Resolves two deferred-debt items, syncs a stale version define, and adds two ope
 | `draw` | No compile errors | ✓ |
 | `depsgraph` | `depsgraph.cc` (add_id_node OOB guard), `depsgraph_tag.cc` (DEG_graph_id_type_tag OOB guard) | ✓ |
 
-### ID_CF — CacheFile *(do last — needs design decision, see CLAUDE.md Key note 8)*
+### ID_CF — CacheFile *(design settled: inline per-instance; chisel in progress — branch `claude/chisel-id-cf`)*
+
+**Pre-chisel audit (2026-05-06):** 29 literal hits / 76 true files. No Scar 2 — `bmain->cachefiles` removed entirely (true fossil; `versioning_290.cc` creates CacheFile IDs but does not iterate the listbase for upgrade, so no versioning dependency blocks full removal).
+
+**Design decision:** `CacheFile *cache_file` pointers in `MeshSeqCacheModifierData` and `bTransformCacheConstraint` replaced with fields inlined directly into those structs (filepath string, flags, velocity scale, `CacheReader *` runtime pointer). VSE precedent — sequence strips carry filepath directly without a shared ID. Two modifiers pointing at the same `.abc` file each store the path string. `bmain->cachefiles` goes away entirely.
+
+**Files to delete:** `editors/io/io_cache.cc`, `editors/io/io_cache.hh`, `blenkernel/intern/cachefile.cc`, `blenkernel/BKE_cachefile.hh`, `makesrna/intern/rna_cachefile.cc`, `editors/space_outliner/tree/tree_element_id_cachefile.cc`, `editors/space_outliner/tree/tree_element_id_cachefile.hh`, `editors/include/ED_fileselect.hh` (CacheFile-specific sections), `editors/animation/anim_channels_defines.cc` (ACF_DSCACHEFILE block).
 
 | Layer | Files touched | Status |
 |-------|--------------|--------|
-| `makesdna` | `DNA_ID_enums.h` (enum entry), `DNA_cachefile_types.h` (id_type constexpr) | ☐ |
-| `blenkernel` | `idtype.cc` (INIT_TYPE), `main.cc` (which_libbase case, BKE_main_lists_get entry) | ☐ |
-| `makesrna` | `rna_ID.cc`, `rna_main_api.cc` | ☐ |
-| `editors` | `interface_icons.cc`, `interface_template_id.cc`, `render_opengl.cc`, `io_cache.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc` | ☐ |
-| `depsgraph` | `deg_builder_relations.cc`, `deg_builder_nodes.cc` | ☐ |
+| `makesdna` | `DNA_ID_enums.h` (enum entry), `DNA_cachefile_types.h` (id_type constexpr; Scar 8), `DNA_ID.h` (FILTER/INDEX macros), `DNA_modifier_types.h` (inline migration: CacheFile* → inlined fields in MeshSeqCacheModifierData), `DNA_constraint_types.h` (inline migration: CacheFile* → inlined fields in bTransformCacheConstraint), `DNA_action_types.h` (ADS_FILTER_NOCACHEFILES bitmask) | ☐ |
+| `blenkernel` | `idtype.cc` (INIT_TYPE + CASE_IDINDEX sweep), `main.cc` (which_libbase case + BKE_main_lists_get entry; Scar 2 does NOT apply — bmain->cachefiles removed entirely), `cachefile.cc` (deleted), `BKE_cachefile.hh` (deleted), `BKE_idtype.hh`, `BKE_main.hh`, `anim_sys.cc`, `anim_data_bmain_utils.cc`, `constraint.cc`, `pointcache.cc`, `path_templates.cc` | ☐ |
+| `makesrna` | `rna_ID.cc`, `rna_main_api.cc`, `rna_main.cc`, `rna_internal.hh`, `rna_cachefile.cc` (deleted), `rna_constraint.cc`, `rna_modifier.cc`, `rna_scene.cc`, `rna_space.cc` (FILTER_ID_CF in asset browser filter), `rna_action.cc` (show_cachefiles RNA prop) | ☐ |
+| `editors` | `io_cache.cc` (deleted), `io_cache.hh` (deleted), `interface_icons.cc`, `interface_template_id.cc`, `interface_template_cache_file.cc` (deleted), `render_opengl.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc`, `tree_element_id_cachefile.cc/.hh` (deleted), `anim_channels_defines.cc` (ACF_DSCACHEFILE), `anim_filter.cc` (animdata_filter_ds_cachefile), `keyframes_keylist.cc` (cachefile_to_keylist), `ED_anim_api.hh` (ANIMTYPE_DSCACHEFILE + FILTER_CF_SCED) | ☐ |
+| `depsgraph` | `deg_builder_relations.cc`, `deg_builder_nodes.cc`, `deg_builder_nodes_view_layer.cc`, `deg_builder_relations_view_layer.cc`, `depsgraph_build.cc` | ☐ |
+| `io` | `alembic/intern/alembic_capi.cc`, `alembic/intern/abc_reader_object.cc` (and related), `usd/intern/usd_capi_import.cc`, `usd/intern/usd_reader_stage.cc`, `usd/intern/usd_reader_geom.cc`, `usd/intern/usd_reader_xform.cc` — CacheFile pointer replaced with inline filepath | ☐ |
 
 ---
 
