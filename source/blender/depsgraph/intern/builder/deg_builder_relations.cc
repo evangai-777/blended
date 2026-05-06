@@ -461,13 +461,8 @@ void DepsgraphRelationBuilder::add_particle_forcefield_relations(const Operation
         add_relation(mod_key, key, name);
       }
 
-      /* Force field Texture. */
-      if ((relation.pd != nullptr) && (relation.pd->forcefield == PFIELD_TEXTURE) &&
-          (relation.pd->tex != nullptr))
-      {
-        ComponentKey tex_key(&relation.pd->tex->id, NodeType::GENERIC_DATABLOCK);
-        add_relation(tex_key, key, "Force field Texture");
-      }
+      /* Force field Texture — ID_TE removed in Blended; build_texture() is a no-op and
+       * no IDNode exists for tex->id. add_relation() on a missing node logs errors. */
 
       /* Smoke flow relations. */
       if (relation.pd->forcefield == PFIELD_FLUIDFLOW && relation.pd->f_source) {
@@ -2269,12 +2264,7 @@ void DepsgraphRelationBuilder::build_rigidbody(Scene *scene)
         ComponentKey effector_geometry_key(&effector_relation.ob->id, NodeType::GEOMETRY);
         add_relation(effector_geometry_key, rb_init_key, "RigidBody Field");
       }
-      if ((effector_relation.pd->forcefield == PFIELD_TEXTURE) &&
-          (effector_relation.pd->tex != nullptr))
-      {
-        ComponentKey tex_key(&effector_relation.pd->tex->id, NodeType::GENERIC_DATABLOCK);
-        add_relation(tex_key, rb_init_key, "Force field Texture");
-      }
+      /* Force field Texture — ID_TE removed in Blended; no IDNode for tex->id. */
     }
   }
   /* Objects. */
@@ -2472,25 +2462,9 @@ void DepsgraphRelationBuilder::build_particle_settings(ParticleSettings *part)
   add_relation(
       particle_settings_init_key, particle_settings_eval_key, "Particle Settings Init Order");
   add_relation(particle_settings_reset_key, particle_settings_eval_key, "Particle Settings Reset");
-  /* Texture slots. */
-  for (MTex *mtex : part->mtex) {
-    if (mtex == nullptr || mtex->tex == nullptr) {
-      continue;
-    }
-    build_texture(mtex->tex);
-    ComponentKey texture_key(&mtex->tex->id, NodeType::GENERIC_DATABLOCK);
-    add_relation(texture_key,
-                 particle_settings_reset_key,
-                 "Particle Texture -> Particle Reset",
-                 RELATION_FLAG_FLUSH_USER_EDIT_ONLY);
-    add_relation(texture_key, particle_settings_eval_key, "Particle Texture -> Particle Eval");
-    /* TODO(sergey): Consider moving texture space handling to its own
-     * function. */
-    if (mtex->texco == TEXCO_OBJECT && mtex->object != nullptr) {
-      ComponentKey object_key(&mtex->object->id, NodeType::TRANSFORM);
-      add_relation(object_key, particle_settings_eval_key, "Particle Texture Space");
-    }
-  }
+  /* Texture slots — ID_TE deregistered in Blended; no depsgraph relations for
+   * legacy particle texture data. build_texture() is a no-op so texture_key
+   * lookups would find no node. */
   if (check_id_has_anim_component(&part->id)) {
     ComponentKey animation_key(&part->id, NodeType::ANIMATION);
     add_relation(animation_key, particle_settings_eval_key, "Particle Settings Animation");
@@ -3164,49 +3138,12 @@ void DepsgraphRelationBuilder::build_materials(ID *owner, Material **materials, 
 }
 
 /* Recursively build graph for texture */
-void DepsgraphRelationBuilder::build_texture(Tex *texture)
+void DepsgraphRelationBuilder::build_texture(Tex * /*texture*/)
 {
-  if (built_map_.check_is_built_and_tag(texture)) {
-    return;
-  }
-
-  const BuilderStack::ScopedEntry stack_entry = stack_.trace(texture->id);
-
-  /* texture itself */
-  ComponentKey texture_key(&texture->id, NodeType::GENERIC_DATABLOCK);
-  build_idproperties(texture->id.properties);
-  build_idproperties(texture->id.system_properties);
-  build_animdata(&texture->id);
-  build_parameters(&texture->id);
-
-  /* texture's nodetree */
-  if (texture->nodetree) {
-    build_nodetree(texture->nodetree);
-    OperationKey ntree_key(
-        &texture->nodetree->id, NodeType::NTREE_OUTPUT, OperationCode::NTREE_OUTPUT);
-    add_relation(ntree_key, texture_key, "Texture's NTree");
-    build_nested_nodetree(&texture->id, texture->nodetree);
-  }
-
-  /* Special cases for different IDs which texture uses. */
-  if (texture->type == TEX_IMAGE) {
-    if (texture->ima != nullptr) {
-      build_image(texture->ima);
-
-      ComponentKey image_key(&texture->ima->id, NodeType::GENERIC_DATABLOCK);
-      add_relation(image_key, texture_key, "Texture Image");
-    }
-  }
-
-  if (check_id_has_anim_component(&texture->id)) {
-    ComponentKey animation_key(&texture->id, NodeType::ANIMATION);
-    add_relation(animation_key, texture_key, "Datablock Animation");
-  }
-
-  if (BKE_image_user_id_has_animation(&texture->id)) {
-    ComponentKey image_animation_key(&texture->id, NodeType::IMAGE_ANIMATION);
-    add_relation(image_animation_key, texture_key, "Datablock Image Animation");
-  }
+  /* ID_TE is no longer a registered ID type in Blended. Tex IDNodes are never
+   * added by the node builder, so ComponentKey lookups on texture->id would find
+   * no node and corrupt the relation graph. All call sites are guarded by null
+   * checks; this body is intentionally empty. */
 }
 
 void DepsgraphRelationBuilder::build_image(Image *image)

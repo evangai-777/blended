@@ -35,7 +35,6 @@ const EnumPropertyItem rna_enum_id_type_items[] = {
     {ID_CF, "CACHEFILE", ICON_FILE, "Cache File", ""},
     {ID_CA, "CAMERA", ICON_CAMERA_DATA, "Camera", ""},
     {ID_GR, "COLLECTION", ICON_OUTLINER_COLLECTION, "Collection", ""},
-    {ID_CU_LEGACY, "CURVE", ICON_CURVE_DATA, "Curve", ""},
     {ID_CV, "CURVES", ICON_CURVES_DATA, "Curves", ""},
     {ID_VF, "FONT", ICON_FONT_DATA, "Font", ""},
 
@@ -118,8 +117,6 @@ const IDFilterEnumPropertyItem rna_enum_id_type_filter_items[] = {
     {FILTER_ID_BR, "filter_brush", ICON_BRUSH_DATA, "Brushes", "Show Brushes data-blocks"},
     {FILTER_ID_CA, "filter_camera", ICON_CAMERA_DATA, "Cameras", "Show Camera data-blocks"},
     {FILTER_ID_CF, "filter_cachefile", ICON_FILE, "Cache Files", "Show Cache File data-blocks"},
-    {FILTER_ID_CU_LEGACY, "filter_curve", ICON_CURVE_DATA, "Curves", "Show Curve data-blocks"},
-
     {FILTER_ID_GP,
      "filter_grease_pencil",
      ICON_GREASEPENCIL,

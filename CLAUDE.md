@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.3.0 (tagged). 0.4.0 in progress — CI green (Windows x64, build #62, commit `7423dae`). Bucket 5 + 6 fossil removals: `ID_PC` ✓ + `ID_SPK` ✓ + `ID_PA` ✓ + `ID_GD_LEGACY` ✓ + `ID_LS` ✓ + `ID_MB` ✓ + `ID_TE` ✓; next: `ID_CU_LEGACY`.
+**Current version:** Blended 0.3.0 (tagged). 0.4.0 in progress — CI green (Windows x64, build #62, commit `7423dae`). Bucket 5 + 6 fossil removals: `ID_PC` ✓ + `ID_SPK` ✓ + `ID_PA` ✓ + `ID_GD_LEGACY` ✓ + `ID_LS` ✓ + `ID_MB` ✓ + `ID_TE` ✓ + `ID_CU_LEGACY` ✓; next: `ID_CF` (design decision needed first).
 
 ---
 
@@ -25,7 +25,7 @@ The old approach (tiered UI, smart defaults, Emscripten) was prototyping toward 
 
 **`ID_SCR` and `ID_WM` removal — compile-clean, pending CI.** All layers merged. The blast radius was enormous — see Scar 2 below. Key architectural outcome: `bmain->screens` and `bmain->wm` kept as non-indexed runtime listbases; `ID_SCR_LEGACY` / `ID_WM_LEGACY` defines route through `which_libbase` for allocation but are excluded from `BKE_main_lists_get`. Branch: `claude/remove-id-scr-id-wm`. Layer-by-layer status in [`CHANGELOG.md`](CHANGELOG.md).
 
-**In progress: Bucket 5 + 6 fossil removals (0.4.x)** — `ID_CU_LEGACY`, `ID_GD_LEGACY`, `ID_TE`, `ID_MB`, `ID_LS`, `ID_CF`. `ID_PC` ✓. `ID_SPK` ✓. `ID_PA` ✓. `ID_GD_LEGACY` ✓. `ID_LS` ✓. `ID_MB` ✓. `ID_TE` ✓. Next: `ID_CU_LEGACY`. See roadmap in CHANGELOG.md.
+**In progress: Bucket 5 + 6 fossil removals (0.4.x)** — `ID_GD_LEGACY`, `ID_TE`, `ID_MB`, `ID_LS`, `ID_CF`. `ID_PC` ✓. `ID_SPK` ✓. `ID_PA` ✓. `ID_GD_LEGACY` ✓. `ID_LS` ✓. `ID_MB` ✓. `ID_TE` ✓. `ID_CU_LEGACY` ✓. Next: `ID_CF` (design decision needed — see Key note 8). See roadmap in CHANGELOG.md.
 
 Pattern for each pending layer: `grep -rn "ID_WS"` the directory, delete or redirect every hit. The breakage is the audit — follow the compile errors, don't paper over them.
 
@@ -47,13 +47,59 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 
 5. **Multi-window screen iteration edge cases** — The 0.3.0 chisel converted global screen iteration to per-window. Edge cases in multi-window layouts may surface at runtime. Not tested in CI (single-window headless).
 
+6. **Scar 2 listbase memory leaks (ID_PA, ID_TE, ID_CU_LEGACY)** — `bmain->particles`, `bmain->textures`, and `bmain->curves` are kept as non-indexed listbases for versioning-pass compatibility, but are NOT in `BKE_main_lists_get`. When a legacy `.blend` file is loaded and then a new file is loaded (or the application exits), `BKE_main_free` does not free those ID blocks. They accumulate for the session. Same root cause as item 1 (ID_LS). Same fix pattern: post-read drain pass. **ID_CU_LEGACY leak is more active than ID_PA/ID_TE:** Alembic NURBS reader and OBJ NURBS importer call `BKE_curve_add` at runtime (not just on legacy file load), creating new Curve blocks in `bmain->curves` that are never freed when scenes are cleared or files are re-opened. `bmain->gpencils` (ID_GD_LEGACY) has the same structure but gpencil data is actively used at runtime — needs separate audit to confirm it's freed by the right path.
+
+---
+
+### Known Runtime Artifacts (QA Reference)
+
+**Check here before assuming a new bug.** These are the expected consequences of completed chisels. The build is CI-green; these are bounded, documented runtime gaps — not regressions.
+
+#### Category A — Expected behavior changes (by design, won't fix)
+
+| Trigger | What happens | Introduced |
+|---------|-------------|------------|
+| Object with `PFIELD_TEXTURE` force field in legacy file | Texture displacement silently dead. `build_texture()` is a no-op — Tex IDNodes never enter the depsgraph. Force field evaluates but ignores the texture parameter entirely. *(Post-chisel fix `c320633b`: two direct `add_relation()` calls in `deg_builder_relations.cc` that bypassed the no-op were removed — without the fix these logged repeated "Failed to add relation" errors at graph-build time. See Scar 12.)* | 0.4.0 (ID_TE) |
+| Object with particle system that has texture slots (legacy file) | Texture slots silently ignored. Particle system otherwise evaluates (geometry nodes path). | 0.4.0 (ID_TE) |
+| Node with `SOCK_TEXTURE` socket and a `Tex *` default value (legacy file) | Socket's texture not depsgraph-tracked; texture changes don't trigger node re-evaluation. | 0.4.0 (ID_TE) |
+| Brush with `paint_curve` assigned in legacy file | `Brush::paint_curve` field no longer exists in DNA; SDNA remapping skips it on load. Brush uses default stroke shape. No crash. | 0.4.0 (ID_PC) |
+| Python script calling `bpy.ops.object.particle_system_add()` or `_remove()` | "Operator not found" error. Operators removed in 0.4.0 cleanup (commit `e39bcd58`). | 0.4.0 (ID_PA) |
+| Scene with NLA sound strip created via old `NLA_OT_soundclip_add` operator | Operator removed. Existing sound strips in NLA from legacy files: no speaker evaluation, no 3D positional audio. VSE timeline audio unaffected. | 0.4.0 (ID_SPK) |
+| File with GD_LEGACY grease pencil objects or annotations | OB_GPENCIL_LEGACY objects and annotation data fully functional — depsgraph evaluation kept intentionally. This is **not** a failure; listed here for completeness. | 0.4.0 (ID_GD_LEGACY) |
+
+#### Category B — Uncertain/crash paths (legacy files only, needs investigation)
+
+| Trigger | Expected failure mode | Introduced | Status |
+|---------|-----------------------|------------|--------|
+| Legacy file containing MetaBall (`OB_MBALL`) objects | `bmain->metaballs` fully removed — no Scar 2 rescue. MetaBall data can't be allocated; no `which_libbase` routing. Objects will load with `ob->type == OB_MBALL` and `ob->data == nullptr`. Any draw or eval code that dereferences `ob->data` without a null check → null deref crash. `BLI_assert_unreachable()` sites in dispatch switches → debug assert. **No versioning pass converts these to another type** (unlike OB_SPEAKER). | 0.4.0 (ID_MB) | Needs versioning pass: convert `OB_MBALL` → `OB_EMPTY` on file load, same pattern as OB_SPEAKER → OB_EMPTY (versioning pass 502.23) |
+| Legacy file with particle systems on objects | `ParticleSettings` IDs load into `bmain->particles` (Scar 2). `build_particle_systems()` is still called from the object node builder for any object with `object->particlesystem.first != nullptr`. Inside, `build_particle_settings(particle->part)` runs. With `INIT_TYPE(ID_PA)` removed and `INDEX_ID_PA` gone, any path that calls `BKE_idtype_idcode_to_index(ID_PA)` (e.g., `add_id_node()`) hits the same OOB-index problem that `build_texture()` had. **This was not fixed in the same pass as the texture bug.** | 0.4.0 (ID_PA) | Needs the same `build_particle_settings()` no-op guard applied to `build_texture()` in this session. Investigate before next legacy-file test. |
+| Legacy file with speaker objects, file version < 502.23 | Versioning pass 502.23 converts `OB_SPEAKER` → `OB_EMPTY`. Files saved before that pass (i.e., Blender files from before 5.0.23 equivalent) should be handled. Files at exactly the edge version boundary may not convert. Low risk in practice. | 0.4.0 (ID_SPK) | Monitor; no known CI fixture |
+
+#### Category C — Memory leaks (session-scoped, accepted)
+
+| Trigger | Leak scope | Introduced | Fix when needed |
+|---------|-----------|------------|-----------------|
+| Load legacy `.blend` with Freestyle LineStyle data (`WITH_FREESTYLE=OFF`) | `bmain->linestyles` populated, not freed by `BKE_main_free`. Blocks accumulate per file load, freed on process exit. | 0.4.0 (ID_LS) | Post-read drain pass on `bmain->linestyles` |
+| Load legacy `.blend` with ParticleSettings data | `bmain->particles` populated (Scar 2), not in `BKE_main_lists_get`. Same leak shape as ID_LS. | 0.4.0 (ID_PA) | Post-read drain pass on `bmain->particles` |
+| Load legacy `.blend` with Blender Internal texture data | `bmain->textures` populated (Scar 2), not in `BKE_main_lists_get`. Same leak shape. | 0.4.0 (ID_TE) | Post-read drain pass on `bmain->textures` |
+| Load legacy `.blend` with Curve data, OR import NURBS via Alembic/OBJ | `bmain->curves` populated (Scar 2), not in `BKE_main_lists_get`. More active than other Scar 2 leaks: `BKE_curve_add` is called at runtime by Alembic NURBS reader and OBJ NURBS importer, so curves accumulate not just on legacy file load but on every NURBS import. | 0.4.0 (ID_CU_LEGACY) | Post-read/post-import drain pass on `bmain->curves` |
+
+**When a post-read drain pass is needed (template):** In `blenloader/intern/readfile.cc` or a post-read callback, after `BKE_blendfile_read()` completes, iterate and free the relevant non-indexed listbase:
+```cpp
+// Example: drain bmain->linestyles after file load when WITH_FREESTYLE=OFF
+BKE_id_multi_tagged_delete(bmain);  // or direct iteration + BKE_id_free
+```
+Exact implementation depends on whether the blocks have ID-system runtime state that needs cleanup — audit `IDTypeInfo::id_free` for the relevant type before implementing.
+
+
+
 ### Upcoming Chisel Roadmap
 
 | Order | ID type | Literal hits | Status |
 |-------|---------|-------------|--------|
 | ~~Done~~ | `ID_MB` — MetaBall | 60 hits / 32 files | ✓ |
 | ~~Done~~ | `ID_TE` — Texture | 76 hits / 45 files | ✓ |
-| Next | `ID_CU_LEGACY` — Legacy Curve | 74 hits / 33 files | ☐ (active migration path to ID_CV must survive) |
+| ~~Done~~ | `ID_CU_LEGACY` — Legacy Curve | 74 hits / 33 files | ✓ |
 | Last | `ID_CF` — CacheFile | 18 literal / ~50+ true | ☐ (needs design decision first) |
 
 ### Foundation Layer Roadmap
@@ -87,7 +133,11 @@ When the true blast radius diverges from the literal count, **update the CLAUDE.
 
 **The rule:** The pre-chisel grep count is a starting map, not a final answer. The editing phase is always the real audit. Always update the documentation to reflect the true scope — future sessions calibrate their estimates off these numbers. If they're systematically low, every future blast radius estimate will be wrong in the same direction.
 
-**ID_CU_LEGACY — 74 hits, 33 files**
+**ID_CU_LEGACY — ✓ COMPLETE (0.4.0)** *(true blast radius: ~86 hits / 36 files — Scar 2 applied, Scar 10 on BKE_curve_add, two depsgraph OOB guards)*
+
+> **Session note (2026-05-06):** 6 layers committed (editors/draw had zero compile errors; all `case ID_CU_LEGACY:` sites in those layers compile fine because `ID_CU_LEGACY` is kept as a `#define` with the same value). Key decisions vs. pre-chisel audit: (1) **Scar 2 mandatory** — `bmain->curves` field and `which_libbase` routing kept; 23+ `bmain->curves` iterations across versioning files 250–520 + `anim_data_bmain_utils.cc` + `anim_sys.cc`. (2) **Scar 8 applied correctly** — `DNA_curve_types.h` `Curve` struct has `DNA_DEFINE_CXX_METHODS(Curve)` AND `id_type` in the same `#ifdef __cplusplus` block; removed only the `id_type` line, kept the rest. (3) **Scar 10** — `BKE_curve_add` calls `BKE_libblock_alloc(bmain, ID_CU_LEGACY, ...)` which crashes after INIT_TYPE removal; applied MEM_new<Curve> + manual-insert pattern; added `BKE_main.hh` include; `BKE_curve_add` has live callers: object.cc (3 types), Alembic NURBS reader, OBJ NURBS importer, mesh_convert.cc, rna_main_api.cc. (4) **Active migration path preserved** — `blenfile_link_append.cc` converter code untouched; case statements in `object.cc`, `material.cc`, `key.cc`, etc. left in place because Alembic/OBJ importers still create legacy curve objects at runtime. (5) **Two depsgraph OOB guards added** — same crash path as ID_TE `build_texture()` but different fix: `add_id_node()` in `depsgraph.cc` guarded with `id_type_index >= 0` check (legacy curves still get IDNodes; only `id_type_exist` write skipped), `DEG_graph_id_type_tag()` in `depsgraph_tag.cc` guarded with early return. (6) **makesrna cleanup** — `rna_Main_curves_new()`, `RNA_def_main_curves()`, `RNA_MAIN_ID_TAG_FUNCS_DEF(curves)`, listbase funcs, and table entry all removed. `rna_space.cc:3951` `FILTER_ID_CU_LEGACY |` in geometry filter removed (same grep-miss pattern). (7) **`FILTER_ID_CU_LEGACY`** was the primary compile-error source in non-core files; once removed from `DNA_ID.h`, `key.cc:173` `.dependencies_id_types` and `rna_space.cc:3951` were the two non-obvious grep-miss sites. (8) Deferred: `rna_curve.cc` entirely intact — `CU_BEZIER/CU_POLY/CU_NURBS` RNA enum arrays stay since `DNA_curve_types.h` is kept for runtime use.
+
+**ID_CU_LEGACY — 74 hits, 33 files** *(pre-chisel record below)*
 
 Core definition:
 - `makesdna/DNA_ID_enums.h:133` — enum entry `ID_CU_LEGACY = MAKE_ID2('C', 'U')`
@@ -620,7 +670,7 @@ Additional files NOT in the literal grep (discovered 2026-04-29):
 
 **Key notes for the chisel session:**
 
-1. **These are true fossils — no runtime rescue.** Unlike ID_SCR/ID_WM, none of these stay as runtime structs. Full removal: enum, DNA `id_type` constexpr, `IDTypeInfo`, `INIT_TYPE`, `which_libbase` case, `BKE_main_lists_get` entry, and `bmain->*` field. **Exceptions — Scar 2 pattern applies to:** `ID_GD_LEGACY` (`bmain->gpencils` kept — OB_GPENCIL_LEGACY objects and annotations still use bGPdata at runtime), `ID_LS` (`bmain->linestyles` kept — legacy file loads populate it; see ID_LS review note), `ID_PA` (`bmain->particles` kept — blenloader versioning files `versioning_250` through `versioning_400` and `versioning_legacy` iterate it to upgrade old particle data on file load; see ID_PA correction note 2026-05-01), and `ID_TE` (`bmain->textures` kept — `versioning_250.cc`, `versioning_260.cc`, `versioning_280.cc`, `versioning_legacy.cc` iterate it to upgrade Blender Internal texture data in legacy files; see ID_TE session note 2026-05-05).
+1. **These are true fossils — no runtime rescue.** Unlike ID_SCR/ID_WM, none of these stay as runtime structs. Full removal: enum, DNA `id_type` constexpr, `IDTypeInfo`, `INIT_TYPE`, `which_libbase` case, `BKE_main_lists_get` entry, and `bmain->*` field. **Exceptions — Scar 2 pattern applies to:** `ID_GD_LEGACY` (`bmain->gpencils` kept — OB_GPENCIL_LEGACY objects and annotations still use bGPdata at runtime), `ID_LS` (`bmain->linestyles` kept — legacy file loads populate it; see ID_LS review note), `ID_PA` (`bmain->particles` kept — blenloader versioning files `versioning_250` through `versioning_400` and `versioning_legacy` iterate it to upgrade old particle data on file load; see ID_PA correction note 2026-05-01), and `ID_TE` (`bmain->textures` kept — `versioning_250.cc`, `versioning_260.cc`, `versioning_280.cc`, `versioning_legacy.cc` iterate it to upgrade Blender Internal texture data in legacy files; see ID_TE session note 2026-05-05), and `ID_CU_LEGACY` (`bmain->curves` kept — 23+ `bmain->curves` iterations across `versioning_250` through `versioning_520` and `versioning_legacy`, plus `anim_data_bmain_utils.cc` and `anim_sys.cc`; see ID_CU_LEGACY session note 2026-05-06).
 
 2. **ID_CU_LEGACY and ID_GD_LEGACY have active migration paths.** CU_LEGACY → CV (Curves), GD_LEGACY → GP (Grease Pencil v3). The migration code in `grease_pencil_convert_legacy.cc` and `blendfile_link_append.cc` must survive removal — only the type registration goes, not the converter.
 
@@ -632,9 +682,9 @@ Additional files NOT in the literal grep (discovered 2026-04-29):
 
 6. **`depsgraph.cc:160` had a `!= ID_PA` guard** in `clear_id_nodes_conditional` — resolved in 0.4.0. The two-pass teardown (scenes first, then everything-except-particles) ensured particle COW copies outlived the objects referencing them. With ID_PA gone, the guard was changed to `!= ID_SCE` (scenes already destroyed in pass 1 are caught by the `id_cow == nullptr` guard in pass 2).
 
-7. **Remaining chisel order (smallest blast radius first):** **ID_GD_LEGACY ✓** → **ID_LS ✓** → **ID_MB ✓** → **ID_TE ✓** → ID_CU_LEGACY (74) → ID_CF (last, design decision). ~74 hits across 1 type remaining. ID_PC (21) ✓ 0.4.0. ID_SPK (23) ✓ 0.4.0. ID_PA (35) ✓ 0.4.0. ID_GD_LEGACY (56) ✓ 0.4.0. ID_LS (~50) ✓ 0.4.0. ID_MB (~130+) ✓ 0.4.0. ID_TE (~76) ✓ 0.4.0. ID_CF deferred — see note 8.
+7. **Remaining chisel order (smallest blast radius first):** **ID_GD_LEGACY ✓** → **ID_LS ✓** → **ID_MB ✓** → **ID_TE ✓** → **ID_CU_LEGACY ✓** → ID_CF (last, design decision). 0 types remaining. ID_PC (21) ✓ 0.4.0. ID_SPK (23) ✓ 0.4.0. ID_PA (35) ✓ 0.4.0. ID_GD_LEGACY (56) ✓ 0.4.0. ID_LS (~50) ✓ 0.4.0. ID_MB (~130+) ✓ 0.4.0. ID_TE (~76) ✓ 0.4.0. ID_CU_LEGACY (~86) ✓ 0.4.0. ID_CF deferred — see note 8.
 
-8. **ID_CF is architecturally entangled — do it last or separately.** The literal grep count (18) dramatically understates the true blast radius. `CacheFile` as a struct is woven into: the Alembic importer (`io/alembic/`), the USD importer (`io/usd/`), the Mesh Sequence Cache modifier (`MOD_meshsequencecache.cc`), the constraint system, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. The Mesh Sequence Cache modifier holds a `CacheFile *` ID pointer so multiple objects can share one cache reference — removing the ID type means deciding what replaces that pointer. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI builds, so breakage here will surface. **Revised chisel order: ID_TE ✓ → ID_CU_LEGACY → ID_CF (last, needs design decision). ID_PC ✓ (0.4.0). ID_SPK ✓ (0.4.0). ID_PA ✓ (0.4.0). ID_GD_LEGACY ✓ (0.4.0). ID_LS ✓ (0.4.0). ID_MB ✓ (0.4.0). ID_TE ✓ (0.4.0).** The open question: does the cache-file reference mechanism get inlined into the modifier/constraint DNA per-instance, or does CacheFile stay as a non-ID struct in a non-indexed listbase (like ID_SCR_LEGACY/ID_WM_LEGACY pattern)? Answer this before chiseling ID_CF.
+8. **ID_CF is architecturally entangled — do it last or separately.** The literal grep count (18) dramatically understates the true blast radius. `CacheFile` as a struct is woven into: the Alembic importer (`io/alembic/`), the USD importer (`io/usd/`), the Mesh Sequence Cache modifier (`MOD_meshsequencecache.cc`), the constraint system, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. The Mesh Sequence Cache modifier holds a `CacheFile *` ID pointer so multiple objects can share one cache reference — removing the ID type means deciding what replaces that pointer. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI builds, so breakage here will surface. **Revised chisel order: ID_TE ✓ → ID_CU_LEGACY ✓ → ID_CF (last, needs design decision). ID_PC ✓ (0.4.0). ID_SPK ✓ (0.4.0). ID_PA ✓ (0.4.0). ID_GD_LEGACY ✓ (0.4.0). ID_LS ✓ (0.4.0). ID_MB ✓ (0.4.0). ID_TE ✓ (0.4.0). ID_CU_LEGACY ✓ (0.4.0).** The open question: does the cache-file reference mechanism get inlined into the modifier/constraint DNA per-instance, or does CacheFile stay as a non-ID struct in a non-indexed listbase (like ID_SCR_LEGACY/ID_WM_LEGACY pattern)? Answer this before chiseling ID_CF.
 
 ---
 
@@ -723,7 +773,7 @@ make check_mypy     # Python type checking
 ### Datablock Cuts in Progress (BLENDED.md §10)
 Target: 39 → ~19 ID types.
 - **Bucket 4 (UI state, remove):** `ID_WS` ✓ (0.2.0), `ID_SCR` ✓ (0.3.0 WIP), `ID_WM` ✓ (0.3.0 WIP)
-- **Bucket 5 (upstream deprecations, finish):** `ID_CU_LEGACY`, `ID_GD_LEGACY` ✓ (0.4.0)
+- **Bucket 5 (upstream deprecations, finish):** `ID_CU_LEGACY` ✓ (0.4.0), `ID_GD_LEGACY` ✓ (0.4.0)
 - **Bucket 6 (fossils, cut):** `ID_CF` — pending (design decision); `ID_PC` ✓ (0.4.0); `ID_SPK` ✓ (0.4.0); `ID_PA` ✓ (0.4.0); `ID_LS` ✓ (0.4.0); `ID_MB` ✓ (0.4.0); `ID_TE` ✓ (0.4.0)
 
 ---
@@ -1000,6 +1050,37 @@ grep -rn "OB_MBALL\|MB_BALL\|MB_CUBE"  source/blender/makesrna/  # example for I
 # For ID_TE: grep for TEX_CLOUDS, TEX_WOOD, TEX_MARBLE, TEX_MAGIC, TEX_BLEND,
 #            TEX_STUCCI, TEX_NOISE, TEX_IMAGE, TEX_MUSGRAVE, TEX_VORONOI, TEX_DISTNOISE
 grep -rn "TEX_CLOUDS\|TEX_WOOD\|TEX_MARBLE\|TEX_MAGIC\|TEX_BLEND\|TEX_STUCCI\|TEX_NOISE\b\|TEX_IMAGE\|TEX_MUSGRAVE\|TEX_VORONOI\|TEX_DISTNOISE" source/blender/makesrna/
+```
+
+---
+
+### Scar 12: build_X() No-Op in Node Builder Does Not Silence Direct add_relation() Calls in Relations Builder
+
+**What happened:** The ID_TE chisel made `build_texture()` a no-op in `deg_builder_nodes.cc` — Tex datablocks never get IDNodes. But `deg_builder_relations.cc` had two sites that called `add_relation()` with `ComponentKey(&tex->id, NodeType::GENERIC_DATABLOCK)` directly, without going through `build_texture()`:
+
+1. Effector relations loop (~line 464): PFIELD_TEXTURE force-field relation
+2. RigidBody effector loop (~line 2272): PFIELD_TEXTURE force-field relation
+
+Since no IDNode existed for `tex->id`, these `add_relation()` calls failed at runtime on any legacy file containing a PFIELD_TEXTURE force field — logging repeated "Failed to add relation" errors during graph build. Caught by Codex review on PR #154 (post-chisel fix commit `c320633b`).
+
+**Why it's easy to miss:** The no-op in the nodes builder looks complete — `build_texture()` is the single public entry point for texture depsgraph work, so it appears to be a clean boundary. But the relations builder has its own separate `ComponentKey`/`add_relation()` blocks that directly reference `tex->id` without calling `build_texture()` at all. Both files must be checked independently.
+
+**The fix:** Remove the direct `add_relation()` blocks in `deg_builder_relations.cc`. The force-field texture displacement remains silently dead (the force field evaluates but the texture parameter is ignored and no error logs are emitted).
+
+**The detection pattern — run this after making any `build_X()` a no-op in either depsgraph builder:**
+```bash
+# Replace 'tex' with the type's field name (part, mball, etc.)
+grep -n "tex->id\|tex_key" source/blender/depsgraph/intern/builder/deg_builder_relations.cc
+# General form:
+grep -n "X->id\|X_key" source/blender/depsgraph/intern/builder/deg_builder_relations.cc
+```
+Any `ComponentKey` or `add_relation()` site that references the removed type's `->id` directly — without going through `build_X()` — is a latent "Failed to add relation" error that surfaces at runtime on legacy files.
+
+**Add to the mandatory post-chisel checklist:**
+```bash
+# Scar 12: direct add_relation() calls in relations builder bypassing the no-op
+# Run after making build_X() a no-op in either depsgraph builder
+grep -n "tex->id\|tex_key" source/blender/depsgraph/intern/builder/deg_builder_relations.cc
 ```
 
 ---

@@ -39,7 +39,7 @@ What's Different Right Now
 - **Pre-5.0 rig compatibility** — `blended_rig_compat.py` restores `action.fcurves` as a compatibility property on `bpy.types.Action`. Pre-Blender-5.0 Rigify rigs (including CGCookie Vonnbots rigs) that access `action.fcurves` directly work again. IK/FK bake operators no longer fail silently.
 - **Update notifications** — Background GitHub Releases check at startup (24-hour cache, non-blocking). Top-bar notification with version string when an update is available. One-click download via browser. "Blended Updates" panel in System Preferences.
 - **CI** — Windows x64 portable `.zip` builds via GitHub Actions. Branch pushes run a fast lite build for compile-error checking. Tags produce a full release artifact. `blended_release.cmake` disables GPU kernel pre-compilation (CUDA/HIP/OneAPI) to keep CI under an hour — runtime compilation covers the same hardware.
-- **Datablock audit — 0.4.x in progress.** Target: 39 → ~19 ID types. Removed so far: `ID_WS` ✓ (0.2.0), `ID_SCR` + `ID_WM` ✓ (0.3.0), `ID_PC` + `ID_SPK` + `ID_PA` + `ID_GD_LEGACY` + `ID_LS` + `ID_MB` + `ID_TE` ✓ (0.4.0). Next: `ID_CU_LEGACY`. See [`CHANGELOG.md`](../CHANGELOG.md) for per-layer file detail.
+- **Datablock audit — 0.4.x in progress.** Target: 39 → ~19 ID types. Removed so far: `ID_WS` ✓ (0.2.0), `ID_SCR` + `ID_WM` ✓ (0.3.0), `ID_PC` + `ID_SPK` + `ID_PA` + `ID_GD_LEGACY` + `ID_LS` + `ID_MB` + `ID_TE` + `ID_CU_LEGACY` ✓ (0.4.0). Next: `ID_CF` (deferred, design decision). See [`CHANGELOG.md`](../CHANGELOG.md) for per-layer file detail.
 
 On the Horizon
 --------------
@@ -156,7 +156,24 @@ Blended is developed with contributions from both human developers and AI tools.
   versioning_260, versioning_280, versioning_legacy all iterate it to upgrade Blender Internal
   texture data in legacy files; INIT_TYPE and BKE_main_lists_get entry remain removed;
   anim_sys.cc field-name grep-miss caught post-chisel (EVAL_ANIM_NODETREE_IDS uses field name
-  not ID_TE string).
+  not ID_TE string); post-chisel Codex fix: two direct add_relation() calls in
+  deg_builder_relations.cc bypassing the build_texture() no-op (PFIELD_TEXTURE effector
+  and RigidBody effector loops) removed — without fix these logged "Failed to add relation"
+  errors on every legacy file with a texture force field (Scar 12, commit c320633b).
+  `ID_CU_LEGACY` (Legacy Curve) removal — ~86 hits, 36 files, 6 layers (makesdna,
+  blenkernel, makesrna, depsgraph active; editors/draw audited — zero compile errors
+  via #define preservation; pre-chisel literal count was 74/33):
+  IDTypeInfo removed (curve.cc), INIT_TYPE + both CASE_IDINDEX(CU_LEGACY) removed (Scar 4),
+  INDEX_ID_CU_LEGACY and FILTER_ID_CU_LEGACY removed, OB_DATA_SUPPORT_EDITMODE/ID/ID_CASE
+  macros cleaned; Scar 2: bmain->curves and which_libbase routing kept — 23+ versioning
+  iterations across versioning_250 through versioning_520 + anim_data_bmain_utils.cc +
+  anim_sys.cc; Scar 8: DNA_DEFINE_CXX_METHODS kept in Curve's #ifdef __cplusplus block,
+  only id_type line removed; Scar 10: BKE_curve_add rewritten with MEM_new<Curve> +
+  manual bmain insert (live callers: object.cc 3 types, Alembic NURBS reader, OBJ NURBS
+  importer, mesh_convert.cc, rna_main_api.cc); two depsgraph OOB crash paths fixed
+  (add_id_node id_type_exist + DEG_graph_id_type_tag id_type_updated — both guarded with
+  BKE_idtype_idcode_to_index < 0 checks); FILTER_ID_CU_LEGACY grep-miss in key.cc:173 and
+  rna_space.cc:3951 caught during layer edits.
   ongoing PR review and integration: 10+ PRs assessed, applied selectively.
   *"Listen to the whole thing before reacting."*
 
