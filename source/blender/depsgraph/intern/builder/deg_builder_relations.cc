@@ -461,13 +461,8 @@ void DepsgraphRelationBuilder::add_particle_forcefield_relations(const Operation
         add_relation(mod_key, key, name);
       }
 
-      /* Force field Texture. */
-      if ((relation.pd != nullptr) && (relation.pd->forcefield == PFIELD_TEXTURE) &&
-          (relation.pd->tex != nullptr))
-      {
-        ComponentKey tex_key(&relation.pd->tex->id, NodeType::GENERIC_DATABLOCK);
-        add_relation(tex_key, key, "Force field Texture");
-      }
+      /* Force field Texture — ID_TE removed in Blended; build_texture() is a no-op and
+       * no IDNode exists for tex->id. add_relation() on a missing node logs errors. */
 
       /* Smoke flow relations. */
       if (relation.pd->forcefield == PFIELD_FLUIDFLOW && relation.pd->f_source) {
@@ -2269,12 +2264,7 @@ void DepsgraphRelationBuilder::build_rigidbody(Scene *scene)
         ComponentKey effector_geometry_key(&effector_relation.ob->id, NodeType::GEOMETRY);
         add_relation(effector_geometry_key, rb_init_key, "RigidBody Field");
       }
-      if ((effector_relation.pd->forcefield == PFIELD_TEXTURE) &&
-          (effector_relation.pd->tex != nullptr))
-      {
-        ComponentKey tex_key(&effector_relation.pd->tex->id, NodeType::GENERIC_DATABLOCK);
-        add_relation(tex_key, rb_init_key, "Force field Texture");
-      }
+      /* Force field Texture — ID_TE removed in Blended; no IDNode for tex->id. */
     }
   }
   /* Objects. */
