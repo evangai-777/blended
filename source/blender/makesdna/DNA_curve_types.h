@@ -212,8 +212,7 @@ struct EditNurb {
 struct Curve {
 #ifdef __cplusplus
   DNA_DEFINE_CXX_METHODS(Curve)
-  /** See #ID_Type comment for why this is here. */
-  static constexpr ID_Type id_type = ID_CU_LEGACY;
+
 #endif
 
   ID id;

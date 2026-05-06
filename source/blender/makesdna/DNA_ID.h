@@ -1158,8 +1158,6 @@ enum IDRecalcFlag {
 #define FILTER_ID_AR (1ULL << 1)
 #define FILTER_ID_BR (1ULL << 2)
 #define FILTER_ID_CA (1ULL << 3)
-#define FILTER_ID_CU_LEGACY (1ULL << 4)
-
 #define FILTER_ID_GR (1ULL << 6)
 #define FILTER_ID_IM (1ULL << 7)
 #define FILTER_ID_LA (1ULL << 8)
@@ -1190,7 +1188,7 @@ enum IDRecalcFlag {
 #define FILTER_ID_IP (1ULL << 41)
 
 #define FILTER_ID_ALL \
-  (FILTER_ID_AC | FILTER_ID_AR | FILTER_ID_BR | FILTER_ID_CA | FILTER_ID_CU_LEGACY | \
+  (FILTER_ID_AC | FILTER_ID_AR | FILTER_ID_BR | FILTER_ID_CA | \
    FILTER_ID_GR | FILTER_ID_IM | FILTER_ID_LA | \
    FILTER_ID_LT | FILTER_ID_MA | FILTER_ID_MC | FILTER_ID_ME | FILTER_ID_MSK | \
    FILTER_ID_NT | FILTER_ID_OB | FILTER_ID_PAL | FILTER_ID_SCE | \
@@ -1268,7 +1266,6 @@ enum eID_Index {
   /* Object data types. */
   INDEX_ID_AR,
   INDEX_ID_ME,
-  INDEX_ID_CU_LEGACY,
   INDEX_ID_CV,
   INDEX_ID_PT,
   INDEX_ID_VO,

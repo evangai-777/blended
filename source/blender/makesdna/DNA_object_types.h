@@ -730,13 +730,12 @@ struct ObHook {
 
 /** Matches #OB_TYPE_SUPPORT_EDITMODE. */
 #define OB_DATA_SUPPORT_EDITMODE(_type) \
-  (ELEM(_type, ID_ME, ID_CU_LEGACY, ID_LT, ID_AR, ID_CV, ID_GP))
+  (ELEM(_type, ID_ME, ID_LT, ID_AR, ID_CV, ID_GP))
 
 /* is this ID type used as object data */
 #define OB_DATA_SUPPORT_ID(_id_type) \
   (ELEM(_id_type, \
         ID_ME, \
-        ID_CU_LEGACY, \
         ID_LA, \
         ID_LP, \
         ID_CA, \
@@ -749,7 +748,6 @@ struct ObHook {
 
 #define OB_DATA_SUPPORT_ID_CASE \
   ID_ME: \
-  case ID_CU_LEGACY: \
   case ID_LA: \
   case ID_LP: \
   case ID_CA: \
