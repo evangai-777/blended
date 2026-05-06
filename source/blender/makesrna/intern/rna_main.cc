@@ -153,7 +153,6 @@ RNA_MAIN_LISTBASE_FUNCS_DEF(brushes)
 RNA_MAIN_LISTBASE_FUNCS_DEF(cachefiles)
 RNA_MAIN_LISTBASE_FUNCS_DEF(cameras)
 RNA_MAIN_LISTBASE_FUNCS_DEF(collections)
-RNA_MAIN_LISTBASE_FUNCS_DEF(curves)
 RNA_MAIN_LISTBASE_FUNCS_DEF(fonts)
 
 RNA_MAIN_LISTBASE_FUNCS_DEF(grease_pencils)
@@ -384,12 +383,6 @@ void RNA_def_main(BlenderRNA *brna)
        "Lattices",
        "Lattice data-blocks",
        RNA_def_main_lattices},
-      {"curves",
-       "Curve",
-       "rna_Main_curves_begin",
-       "Curves",
-       "Curve data-blocks",
-       RNA_def_main_curves},
       {"fonts",
        "VectorFont",
        "rna_Main_fonts_begin",

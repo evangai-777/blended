@@ -445,19 +445,6 @@ static Lattice *rna_Main_lattices_new(Main *bmain, const char *name)
   return lt;
 }
 
-static Curve *rna_Main_curves_new(Main *bmain, const char *name, int type)
-{
-  char safe_name[MAX_ID_NAME - 2];
-  rna_idname_validate(name, safe_name);
-
-  Curve *cu = BKE_curve_add(bmain, safe_name, type);
-  id_us_min(&cu->id);
-
-  WM_main_add_notifier(NC_ID | NA_ADDED, nullptr);
-
-  return cu;
-}
-
 static VFont *rna_Main_fonts_load(Main *bmain,
                                   ReportList *reports,
                                   const char *filepath,
@@ -760,7 +747,6 @@ RNA_MAIN_ID_TAG_FUNCS_DEF(lights, lights, ID_LA)
 RNA_MAIN_ID_TAG_FUNCS_DEF(libraries, libraries, ID_LI)
 RNA_MAIN_ID_TAG_FUNCS_DEF(images, images, ID_IM)
 RNA_MAIN_ID_TAG_FUNCS_DEF(lattices, lattices, ID_LT)
-RNA_MAIN_ID_TAG_FUNCS_DEF(curves, curves, ID_CU_LEGACY)
 RNA_MAIN_ID_TAG_FUNCS_DEF(fonts, fonts, ID_VF)
 RNA_MAIN_ID_TAG_FUNCS_DEF(brushes, brushes, ID_BR)
 RNA_MAIN_ID_TAG_FUNCS_DEF(worlds, worlds, ID_WO)
@@ -1321,52 +1307,6 @@ void RNA_def_main_lattices(BlenderRNA *brna, PropertyRNA *cprop)
       func, "do_ui_user", true, "", "Make sure interface does not reference this lattice data");
 
   func = RNA_def_function(srna, "tag", "rna_Main_lattices_tag");
-  parm = RNA_def_boolean(func, "value", false, "Value", "");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-}
-void RNA_def_main_curves(BlenderRNA *brna, PropertyRNA *cprop)
-{
-  StructRNA *srna;
-  FunctionRNA *func;
-  PropertyRNA *parm;
-
-  RNA_def_property_srna(cprop, "BlendDataCurves");
-  srna = RNA_def_struct(brna, "BlendDataCurves", nullptr);
-  RNA_def_struct_sdna(srna, "Main");
-  RNA_def_struct_ui_text(srna, "Main Curves", "Collection of curves");
-
-  func = RNA_def_function(srna, "new", "rna_Main_curves_new");
-  RNA_def_function_ui_description(func, "Add a new curve to the main database");
-  parm = RNA_def_string(func, "name", "Curve", 0, "", "New name for the data-block");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-  parm = RNA_def_enum(
-      func, "type", rna_enum_object_type_curve_items, 0, "Type", "The type of curve to add");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-  /* return type */
-  parm = RNA_def_pointer(func, "curve", "Curve", "", "New curve data-block");
-  RNA_def_function_return(func, parm);
-
-  func = RNA_def_function(srna, "remove", "rna_Main_ID_remove");
-  RNA_def_function_flag(func, FUNC_USE_REPORTS);
-  RNA_def_function_ui_description(func, "Remove a curve from the current blendfile");
-  parm = RNA_def_pointer(func, "curve", "Curve", "", "Curve to remove");
-  RNA_def_parameter_flags(parm, PROP_NEVER_NULL, PARM_REQUIRED | PARM_RNAPTR);
-  RNA_def_parameter_clear_flags(parm, PROP_THICK_WRAP, ParameterFlag(0));
-  RNA_def_boolean(func,
-                  "do_unlink",
-                  true,
-                  "",
-                  "Unlink all usages of this curve before deleting it "
-                  "(WARNING: will also delete objects instancing that curve data)");
-  RNA_def_boolean(func,
-                  "do_id_user",
-                  true,
-                  "",
-                  "Decrement user counter of all data-blocks used by this curve data");
-  RNA_def_boolean(
-      func, "do_ui_user", true, "", "Make sure interface does not reference this curve data");
-
-  func = RNA_def_function(srna, "tag", "rna_Main_curves_tag");
   parm = RNA_def_boolean(func, "value", false, "Value", "");
   RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
 }
