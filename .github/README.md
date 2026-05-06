@@ -11,7 +11,7 @@ Blended
 
 Blended is a fork of [Blender](https://www.blender.org) being rebuilt from the foundation up around one stated identity: **free 2D and 3D software tools, with an explicit focus on the craft of animation.**
 
-The project is at 0.3.0 (tagged) — 0.4.0 in progress, CI green (Windows x64, build #62). Early, honest, and moving forward with intention.
+The project is at 0.3.0 (tagged) — 0.4.0 pending CI (all 9 Bucket 5+6 fossil removals complete). Early, honest, and moving forward with intention.
 
 What Blended Is
 ---------------
@@ -39,7 +39,7 @@ What's Different Right Now
 - **Pre-5.0 rig compatibility** — `blended_rig_compat.py` restores `action.fcurves` as a compatibility property on `bpy.types.Action`. Pre-Blender-5.0 Rigify rigs (including CGCookie Vonnbots rigs) that access `action.fcurves` directly work again. IK/FK bake operators no longer fail silently.
 - **Update notifications** — Background GitHub Releases check at startup (24-hour cache, non-blocking). Top-bar notification with version string when an update is available. One-click download via browser. "Blended Updates" panel in System Preferences.
 - **CI** — Windows x64 portable `.zip` builds via GitHub Actions. Branch pushes run a fast lite build for compile-error checking. Tags produce a full release artifact. `blended_release.cmake` disables GPU kernel pre-compilation (CUDA/HIP/OneAPI) to keep CI under an hour — runtime compilation covers the same hardware.
-- **Datablock audit — 0.4.x in progress.** Target: 39 → ~19 ID types. Removed so far: `ID_WS` ✓ (0.2.0), `ID_SCR` + `ID_WM` ✓ (0.3.0), `ID_PC` + `ID_SPK` + `ID_PA` + `ID_GD_LEGACY` + `ID_LS` + `ID_MB` + `ID_TE` + `ID_CU_LEGACY` ✓ (0.4.0). Next: `ID_CF` — design settled (inline per-instance; `CacheFile *` replaced with inlined filepath fields in modifier/constraint DNA; `bmain->cachefiles` removed entirely), chisel in progress. See [`CHANGELOG.md`](../CHANGELOG.md) for per-layer file detail.
+- **Datablock audit — 0.4.x complete (pending CI).** Target: 39 → ~19 ID types. Removed: `ID_WS` ✓ (0.2.0), `ID_SCR` + `ID_WM` ✓ (0.3.0), `ID_PC` + `ID_SPK` + `ID_PA` + `ID_GD_LEGACY` + `ID_LS` + `ID_MB` + `ID_TE` + `ID_CU_LEGACY` + `ID_CF` ✓ (0.4.0). `ID_CF` removal: inline per-instance — `CacheFile *` replaced with inlined filepath/settings fields directly in `MeshSeqCacheModifierData` and `bTransformCacheConstraint`; `bmain->cachefiles` removed entirely (true fossil, no Scar 2). See [`CHANGELOG.md`](../CHANGELOG.md) for per-layer file detail.
 
 On the Horizon
 --------------
@@ -174,6 +174,16 @@ Blended is developed with contributions from both human developers and AI tools.
   (add_id_node id_type_exist + DEG_graph_id_type_tag id_type_updated — both guarded with
   BKE_idtype_idcode_to_index < 0 checks); FILTER_ID_CU_LEGACY grep-miss in key.cc:173 and
   rna_space.cc:3951 caught during layer edits.
+  `ID_CF` (CacheFile) removal — ~76 files, 8 layers, inline per-instance design:
+  MeshSeqCacheModifierData and bTransformCacheConstraint carry filepath/settings directly;
+  bmain->cachefiles removed entirely (true fossil, no Scar 2); full Alembic/USD reader
+  hierarchy migrated (all CacheFile* parameters replaced with inline path+settings);
+  ANIMTYPE_DSCACHEFILE chain removed (anim_channels_defines.cc ACF_DSCACHEFILE block,
+  animdata_filter_ds_cachefile function, fallthrough cases across 7 anim/NLA/transform files);
+  files deleted: io_cache.cc, io_cache.hh, interface_template_cache_file.cc, rna_cachefile.cc,
+  cachefile.cc, BKE_cachefile.hh; versioning_290.cc velocity_unit loop removed;
+  CTX_data_edit_cachefile and BLT_I18NCONTEXT_ID_CACHEFILE removed; RNA migrated from
+  PROP_POINTER to PROP_STRING/PROP_FILEPATH in rna_constraint.cc and rna_modifier.cc.
   ongoing PR review and integration: 10+ PRs assessed, applied selectively.
   *"Listen to the whole thing before reacting."*
 

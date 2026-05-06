@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.3.0 (tagged). 0.4.0 in progress — CI green (Windows x64, build #62, commit `7423dae`). Bucket 5 + 6 fossil removals: `ID_PC` ✓ + `ID_SPK` ✓ + `ID_PA` ✓ + `ID_GD_LEGACY` ✓ + `ID_LS` ✓ + `ID_MB` ✓ + `ID_TE` ✓ + `ID_CU_LEGACY` ✓; `ID_CF` in progress (design settled: inline per-instance, branch `claude/chisel-id-cf`).
+**Current version:** Blended 0.3.0 (tagged). 0.4.0 in progress — CI green (Windows x64, build #62, commit `7423dae`). Bucket 5 + 6 fossil removals: `ID_PC` ✓ + `ID_SPK` ✓ + `ID_PA` ✓ + `ID_GD_LEGACY` ✓ + `ID_LS` ✓ + `ID_MB` ✓ + `ID_TE` ✓ + `ID_CU_LEGACY` ✓ + `ID_CF` ✓. All 9 types complete — pending CI on branch `claude/chisel-id-cf`.
 
 ---
 
@@ -39,7 +39,7 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 
 1. **ID_LS latent memory leak** — Opening a legacy `.blend` file with Freestyle data in a `WITH_FREESTYLE=OFF` build populates `bmain->linestyles` via the kept `which_libbase` routing, but that listbase is not in `BKE_main_lists_get`, so `BKE_main_free` does not free those blocks. Accepted for now (no Freestyle fixtures in CI). Fix if needed: a blenloader post-read pass that drains `bmain->linestyles` after any file load when `WITH_FREESTYLE=OFF`.
 
-2. **ID_CF chisel in progress** — Design decision settled (2026-05-06): inline per-instance. `CacheFile *` in `MeshSeqCacheModifierData` and `bTransformCacheConstraint` replaced with inlined fields; `bmain->cachefiles` removed entirely (no Scar 2). True blast radius ~76 files. Branch: `claude/chisel-id-cf`. See Key note 8.
+2. **ID_CF chisel complete (0.4.0)** — Inline per-instance. `CacheFile *` in `MeshSeqCacheModifierData` and `bTransformCacheConstraint` replaced with inlined fields; `bmain->cachefiles` removed entirely (no Scar 2). 8 layers on branch `claude/chisel-id-cf`, pending CI. No deferred debt — no Scar 2 listbase, no runtime leak. See Key note 8 for full session record.
 
 3. **ID_SCR runtime debt (Scar 1)** — Workspace cycle, reorder operators, factory name translation. Runtime behavior after screens are per-window state instead of a global list. See Scar 1 for anatomy.
 
@@ -100,7 +100,7 @@ Exact implementation depends on whether the blocks have ID-system runtime state 
 | ~~Done~~ | `ID_MB` — MetaBall | 60 hits / 32 files | ✓ |
 | ~~Done~~ | `ID_TE` — Texture | 76 hits / 45 files | ✓ |
 | ~~Done~~ | `ID_CU_LEGACY` — Legacy Curve | 74 hits / 33 files | ✓ |
-| In progress | `ID_CF` — CacheFile | 29 literal / ~76 true | ☐ (design settled: inline per-instance) |
+| ~~Done~~ | `ID_CF` — CacheFile | 29 literal / ~76 true | ✓ (inline per-instance) |
 
 ### Foundation Layer Roadmap
 
@@ -623,7 +623,7 @@ makesrna (4 files):
 
 ---
 
-**ID_CF — 29 literal hits, ~15 files — true blast radius: ~76 files across 12 layers**
+**ID_CF — ✓ COMPLETE (0.4.0)** *(true blast radius: ~76 files across 8 committed layers — no Scar 2, true fossil, inline per-instance)*
 
 > **Pre-chisel audit (2026-05-06):** Literal `ID_CF` grep: 29 hits. Broader pattern grep (`CacheFile`, `cachefile`, `MeshSeqCache`, `bTransformCacheConstraint`, `ANIMTYPE_DSCACHEFILE`, `BKE_cachefile`, `rna_cachefile`, `io_cache`, etc.): 76 files after removing 3 false-positive categories (`blenlib/memory_cache_file_load.cc` — BLI memory cache, unrelated; `gpu/vulkan/vk_pipeline_pool.cc` — GPU pipeline cache, unrelated; `nodes/geometry/nodes/node_geo_import_*.cc` — 5 files, 0 CacheFile struct hits).
 >
@@ -741,9 +741,9 @@ blentranslation (1 file):
 
 6. **`depsgraph.cc:160` had a `!= ID_PA` guard** in `clear_id_nodes_conditional` — resolved in 0.4.0. The two-pass teardown (scenes first, then everything-except-particles) ensured particle COW copies outlived the objects referencing them. With ID_PA gone, the guard was changed to `!= ID_SCE` (scenes already destroyed in pass 1 are caught by the `id_cow == nullptr` guard in pass 2).
 
-7. **Remaining chisel order (smallest blast radius first):** **ID_GD_LEGACY ✓** → **ID_LS ✓** → **ID_MB ✓** → **ID_TE ✓** → **ID_CU_LEGACY ✓** → **ID_CF** (in progress — design settled, see note 8). ID_PC (21) ✓ 0.4.0. ID_SPK (23) ✓ 0.4.0. ID_PA (35) ✓ 0.4.0. ID_GD_LEGACY (56) ✓ 0.4.0. ID_LS (~50) ✓ 0.4.0. ID_MB (~130+) ✓ 0.4.0. ID_TE (~76) ✓ 0.4.0. ID_CU_LEGACY (~86) ✓ 0.4.0. ID_CF (~76) — branch `claude/chisel-id-cf`.
+7. **Chisel order complete (0.4.0):** ID_PC (21) ✓ → ID_SPK (23) ✓ → ID_PA (35) ✓ → ID_GD_LEGACY (56) ✓ → ID_LS (~50) ✓ → ID_MB (~130+) ✓ → ID_TE (~76) ✓ → ID_CU_LEGACY (~86) ✓ → ID_CF (~76) ✓. All 9 Bucket 5+6 fossil removals complete — 0.4.0 pending CI. Next: 0.5.x (Bucket 3 fold-downs, 39 → ~19 ID types).
 
-8. **ID_CF design decision settled: inline per-instance.** True blast radius is ~76 files (vs. 18 literal hits, ~50+ first estimate). `CacheFile` is woven into the Alembic importer, USD importer, Mesh Sequence Cache modifier, `bTransformCacheConstraint`, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI. **Design decision (2026-05-06):** inline per-instance. `CacheFile *` pointers in `MeshSeqCacheModifierData` and `bTransformCacheConstraint` are replaced with the `CacheFile` fields inlined directly. Precedent: VSE sequence strips carry file paths directly in the strip struct — no shared ID needed. The "shared reference" feature is not load-bearing; two objects can both store the same path string. `bmain->cachefiles` removed entirely — no Scar 2 rescue, true fossil. `versioning_290.cc` creates CacheFile IDs but does not iterate `bmain->cachefiles` for upgrades (verified), so no versioning dependency blocks the removal. **Chisel order: ID_TE ✓ → ID_CU_LEGACY ✓ → ID_CF (in progress). ID_PC ✓ (0.4.0). ID_SPK ✓ (0.4.0). ID_PA ✓ (0.4.0). ID_GD_LEGACY ✓ (0.4.0). ID_LS ✓ (0.4.0). ID_MB ✓ (0.4.0). ID_TE ✓ (0.4.0). ID_CU_LEGACY ✓ (0.4.0). ID_CF branch: `claude/chisel-id-cf`.**
+8. **ID_CF complete (0.4.0): inline per-instance.** True blast radius ~76 files (vs. 29 literal hits). `CacheFile` was woven into the Alembic importer, USD importer, Mesh Sequence Cache modifier, `bTransformCacheConstraint`, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI. **Design decision (2026-05-06):** inline per-instance — `CacheFile *` pointers in `MeshSeqCacheModifierData` and `bTransformCacheConstraint` replaced with the `CacheFile` fields inlined directly. `bmain->cachefiles` removed entirely — no Scar 2 rescue, true fossil. `versioning_290.cc` velocity_unit loop (the only `bmain->cachefiles` iteration) removed. 8 layers on branch `claude/chisel-id-cf`, pending CI. **No deferred runtime debt.**
 
 ---
 

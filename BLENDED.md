@@ -288,9 +288,9 @@ Blender itself has marked these for replacement. Blended finishes the job.
 | `ID_LS` | FreestyleLineStyle | Niche NPR renderer; NPR via shader nodes / Grease Pencil | ✓ 0.4.0 ¹ |
 | `ID_SPK` | Speaker | 3D positional audio on scene objects; niche. Audio flows through VSE timeline. | ✓ 0.4.0 |
 | `ID_PC` | PaintCurve | Niche stroke guide | ✓ 0.4.0 |
-| `ID_CF` | CacheFile | External Alembic/USD cache reference — boundary concern, not project data | design settled — inline per-instance; chisel in progress (branch `claude/chisel-id-cf`) |
+| `ID_CF` | CacheFile | External Alembic/USD cache reference — boundary concern, not project data | ✓ 0.4.0 |
 
-Removal in progress — 0.4.x. Per-layer file detail in [`CHANGELOG.md`](CHANGELOG.md).
+Removal complete — 0.4.x. Per-layer file detail in [`CHANGELOG.md`](CHANGELOG.md).
 
 ² **ID_PA known artifact:** `bmain->particles` is kept as a non-indexed Scar 2 listbase so blenloader versioning passes (`versioning_250` through `versioning_400`) can upgrade particle data in legacy files. Unlike ID_LS (where the leak is latent), these versioning passes actively need the field — without it, loading any legacy `.blend` with particle data crashes. `INIT_TYPE` and `BKE_main_lists_get` entry removed; field and `which_libbase` routing kept.
 

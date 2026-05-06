@@ -56,8 +56,8 @@ carries a one-liner status per active item.
 
 ## Unreleased — 0.4.0
 
-Bucket 5 + 6 fossil removals. 9 ID types, 357 hits, same chisel pattern as 0.3.0. CI green (Windows x64, build #62, commit `7423dae`) — 8 of 9 types complete.
-Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEGACY ✓** → **ID_LS ✓** → **ID_MB ✓** → **ID_TE ✓** → **ID_CU_LEGACY ✓** → **ID_CF** (design settled — inline per-instance; in progress on branch `claude/chisel-id-cf`).
+Bucket 5 + 6 fossil removals. 9 ID types, 357 hits, same chisel pattern as 0.3.0. CI green (Windows x64, build #62, commit `7423dae`) — 9 of 9 types complete.
+Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEGACY ✓** → **ID_LS ✓** → **ID_MB ✓** → **ID_TE ✓** → **ID_CU_LEGACY ✓** → **ID_CF ✓**.
 *(Order corrected in PR #126 fix — initial commit had ID_CF first, contradicting CLAUDE.md Key note 8. Scar 7.)*
 
 **Key notes:**
@@ -205,22 +205,24 @@ Resolves two deferred-debt items, syncs a stale version define, and adds two ope
 | `draw` | No compile errors | ✓ |
 | `depsgraph` | `depsgraph.cc` (add_id_node OOB guard), `depsgraph_tag.cc` (DEG_graph_id_type_tag OOB guard) | ✓ |
 
-### ID_CF — CacheFile *(design settled: inline per-instance; chisel in progress — branch `claude/chisel-id-cf`)*
+### ID_CF — CacheFile ✓ (0.4.0)
 
 **Pre-chisel audit (2026-05-06):** 29 literal hits / 76 true files. No Scar 2 — `bmain->cachefiles` removed entirely (true fossil; `versioning_290.cc` creates CacheFile IDs but does not iterate the listbase for upgrade, so no versioning dependency blocks full removal).
 
 **Design decision:** `CacheFile *cache_file` pointers in `MeshSeqCacheModifierData` and `bTransformCacheConstraint` replaced with fields inlined directly into those structs (filepath string, flags, velocity scale, `CacheReader *` runtime pointer). VSE precedent — sequence strips carry filepath directly without a shared ID. Two modifiers pointing at the same `.abc` file each store the path string. `bmain->cachefiles` goes away entirely.
 
-**Files to delete:** `editors/io/io_cache.cc`, `editors/io/io_cache.hh`, `blenkernel/intern/cachefile.cc`, `blenkernel/BKE_cachefile.hh`, `makesrna/intern/rna_cachefile.cc`, `editors/space_outliner/tree/tree_element_id_cachefile.cc`, `editors/space_outliner/tree/tree_element_id_cachefile.hh`, `editors/include/ED_fileselect.hh` (CacheFile-specific sections), `editors/animation/anim_channels_defines.cc` (ACF_DSCACHEFILE block).
+**Session note (2026-05-06):** 8 layers committed on branch `claude/chisel-id-cf`. Key decisions: (1) **No Scar 2** — `bmain->cachefiles` fully removed from `BKE_main.hh` and `which_libbase`; verified that versioning_290.cc only *creates* CacheFile IDs during versioning (does not iterate the listbase post-creation), so the velocity_unit block that iterated `bmain->cachefiles` was removed entirely. (2) **Inline migration** — `MeshSeqCacheModifierData` and `bTransformCacheConstraint` now carry `filepath[1024]`, `cache_type`, `scale`, `is_sequence`, `velocity_name[64]`, `velocity_unit`, `velocity_scale` directly; `CacheReader *` runtime pointer kept inline. (3) **Alembic/USD readers** — all `CacheFile *` parameters replaced with inline filepath+settings in the reader hierarchy; `ABCArchiveCache` holds its own path string. (4) **RNA migration** — `cache_file` PROP_POINTER replaced with `filepath` PROP_STRING/PROP_FILEPATH in `rna_constraint.cc` and `rna_modifier.cc`. (5) **ANIMTYPE_DSCACHEFILE chain** removed: `anim_channels_defines.cc` (ACF_DSCACHEFILE struct+3 callbacks+table entry), all fallthrough cases in `anim_channels_edit.cc`, `anim_deps.cc`, `nla_*.cc`, `transform_convert_action.cc`, `animdata_filter_ds_cachefile()` function + SACTCONT_CACHEFILE dispatch in `anim_filter.cc`. (6) **Files deleted**: `io_cache.cc`, `io_cache.hh`, `interface_template_cache_file.cc`, `rna_cachefile.cc`, `cachefile.cc`, `BKE_cachefile.hh`. (7) **CTX_data_edit_cachefile** removed from `BKE_context.hh` and `context.cc`. (8) **BLT_I18NCONTEXT_ID_CACHEFILE** removed from `BLT_translation.hh`. (9) **versioning_290.cc** velocity_unit block removed (iterated `bmain->cachefiles`). No deferred runtime debt.
 
 | Layer | Files touched | Status |
 |-------|--------------|--------|
-| `makesdna` | `DNA_ID_enums.h` (enum entry), `DNA_cachefile_types.h` (id_type constexpr; Scar 8), `DNA_ID.h` (FILTER/INDEX macros), `DNA_modifier_types.h` (inline migration: CacheFile* → inlined fields in MeshSeqCacheModifierData), `DNA_constraint_types.h` (inline migration: CacheFile* → inlined fields in bTransformCacheConstraint), `DNA_action_types.h` (ADS_FILTER_NOCACHEFILES bitmask) | ☐ |
-| `blenkernel` | `idtype.cc` (INIT_TYPE + CASE_IDINDEX sweep), `main.cc` (which_libbase case + BKE_main_lists_get entry; Scar 2 does NOT apply — bmain->cachefiles removed entirely), `cachefile.cc` (deleted), `BKE_cachefile.hh` (deleted), `BKE_idtype.hh`, `BKE_main.hh`, `anim_sys.cc`, `anim_data_bmain_utils.cc`, `constraint.cc`, `pointcache.cc`, `path_templates.cc` | ☐ |
-| `makesrna` | `rna_ID.cc`, `rna_main_api.cc`, `rna_main.cc`, `rna_internal.hh`, `rna_cachefile.cc` (deleted), `rna_constraint.cc`, `rna_modifier.cc`, `rna_scene.cc`, `rna_space.cc` (FILTER_ID_CF in asset browser filter), `rna_action.cc` (show_cachefiles RNA prop) | ☐ |
-| `editors` | `io_cache.cc` (deleted), `io_cache.hh` (deleted), `interface_icons.cc`, `interface_template_id.cc`, `interface_template_cache_file.cc` (deleted), `render_opengl.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc`, `tree_element_id_cachefile.cc/.hh` (deleted), `anim_channels_defines.cc` (ACF_DSCACHEFILE), `anim_filter.cc` (animdata_filter_ds_cachefile), `keyframes_keylist.cc` (cachefile_to_keylist), `ED_anim_api.hh` (ANIMTYPE_DSCACHEFILE + FILTER_CF_SCED) | ☐ |
-| `depsgraph` | `deg_builder_relations.cc`, `deg_builder_nodes.cc`, `deg_builder_nodes_view_layer.cc`, `deg_builder_relations_view_layer.cc`, `depsgraph_build.cc` | ☐ |
-| `io` | `alembic/intern/alembic_capi.cc`, `alembic/intern/abc_reader_object.cc` (and related), `usd/intern/usd_capi_import.cc`, `usd/intern/usd_reader_stage.cc`, `usd/intern/usd_reader_geom.cc`, `usd/intern/usd_reader_xform.cc` — CacheFile pointer replaced with inline filepath | ☐ |
+| `makesdna` | `DNA_ID_enums.h` (enum entry + deprecated #define), `DNA_cachefile_types.h` (id_type constexpr removed; Scar 8), `DNA_ID.h` (FILTER/INDEX macros), `DNA_modifier_types.h` (inline migration), `DNA_constraint_types.h` (inline migration), `DNA_action_types.h` (ADS_FILTER_NOCACHEFILES) | ✓ |
+| `blenkernel` | `idtype.cc` (INIT_TYPE + CASE_IDINDEX sweep), `main.cc` (which_libbase case + BKE_main_lists_get entry), `cachefile.cc` (deleted), `BKE_cachefile.hh` (deleted), `BKE_idtype.hh`, `BKE_main.hh`, `anim_sys.cc`, `anim_data_bmain_utils.cc`, `constraint.cc`, `path_templates.cc`, `BKE_context.hh`, `context.cc` (CTX_data_edit_cachefile removed), `BLT_translation.hh` | ✓ |
+| `modifiers` | `MOD_meshsequencecache.cc` — all `CacheFile *` access replaced with inline struct fields; `CacheReader *` managed directly | ✓ |
+| `io` | `alembic/intern/alembic_capi.cc`, `abc_reader_object.cc`, and full Alembic reader hierarchy; `usd/intern/usd_capi_import.cc`, `usd_reader_stage.cc`, `usd_reader_geom.cc`, `usd_reader_xform.cc`, `usd_reader_prim.hh` — CacheFile pointer replaced with inline filepath+settings | ✓ |
+| `editors` | `io_cache.cc` (deleted), `io_cache.hh` (deleted), `interface_template_cache_file.cc` (deleted), `io_ops.cc`, `interface_icons.cc`, `interface_template_id.cc`, `render_opengl.cc`, `render_update.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc`, `anim_channels_defines.cc` (ACF_DSCACHEFILE), `anim_filter.cc`, `keyframes_keylist.cc`, `ED_anim_api.hh`, `ED_keyframes_keylist.hh`, `UI_interface_c.hh`, `object_constraint.cc`, `anim_channels_edit.cc`, `anim_deps.cc`, `nla_buttons.cc`, `nla_draw.cc`, `nla_tracks.cc`, `transform_convert_action.cc` | ✓ |
+| `depsgraph` | `deg_builder_nodes.cc`, `deg_builder_nodes.h`, `deg_builder_nodes_view_layer.cc`, `deg_builder_relations.cc`, `deg_builder_relations.h`, `deg_builder_relations_view_layer.cc`, `depsgraph_build.cc`, `DEG_depsgraph_build.hh` | ✓ |
+| `makesrna` | `rna_cachefile.cc` (deleted), `makesrna.cc`, `rna_ID.cc`, `rna_main.cc`, `rna_main_api.cc`, `rna_internal.hh`, `rna_constraint.cc`, `rna_modifier.cc`, `rna_scene.cc`, `rna_space.cc`, `rna_action.cc`, `rna_ui_api.cc` | ✓ |
+| `blenloader` | `versioning_290.cc` — removed velocity_unit loop iterating `bmain->cachefiles` | ✓ |
 
 ---
 
