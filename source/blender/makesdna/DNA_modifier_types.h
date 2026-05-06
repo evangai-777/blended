@@ -2357,6 +2357,8 @@ struct MeshSeqCacheModifierData {
   /* Runtime. */
   struct CacheReader *reader = nullptr;
   char reader_object_path[/*FILE_MAX*/ 1024] = "";
+  void *archive_handle = nullptr;
+  char archive_handle_filepath[/*FILE_MAX*/ 1024] = "";
 };
 
 /** Surface Deform modifier flags. */

@@ -24,7 +24,6 @@
 
 #include "MEM_guardedalloc.h"
 
-#include "BKE_cachefile.hh"
 #include "BKE_geometry_set.hh"
 #include "BKE_lib_query.hh"
 #include "BKE_mesh.hh"
@@ -36,7 +35,6 @@
 #include "RNA_access.hh"
 #include "RNA_prototypes.hh"
 
-#include "DEG_depsgraph_build.hh"
 #include "DEG_depsgraph_query.hh"
 
 #include "GEO_mesh_primitive_cuboid.hh"
@@ -67,15 +65,14 @@ static void init_data(ModifierData *md)
 
 static void copy_data(const ModifierData *md, ModifierData *target, const int flag)
 {
-#if 0
-  const MeshSeqCacheModifierData *mcmd = (const MeshSeqCacheModifierData *)md;
-#endif
   MeshSeqCacheModifierData *tmcmd = reinterpret_cast<MeshSeqCacheModifierData *>(target);
 
   BKE_modifier_copydata_generic(md, target, flag);
 
   tmcmd->reader = nullptr;
   tmcmd->reader_object_path[0] = '\0';
+  tmcmd->archive_handle = nullptr;
+  tmcmd->archive_handle_filepath[0] = '\0';
 }
 
 static void free_data(ModifierData *md)
@@ -84,19 +81,120 @@ static void free_data(ModifierData *md)
 
   if (mcmd->reader) {
     mcmd->reader_object_path[0] = '\0';
-    BKE_cachefile_reader_free(mcmd->cache_file, &mcmd->reader);
+    switch (eCacheFileType(mcmd->type)) {
+      case CACHEFILE_TYPE_ALEMBIC:
+#ifdef WITH_ALEMBIC
+        ABC_CacheReader_free(mcmd->reader);
+#endif
+        break;
+      case CACHEFILE_TYPE_USD:
+#ifdef WITH_USD
+        io::usd::USD_CacheReader_free(mcmd->reader);
+#endif
+        break;
+      case CACHE_FILE_TYPE_INVALID:
+        break;
+    }
+    mcmd->reader = nullptr;
+  }
+
+  if (mcmd->archive_handle) {
+    switch (eCacheFileType(mcmd->type)) {
+      case CACHEFILE_TYPE_ALEMBIC:
+#ifdef WITH_ALEMBIC
+        ABC_free_handle(static_cast<CacheArchiveHandle *>(mcmd->archive_handle));
+#endif
+        break;
+      case CACHEFILE_TYPE_USD:
+#ifdef WITH_USD
+        io::usd::USD_free_handle(static_cast<CacheArchiveHandle *>(mcmd->archive_handle));
+#endif
+        break;
+      case CACHE_FILE_TYPE_INVALID:
+        break;
+    }
+    mcmd->archive_handle = nullptr;
+    mcmd->archive_handle_filepath[0] = '\0';
   }
 }
 
 static bool is_disabled(const Scene * /*scene*/, ModifierData *md, bool /*use_render_params*/)
 {
   MeshSeqCacheModifierData *mcmd = reinterpret_cast<MeshSeqCacheModifierData *>(md);
-
-  /* leave it up to the modifier to check the file is valid on calculation */
-  return (mcmd->cache_file == nullptr) || (mcmd->object_path[0] == '\0');
+  return (mcmd->filepath[0] == '\0') || (mcmd->object_path[0] == '\0');
 }
 
 #if defined(WITH_USD) || defined(WITH_ALEMBIC)
+
+static CacheArchiveHandle *ensure_archive_handle(MeshSeqCacheModifierData *mcmd,
+                                                  ModifierData *md,
+                                                  const ModifierEvalContext *ctx)
+{
+  if (mcmd->archive_handle != nullptr && STREQ(mcmd->archive_handle_filepath, mcmd->filepath)) {
+    return static_cast<CacheArchiveHandle *>(mcmd->archive_handle);
+  }
+
+  /* Free stale reader and handle. */
+  if (mcmd->reader) {
+    switch (eCacheFileType(mcmd->type)) {
+      case CACHEFILE_TYPE_ALEMBIC:
+#  ifdef WITH_ALEMBIC
+        ABC_CacheReader_free(mcmd->reader);
+#  endif
+        break;
+      case CACHEFILE_TYPE_USD:
+#  ifdef WITH_USD
+        io::usd::USD_CacheReader_free(mcmd->reader);
+#  endif
+        break;
+      case CACHE_FILE_TYPE_INVALID:
+        break;
+    }
+    mcmd->reader = nullptr;
+    mcmd->reader_object_path[0] = '\0';
+  }
+  if (mcmd->archive_handle) {
+    switch (eCacheFileType(mcmd->type)) {
+      case CACHEFILE_TYPE_ALEMBIC:
+#  ifdef WITH_ALEMBIC
+        ABC_free_handle(static_cast<CacheArchiveHandle *>(mcmd->archive_handle));
+#  endif
+        break;
+      case CACHEFILE_TYPE_USD:
+#  ifdef WITH_USD
+        io::usd::USD_free_handle(static_cast<CacheArchiveHandle *>(mcmd->archive_handle));
+#  endif
+        break;
+      case CACHE_FILE_TYPE_INVALID:
+        break;
+    }
+    mcmd->archive_handle = nullptr;
+  }
+
+  Main *bmain = DEG_get_bmain(ctx->depsgraph);
+  switch (eCacheFileType(mcmd->type)) {
+    case CACHEFILE_TYPE_ALEMBIC:
+#  ifdef WITH_ALEMBIC
+      mcmd->archive_handle = ABC_create_handle(bmain, mcmd->filepath, nullptr, nullptr);
+#  endif
+      break;
+    case CACHEFILE_TYPE_USD:
+#  ifdef WITH_USD
+      mcmd->archive_handle = io::usd::USD_create_handle(bmain, mcmd->filepath, nullptr);
+#  endif
+      break;
+    case CACHE_FILE_TYPE_INVALID:
+      break;
+  }
+
+  if (!mcmd->archive_handle) {
+    BKE_modifier_set_error(ctx->object, md, "Could not open archive: %s", mcmd->filepath);
+    return nullptr;
+  }
+
+  STRNCPY(mcmd->archive_handle_filepath, mcmd->filepath);
+  return static_cast<CacheArchiveHandle *>(mcmd->archive_handle);
+}
 
 /* Return true if the modifier evaluation is for the ORCO mesh and the mesh hasn't changed
  * topology.
@@ -112,9 +210,7 @@ static bool can_use_mesh_for_orco_evaluation(MeshSeqCacheModifierData *mcmd,
     return false;
   }
 
-  CacheFile *cache_file = mcmd->cache_file;
-
-  switch (cache_file->type) {
+  switch (eCacheFileType(mcmd->type)) {
     case CACHEFILE_TYPE_ALEMBIC:
 #  ifdef WITH_ALEMBIC
       if (!ABC_mesh_topology_changed(mcmd->reader, ctx->object, mesh, time_offset, r_err_str)) {
@@ -151,19 +247,42 @@ static void modify_geometry_set(ModifierData *md,
   MeshSeqCacheModifierData *mcmd = reinterpret_cast<MeshSeqCacheModifierData *>(md);
 
   Scene *scene = DEG_get_evaluated_scene(ctx->depsgraph);
-  CacheFile *cache_file = mcmd->cache_file;
+  const double fps = scene->frames_per_second();
   const double frame = double(DEG_get_ctime(ctx->depsgraph));
-  const double frame_offset = BKE_cachefile_frame_offset(cache_file, frame);
-  const double time_offset = BKE_cachefile_time_offset(
-      cache_file, frame, scene->frames_per_second());
+  const double active_frame = mcmd->override_frame ? double(mcmd->frame) : frame;
+  const double frame_offset = mcmd->is_sequence ? active_frame :
+                                                   active_frame - double(mcmd->frame_offset);
+  const double time_offset = mcmd->is_sequence ?
+                                 active_frame :
+                                 active_frame / fps - double(mcmd->frame_offset) / fps;
   const char *err_str = nullptr;
+
+  CacheArchiveHandle *handle = ensure_archive_handle(mcmd, md, ctx);
+  if (!handle) {
+    return;
+  }
 
   if (!mcmd->reader || !STREQ(mcmd->reader_object_path, mcmd->object_path)) {
     STRNCPY(mcmd->reader_object_path, mcmd->object_path);
-    BKE_cachefile_reader_open(cache_file, &mcmd->reader, ctx->object, mcmd->object_path);
+    switch (eCacheFileType(mcmd->type)) {
+      case CACHEFILE_TYPE_ALEMBIC:
+#  ifdef WITH_ALEMBIC
+        mcmd->reader = CacheReader_open_alembic_object(
+            handle, mcmd->reader, ctx->object, mcmd->object_path, mcmd->is_sequence);
+#  endif
+        break;
+      case CACHEFILE_TYPE_USD:
+#  ifdef WITH_USD
+        mcmd->reader = io::usd::CacheReader_open_usd_object(
+            handle, mcmd->reader, ctx->object, mcmd->object_path);
+#  endif
+        break;
+      case CACHE_FILE_TYPE_INVALID:
+        break;
+    }
     if (!mcmd->reader) {
       BKE_modifier_set_error(
-          ctx->object, md, "Could not create cache reader for file %s", cache_file->filepath);
+          ctx->object, md, "Could not create cache reader for file %s", mcmd->filepath);
       return;
     }
   }
@@ -175,22 +294,20 @@ static void modify_geometry_set(ModifierData *md,
     }
   }
 
-  /* Time (in frames or seconds) between two velocity samples. Automatically computed to
-   * scale the velocity vectors at render time for generating proper motion blur data. */
 #  ifdef WITH_ALEMBIC
   float velocity_scale = mcmd->velocity_scale;
-  if (mcmd->cache_file->velocity_unit == CACHEFILE_VELOCITY_UNIT_FRAME) {
-    velocity_scale *= scene->frames_per_second();
+  if (mcmd->velocity_unit == CACHEFILE_VELOCITY_UNIT_FRAME) {
+    velocity_scale *= float(fps);
   }
 #  endif
 
-  switch (cache_file->type) {
+  switch (eCacheFileType(mcmd->type)) {
     case CACHEFILE_TYPE_ALEMBIC: {
 #  ifdef WITH_ALEMBIC
       ABCReadParams params;
       params.time = time_offset;
       params.read_flags = mcmd->read_flag;
-      params.velocity_name = mcmd->cache_file->velocity_name;
+      params.velocity_name = mcmd->velocity_name;
       params.velocity_scale = velocity_scale;
       ABC_read_geometry(mcmd->reader, ctx->object, *geometry_set, &params, &err_str);
 #  endif
@@ -223,31 +340,51 @@ static Mesh *modify_mesh(ModifierData *md, const ModifierEvalContext *ctx, Mesh 
 #if defined(WITH_USD) || defined(WITH_ALEMBIC)
   MeshSeqCacheModifierData *mcmd = reinterpret_cast<MeshSeqCacheModifierData *>(md);
 
-  /* Only used to check whether we are operating on org data or not... */
   Mesh *object_mesh = (ctx->object->type == OB_MESH) ? id_cast<Mesh *>(ctx->object->data) :
                                                        nullptr;
   Mesh *org_mesh = mesh;
 
   Scene *scene = DEG_get_evaluated_scene(ctx->depsgraph);
-  CacheFile *cache_file = mcmd->cache_file;
+  const double fps = scene->frames_per_second();
   const double frame = double(DEG_get_ctime(ctx->depsgraph));
-  const double frame_offset = BKE_cachefile_frame_offset(cache_file, frame);
-  const double time_offset = BKE_cachefile_time_offset(
-      cache_file, frame, scene->frames_per_second());
+  const double active_frame = mcmd->override_frame ? double(mcmd->frame) : frame;
+  const double frame_offset = mcmd->is_sequence ? active_frame :
+                                                   active_frame - double(mcmd->frame_offset);
+  const double time_offset = mcmd->is_sequence ?
+                                 active_frame :
+                                 active_frame / fps - double(mcmd->frame_offset) / fps;
   const char *err_str = nullptr;
+
+  CacheArchiveHandle *handle = ensure_archive_handle(mcmd, md, ctx);
+  if (!handle) {
+    return mesh;
+  }
 
   if (!mcmd->reader || !STREQ(mcmd->reader_object_path, mcmd->object_path)) {
     STRNCPY(mcmd->reader_object_path, mcmd->object_path);
-    BKE_cachefile_reader_open(cache_file, &mcmd->reader, ctx->object, mcmd->object_path);
+    switch (eCacheFileType(mcmd->type)) {
+      case CACHEFILE_TYPE_ALEMBIC:
+#  ifdef WITH_ALEMBIC
+        mcmd->reader = CacheReader_open_alembic_object(
+            handle, mcmd->reader, ctx->object, mcmd->object_path, mcmd->is_sequence);
+#  endif
+        break;
+      case CACHEFILE_TYPE_USD:
+#  ifdef WITH_USD
+        mcmd->reader = io::usd::CacheReader_open_usd_object(
+            handle, mcmd->reader, ctx->object, mcmd->object_path);
+#  endif
+        break;
+      case CACHE_FILE_TYPE_INVALID:
+        break;
+    }
     if (!mcmd->reader) {
       BKE_modifier_set_error(
-          ctx->object, md, "Could not create reader for file %s", cache_file->filepath);
+          ctx->object, md, "Could not create reader for file %s", mcmd->filepath);
       return mesh;
     }
   }
 
-  /* If this invocation is for the ORCO mesh, and the mesh hasn't changed topology, we
-   * must return the mesh as-is instead of deforming it. */
   if (can_use_mesh_for_orco_evaluation(mcmd, ctx, mesh, frame_offset, time_offset, &err_str)) {
     return mesh;
   }
@@ -260,13 +397,9 @@ static Mesh *modify_mesh(ModifierData *md, const ModifierEvalContext *ctx, Mesh 
     const Span<int2> me_edges = object_mesh->edges();
     const OffsetIndices me_faces = object_mesh->faces();
 
-    /* TODO(sybren+bastien): possibly check relevant custom data layers (UV/color depending on
-     * flags) and duplicate those too.
-     * XXX(Hans): This probably isn't true anymore with various copy-on-eval improvements, etc. */
     if ((me_positions.data() == mesh_positions.data()) || (me_edges.data() == mesh_edges.data()) ||
         (me_faces.data() == mesh_faces.data()))
     {
-      /* We need to duplicate data here, otherwise we'll modify org mesh, see #51701. */
       mesh = reinterpret_cast<Mesh *>(
           BKE_id_copy_ex(nullptr,
                          &mesh->id,
@@ -297,48 +430,24 @@ static bool depends_on_time(Scene * /*scene*/, ModifierData *md)
 {
 #if defined(WITH_USD) || defined(WITH_ALEMBIC)
   MeshSeqCacheModifierData *mcmd = reinterpret_cast<MeshSeqCacheModifierData *>(md);
-  return (mcmd->cache_file != nullptr);
+  return mcmd->filepath[0] != '\0';
 #else
   UNUSED_VARS(md);
   return false;
 #endif
 }
 
-static void foreach_ID_link(ModifierData *md, Object *ob, IDWalkFunc walk, void *user_data)
-{
-  MeshSeqCacheModifierData *mcmd = reinterpret_cast<MeshSeqCacheModifierData *>(md);
-
-  walk(user_data, ob, reinterpret_cast<ID **>(&mcmd->cache_file), IDWALK_CB_USER);
-}
-
-static void update_depsgraph(ModifierData *md, const ModifierUpdateDepsgraphContext *ctx)
-{
-  MeshSeqCacheModifierData *mcmd = reinterpret_cast<MeshSeqCacheModifierData *>(md);
-
-  if (mcmd->cache_file != nullptr) {
-    DEG_add_object_cache_relation(
-        ctx->node, mcmd->cache_file, DEG_OB_COMP_CACHE, "Mesh Cache File");
-  }
-}
-
-static void panel_draw(const bContext *C, Panel *panel)
+static void panel_draw(const bContext * /*C*/, Panel *panel)
 {
   ui::Layout &layout = *panel->layout;
 
   PointerRNA ob_ptr;
   PointerRNA *ptr = modifier_panel_get_property_pointers(panel, &ob_ptr);
 
-  PointerRNA cache_file_ptr = RNA_pointer_get(ptr, "cache_file");
-  bool has_cache_file = !RNA_pointer_is_null(&cache_file_ptr);
-
   layout.use_property_split_set(true);
-
-  template_cache_file(&layout, C, ptr, "cache_file");
-
-  if (has_cache_file) {
-    layout.prop_search(
-        ptr, "object_path", &cache_file_ptr, "object_paths", std::nullopt, ICON_NONE);
-  }
+  layout.prop(ptr, "filepath", UI_ITEM_NONE, std::nullopt, ICON_NONE);
+  layout.prop(ptr, "cache_type", UI_ITEM_NONE, std::nullopt, ICON_NONE);
+  layout.prop(ptr, "object_path", UI_ITEM_NONE, std::nullopt, ICON_NONE);
 
   if (RNA_enum_get(&ob_ptr, "type") == OB_MESH) {
     layout.prop(ptr, "read_data", ui::ITEM_R_EXPAND, std::nullopt, ICON_NONE);
@@ -355,16 +464,11 @@ static void velocity_panel_draw(const bContext * /*C*/, Panel *panel)
 {
   ui::Layout &layout = *panel->layout;
 
-  PointerRNA ob_ptr;
-  PointerRNA *ptr = modifier_panel_get_property_pointers(panel, &ob_ptr);
-
-  PointerRNA fileptr;
-  if (!ui::template_cache_file_pointer(ptr, "cache_file", &fileptr)) {
-    return;
-  }
+  PointerRNA *ptr = modifier_panel_get_property_pointers(panel, nullptr);
 
   layout.use_property_split_set(true);
-  template_cache_file_velocity(&layout, &fileptr);
+  layout.prop(ptr, "velocity_name", UI_ITEM_NONE, std::nullopt, ICON_NONE);
+  layout.prop(ptr, "velocity_unit", UI_ITEM_NONE, std::nullopt, ICON_NONE);
   layout.prop(ptr, "velocity_scale", UI_ITEM_NONE, std::nullopt, ICON_NONE);
 }
 
@@ -372,32 +476,13 @@ static void time_panel_draw(const bContext * /*C*/, Panel *panel)
 {
   ui::Layout &layout = *panel->layout;
 
-  PointerRNA ob_ptr;
-  PointerRNA *ptr = modifier_panel_get_property_pointers(panel, &ob_ptr);
-
-  PointerRNA fileptr;
-  if (!ui::template_cache_file_pointer(ptr, "cache_file", &fileptr)) {
-    return;
-  }
+  PointerRNA *ptr = modifier_panel_get_property_pointers(panel, nullptr);
 
   layout.use_property_split_set(true);
-  template_cache_file_time_settings(&layout, &fileptr);
-}
-
-static void override_layers_panel_draw(const bContext *C, Panel *panel)
-{
-  ui::Layout &layout = *panel->layout;
-
-  PointerRNA ob_ptr;
-  PointerRNA *ptr = modifier_panel_get_property_pointers(panel, &ob_ptr);
-
-  PointerRNA fileptr;
-  if (!ui::template_cache_file_pointer(ptr, "cache_file", &fileptr)) {
-    return;
-  }
-
-  layout.use_property_split_set(true);
-  template_uilist_flags(&layout, C, &fileptr);
+  layout.prop(ptr, "is_sequence", UI_ITEM_NONE, std::nullopt, ICON_NONE);
+  layout.prop(ptr, "override_frame", UI_ITEM_NONE, std::nullopt, ICON_NONE);
+  layout.prop(ptr, "frame", UI_ITEM_NONE, std::nullopt, ICON_NONE);
+  layout.prop(ptr, "frame_offset", UI_ITEM_NONE, std::nullopt, ICON_NONE);
 }
 
 static void panel_register(ARegionType *region_type)
@@ -407,12 +492,6 @@ static void panel_register(ARegionType *region_type)
   modifier_subpanel_register(region_type, "time", "Time", nullptr, time_panel_draw, panel_type);
   modifier_subpanel_register(
       region_type, "velocity", "Velocity", nullptr, velocity_panel_draw, panel_type);
-  modifier_subpanel_register(region_type,
-                             "override_layers",
-                             "Override Layers",
-                             nullptr,
-                             override_layers_panel_draw,
-                             panel_type);
 }
 
 static void blend_read(BlendDataReader * /*reader*/, ModifierData *md)
@@ -420,6 +499,8 @@ static void blend_read(BlendDataReader * /*reader*/, ModifierData *md)
   MeshSeqCacheModifierData *msmcd = reinterpret_cast<MeshSeqCacheModifierData *>(md);
   msmcd->reader = nullptr;
   msmcd->reader_object_path[0] = '\0';
+  msmcd->archive_handle = nullptr;
+  msmcd->archive_handle_filepath[0] = '\0';
 }
 
 ModifierTypeInfo modifierType_MeshSequenceCache = {
@@ -431,7 +512,7 @@ ModifierTypeInfo modifierType_MeshSequenceCache = {
     /*type*/ ModifierTypeType::Constructive,
     /*flags*/
     (eModifierTypeFlag_AcceptsMesh | eModifierTypeFlag_AcceptsCVs),
-    /*icon*/ ICON_MOD_MESHDEFORM, /* TODO: Use correct icon. */
+    /*icon*/ ICON_MOD_MESHDEFORM,
 
     /*copy_data*/ copy_data,
 
@@ -446,10 +527,10 @@ ModifierTypeInfo modifierType_MeshSequenceCache = {
     /*required_data_mask*/ nullptr,
     /*free_data*/ free_data,
     /*is_disabled*/ is_disabled,
-    /*update_depsgraph*/ update_depsgraph,
+    /*update_depsgraph*/ nullptr,
     /*depends_on_time*/ depends_on_time,
     /*depends_on_normals*/ nullptr,
-    /*foreach_ID_link*/ foreach_ID_link,
+    /*foreach_ID_link*/ nullptr,
     /*foreach_tex_link*/ nullptr,
     /*free_runtime_data*/ nullptr,
     /*panel_register*/ panel_register,
