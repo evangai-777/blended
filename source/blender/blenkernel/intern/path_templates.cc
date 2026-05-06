@@ -310,7 +310,7 @@ void BKE_add_template_variables_for_render_path(VariableMap &variables, const Sc
 
   /* FPS variable.
    *
-   * FPS eval code copied from #BKE_cachefile_filepath_get().
+   * FPS eval code adapted from former BKE_cachefile_filepath_get().
    *
    * TODO: should probably use one function for this everywhere to ensure that
    * fps is computed consistently, but at the time of writing no such function

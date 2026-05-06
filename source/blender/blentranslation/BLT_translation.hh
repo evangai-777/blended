@@ -109,7 +109,6 @@ StringRef BLT_translate_do_new_dataname(StringRef msgctxt, StringRef msgid);
 #define BLT_I18NCONTEXT_ID_ANIMATION "Animation"
 #define BLT_I18NCONTEXT_ID_ARMATURE "Armature"
 #define BLT_I18NCONTEXT_ID_BRUSH "Brush"
-#define BLT_I18NCONTEXT_ID_CACHEFILE "CacheFile"
 #define BLT_I18NCONTEXT_ID_CAMERA "Camera"
 #define BLT_I18NCONTEXT_ID_COLLECTION "Collection"
 #define BLT_I18NCONTEXT_ID_CURVES "Curves"
@@ -183,7 +182,6 @@ struct BLT_i18n_contexts_descriptor {
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_ARMATURE, "id_armature"), \
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_NO_TRANSLATION, "no_translation"), \
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_BRUSH, "id_brush"), \
-        BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_CACHEFILE, "id_cachefile"), \
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_CAMERA, "id_camera"), \
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_COLLECTION, "id_collection"), \
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_CURVES, "id_curves"), \

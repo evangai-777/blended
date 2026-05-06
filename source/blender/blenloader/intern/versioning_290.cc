@@ -24,7 +24,6 @@
 #include "DNA_anim_types.h"
 #include "DNA_armature_types.h"
 #include "DNA_brush_types.h"
-#include "DNA_cachefile_types.h"
 #include "DNA_collection_types.h"
 #include "DNA_constraint_types.h"
 #include "DNA_fluid_types.h"
@@ -1112,7 +1111,6 @@ void blo_do_versions_290(FileData *fd, Library * /*lib*/, Main *bmain)
       }
     }
 
-    /* Initialize additional velocity parameter for #CacheFile's. */
     if (!DNA_struct_member_exists(
             fd->filesdna, "MeshSeqCacheModifierData", "float", "velocity_scale"))
     {
@@ -1123,13 +1121,6 @@ void blo_do_versions_290(FileData *fd, Library * /*lib*/, Main *bmain)
             mcmd->velocity_scale = 1.0f;
           }
         }
-      }
-    }
-
-    if (!DNA_struct_member_exists(fd->filesdna, "CacheFile", "char", "velocity_unit")) {
-      for (CacheFile &cache_file : bmain->cachefiles) {
-        STRNCPY_UTF8(cache_file.velocity_name, ".velocities");
-        cache_file.velocity_unit = CACHEFILE_VELOCITY_UNIT_SECOND;
       }
     }
 
