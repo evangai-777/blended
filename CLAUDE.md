@@ -47,6 +47,51 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 
 5. **Multi-window screen iteration edge cases** — The 0.3.0 chisel converted global screen iteration to per-window. Edge cases in multi-window layouts may surface at runtime. Not tested in CI (single-window headless).
 
+6. **Scar 2 listbase memory leaks (ID_PA, ID_TE)** — `bmain->particles` and `bmain->textures` are kept as non-indexed listbases for versioning-pass compatibility, but are NOT in `BKE_main_lists_get`. When a legacy `.blend` file is loaded and then a new file is loaded (or the application exits), `BKE_main_free` does not free those ID blocks. They accumulate for the session. Same root cause as item 1 (ID_LS). Same fix pattern: post-read drain pass. `bmain->gpencils` (ID_GD_LEGACY) has the same structure but gpencil data is actively used at runtime — needs separate audit to confirm it's freed by the right path.
+
+---
+
+### Known Runtime Artifacts (QA Reference)
+
+**Check here before assuming a new bug.** These are the expected consequences of completed chisels. The build is CI-green; these are bounded, documented runtime gaps — not regressions.
+
+#### Category A — Expected behavior changes (by design, won't fix)
+
+| Trigger | What happens | Introduced |
+|---------|-------------|------------|
+| Object with `PFIELD_TEXTURE` force field in legacy file | Texture displacement silently dead. `build_texture()` is a no-op — Tex IDNodes never enter the depsgraph. Force field evaluates but ignores the texture parameter entirely. | 0.4.0 (ID_TE) |
+| Object with particle system that has texture slots (legacy file) | Texture slots silently ignored. Particle system otherwise evaluates (geometry nodes path). | 0.4.0 (ID_TE) |
+| Node with `SOCK_TEXTURE` socket and a `Tex *` default value (legacy file) | Socket's texture not depsgraph-tracked; texture changes don't trigger node re-evaluation. | 0.4.0 (ID_TE) |
+| Brush with `paint_curve` assigned in legacy file | `Brush::paint_curve` field no longer exists in DNA; SDNA remapping skips it on load. Brush uses default stroke shape. No crash. | 0.4.0 (ID_PC) |
+| Python script calling `bpy.ops.object.particle_system_add()` or `_remove()` | "Operator not found" error. Operators removed in 0.4.0 cleanup (commit `e39bcd58`). | 0.4.0 (ID_PA) |
+| Scene with NLA sound strip created via old `NLA_OT_soundclip_add` operator | Operator removed. Existing sound strips in NLA from legacy files: no speaker evaluation, no 3D positional audio. VSE timeline audio unaffected. | 0.4.0 (ID_SPK) |
+| File with GD_LEGACY grease pencil objects or annotations | OB_GPENCIL_LEGACY objects and annotation data fully functional — depsgraph evaluation kept intentionally. This is **not** a failure; listed here for completeness. | 0.4.0 (ID_GD_LEGACY) |
+
+#### Category B — Uncertain/crash paths (legacy files only, needs investigation)
+
+| Trigger | Expected failure mode | Introduced | Status |
+|---------|-----------------------|------------|--------|
+| Legacy file containing MetaBall (`OB_MBALL`) objects | `bmain->metaballs` fully removed — no Scar 2 rescue. MetaBall data can't be allocated; no `which_libbase` routing. Objects will load with `ob->type == OB_MBALL` and `ob->data == nullptr`. Any draw or eval code that dereferences `ob->data` without a null check → null deref crash. `BLI_assert_unreachable()` sites in dispatch switches → debug assert. **No versioning pass converts these to another type** (unlike OB_SPEAKER). | 0.4.0 (ID_MB) | Needs versioning pass: convert `OB_MBALL` → `OB_EMPTY` on file load, same pattern as OB_SPEAKER → OB_EMPTY (versioning pass 502.23) |
+| Legacy file with particle systems on objects | `ParticleSettings` IDs load into `bmain->particles` (Scar 2). `build_particle_systems()` is still called from the object node builder for any object with `object->particlesystem.first != nullptr`. Inside, `build_particle_settings(particle->part)` runs. With `INIT_TYPE(ID_PA)` removed and `INDEX_ID_PA` gone, any path that calls `BKE_idtype_idcode_to_index(ID_PA)` (e.g., `add_id_node()`) hits the same OOB-index problem that `build_texture()` had. **This was not fixed in the same pass as the texture bug.** | 0.4.0 (ID_PA) | Needs the same `build_particle_settings()` no-op guard applied to `build_texture()` in this session. Investigate before next legacy-file test. |
+| Legacy file with speaker objects, file version < 502.23 | Versioning pass 502.23 converts `OB_SPEAKER` → `OB_EMPTY`. Files saved before that pass (i.e., Blender files from before 5.0.23 equivalent) should be handled. Files at exactly the edge version boundary may not convert. Low risk in practice. | 0.4.0 (ID_SPK) | Monitor; no known CI fixture |
+
+#### Category C — Memory leaks (session-scoped, accepted)
+
+| Trigger | Leak scope | Introduced | Fix when needed |
+|---------|-----------|------------|-----------------|
+| Load legacy `.blend` with Freestyle LineStyle data (`WITH_FREESTYLE=OFF`) | `bmain->linestyles` populated, not freed by `BKE_main_free`. Blocks accumulate per file load, freed on process exit. | 0.4.0 (ID_LS) | Post-read drain pass on `bmain->linestyles` |
+| Load legacy `.blend` with ParticleSettings data | `bmain->particles` populated (Scar 2), not in `BKE_main_lists_get`. Same leak shape as ID_LS. | 0.4.0 (ID_PA) | Post-read drain pass on `bmain->particles` |
+| Load legacy `.blend` with Blender Internal texture data | `bmain->textures` populated (Scar 2), not in `BKE_main_lists_get`. Same leak shape. | 0.4.0 (ID_TE) | Post-read drain pass on `bmain->textures` |
+
+**When a post-read drain pass is needed (template):** In `blenloader/intern/readfile.cc` or a post-read callback, after `BKE_blendfile_read()` completes, iterate and free the relevant non-indexed listbase:
+```cpp
+// Example: drain bmain->linestyles after file load when WITH_FREESTYLE=OFF
+BKE_id_multi_tagged_delete(bmain);  // or direct iteration + BKE_id_free
+```
+Exact implementation depends on whether the blocks have ID-system runtime state that needs cleanup — audit `IDTypeInfo::id_free` for the relevant type before implementing.
+
+
+
 ### Upcoming Chisel Roadmap
 
 | Order | ID type | Literal hits | Status |
