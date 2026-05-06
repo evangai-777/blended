@@ -320,7 +320,6 @@ void ANIM_sync_animchannels_to_data(const bContext *C)
       case ANIMTYPE_DSMAT:
       case ANIMTYPE_DSLAM:
       case ANIMTYPE_DSCAM:
-      case ANIMTYPE_DSCACHEFILE:
       case ANIMTYPE_DSCUR:
       case ANIMTYPE_DSSKEY:
       case ANIMTYPE_DSWOR:

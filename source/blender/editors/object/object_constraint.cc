@@ -377,7 +377,7 @@ static void test_constraint(
   else if (con->type == CONSTRAINT_TYPE_TRANSFORM_CACHE) {
     bTransformCacheConstraint *data = static_cast<bTransformCacheConstraint *>(con->data);
 
-    if ((data->cache_file == nullptr) || (data->object_path[0] == '\0')) {
+    if ((data->filepath[0] == '\0') || (data->object_path[0] == '\0')) {
       con->flag |= CONSTRAINT_DISABLE;
     }
   }

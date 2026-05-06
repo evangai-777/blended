@@ -160,7 +160,6 @@ struct TreeElementIcon {
         ID_TXT, \
         ID_VF, \
         ID_SO, \
-        ID_CF, \
         ID_PAL, \
         ID_MC, \
         ID_MSK))

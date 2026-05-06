@@ -2673,37 +2673,6 @@ void template_component_menu(Layout *layout,
                              StringRef name);
 void template_node_socket(Layout *layout, bContext *C, const float color[4]);
 
-/**
- * Draw the main CacheFile properties and operators (file path, scale, etc.), that is those which
- * do not have their own dedicated template functions.
- */
-void template_cache_file(Layout *layout,
-                         const bContext *C,
-                         PointerRNA *ptr,
-                         StringRefNull propname);
-
-/**
- * Lookup the CacheFile PointerRNA of the given pointer and return it in the output parameter.
- * Returns true if `ptr` has a RNACacheFile, false otherwise. If false, the output parameter is not
- * initialized.
- */
-bool template_cache_file_pointer(PointerRNA *ptr, StringRefNull propname, PointerRNA *r_file_ptr);
-
-/**
- * Draw the velocity related properties of the CacheFile.
- */
-void template_cache_file_velocity(Layout *layout, PointerRNA *fileptr);
-
-/**
- * Draw the time related properties of the CacheFile.
- */
-void template_cache_file_time_settings(Layout *layout, PointerRNA *fileptr);
-
-/**
- * Draw the override layers related properties of the CacheFile.
- */
-void template_uilist_flags(Layout *layout, const bContext *C, PointerRNA *fileptr);
-
 /** Default UIList class name, keep in sync with its declaration in `bl_ui/__init__.py`. */
 #define UI_UL_DEFAULT_CLASS_NAME "UI_UL_list"
 enum TemplateListFlags {

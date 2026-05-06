@@ -23,7 +23,6 @@
 #include "BLI_utildefines.h"
 
 #include "DNA_anim_types.h"
-#include "DNA_cachefile_types.h"
 #include "DNA_gpencil_legacy_types.h"
 #include "DNA_layer_types.h"
 #include "DNA_mask_types.h"
@@ -1198,47 +1197,6 @@ void ob_to_keylist(
                       keylist,
                       saction_flag,
                       range,
-                      ANIM_nla_mapping_allowed(&ale));
-  }
-
-  ANIM_animdata_freelist(&anim_data);
-}
-
-void cachefile_to_keylist(bDopeSheet *ads,
-                          CacheFile *cache_file,
-                          AnimKeylist *keylist,
-                          const int saction_flag)
-{
-  if (cache_file == nullptr) {
-    return;
-  }
-
-  /* Create a dummy wrapper data to work with. */
-  bAnimListElem dummy_chan = {nullptr};
-  dummy_chan.type = ANIMTYPE_DSCACHEFILE;
-  dummy_chan.data = cache_file;
-  dummy_chan.id = &cache_file->id;
-  dummy_chan.adt = cache_file->adt;
-
-  bAnimContext ac = {nullptr};
-  ac.ads = ads;
-  ac.data = &dummy_chan;
-  ac.datatype = ANIMCONT_CHANNEL;
-  ac.filters.flag = eDopeSheet_FilterFlag(ads->filterflag);
-  ac.filters.flag2 = eDopeSheet_FilterFlag2(ads->filterflag2);
-
-  /* Get F-Curves to take keyframes from. */
-  ListBaseT<bAnimListElem> anim_data = {nullptr, nullptr};
-  const eAnimFilter_Flags filter = ANIMFILTER_DATA_VISIBLE | ANIMFILTER_FCURVESONLY;
-  ANIM_animdata_filter(&ac, &anim_data, filter, ac.data, ac.datatype);
-
-  /* Loop through each F-Curve, grabbing the keyframes. */
-  for (const bAnimListElem &ale : anim_data) {
-    fcurve_to_keylist(ale.adt,
-                      static_cast<FCurve *>(ale.data),
-                      keylist,
-                      saction_flag,
-                      {-FLT_MAX, FLT_MAX},
                       ANIM_nla_mapping_allowed(&ale));
   }
 

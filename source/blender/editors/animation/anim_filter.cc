@@ -29,7 +29,6 @@
 
 #include "DNA_anim_types.h"
 #include "DNA_armature_types.h"
-#include "DNA_cachefile_types.h"
 #include "DNA_camera_types.h"
 #include "DNA_curves_types.h"
 #include "DNA_gpencil_legacy_types.h"
@@ -138,7 +137,6 @@ bAction *ANIM_active_action_from_area(const Main &bmain,
     case SACTCONT_GPENCIL:
     case SACTCONT_DOPESHEET:
     case SACTCONT_MASK:
-    case SACTCONT_CACHEFILE:
     case SACTCONT_TIMELINE:
       if (r_action_user) {
         *r_action_user = nullptr;
@@ -214,14 +212,6 @@ static bool actedit_get_context(bAnimContext *ac, SpaceAction *saction)
       saction->ads.source = reinterpret_cast<ID *>(ac->scene);
 
       ac->datatype = ANIMCONT_GPENCIL;
-      ac->data = &saction->ads;
-      return true;
-
-    case SACTCONT_CACHEFILE: /* Cache File */ /* XXX review how this mode is handled... */
-      /* update scene-pointer (no need to check for pinning yet, as not implemented) */
-      saction->ads.source = reinterpret_cast<ID *>(ac->scene);
-
-      ac->datatype = ANIMCONT_CHANNEL;
       ac->data = &saction->ads;
       return true;
 
@@ -758,12 +748,6 @@ static bAnimListElem *make_new_animlistelem(
       Camera *ca = static_cast<Camera *>(data);
       ale->flag = FILTER_CAM_OBJD(ca);
       key_data_from_adt(*ale, ca->adt);
-      break;
-    }
-    case ANIMTYPE_DSCACHEFILE: {
-      CacheFile *cache_file = static_cast<CacheFile *>(data);
-      ale->flag = FILTER_CACHEFILE_OBJD(cache_file);
-      key_data_from_adt(*ale, cache_file->adt);
       break;
     }
     case ANIMTYPE_DSCUR: {
@@ -2347,44 +2331,6 @@ static size_t animdata_filter_ds_gpencil(bAnimContext *ac,
   return items;
 }
 
-/* Helper for Cache File data integrated with main DopeSheet */
-static size_t animdata_filter_ds_cachefile(bAnimContext *ac,
-                                           ListBaseT<bAnimListElem> *anim_data,
-                                           CacheFile *cache_file,
-                                           eAnimFilter_Flags filter_mode)
-{
-  ListBaseT<bAnimListElem> tmp_data = {nullptr, nullptr};
-  size_t tmp_items = 0;
-  size_t items = 0;
-
-  /* add relevant animation channels for Cache File */
-  BEGIN_ANIMFILTER_SUBCHANNELS (FILTER_CACHEFILE_OBJD(cache_file)) {
-    /* add animation channels */
-    tmp_items += animfilter_block_data(ac, &tmp_data, &cache_file->id, filter_mode);
-  }
-  END_ANIMFILTER_SUBCHANNELS;
-
-  /* did we find anything? */
-  if (tmp_items) {
-    /* include data-expand widget first */
-    if (filter_mode & ANIMFILTER_LIST_CHANNELS) {
-      /* check if filtering by active status */
-      /* XXX: active check here needs checking */
-      if (ANIMCHANNEL_ACTIVEOK(cache_file)) {
-        ANIMCHANNEL_NEW_CHANNEL(ac->bmain, cache_file, ANIMTYPE_DSCACHEFILE, cache_file, nullptr);
-      }
-    }
-
-    /* now add the list of collected channels */
-    BLI_movelisttolist(anim_data, &tmp_data);
-    BLI_assert(BLI_listbase_is_empty(&tmp_data));
-    items += tmp_items;
-  }
-
-  /* return the number of items added to the list */
-  return items;
-}
-
 /* Helper for Mask Editing - mask layers */
 static size_t animdata_filter_mask_data(bAnimContext *ac,
                                         ListBaseT<bAnimListElem> *anim_data,
@@ -3596,13 +3542,7 @@ static size_t animdata_filter_dopesheet(bAnimContext *ac,
     filter_mode |= ANIMFILTER_SELEDIT;
   }
 
-  /* Cache files level animations (frame duration and such). */
   const bool use_only_selected = (ac->filters.flag & ADS_FILTER_ONLYSEL);
-  if (!use_only_selected && !(ac->filters.flag2 & ADS_FILTER_NOCACHEFILES)) {
-    for (CacheFile &cache_file : ac->bmain->cachefiles) {
-      items += animdata_filter_ds_cachefile(ac, anim_data, &cache_file, filter_mode);
-    }
-  }
 
   /* Annotations are always shown if "Only Show Selected" is disabled. */
   if (!use_only_selected && !(ac->filters.flag & ADS_FILTER_NOGPENCIL)) {
@@ -3748,11 +3688,6 @@ static size_t animdata_filter_animchan(bAnimContext *ac,
     case ANIMTYPE_OBJECT:
       items += animdata_filter_dopesheet_ob(
           ac, anim_data, static_cast<Base *>(channel->data), filter_mode);
-      break;
-
-    case ANIMTYPE_DSCACHEFILE:
-      items += animdata_filter_ds_cachefile(
-          ac, anim_data, static_cast<CacheFile *>(channel->data), filter_mode);
       break;
 
     case ANIMTYPE_ANIMDATA:

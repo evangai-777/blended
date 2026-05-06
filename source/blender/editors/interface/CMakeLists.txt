@@ -60,7 +60,6 @@ set(SRC
   templates/interface_template_asset_shelf_popover.cc
   templates/interface_template_attribute_search.cc
   templates/interface_template_bone_collection_tree.cc
-  templates/interface_template_cache_file.cc
   templates/interface_template_color_management.cc
   templates/interface_template_color_picker.cc
   templates/interface_template_color_ramp.cc

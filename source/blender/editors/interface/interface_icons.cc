@@ -2047,8 +2047,6 @@ int icon_from_idcode(const int idcode)
       return ICON_BRUSH_DATA;
     case ID_CA:
       return ICON_CAMERA_DATA;
-    case ID_CF:
-      return ICON_FILE;
     case ID_CU_LEGACY:
       return ICON_CURVE_DATA;
 

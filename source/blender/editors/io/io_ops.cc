@@ -18,7 +18,6 @@
 #  include "io_fbx_ops.hh"
 #endif
 
-#include "io_cache.hh"
 #include "io_drop_import_file.hh"
 #include "io_grease_pencil.hh"
 #include "io_obj.hh"
@@ -51,12 +50,6 @@ void ED_operatortypes_io()
 #  endif
 #endif
 
-  WM_operatortype_append(CACHEFILE_OT_open);
-  WM_operatortype_append(CACHEFILE_OT_reload);
-
-  WM_operatortype_append(CACHEFILE_OT_layer_add);
-  WM_operatortype_append(CACHEFILE_OT_layer_remove);
-  WM_operatortype_append(CACHEFILE_OT_layer_move);
 #ifdef WITH_IO_WAVEFRONT_OBJ
   WM_operatortype_append(WM_OT_obj_export);
   WM_operatortype_append(WM_OT_obj_import);

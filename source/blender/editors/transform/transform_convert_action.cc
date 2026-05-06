@@ -731,7 +731,6 @@ static void createTransActionData(bContext *C, TransInfo *t)
       case ANIMTYPE_DSMAT:
       case ANIMTYPE_DSLAM:
       case ANIMTYPE_DSCAM:
-      case ANIMTYPE_DSCACHEFILE:
       case ANIMTYPE_DSCUR:
       case ANIMTYPE_DSSKEY:
       case ANIMTYPE_DSWOR:

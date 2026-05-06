@@ -200,7 +200,6 @@ enum eAnim_ChannelType {
   ANIMTYPE_DSMAT,
   ANIMTYPE_DSLAM,
   ANIMTYPE_DSCAM,
-  ANIMTYPE_DSCACHEFILE,
   ANIMTYPE_DSCUR,
   ANIMTYPE_DSSKEY,
   ANIMTYPE_DSWOR,
@@ -448,8 +447,6 @@ ENUM_OPERATORS(eAnimFilter_Flags);
 #define FILTER_MAT_OBJD(ma) (CHECK_TYPE_INLINE(ma, Material *), ((ma->flag & MA_DS_EXPAND)))
 #define FILTER_LAM_OBJD(la) (CHECK_TYPE_INLINE(la, Light *), ((la->flag & LA_DS_EXPAND)))
 #define FILTER_CAM_OBJD(ca) (CHECK_TYPE_INLINE(ca, Camera *), ((ca->flag & CAM_DS_EXPAND)))
-#define FILTER_CACHEFILE_OBJD(cf) \
-  (CHECK_TYPE_INLINE(cf, CacheFile *), (((cf)->flag & CACHEFILE_DS_EXPAND)))
 #define FILTER_CUR_OBJD(cu) (CHECK_TYPE_INLINE(cu, Curve *), ((cu->flag & CU_DS_EXPAND)))
 #define FILTER_PART_OBJD(part) \
   (CHECK_TYPE_INLINE(part, ParticleSettings *), (((part)->flag & PART_DS_EXPAND)))
