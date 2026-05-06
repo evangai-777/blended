@@ -4155,9 +4155,6 @@ void BKE_animsys_evaluate_all_animation(Main *main, Depsgraph *depsgraph, float 
   /* palettes */
   EVAL_ANIM_IDS(main->palettes.first, ADT_RECALC_ANIM);
 
-  /* cache files */
-  EVAL_ANIM_IDS(main->cachefiles.first, ADT_RECALC_ANIM);
-
   /* Hair Curves. */
   EVAL_ANIM_IDS(main->hair_curves.first, ADT_RECALC_ANIM);
 

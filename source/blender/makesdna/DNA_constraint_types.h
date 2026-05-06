@@ -1157,7 +1157,10 @@ struct bTransformCacheConstraint {
   char _pad[3] = {};
   float scale = 1.0f;
 
-  /* Runtime. */
+  /* Runtime — archive handle opened lazily from filepath. */
+  void *archive_handle = nullptr;
+  char archive_handle_path[/*FILE_MAX*/ 1024] = "";
+
   struct CacheReader *reader = nullptr;
   char reader_object_path[/*FILE_MAX*/ 1024] = "";
 };

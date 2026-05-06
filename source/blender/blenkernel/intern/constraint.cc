@@ -5428,12 +5428,6 @@ static bConstraintTypeInfo CTI_OBJECTSOLVER = {
 
 /* ----------- Transform Cache ------------- */
 
-static void transformcache_id_looper(bConstraint *con, ConstraintIDFunc func, void *userdata)
-{
-  bTransformCacheConstraint *data = static_cast<bTransformCacheConstraint *>(con->data);
-  func(con, reinterpret_cast<ID **>(&data->cache_file), true, userdata);
-}
-
 static void transformcache_evaluate(bConstraint *con,
                                     bConstraintOb *cob,
                                     ListBaseT<bConstraintTarget> *targets)
@@ -5442,32 +5436,78 @@ static void transformcache_evaluate(bConstraint *con,
   bTransformCacheConstraint *data = static_cast<bTransformCacheConstraint *>(con->data);
   Scene *scene = cob->scene;
 
-  CacheFile *cache_file = data->cache_file;
-
-  if (!cache_file) {
+  if (data->filepath[0] == '\0' || data->object_path[0] == '\0') {
     return;
   }
 
-  const float frame = DEG_get_ctime(cob->depsgraph);
-  const double time = BKE_cachefile_time_offset(
-      cache_file, double(frame), scene->frames_per_second());
+  /* Lazy-open archive handle when filepath changes or first use. */
+  if (data->archive_handle == nullptr || !STREQ(data->archive_handle_path, data->filepath)) {
+#  ifdef WITH_ALEMBIC
+    if (data->archive_handle) {
+      ABC_free_handle(static_cast<CacheArchiveHandle *>(data->archive_handle));
+    }
+#  endif
+    data->archive_handle = nullptr;
+    data->reader = nullptr;
+    data->reader_object_path[0] = '\0';
+    STRNCPY(data->archive_handle_path, data->filepath);
 
-  if (!data->reader || !STREQ(data->reader_object_path, data->object_path)) {
-    STRNCPY(data->reader_object_path, data->object_path);
-    BKE_cachefile_reader_open(cache_file, &data->reader, cob->ob, data->object_path);
+    Main *bmain = DEG_get_bmain(cob->depsgraph);
+
+#  ifdef WITH_ALEMBIC
+    if (BLI_path_extension_check_glob(data->filepath, "*.abc")) {
+      data->archive_handle = ABC_create_handle(bmain, data->filepath, nullptr, nullptr);
+    }
+#  endif
+#  ifdef WITH_USD
+    if (BLI_path_extension_check_glob(data->filepath, "*.usd;*.usda;*.usdc;*.usdz")) {
+      data->archive_handle = io::usd::USD_create_handle(bmain, data->filepath, nullptr);
+    }
+#  endif
   }
 
-  switch (cache_file->type) {
+  if (data->archive_handle == nullptr) {
+    return;
+  }
+
+  /* Open reader when object path changes. */
+  if (!data->reader || !STREQ(data->reader_object_path, data->object_path)) {
+    STRNCPY(data->reader_object_path, data->object_path);
+    CacheArchiveHandle *handle = static_cast<CacheArchiveHandle *>(data->archive_handle);
+
+#  ifdef WITH_ALEMBIC
+    if (BLI_path_extension_check_glob(data->filepath, "*.abc")) {
+      data->reader = CacheReader_open_alembic_object(
+          handle, data->reader, cob->ob, data->object_path, false);
+    }
+#  endif
+#  ifdef WITH_USD
+    if (BLI_path_extension_check_glob(data->filepath, "*.usd;*.usda;*.usdc;*.usdz")) {
+      data->reader = io::usd::CacheReader_open_usd_object(
+          handle, data->reader, cob->ob, data->object_path);
+    }
+#  endif
+  }
+
+  if (data->reader == nullptr) {
+    return;
+  }
+
+  /* time = frame / fps (CacheFile override_frame/is_sequence defaults — not inline here). */
+  const double frame = double(DEG_get_ctime(cob->depsgraph));
+  const double time = frame / scene->frames_per_second();
+
+  switch (eCacheFileType(data->type)) {
     case CACHEFILE_TYPE_ALEMBIC:
 #  ifdef WITH_ALEMBIC
-      ABC_get_transform(data->reader, cob->matrix, time, cache_file->scale);
+      ABC_get_transform(data->reader, cob->matrix, time, data->scale);
 #  endif
       break;
     case CACHEFILE_TYPE_USD:
 #  ifdef WITH_USD
       float4x4 mat;
       io::usd::USD_get_transform(
-          data->reader, mat, time * scene->frames_per_second(), cache_file->scale);
+          data->reader, mat, time * scene->frames_per_second(), data->scale);
       copy_m4_m4(cob->matrix, mat.ptr());
 #  endif
       break;
@@ -5486,8 +5526,13 @@ static void transformcache_copy(bConstraint *con, bConstraint *srccon)
   bTransformCacheConstraint *src = static_cast<bTransformCacheConstraint *>(srccon->data);
   bTransformCacheConstraint *dst = static_cast<bTransformCacheConstraint *>(con->data);
 
+  STRNCPY(dst->filepath, src->filepath);
   STRNCPY(dst->object_path, src->object_path);
-  dst->cache_file = src->cache_file;
+  dst->type = src->type;
+  dst->scale = src->scale;
+  /* Reset runtime state — reader and archive handle are per-instance. */
+  dst->archive_handle = nullptr;
+  dst->archive_handle_path[0] = '\0';
   dst->reader = nullptr;
   dst->reader_object_path[0] = '\0';
 }
@@ -5497,16 +5542,39 @@ static void transformcache_free(bConstraint *con)
   bTransformCacheConstraint *data = static_cast<bTransformCacheConstraint *>(con->data);
 
   if (data->reader) {
-    BKE_cachefile_reader_free(data->cache_file, &data->reader);
+#if defined(WITH_ALEMBIC) || defined(WITH_USD)
+    switch (eCacheFileType(data->type)) {
+      case CACHEFILE_TYPE_ALEMBIC:
+#  ifdef WITH_ALEMBIC
+        ABC_CacheReader_free(data->reader);
+#  endif
+        break;
+      case CACHEFILE_TYPE_USD:
+#  ifdef WITH_USD
+        io::usd::USD_CacheReader_free(data->reader);
+#  endif
+        break;
+      case CACHE_FILE_TYPE_INVALID:
+        break;
+    }
+#endif
+    data->reader = nullptr;
     data->reader_object_path[0] = '\0';
+  }
+
+  if (data->archive_handle) {
+#ifdef WITH_ALEMBIC
+    ABC_free_handle(static_cast<CacheArchiveHandle *>(data->archive_handle));
+#endif
+    data->archive_handle = nullptr;
+    data->archive_handle_path[0] = '\0';
   }
 }
 
 static void transformcache_new_data(void *cdata)
 {
-  bTransformCacheConstraint *data = static_cast<bTransformCacheConstraint *>(cdata);
-
-  data->cache_file = nullptr;
+  /* All fields default-initialized via in-class initializers (MEM_new). */
+  UNUSED_VARS(cdata);
 }
 
 static bConstraintTypeInfo CTI_TRANSFORM_CACHE = {
@@ -5515,7 +5583,7 @@ static bConstraintTypeInfo CTI_TRANSFORM_CACHE = {
     /*name*/ N_("Transform Cache"),
     /*struct_name*/ "bTransformCacheConstraint",
     /*free_data*/ transformcache_free,
-    /*id_looper*/ transformcache_id_looper,
+    /*id_looper*/ nullptr,
     /*copy_data*/ transformcache_copy,
     /*new_data*/ transformcache_new_data,
     /*get_constraint_targets*/ nullptr,
