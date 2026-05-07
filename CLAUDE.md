@@ -1206,6 +1206,16 @@ Before staging any commit that touches documentation (CLAUDE.md, CHANGELOG.md, B
 
 ---
 
+### Count Before You Claim
+
+If you say "three issues" there must be three issues. If you list a numbered set and then immediately dismiss one entry as "not a problem," you miscounted — that item was an observation, not an issue, and should never have been numbered. Do not announce N things and deliver N-1.
+
+The failure mode: pattern-matching to a list format ("here are the issues") and then populating it with both real findings and supporting observations that happen to be phrased like findings. The reader takes the count literally. When the count is wrong, trust erodes — especially in a review context where the whole point is precision.
+
+**The rule:** Only number something if it requires action or represents a real finding. Observations that confirm correctness belong in prose after the list, not as list items. Count your actionable items before writing the number.
+
+---
+
 ### Don't Over-Engineer
 
 `static_cast` is the fix, not a template wrapper. Casts, not frameworks. Enums, not architectures. Three similar lines is better than a premature abstraction. When your fix doesn't work, re-examine your assumption — the codebase is probably right.

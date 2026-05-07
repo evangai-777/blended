@@ -13,6 +13,7 @@
 
 #include "rna_internal.hh"
 
+#include "DNA_cachefile_types.h"
 #include "DNA_scene_types.h"
 #include "DNA_volume_types.h"
 
@@ -23,6 +24,12 @@
 #include "BLT_translation.hh"
 struct DummyVolumeGridData;
 namespace blender {
+
+static const EnumPropertyItem rna_enum_velocity_unit_items[] = {
+    {CACHEFILE_VELOCITY_UNIT_SECOND, "SECOND", 0, "Second", ""},
+    {CACHEFILE_VELOCITY_UNIT_FRAME, "FRAME", 0, "Frame", ""},
+    {0, nullptr, 0, nullptr, nullptr},
+};
 
 const EnumPropertyItem rna_enum_volume_grid_data_type_items[] = {
     {VOLUME_GRID_BOOLEAN, "BOOLEAN", 0, "Boolean", "Boolean"},
