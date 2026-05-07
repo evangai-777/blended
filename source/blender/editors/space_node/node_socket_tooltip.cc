@@ -488,9 +488,6 @@ class SocketTooltipBuilder {
     if (this->build_tooltip_value_data_block<Material>(value)) {
       return;
     }
-    if (this->build_tooltip_value_data_block<Tex>(value)) {
-      return;
-    }
     if (this->build_tooltip_value_data_block<Image>(value)) {
       return;
     }
