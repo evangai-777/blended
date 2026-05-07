@@ -11,6 +11,7 @@
 #include <cstdlib>
 
 #include "DNA_armature_types.h"
+#include "DNA_cachefile_types.h"
 #include "DNA_gpencil_modifier_types.h"
 #include "DNA_lineart_types.h"
 #include "DNA_modifier_types.h"
@@ -7080,6 +7081,12 @@ static void rna_def_modifier_meshseqcache(BlenderRNA *brna)
       {0, nullptr, 0, nullptr, nullptr},
   };
 
+  static const EnumPropertyItem velocity_unit_items[] = {
+      {CACHEFILE_VELOCITY_UNIT_SECOND, "SECOND", 0, "Second", ""},
+      {CACHEFILE_VELOCITY_UNIT_FRAME, "FRAME", 0, "Frame", ""},
+      {0, nullptr, 0, nullptr, nullptr},
+  };
+
   prop = RNA_def_property(srna, "read_data", PROP_ENUM, PROP_NONE);
   RNA_def_property_flag(prop, PROP_ENUM_FLAG);
   RNA_def_property_enum_sdna(prop, nullptr, "read_flag");
@@ -7091,6 +7098,26 @@ static void rna_def_modifier_meshseqcache(BlenderRNA *brna)
   RNA_def_property_boolean_sdna(prop, nullptr, "read_flag", MOD_MESHSEQ_INTERPOLATE_VERTICES);
   RNA_def_property_ui_text(
       prop, "Vertex Interpolation", "Allow interpolation of vertex positions");
+  RNA_def_property_update(prop, 0, "rna_Modifier_update");
+
+  prop = RNA_def_property(srna, "velocity_name", PROP_STRING, PROP_NONE);
+  RNA_def_property_string_sdna(prop, nullptr, "velocity_name");
+  RNA_def_property_ui_text(prop,
+                           "Velocity Attribute",
+                           "Name of the attribute used for generating motion blur data");
+  RNA_def_property_clear_flag(prop, PROP_ANIMATABLE);
+  RNA_def_property_update(prop, 0, "rna_Modifier_update");
+
+  prop = RNA_def_property(srna, "velocity_unit", PROP_ENUM, PROP_NONE);
+  RNA_def_property_enum_sdna(prop, nullptr, "velocity_unit");
+  RNA_def_property_enum_items(prop, velocity_unit_items);
+  RNA_def_property_ui_text(
+      prop,
+      "Velocity Unit",
+      "Define how the velocity vectors are interpreted with regard to time, 'frame' means "
+      "the delta time is 1 frame, 'second' means the delta time is 1 / FPS");
+  RNA_def_property_translation_context(prop, BLT_I18NCONTEXT_UNIT);
+  RNA_def_property_clear_flag(prop, PROP_ANIMATABLE);
   RNA_def_property_update(prop, 0, "rna_Modifier_update");
 
   prop = RNA_def_property(srna, "velocity_scale", PROP_FLOAT, PROP_NONE);
