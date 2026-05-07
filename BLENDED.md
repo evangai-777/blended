@@ -146,7 +146,7 @@ Identified, principles locked, final per-format decisions still being headhunted
 
 ## 6. Launcher Architecture [MOVED]
 
-The original v1 launcher spec — tier-based door menu (3D vs 2D substrate → focused workspace doors) — was superseded by §11 Pipeline as UX. Full original content preserved in §13 Notes for historical context.
+The original v1 launcher spec — tier-based door menu (3D vs 2D substrate → focused workspace doors) — was superseded by §11 Pipeline as UX. Full original content preserved in §14 Notes for historical context.
 
 ---
 
@@ -1151,7 +1151,43 @@ Same `.blended` file, same timeline, same data. The back-cycle is a mode switch,
 
 ---
 
-## 13. Notes [HISTORY]
+## 13. Community Extensions [LOCKED in principle, details OPEN]
+
+Blended core ships without translation catalogs. The i18n infrastructure (`WITH_INTERNATIONAL`, BLT context system, `.po` lookup) remains as a deliberate extension hook for community-provided localization packages.
+
+### What "community i18n" means
+
+Blended's identity is English-first, animation-first. Localization is not a core obligation — it is a community contribution layer. This is not a cost-cutting shortcut; it is an architectural decision: core does not carry `.po` files, and that absence is a feature, not a gap.
+
+Community packages can provide:
+- Translation `.po` catalogs keyed to any `msgctxt` in the source
+- UI skins and layout overrides packaged as Blended extensions
+- Locale-specific presets and templates
+
+The BLT context system (every `RNA_def_property_translation_context(prop, BLT_I18NCONTEXT_*)` call in source) is the API surface for community translators. Each context constant is a semantic namespace: "Action", "Curve", "NodeTree", etc. Community translators target these namespaces to produce correct, context-aware translations.
+
+### The "Curve" context
+
+`BLT_I18NCONTEXT_ID_CURVE_LEGACY` (`"Curve"`) is kept in `BLT_translation.hh` specifically as the semantic home for interpolation/falloff/curve-shape terms — smooth, linear, sharp, sphere, root, etc. These appear throughout the codebase in proportional editing, modifier falloffs, brush curves, and mask feathers. They are not related to the `CU_LEGACY` ID type (removed in 0.4.0); they are genuinely curve-concept properties. Community translators targeting `msgctxt "Curve"` get all of these consistently.
+
+### The "Abusing" pattern — resolved
+
+Prior to 0.4.0, 12 sites in the codebase used `BLT_I18NCONTEXT_ID_CURVE_LEGACY` with an explicit `/* Abusing id_curve :/ */` apology comment. This was the original Blender developer's self-deprecating admission that they were using an ID type's context for a non-ID concept. In Blended's framework, these sites are not abusing anything — they are correctly using the curve-concept context for curve-concept properties. The apology comments were removed in 0.4.0; the context values are kept.
+
+### When removing an ID type: context remapping rule
+
+When a type's `BLT_I18NCONTEXT_ID_<TYPE>` constant is removed from `BLT_translation.hh`, any site in the codebase that borrowed it for unrelated properties must be remapped. The rule:
+
+1. `grep -rn "BLT_I18NCONTEXT_ID_<TYPE>" source/` across the whole tree — not just makesrna
+2. For each hit that is NOT a site registering that type's own properties: determine the semantically correct context for the property being translated
+3. Remap to the nearest correct context (not `BLT_I18NCONTEXT_DEFAULT` unless no better fit exists)
+4. The goal is: community translators keying on a context string find all semantically related properties under that string, not accidentally under a removed type's context
+
+Example: `rna_modifier.cc`'s `NodesModifier` bake_target properties borrowed `BLT_I18NCONTEXT_ID_CACHEFILE` (PR #157, 0.4.0). After ID_CF removal, remapped to `BLT_I18NCONTEXT_ID_NODETREE` — because bake targets are a Geometry Nodes Modifier concept, and community localizers for node trees would expect to find baking terms under the "NodeTree" context.
+
+---
+
+## 14. Notes [HISTORY]
 
 The project's history that lives in the doc instead of in git. Git has every commit; this section has the narrative — the renames, the superseded designs, the reframes — so a reader can orient without scrubbing the log.
 
@@ -1207,11 +1243,11 @@ Earlier pipeline drafts had Assets, Environments, VFX, and Animate as standalone
 
 ---
 
-## 14. Document Conventions
+## 15. Document Conventions
 
 - Tag new sections with [LOCKED] / [OPEN] / [REJECTED] / [GUARDRAIL].
 - When reopening a LOCKED section, state why and what new evidence changed the call.
 - When a decision closes an OPEN question, move it out and summarize in the relevant section.
 - Keep the active sections (§1–§12) tight. They're working agreements, not narrative.
-- §13 Notes is the doc's history. Renames, supersessions, and reframes go there in narrative form. Git has the full record; §13 has the summary a reader can read in a minute.
-- When a section is renamed or superseded, leave a one-line stub at the old location pointing to its new home, and add the entry to §13.
+- §14 Notes is the doc's history. Renames, supersessions, and reframes go there in narrative form. Git has the full record; §14 has the summary a reader can read in a minute.
+- When a section is renamed or superseded, leave a one-line stub at the old location pointing to its new home, and add the entry to §14.

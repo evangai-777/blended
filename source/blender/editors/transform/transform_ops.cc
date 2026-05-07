@@ -692,7 +692,7 @@ void properties_register(wmOperatorType *ot, int flags)
                         0,
                         "Proportional Falloff",
                         "Falloff type for proportional editing mode");
-    /* Abusing id_curve :/ */
+    /* "Curve" context is the intentional home for interpolation/falloff shape terms. */
     RNA_def_property_translation_context(prop, BLT_I18NCONTEXT_ID_CURVE_LEGACY);
     RNA_def_float(ot->srna,
                   "proportional_size",

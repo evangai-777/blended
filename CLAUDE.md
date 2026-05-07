@@ -1121,7 +1121,7 @@ grep -rn "BLT_I18NCONTEXT_ID_CF\|BLT_I18NCONTEXT_ID_XX" source/  # replace XX wi
 grep -rn "BLT_I18NCONTEXT_ID_<TYPE>" source/ --include="*.cc" --include="*.hh"
 ```
 
-**ID_CF post-merge CI catch (2026-05-07):** `rna_modifier.cc:8027` and `:8178` — two `NodesModifier` bake_target properties used `BLT_I18NCONTEXT_ID_CACHEFILE` as their `RNA_def_property_translation_context` argument. Completely unrelated to CacheFile; the constant was borrowed as a convenient translation namespace. Invisible to `grep "ID_CF"`. Surfaced at step 5230/8093 as C2065 after `BLT_I18NCONTEXT_ID_CACHEFILE` was removed from `BLT_translation.hh` in Layer 8. Fix: remove the two `RNA_def_property_translation_context` calls (properties fall back to default context). PR #157.
+**ID_CF post-merge CI catch (2026-05-07):** `rna_modifier.cc:8027` and `:8178` — two `NodesModifier` bake_target properties used `BLT_I18NCONTEXT_ID_CACHEFILE` as their `RNA_def_property_translation_context` argument. Completely unrelated to CacheFile; the constant was borrowed as a convenient translation namespace. Invisible to `grep "ID_CF"`. Surfaced at step 5230/8093 as C2065 after `BLT_I18NCONTEXT_ID_CACHEFILE` was removed from `BLT_translation.hh` in Layer 8. Fix: remapped to `BLT_I18NCONTEXT_ID_NODETREE` (bake target is a Geometry Nodes Modifier concept). PR #157. See Scar 13 for the full pattern including the community i18n principle and the `interface_template_id.cc` sweep.
 
 ---
 
@@ -1153,6 +1153,34 @@ Any `ComponentKey` or `add_relation()` site that references the removed type's `
 # Run after making build_X() a no-op in either depsgraph builder
 grep -n "tex->id\|tex_key" source/blender/depsgraph/intern/builder/deg_builder_relations.cc
 ```
+
+---
+
+### Scar 13: BLT_I18NCONTEXT_ID_<TYPE> Borrowed by Unrelated Code Is Invisible to ID Grep (Community i18n Pattern)
+
+**What happened:** The ID_CF chisel removed `BLT_I18NCONTEXT_ID_CACHEFILE` from `BLT_translation.hh` in Layer 8. After the PR merged, CI failed at step 5230/8093 — `rna_modifier.cc:8027` and `:8178` in the `NodesModifier` bake_target RNA used that constant as their `RNA_def_property_translation_context` argument. These were Geometry Nodes Modifier properties with no connection to CacheFile. Zero `ID_CF` strings in those lines. Invisible to `grep "ID_CF"`. C2065 at compile time.
+
+**Separate failure in same session:** The ID_MB chisel removed `BLT_I18NCONTEXT_ID_METABALL` but left `interface_template_id.cc:973` — a `BLT_I18N_MSGID_MULTI_CTXT` registration call listing every ID type's context — still referencing it. Also invisible to `grep "ID_MB"` because the macro is a no-op and contains only the constant name.
+
+**Why this fails silently in audit:** The `grep -rn "ID_XX"` sweep finds sites that reference the ID token string directly. Context constants are named `BLT_I18NCONTEXT_ID_XX` — that string never appears at the borrowing site. Only the constant name does. The grep pattern catches it only if you also grep the constant name.
+
+**The community i18n principle (BLENDED.md §13):** When removing a type's context constant, borrow sites must be *remapped to the semantically correct context*, not dropped. Drop = existing community translations are silently orphaned. Remap = translations key correctly to the right msgctxt. Example: `NodesModifier` bake_target remapped to `BLT_I18NCONTEXT_ID_NODETREE` (PR #157).
+
+**`BLT_I18NCONTEXT_ID_CURVE_LEGACY` — kept intentionally:** 12 sites used this with `/* Abusing id_curve :/ */` comments. These are NOT abuse — they are curve-shape/interpolation properties (proportional edit falloff, modifier falloff types, shutter curve, mask feather) that genuinely belong under the `"Curve"` msgctxt. The constant is retained in `BLT_translation.hh` after ID_CU_LEGACY removal precisely because these 12 sites need it. The apology comments were removed in 0.4.0.
+
+**Mandatory post-chisel grep (run after removing any `BLT_I18NCONTEXT_ID_<TYPE>` from `BLT_translation.hh`):**
+```bash
+# Replace CACHEFILE with the removed type's constant suffix
+grep -rn "BLT_I18NCONTEXT_ID_CACHEFILE" source/  # finds borrow sites in any file
+# General form:
+grep -rn "BLT_I18NCONTEXT_ID_<TYPE>" source/ --include="*.cc" --include="*.hh"
+```
+For each hit that is NOT inside the type's own RNA file (or a `BLT_I18N_MSGID_MULTI_CTXT` registration call in `interface_template_id.cc`):
+1. Identify the semantic concept the property is actually about
+2. Remap to the nearest correct `BLT_I18NCONTEXT_*` constant
+3. Document the remap in the commit message
+
+**Also sweep `interface_template_id.cc`:** The `BLT_I18N_MSGID_MULTI_CTXT("New", ...)` block around line 956–983 lists every ID type context. After any chisel that removes a context constant, find and remove that constant's entry from this list.
 
 ---
 
