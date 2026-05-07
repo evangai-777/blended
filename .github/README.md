@@ -184,6 +184,9 @@ Blended is developed with contributions from both human developers and AI tools.
   cachefile.cc, BKE_cachefile.hh; versioning_290.cc velocity_unit loop removed;
   CTX_data_edit_cachefile and BLT_I18NCONTEXT_ID_CACHEFILE removed; RNA migrated from
   PROP_POINTER to PROP_STRING/PROP_FILEPATH in rna_constraint.cc and rna_modifier.cc.
+  Post-merge CI fixes: MeshSeqCacheModifierData DNA alignment (5 chars → two 4-char groups;
+  PR #156); BLT_I18NCONTEXT_ID_CACHEFILE borrowed by unrelated NodesModifier bake_target
+  properties in rna_modifier.cc — Scar 11 extension, invisible to ID_CF grep (PR #157).
   ongoing PR review and integration: 10+ PRs assessed, applied selectively.
   *"Listen to the whole thing before reacting."*
 

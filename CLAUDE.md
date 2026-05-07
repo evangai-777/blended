@@ -743,7 +743,7 @@ blentranslation (1 file):
 
 7. **Chisel order complete (0.4.0):** ID_PC (21) ✓ → ID_SPK (23) ✓ → ID_PA (35) ✓ → ID_GD_LEGACY (56) ✓ → ID_LS (~50) ✓ → ID_MB (~130+) ✓ → ID_TE (~76) ✓ → ID_CU_LEGACY (~86) ✓ → ID_CF (~76) ✓. All 9 Bucket 5+6 fossil removals complete — 0.4.0 pending CI. Next: 0.5.x (Bucket 3 fold-downs, 39 → ~19 ID types).
 
-8. **ID_CF complete (0.4.0): inline per-instance.** True blast radius ~76 files (vs. 29 literal hits). `CacheFile` was woven into the Alembic importer, USD importer, Mesh Sequence Cache modifier, `bTransformCacheConstraint`, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI. **Design decision (2026-05-06):** inline per-instance — `CacheFile *` pointers in `MeshSeqCacheModifierData` and `bTransformCacheConstraint` replaced with the `CacheFile` fields inlined directly. `bmain->cachefiles` removed entirely — no Scar 2 rescue, true fossil. `versioning_290.cc` velocity_unit loop (the only `bmain->cachefiles` iteration) removed. 8 layers on branch `claude/chisel-id-cf`, pending CI. **No deferred runtime debt.**
+8. **ID_CF complete (0.4.0): inline per-instance.** True blast radius ~76 files (vs. 29 literal hits). `CacheFile` was woven into the Alembic importer, USD importer, Mesh Sequence Cache modifier, `bTransformCacheConstraint`, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI. **Design decision (2026-05-06):** inline per-instance — `CacheFile *` pointers in `MeshSeqCacheModifierData` and `bTransformCacheConstraint` replaced with the `CacheFile` fields inlined directly. `bmain->cachefiles` removed entirely — no Scar 2 rescue, true fossil. `versioning_290.cc` velocity_unit loop (the only `bmain->cachefiles` iteration) removed. 8 layers on branch `claude/chisel-id-cf`. **Post-merge CI fixes (PR #156, PR #157):** (1) `MeshSeqCacheModifierData` DNA alignment — 5 chars before floats violated SDNA 4-byte alignment; reorganized into two 4-char groups (Scar 11-adjacent). (2) `BLT_I18NCONTEXT_ID_CACHEFILE` borrowed by `NodesModifier` bake_target properties in `rna_modifier.cc:8027,8178` — invisible to `grep "ID_CF"`; removed two `RNA_def_property_translation_context` calls (Scar 11 extension). **No deferred runtime debt.**
 
 ---
 
@@ -1109,7 +1109,19 @@ grep -rn "OB_MBALL\|MB_BALL\|MB_CUBE"  source/blender/makesrna/  # example for I
 # For ID_TE: grep for TEX_CLOUDS, TEX_WOOD, TEX_MARBLE, TEX_MAGIC, TEX_BLEND,
 #            TEX_STUCCI, TEX_NOISE, TEX_IMAGE, TEX_MUSGRAVE, TEX_VORONOI, TEX_DISTNOISE
 grep -rn "TEX_CLOUDS\|TEX_WOOD\|TEX_MARBLE\|TEX_MAGIC\|TEX_BLEND\|TEX_STUCCI\|TEX_NOISE\b\|TEX_IMAGE\|TEX_MUSGRAVE\|TEX_VORONOI\|TEX_DISTNOISE" source/blender/makesrna/
+
+# Scar 11 extension: BLT_I18NCONTEXT_ID_<TYPE> borrowed by unrelated code
+# When BLT_I18NCONTEXT_ID_XX is removed from BLT_translation.hh, any file that uses
+# that constant as a translation context for unrelated properties will break at compile
+# time with C2065. These callers contain the constant NAME, not the ID token string,
+# so they are invisible to grep -rn "ID_XX".
+# Run after removing any BLT_I18NCONTEXT_ID_XX entry from BLT_translation.hh:
+grep -rn "BLT_I18NCONTEXT_ID_CF\|BLT_I18NCONTEXT_ID_XX" source/  # replace XX with removed type
+# General form — grep the whole source tree, not just makesrna:
+grep -rn "BLT_I18NCONTEXT_ID_<TYPE>" source/ --include="*.cc" --include="*.hh"
 ```
+
+**ID_CF post-merge CI catch (2026-05-07):** `rna_modifier.cc:8027` and `:8178` — two `NodesModifier` bake_target properties used `BLT_I18NCONTEXT_ID_CACHEFILE` as their `RNA_def_property_translation_context` argument. Completely unrelated to CacheFile; the constant was borrowed as a convenient translation namespace. Invisible to `grep "ID_CF"`. Surfaced at step 5230/8093 as C2065 after `BLT_I18NCONTEXT_ID_CACHEFILE` was removed from `BLT_translation.hh` in Layer 8. Fix: remove the two `RNA_def_property_translation_context` calls (properties fall back to default context). PR #157.
 
 ---
 
