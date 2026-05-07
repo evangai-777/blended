@@ -19,6 +19,7 @@
 
 #include "DNA_collection_types.h"
 #include "DNA_material_types.h"
+#include "DNA_texture_types.h"
 
 #include "NOD_eval_log.hh"
 #include "NOD_menu_value.hh"
@@ -486,6 +487,13 @@ class SocketTooltipBuilder {
       return;
     }
     if (this->build_tooltip_value_data_block<Material>(value)) {
+      return;
+    }
+    if (value.type()->is<Tex *>()) {
+      const Tex *tex = *value.get<Tex *>();
+      const std::string value_str = tex ? BKE_id_name(id_cast<const ID &>(*tex)) :
+                                          std::string(TIP_("None"));
+      this->build_tooltip_value_and_type_oneline(value_str, TIP_("Texture"));
       return;
     }
     if (this->build_tooltip_value_data_block<Image>(value)) {
