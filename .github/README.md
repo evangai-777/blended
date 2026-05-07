@@ -184,6 +184,16 @@ Blended is developed with contributions from both human developers and AI tools.
   cachefile.cc, BKE_cachefile.hh; versioning_290.cc velocity_unit loop removed;
   CTX_data_edit_cachefile and BLT_I18NCONTEXT_ID_CACHEFILE removed; RNA migrated from
   PROP_POINTER to PROP_STRING/PROP_FILEPATH in rna_constraint.cc and rna_modifier.cc.
+  Post-merge CI fixes: MeshSeqCacheModifierData DNA alignment (5 chars → two 4-char groups;
+  PR #156); BLT_I18NCONTEXT_ID_CACHEFILE borrowed by NodesModifier bake_target properties —
+  Scar 13, invisible to ID_CF grep; final fix remaps to BLT_I18NCONTEXT_ID_NODETREE (PR #157).
+  i18n cleanup: BLT_I18NCONTEXT_ID_METABALL latent reference in interface_template_id.cc removed;
+  12 "Abusing id_curve" apology comments cleaned up — these are correct uses of the curve-concept
+  context for interpolation/falloff properties; BLT_I18NCONTEXT_ID_CURVE_LEGACY retained as
+  intentional hook for community localizers.
+  Community i18n architectural decision: Blended core ships no .po catalogs; i18n infrastructure
+  is a community-extension hook (BLENDED.md §13). Context constants remap to semantically correct
+  msgctxt on type removal, not dropped, so community translations key correctly.
   ongoing PR review and integration: 10+ PRs assessed, applied selectively.
   *"Listen to the whole thing before reacting."*
 
