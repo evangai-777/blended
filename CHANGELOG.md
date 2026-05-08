@@ -54,9 +54,15 @@ carries a one-liner status per active item.
 
 ---
 
-## Unreleased — 0.4.0
+## Unreleased — 0.5.0
 
-Bucket 5 + 6 fossil removals. 9 ID types, 357 hits, same chisel pattern as 0.3.0. CI green (Windows x64, build 62, commit `7423dae`) — 9 of 9 types complete.
+Bucket 3 fold-downs — the last datablock-audit version. Six IDs that are property bags pretending to be first-class entities, each folded into the structure they actually belong to: `ID_BR` (Brush) → user state + shareable brush packs, `ID_PAL` (Palette) → brush property or inline, `ID_LT` (Lattice) → modifier, not a datablock, `ID_LP` (LightProbe) → merge into `ID_LA` with a type flag, `ID_MSK` (Mask) → hang off compositor NodeTree, `ID_VF` (VFont) → system font reference. Closes the datablock audit (39 → ~19 ID types).
+
+---
+
+## 0.4.0 — 2026-05-08
+
+Bucket 5 + 6 fossil removals — 9 ID types removed across the same chisel pattern as 0.3.0. CI green (Windows x64, build 70, commit `7bd69df`) — 9 of 9 types complete. Tag pending.
 Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEGACY ✓** → **ID_LS ✓** → **ID_MB ✓** → **ID_TE ✓** → **ID_CU_LEGACY ✓** → **ID_CF ✓**.
 *(Order corrected in PR #126 fix — initial commit had ID_CF first, contradicting CLAUDE.md Key note 8. Scar 7.)*
 

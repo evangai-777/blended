@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.3.0 (tagged). 0.4.0 in progress — all 9 Bucket 5+6 fossil removals complete. Post-merge CI fixes applied on branches `claude/fix-id-cf-ci` (PRs #156–157), `claude/fix-transform-compile-tSXsL` (PRs #158–160 plus ongoing), and `claude/quality-integrity-standards-ETYzo` (build 69 fallout — `UI_UL_cache_file_layers` linker orphan + Transform Cache constraint Python UI rebuilt around inline RNA + dopesheet `bpy.data.*` orphans). Pending: 0.4.0 tag.
+**Current version:** Blended 0.4.0 — CI-complete (Windows x64, build 70 on commit `7bd69df`). All 9 Bucket 5+6 fossil removals shipped; tag pending. 0.5.0 next — Bucket 3 fold-downs (39 → ~19 ID types: `ID_BR`, `ID_PAL`, `ID_LT`, `ID_LP`, `ID_MSK`, `ID_VF`).
 
 ---
 
