@@ -334,13 +334,9 @@ void BKE_texture_type_set(Tex *tex, int type)
 
 /* ------------------------------------------------------------------------- */
 
-Tex *BKE_texture_add(Main *bmain, const char *name)
+Tex *BKE_texture_add(Main * /*bmain*/, const char * /*name*/)
 {
-  Tex *tex;
-
-  tex = BKE_id_new<Tex>(bmain, name);
-
-  return tex;
+  return nullptr;
 }
 
 /* ------------------------------------------------------------------------- */

@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.3.0 (tagged). 0.4.0 in progress — CI green (Windows x64, build #62, commit `7423dae`). Bucket 5 + 6 fossil removals: `ID_PC` ✓ + `ID_SPK` ✓ + `ID_PA` ✓ + `ID_GD_LEGACY` ✓ + `ID_LS` ✓ + `ID_MB` ✓ + `ID_TE` ✓ + `ID_CU_LEGACY` ✓ + `ID_CF` ✓. All 9 types complete — pending CI on branch `claude/chisel-id-cf`.
+**Current version:** Blended 0.3.0 (tagged). 0.4.0 in progress — all 9 Bucket 5+6 fossil removals complete. Post-merge CI fixes applied on branches `claude/fix-id-cf-ci` (PRs #156–157) and `claude/fix-transform-compile-tSXsL` (PRs #158–160 plus ongoing). Pending: 0.4.0 tag.
 
 ---
 
@@ -25,7 +25,7 @@ The old approach (tiered UI, smart defaults, Emscripten) was prototyping toward 
 
 **`ID_SCR` and `ID_WM` removal — compile-clean, pending CI.** All layers merged. The blast radius was enormous — see Scar 2 below. Key architectural outcome: `bmain->screens` and `bmain->wm` kept as non-indexed runtime listbases; `ID_SCR_LEGACY` / `ID_WM_LEGACY` defines route through `which_libbase` for allocation but are excluded from `BKE_main_lists_get`. Branch: `claude/remove-id-scr-id-wm`. Layer-by-layer status in [`CHANGELOG.md`](CHANGELOG.md).
 
-**In progress: Bucket 5 + 6 fossil removals (0.4.x)** — `ID_GD_LEGACY`, `ID_TE`, `ID_MB`, `ID_LS`, `ID_CF`. `ID_PC` ✓. `ID_SPK` ✓. `ID_PA` ✓. `ID_GD_LEGACY` ✓. `ID_LS` ✓. `ID_MB` ✓. `ID_TE` ✓. `ID_CU_LEGACY` ✓. Next: `ID_CF` (design decision needed — see Key note 8). See roadmap in CHANGELOG.md.
+**Bucket 5 + 6 fossil removals (0.4.x) — complete.** All 9 types removed: `ID_PC` ✓ `ID_SPK` ✓ `ID_PA` ✓ `ID_GD_LEGACY` ✓ `ID_LS` ✓ `ID_MB` ✓ `ID_TE` ✓ `ID_CU_LEGACY` ✓ `ID_CF` ✓. Post-merge CI fixes complete. Next version: 0.5.x — Bucket 3 fold-downs (39 → ~19 ID types). See roadmap in CHANGELOG.md.
 
 Pattern for each pending layer: `grep -rn "ID_WS"` the directory, delete or redirect every hit. The breakage is the audit — follow the compile errors, don't paper over them.
 
@@ -37,17 +37,11 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 
 ### Known Deferred Debt (compile-green but runtime-broken or leak-prone)
 
-1. **ID_LS latent memory leak** — Opening a legacy `.blend` file with Freestyle data in a `WITH_FREESTYLE=OFF` build populates `bmain->linestyles` via the kept `which_libbase` routing, but that listbase is not in `BKE_main_lists_get`, so `BKE_main_free` does not free those blocks. Accepted for now (no Freestyle fixtures in CI). Fix if needed: a blenloader post-read pass that drains `bmain->linestyles` after any file load when `WITH_FREESTYLE=OFF`.
+1. **ID_LS latent memory leak** — Opening a legacy `.blend` file with Freestyle data in a `WITH_FREESTYLE=OFF` build populates `bmain->linestyles` via the kept `which_libbase` routing, but that listbase is not in `BKE_main_lists_get`, so `BKE_main_free` does not free those blocks. **Fix when:** a legacy `.blend` with Freestyle LineStyle data is added to CI fixtures, or a user reports memory growth across repeated file loads. **Fix:** a blenloader post-read pass that drains `bmain->linestyles` — see drain template in Category C below.
 
-2. **ID_CF chisel complete (0.4.0)** — Inline per-instance. `CacheFile *` in `MeshSeqCacheModifierData` and `bTransformCacheConstraint` replaced with inlined fields; `bmain->cachefiles` removed entirely (no Scar 2). 8 layers on branch `claude/chisel-id-cf`, pending CI. No deferred debt — no Scar 2 listbase, no runtime leak. See Key note 8 for full session record.
+2. **`BKE_screen_blend_read_data` kept but not called** — Defined in `screen.cc`, not called by the ID system. Retained for possible future format work. **Fix when:** 0.8.x `.blended` format work begins — wire it into the format reader or delete it.
 
-3. **ID_SCR runtime debt (Scar 1)** — Workspace cycle, reorder operators, factory name translation. Runtime behavior after screens are per-window state instead of a global list. See Scar 1 for anatomy.
-
-4. **`BKE_screen_blend_read_data` kept but not dead** — Defined, not called by the ID system. Retained for possible future format work. If `.blended` format work starts, audit this first.
-
-5. **Multi-window screen iteration edge cases** — The 0.3.0 chisel converted global screen iteration to per-window. Edge cases in multi-window layouts may surface at runtime. Not tested in CI (single-window headless).
-
-6. **Scar 2 listbase memory leaks (ID_PA, ID_TE, ID_CU_LEGACY)** — `bmain->particles`, `bmain->textures`, and `bmain->curves` are kept as non-indexed listbases for versioning-pass compatibility, but are NOT in `BKE_main_lists_get`. When a legacy `.blend` file is loaded and then a new file is loaded (or the application exits), `BKE_main_free` does not free those ID blocks. They accumulate for the session. Same root cause as item 1 (ID_LS). Same fix pattern: post-read drain pass. **ID_CU_LEGACY leak is more active than ID_PA/ID_TE:** Alembic NURBS reader and OBJ NURBS importer call `BKE_curve_add` at runtime (not just on legacy file load), creating new Curve blocks in `bmain->curves` that are never freed when scenes are cleared or files are re-opened. `bmain->gpencils` (ID_GD_LEGACY) has the same structure but gpencil data is actively used at runtime — needs separate audit to confirm it's freed by the right path.
+3. **Scar 2 listbase memory leaks (ID_PA, ID_TE, ID_CU_LEGACY)** — `bmain->particles`, `bmain->textures`, and `bmain->curves` are kept as non-indexed listbases for versioning-pass compatibility, but are NOT in `BKE_main_lists_get`. `BKE_main_free` does not free those ID blocks. Same root cause as item 1. **Fix when:** memory profiling shows measurable growth across file loads in a session, or a user reports the issue. **Fix:** post-read drain pass — see Category C and drain template below. **ID_CU_LEGACY is more active** than ID_PA/ID_TE: `BKE_curve_add` is called at runtime by the Alembic NURBS reader and OBJ NURBS importer, so `bmain->curves` accumulates on every NURBS import, not just legacy file loads.
 
 ---
 
@@ -72,10 +66,9 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 | Trigger | Expected failure mode | Introduced | Status |
 |---------|-----------------------|------------|--------|
 | Legacy file containing MetaBall (`OB_MBALL`) objects | `bmain->metaballs` fully removed — no Scar 2 rescue. MetaBall data can't be allocated; no `which_libbase` routing. Objects will load with `ob->type == OB_MBALL` and `ob->data == nullptr`. Any draw or eval code that dereferences `ob->data` without a null check → null deref crash. `BLI_assert_unreachable()` sites in dispatch switches → debug assert. **No versioning pass converts these to another type** (unlike OB_SPEAKER). | 0.4.0 (ID_MB) | Needs versioning pass: convert `OB_MBALL` → `OB_EMPTY` on file load, same pattern as OB_SPEAKER → OB_EMPTY (versioning pass 502.23) |
-| Legacy file with particle systems on objects | `ParticleSettings` IDs load into `bmain->particles` (Scar 2). `build_particle_systems()` is still called from the object node builder for any object with `object->particlesystem.first != nullptr`. Inside, `build_particle_settings(particle->part)` runs. With `INIT_TYPE(ID_PA)` removed and `INDEX_ID_PA` gone, any path that calls `BKE_idtype_idcode_to_index(ID_PA)` (e.g., `add_id_node()`) hits the same OOB-index problem that `build_texture()` had. **This was not fixed in the same pass as the texture bug.** | 0.4.0 (ID_PA) | Needs the same `build_particle_settings()` no-op guard applied to `build_texture()` in this session. Investigate before next legacy-file test. |
-| Legacy file with speaker objects, file version < 502.23 | Versioning pass 502.23 converts `OB_SPEAKER` → `OB_EMPTY`. Files saved before that pass (i.e., Blender files from before 5.0.23 equivalent) should be handled. Files at exactly the edge version boundary may not convert. Low risk in practice. | 0.4.0 (ID_SPK) | Monitor; no known CI fixture |
+| Legacy file with particle systems on objects | `ParticleSettings` IDs load into `bmain->particles` (Scar 2). `build_particle_systems()` is still called for any object with `object->particlesystem.first != nullptr`. `build_particle_settings(particle->part)` runs and calls `add_id_node()`. The OOB-index crash (`BKE_idtype_idcode_to_index(ID_PA)` → -1) is **guarded**: `depsgraph.cc` has `if (id_type_index >= 0)` before writing `id_type_exist[]`, applied during the ID_CU_LEGACY chisel. Particle systems in legacy files load and evaluate without crashing. Memory leak: `bmain->particles` not in `BKE_main_lists_get` (Category C). | 0.4.0 (ID_PA) | ✓ OOB guard in place. Remaining: Category C memory leak only. |
 
-#### Category C — Memory leaks (session-scoped, accepted)
+#### Category C — Memory leaks (session-scoped; fix when needed — see Deferred Debt items 1 and 3 for triggers)
 
 | Trigger | Leak scope | Introduced | Fix when needed |
 |---------|-----------|------------|-----------------|
@@ -87,9 +80,12 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 **When a post-read drain pass is needed (template):** In `blenloader/intern/readfile.cc` or a post-read callback, after `BKE_blendfile_read()` completes, iterate and free the relevant non-indexed listbase:
 ```cpp
 // Example: drain bmain->linestyles after file load when WITH_FREESTYLE=OFF
-BKE_id_multi_tagged_delete(bmain);  // or direct iteration + BKE_id_free
+LISTBASE_FOREACH_MUTABLE(ID *, id, &bmain->linestyles) {
+  BKE_id_free(bmain, id);
+}
+BLI_listbase_clear(&bmain->linestyles);
 ```
-Exact implementation depends on whether the blocks have ID-system runtime state that needs cleanup — audit `IDTypeInfo::id_free` for the relevant type before implementing.
+`BKE_id_free` skips the `IDTypeInfo::id_free` callback when the type is unregistered (INIT_TYPE removed) but still frees the memory block and animation data. Before using this pattern, audit the original `IDTypeInfo::id_free` implementation to confirm nothing non-trivial was being cleaned up there (e.g., GPU resources, runtime caches). For ID_LS, ID_PA, ID_TE, and ID_CU_LEGACY the callbacks were simple struct-internal frees with no GPU state — the drain is safe. Do NOT use `BKE_id_multi_tagged_delete` — that API operates on tagged blocks within the main indexed list and will not reach Scar 2 unindexed listbases.
 
 
 
@@ -328,7 +324,7 @@ makesrna (8 files):
 >
 > **(3) Missed site: `anim_data_bmain_utils.cc:92`** — `ANIMDATA_IDS_CB(bmain->particles.first)` was not in the literal or true blast radius audit. Caught at compile step 6484/8112.
 >
-> **(4) `BKE_id_new<ParticleSettings>` template instantiation failure — `particle.cc:3770`.** Removing `static constexpr ID_Type id_type = ID_PA` from `ParticleSettings` also broke the template `BKE_id_new<T>`, which requires `T::id_type`. Fix: replaced with `static_cast<ParticleSettings *>(BKE_libblock_alloc(bmain, ID_PA, name, 0))`. **Known runtime debt:** `INIT_TYPE(ID_PA)` is removed, so `BKE_libblock_alloc(bmain, ID_PA, ...)` returns `nullptr` at runtime — the add-particle-system operator path (`BKE_particlesettings_add` → `particle.cc:3621`) is silently dead in Blended. The operators that call this path (`OBJECT_OT_particle_system_add` and related) were not removed as part of the ID_PA chisel and should be cleaned up as a follow-up.
+> **(4) `BKE_id_new<ParticleSettings>` template instantiation failure — `particle.cc:3770`.** Removing `static constexpr ID_Type id_type = ID_PA` from `ParticleSettings` also broke the template `BKE_id_new<T>`, which requires `T::id_type`. Initial fix replaced with `BKE_libblock_alloc(bmain, ID_PA, name, 0)` — that returned `nullptr` at runtime (no `INIT_TYPE`). **Corrected fix (Scar 10):** `BKE_particlesettings_add` now uses `MEM_new<ParticleSettings>` + manual insertion into `bmain->particles` via `which_libbase` Scar 2 routing. Returns a valid object. Particle system creation works. Memory is not freed by `BKE_main_free` (Category C leak). The depsgraph OOB issue (`add_id_node` → `BKE_idtype_idcode_to_index(ID_PA)` → -1) is guarded by the `id_type_index >= 0` check in `depsgraph.cc` applied during the ID_CU_LEGACY chisel.
 
 Core definition:
 - `makesdna/DNA_ID_enums.h:152` — enum entry `ID_PA = MAKE_ID2('P', 'A')`
