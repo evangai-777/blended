@@ -200,6 +200,7 @@ Next in the foundation chain:
 4. **Project-mode flag.** One `.blended` file that can hold 3D-primary, 2D-primary, or mixed projects — or enforce single-mode per file?
 5. **Per-format final decisions** in §5 Groups 2–6.
 6. **Detailed launcher UI** — deferred until foundation is solid.
+7. **`.blend` cross-compatibility (0.9.x).** Whether and how Blended reads upstream `.blend` files as a migration path. Stated direction: one-way (`.blend` → `.blended`). Scope TBD — depends on how far the format diverges in 0.8.x.
 
 ---
 
