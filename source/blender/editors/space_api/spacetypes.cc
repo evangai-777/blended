@@ -121,8 +121,6 @@ void ED_spacetypes_init()
 
   ED_screen_user_menu_register();
 
-  ui::uilisttypes_ui();
-
   /* Gizmo types. */
   ED_gizmotypes_button_2d();
   ED_gizmotypes_dial_3d();

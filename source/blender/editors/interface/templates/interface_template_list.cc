@@ -1033,16 +1033,4 @@ void template_uilist(Layout *layout,
   template_uilist_layout_draw(C, ui_list, *layout, &input_data, &items, &layout_data, flags);
 }
 
-/* -------------------------------------------------------------------- */
-
-/** \name List-types Registration
- * \{ */
-
-void uilisttypes_ui()
-{
-  WM_uilisttype_add(UI_UL_cache_file_layers());
-}
-
-/** \} */
-
 }  // namespace blender::ui
