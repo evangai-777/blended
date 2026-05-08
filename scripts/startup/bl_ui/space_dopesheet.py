@@ -127,18 +127,10 @@ class DopesheetFilterPopoverBase:
 
         # data types
         flow.prop(dopesheet, "show_worlds", text="Worlds")
-        if bpy.data.particles:
-            flow.prop(dopesheet, "show_particles", text="Particles")
-        if bpy.data.linestyles:
-            flow.prop(dopesheet, "show_linestyles", text="Line Styles")
         if bpy.data.materials:
             flow.prop(dopesheet, "show_materials", text="Materials")
-        if bpy.data.textures:
-            flow.prop(dopesheet, "show_textures", text="Textures")
         if bpy.data.shape_keys:
             flow.prop(dopesheet, "show_shapekeys", text="Shape Keys")
-        if bpy.data.cache_files:
-            flow.prop(dopesheet, "show_cache_files", text="Cache Files")
         if bpy.data.movieclips:
             flow.prop(dopesheet, "show_movieclips", text="Movie Clips")
 

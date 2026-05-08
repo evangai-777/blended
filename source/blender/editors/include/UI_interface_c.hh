@@ -2781,7 +2781,6 @@ void operatortypes_ui();
  */
 void keymap_ui(wmKeyConfig *keyconf);
 void dropboxes_ui();
-void uilisttypes_ui();
 
 void drop_color_copy(bContext *C, wmDrag *drag, wmDropBox *drop);
 bool drop_color_poll(bContext *C, wmDrag *drag, const wmEvent *event);

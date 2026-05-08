@@ -1756,8 +1756,6 @@ void view_item_swap_button_pointers(AbstractViewItem &a, AbstractViewItem &b);
 
 /* `views/interface_templates.cc` */
 
-uiListType *UI_UL_cache_file_layers();
-
 ID *template_id_liboverride_hierarchy_make(
     bContext *C, Main *bmain, ID *owner_id, ID *id, const char **r_undo_push_label);
 
