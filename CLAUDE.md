@@ -102,12 +102,39 @@ BLI_listbase_clear(&bmain->linestyles);
 
 | Version | Layer | Status |
 |---------|-------|--------|
-| 0.4.x | Datablock audit — 9 fossil removals (Bucket 5+6) | In progress |
+| 0.4.x | Datablock audit — 9 fossil removals (Bucket 5+6) | ✓ CI-complete (build 70) |
 | 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) | Pending |
 | 0.6.x | Evaluation model — depsgraph audit | Pending |
 | 0.7.x | App lenses — launcher as canonical workspace system | Pending |
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary | Pending |
 | 1.0.0 | Foundation complete; basic pipeline navigation working | Pending |
+
+---
+
+### Bucket 3 Fold-Down Protocol (0.5.x)
+
+Bucket 3 is not chiseling. Read this before touching any of the six types.
+
+**What chiseling and fold-down share:** both remove the type from the ID system — `INIT_TYPE`, `INDEX_ID_XX`, `FILTER_ID_XX`, `BKE_main_lists_get` entry all go. Scar 4 applies (sweep both `CASE_IDINDEX` blocks in `idtype.cc`). Scar 8 applies (remove the `id_type` constexpr and its entire `#ifdef __cplusplus` block together). Scar 10 applies (allocation functions that called `BKE_libblock_alloc` must be rewritten using `MEM_new<T>` + manual listbase insert). The blast radius protocol still runs: literal grep first, true blast radius emerges during editing, document both.
+
+**What is different:** the functionality is not dead. The data structure stays. The runtime code that creates and uses these types keeps working. Nothing gets deleted.
+
+The Scar 2 rule is **mandatory and unconditional for all six Bucket 3 types:** keep `bmain->brushes` / `bmain->lattices` / `bmain->palettes` / `bmain->lightprobes` / `bmain->masks` / `bmain->fonts` as non-indexed listbases. Keep their `which_libbase` routing. These types are active at runtime — they are not fossils. Removing the field would break the runtime tool code, not just versioning passes.
+
+**What "fold into" means for 0.5.0:** it means deregistration only. The eventual architectural home for each type — brushes as user state, palette inline in brush, lattice owned by modifier, LightProbe merged into Light, Mask hanging off NodeTree, VFont as a path — is a design question for 0.7.x (launcher / app lenses). 0.5.0 closes the datablock audit number by removing these six from the ID system. The question of "where does this data truly live in the final product" is not a 0.5.0 question. Do not attempt to answer it in the chisel. If the code for brush-as-user-state doesn't exist yet, that's correct — it will exist in 0.7.x. The Scar 2 listbase is the bridge that keeps everything working in between.
+
+**What not to do (the failure mode):** do not delete files that belong to the type. Do not remove the struct definition from DNA. Do not remove allocation functions (patch them per Scar 10). Do not search for a "replacement" for the functionality — there isn't one in this version. Do not treat this like a Bucket 6 fossil removal where the data and the function are both gone.
+
+**The six types and their Scar 2 fields:**
+
+| ID | bmain field | Scar 2 note |
+|----|-------------|-------------|
+| `ID_BR` | `bmain->brushes` | Active at runtime — every paint/sculpt mode uses this |
+| `ID_PAL` | `bmain->palettes` | Referenced by Brush; keep until palette-inline-in-brush is designed |
+| `ID_LT` | `bmain->lattices` | OB_LATTICE objects still deform meshes at runtime |
+| `ID_LP` | `bmain->lightprobes` | Active in EEVEE; merge-into-Light is 0.7.x work |
+| `ID_MSK` | `bmain->masks` | Used in motion tracking and compositor; NodeTree home is 0.7.x |
+| `ID_VF` | `bmain->fonts` | Text objects still reference these at runtime |
 
 ---
 
