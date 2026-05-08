@@ -105,7 +105,7 @@ BLI_listbase_clear(&bmain->linestyles);
 | 0.4.x | Datablock audit — 9 fossil removals (Bucket 5+6) | ✓ CI-complete (build 70) |
 | 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) | Pending |
 | 0.6.x | Evaluation model — depsgraph audit | Pending |
-| 0.7.x | App lenses — launcher as canonical workspace system | Pending |
+| 0.7.x | App lenses — launcher as canonical workspace system + full product identity | Pending |
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary | Pending |
 | 0.9.x | `.blend` import — seamless read with dropped-data manifest output | Pending |
 | 1.0.0 | Foundation complete; basic pipeline navigation working | Pending |
