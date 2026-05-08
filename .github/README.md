@@ -194,7 +194,7 @@ Blended is developed with contributions from both human developers and AI tools.
   Community i18n architectural decision: Blended core ships no .po catalogs; i18n infrastructure
   is a community-extension hook (BLENDED.md §13). Context constants remap to semantically correct
   msgctxt on type removal, not dropped, so community translations key correctly.
-  Build #69 fallout (branch `claude/quality-integrity-standards-ETYzo`): `UI_UL_cache_file_layers`
+  Build 69 fallout (branch `claude/quality-integrity-standards-ETYzo`): `UI_UL_cache_file_layers`
   linker orphan from the ID_CF chisel — same root cause as Scar 4, four C++ files (declaration,
   definition, sibling declaration, caller) all needed cleanup; the broader sweep then surfaced
   Python orphans from the same incomplete chisel: Transform Cache constraint UI rebuilt around

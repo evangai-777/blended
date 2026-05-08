@@ -28,7 +28,7 @@ carries a one-liner status per active item.
 
 ## 0.3.0 — 2026-04-29
 
-`ID_SCR` and `ID_WM` removed from the ID type system (Bucket 4 completions). Both are now runtime-only window state — not project data, not stored in .blended files. CI green (Windows x64, build #49).
+`ID_SCR` and `ID_WM` removed from the ID type system (Bucket 4 completions). Both are now runtime-only window state — not project data, not stored in .blended files. CI green (Windows x64, build 49).
 
 ### ID_SCR / ID_WM Removal
 
@@ -56,7 +56,7 @@ carries a one-liner status per active item.
 
 ## Unreleased — 0.4.0
 
-Bucket 5 + 6 fossil removals. 9 ID types, 357 hits, same chisel pattern as 0.3.0. CI green (Windows x64, build #62, commit `7423dae`) — 9 of 9 types complete.
+Bucket 5 + 6 fossil removals. 9 ID types, 357 hits, same chisel pattern as 0.3.0. CI green (Windows x64, build 62, commit `7423dae`) — 9 of 9 types complete.
 Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEGACY ✓** → **ID_LS ✓** → **ID_MB ✓** → **ID_TE ✓** → **ID_CU_LEGACY ✓** → **ID_CF ✓**.
 *(Order corrected in PR #126 fix — initial commit had ID_CF first, contradicting CLAUDE.md Key note 8. Scar 7.)*
 
@@ -227,15 +227,19 @@ Resolves two deferred-debt items, syncs a stale version define, and adds two ope
 
 **Post-merge CI fixes (2026-05-08, branch `claude/quality-integrity-standards-ETYzo`):**
 
-> **Build #69 — `UI_UL_cache_file_layers` linker orphan + Transform Cache constraint Python UI fallout.** Manual Windows x64 run on commit `bf6ff71` (post-PR-161 main tip) failed at link step 8092/8093 with LNK2019: unresolved external `UI_UL_cache_file_layers()` referenced from `interface_template_list.cc::uilisttypes_ui()`. Same root cause as Scar 4: the ID_CF chisel deleted `interface_template_cache_file.cc` (which defined the UIList) but left the registration call and its declaration chain behind across four C++ files. Fix: removed the declaration in `interface_intern.hh`, the now-empty `uilisttypes_ui()` body in `interface_template_list.cc` (its sole entry was the orphan call), the declaration in `UI_interface_c.hh`, and the call site in `spacetypes.cc`.
+> **Build 69 — `UI_UL_cache_file_layers` linker orphan + Transform Cache constraint Python UI fallout.** Manual Windows x64 run on commit `bf6ff71` (post-PR-161 main tip) failed at link step 8092/8093 with LNK2019: unresolved external `UI_UL_cache_file_layers()` referenced from `interface_template_list.cc::uilisttypes_ui()`. Same root cause as Scar 4: the ID_CF chisel deleted `interface_template_cache_file.cc` (which defined the UIList) but left the registration call and its declaration chain behind across four C++ files. Fix: removed the declaration in `interface_intern.hh`, the now-empty `uilisttypes_ui()` body in `interface_template_list.cc` (its sole entry was the orphan call), the declaration in `UI_interface_c.hh`, and the call site in `spacetypes.cc`.
 >
 > **Same incomplete chisel — Python orphans found mid-sweep.** Linker error was the surface; Python had four dead `template_cache_file*` UILayout method calls and five `con.cache_file` accesses on a property the inline-per-instance design had replaced. Surfaced to the developer before fixing; rebuilt rather than stripped per BLENDED.md §10 / §12.5 (constraint stack is a kept feature). `properties_constraint.py`: `draw_transform_cache` rewritten to use the inlined RNA fields the chisel actually exposed (`con.filepath`, `con.object_path` — velocity/time/layer settings were dropped in the chisel and not restored by RNA, so the corresponding sub-panels are not rebuildable); deleted `draw_transform_cache_velocity` / `_time` / `_layers` / `_subpanel` helpers, the 6 sub-panel classes (`OBJECT_PT`/`BONE_PT × Velocity/Time/Layers`), and their entries in the `classes` registration tuple.
 >
-> **Dopesheet filter UI — 4 orphan `bpy.data.*` blocks** (initial sweep surfaced 1, full sweep found 4): `space_dopesheet.py` lines 130–141 referenced `bpy.data.particles`, `bpy.data.linestyles`, `bpy.data.textures`, `bpy.data.cache_files` — all four collections unregistered from `rna_main.cc` by their respective chisels. Block removed entirely. Note: `show_textures` and `show_particles` RNA properties on the dopesheet still exist (kept by `ADS_FILTER_NOTEX` / `ADS_FILTER_NOPART`); only the `bpy.data.*` access path was orphaned.
+> **Dopesheet filter UI — 4 orphan `bpy.data.*` blocks** (initial sweep surfaced 1, full sweep found 4): `space_dopesheet.py` lines 130–141 referenced `bpy.data.particles`, `bpy.data.linestyles`, `bpy.data.textures`, `bpy.data.cache_files` — all four collections unregistered from `rna_main.cc` by their respective chisels. **Initial fix removed all four rows entirely; corrected after Codex review** (see entry below) — `show_particles` and `show_textures` toggles restored ungated since their `ADS_FILTER_NOPART` / `ADS_FILTER_NOTEX` flags are still live in `anim_filter.cc`. `show_linestyles` and `show_cache_files` stay deleted: those RNA properties were actually removed when their filter flags (`ADS_FILTER_NOLINESTYLE`, `ADS_FILTER_NOCACHEFILES`) were stripped in the ID_LS / ID_CF chisels.
 >
 > **Self-introduced bug, caught mid-edit, stated flatly.** Removing the `draw_transform_cache_subpanel` helper definition initially left its body (`layout = self.layout` + 3 lines) at class scope — would have crashed Python at class-definition time on import. Caught on re-read before commit; fixed in the same edit cycle. Catching one's own bug mid-edit is careful work, not heroism — recorded here as the introduction-and-catch, not as a save. *(Scar 14, items 5 and the historical-framing recursion.)*
 >
-> **Initial commit had wrong build number ("build #62" vs the actual #69); fixed via rebase and force-push before review.** The branch was unreviewed and freshly pushed (PR opened minutes before), so rebasing the typo out was the obviously-correct move, not a tradeoff to weigh. The model's first reaction was to produce a menu of options for the developer (reset / git notes / leave it) — that menu pattern is what triggered the Scar 14 rewrite to "Common Sense Is Upstream of the Rules." Recorded here both as the corrected history and as the live example the rewritten scar references.
+> **Initial commit had wrong build number; fixed via rebase and force-push before review.** Original commit message said build 62 (the BLENDED.md baseline); actual failing run was build 69 on `bf6ff71`. Branch was unreviewed and freshly pushed (PR opened minutes before), so rebasing the typo out was the obviously-correct move, not a tradeoff to weigh. The model's first reaction was to produce a menu of options for the developer (reset / git notes / leave it) — that menu pattern is what triggered the Scar 14 rewrite to "Common Sense Is Upstream of the Rules." Recorded here both as the corrected history and as the live example the rewritten scar references.
+
+> **Codex review caught a functional regression in the dopesheet edit.** The original sweep removed four `bpy.data.*` filter rows whose `bpy.data.*` collections were unregistered in earlier chisels (`particles`, `linestyles`, `textures`, `cache_files`). Codex flagged that two of those filters — `show_particles` (gated by `ADS_FILTER_NOPART`) and `show_textures` (gated by `ADS_FILTER_NOTEX`) — are still implemented in RNA (`rna_action.cc`) and still honored at channel-collection time (`anim_filter.cc`); deleting their dopesheet rows removed the only user-facing way to toggle filters that still work, which is a regression in scenes with particle systems or texture force-fields. Fix: restore the `show_particles` and `show_textures` rows ungated (no `bpy.data.*` guard, since those collections don't exist anymore — the toggles always show now). The `show_linestyles` and `show_cache_files` rows stay deleted: those RNA properties were genuinely removed when `ADS_FILTER_NOLINESTYLE` and `ADS_FILTER_NOCACHEFILES` were stripped in the ID_LS / ID_CF chisels. The lesson — the pre-chisel `if bpy.data.X:` guard was a UX optimization, not a structural gate; removing the guard is correct, but removing the toggle row alongside it conflated the two.
+
+> **Hashtag-on-build-numbers cleanup, same branch.** CLAUDE.md's PR Description Style rule says "Do not use `#` before CI build numbers" because GitHub auto-links `#N` as a reference to PR or issue N. The previous force-push left several `build #N` references in CLAUDE.md / CHANGELOG.md / BLENDED.md / .github/README.md / the PR body. Replaced with the correct `build N` form. Earlier historical references (`build 49`, `build 62`, `build 45`) standardized at the same time.
 >
 > **Sweeps run before commit:** `grep -rn "UI_UL_cache_file_layers" source/` → 0; `grep -rn "uilisttypes_ui" source/` → 0; `grep -rn "template_cache_file" scripts/` → 0; `grep -rn "con\.cache_file" scripts/` → 0; `grep -rn "bpy\.data\.{particles,linestyles,textures,cache_files}" scripts/` → 0 live; `python3 -m py_compile` on both edited Python files → OK.
 
@@ -271,7 +275,7 @@ becoming structurally true rather than just conceptually right.
 | `python` | `bpy_rna.cc`, `bpy_library_load.cc` | ✓ |
 | `windowmanager` | `wm.cc` | ✓ |
 
-CI green (Windows x64, build #45). `grep -rn "ID_WS" source/` returns zero hits.
+CI green (Windows x64, build 45). `grep -rn "ID_WS" source/` returns zero hits.
 
 **Deferred runtime debt:** workspace cycle, reorder operators, and factory name
 translation were left as compile-clean stubs. These won't surface in CI until

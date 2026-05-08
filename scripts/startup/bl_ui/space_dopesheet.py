@@ -127,8 +127,16 @@ class DopesheetFilterPopoverBase:
 
         # data types
         flow.prop(dopesheet, "show_worlds", text="Worlds")
+        # show_particles / show_textures: bpy.data.particles and bpy.data.textures
+        # collections were unregistered in the ID_PA / ID_TE chisels, but the
+        # ADS_FILTER_NOPART / ADS_FILTER_NOTEX filter flags and their RNA
+        # show_* properties are still live (anim_filter.cc still honors them
+        # for particle systems and texture force-fields). Show the toggles
+        # unconditionally — losing the conditional was a functional regression.
+        flow.prop(dopesheet, "show_particles", text="Particles")
         if bpy.data.materials:
             flow.prop(dopesheet, "show_materials", text="Materials")
+        flow.prop(dopesheet, "show_textures", text="Textures")
         if bpy.data.shape_keys:
             flow.prop(dopesheet, "show_shapekeys", text="Shape Keys")
         if bpy.data.movieclips:
