@@ -107,7 +107,7 @@ BLI_listbase_clear(&bmain->linestyles);
 | 0.6.x | Evaluation model — depsgraph audit | Pending |
 | 0.7.x | App lenses — launcher as canonical workspace system | Pending |
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary | Pending |
-| 0.9.x | `.blend` cross-compatibility — migration path and/or interoperability (scope TBD) | Pending |
+| 0.9.x | `.blend` import — seamless read with dropped-data manifest output | Pending |
 | 1.0.0 | Foundation complete; basic pipeline navigation working | Pending |
 
 ---

@@ -200,7 +200,7 @@ Next in the foundation chain:
 4. **Project-mode flag.** One `.blended` file that can hold 3D-primary, 2D-primary, or mixed projects — or enforce single-mode per file?
 5. **Per-format final decisions** in §5 Groups 2–6.
 6. **Detailed launcher UI** — deferred until foundation is solid.
-7. **`.blend` cross-compatibility (0.9.x).** Whether and how Blended reads upstream `.blend` files as a migration path. Stated direction: one-way (`.blend` → `.blended`). Scope TBD — depends on how far the format diverges in 0.8.x.
+7. **`.blend` import pipeline (0.9.x).** Full investigation into reading upstream Blender `.blend` files seamlessly. Direction: one-way (`.blend` → `.blended`). Goal: read any `.blend` file with no crashes, no silent truncation, no errors — read what Blended can represent, and for everything that was removed or restructured, produce a **dropped-data manifest** (plain text file or in-app notification panel) listing exactly what didn't come through and why. Users open their existing Blender projects in Blended, get a working file, and receive an honest accounting of what they're missing. The blenloader versioning infrastructure preserved throughout 0.2–0.8 via Scar 2 listbases is the read pipeline this milestone audits and completes.
 
 ---
 
