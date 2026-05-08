@@ -363,7 +363,7 @@ depsgraph. This milestone cleans up what remains.
 
 ---
 
-### 0.7.x — App lenses (launcher)
+### 0.7.x — App lenses (launcher) + product identity
 
 The launcher model from BLENDED.md §11 becomes structurally real:
 
@@ -376,6 +376,10 @@ The launcher model from BLENDED.md §11 becomes structurally real:
 
 Fast intra-section mode switching. Project state reflected in the launcher.
 Global hotkey to return from any workspace.
+
+The launcher becoming real is also when the full product identity is designed.
+Logo, app icon, color palette, splash screen, window chrome — Blended as a
+distinct product, not a Blender skin. See BLENDED.md §16.
 
 ---
 

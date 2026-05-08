@@ -1244,6 +1244,20 @@ Earlier pipeline drafts had Assets, Environments, VFX, and Animate as standalone
 
 ---
 
+## 16. Product Identity [OPEN]
+
+Blended is a separate product, not a Blender skin. The GPL license that governs Blender grants full latitude to rebrand, redesign, and ship under a completely distinct identity — Blended exercises that latitude completely.
+
+This is genuinely uncharted territory. Every Blender fork to date has hedged: kept the name adjacent, kept the visual identity close, kept the splash screen shape familiar. None has committed to the full separate product path. Blended does.
+
+**Why 0.7.x is the right moment:** The launcher becoming real (§11) is when the product face becomes real. You can't separate brand identity from the moment a user first sees the product. The existing branding work — `BLENDED_VERSION_*` defines, "Blender, simplified." tagline, window titles, splash screen — is scaffolding toward a full identity, not the identity itself. 0.7.x is when the full visual design is done.
+
+**Direction [LOCKED]:** Full separate product identity. Blended looks like Blended, not like Blender. The word "Blender" appears only where GPL attribution requires it and in the import dialog ("Open .blend file").
+
+**Specifics [OPEN]:** Logo, color palette, app icon, typography, splash screen, window chrome — all to be designed in 0.7.x. The Bucket 3 architectural decisions (where brushes live as user state, etc.) will inform what the product's mental model communicates visually.
+
+---
+
 ## 15. Document Conventions
 
 - Tag new sections with [LOCKED] / [OPEN] / [REJECTED] / [GUARDRAIL].
