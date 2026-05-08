@@ -62,7 +62,7 @@ Bucket 3 fold-downs — the last datablock-audit version. Six IDs that are prope
 
 ## 0.4.0 — 2026-05-08
 
-Bucket 5 + 6 fossil removals — 9 ID types removed across the same chisel pattern as 0.3.0. CI green (Windows x64, build 70, commit `7bd69df`) — 9 of 9 types complete. Tag pending.
+Bucket 5 + 6 fossil removals — 9 ID types removed across the same chisel pattern as 0.3.0. CI green (Windows x64, build 70, commit `7bd69df`) — 9 of 9 types complete.
 Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEGACY ✓** → **ID_LS ✓** → **ID_MB ✓** → **ID_TE ✓** → **ID_CU_LEGACY ✓** → **ID_CF ✓**.
 *(Order corrected in PR #126 fix — initial commit had ID_CF first, contradicting CLAUDE.md Key note 8. Scar 7.)*
 

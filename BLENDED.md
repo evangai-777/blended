@@ -1,6 +1,6 @@
 # BLENDED — Identity & Design Agreements
 
-**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.4.0 — CI-complete (Windows x64, build 70 on commit `7bd69df`); tag pending. 0.5.0 next — Bucket 3 fold-downs (six IDs: `ID_BR`, `ID_PAL`, `ID_LT`, `ID_LP`, `ID_MSK`, `ID_VF`).
+**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.4.0 — CI-complete (Windows x64, build 70 on commit `7bd69df`). 0.5.0 next — Bucket 3 fold-downs (six IDs: `ID_BR`, `ID_PAL`, `ID_LT`, `ID_LP`, `ID_MSK`, `ID_VF`).
 **Purpose:** So any future session, contributor, or Claude instance can pick up without re-litigating what's already been decided. Read this first before proposing changes to scope, identity, or architecture.
 
 ---

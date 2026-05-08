@@ -11,7 +11,7 @@ Blended
 
 Blended is a fork of [Blender](https://www.blender.org) being rebuilt from the foundation up around one stated identity: **free 2D and 3D software tools, with an explicit focus on the craft of animation.**
 
-The project is at 0.4.0 — CI-complete (Windows x64, build 70), tag pending. 0.5.0 next: the final datablock-audit version, folding six Bucket 3 IDs into the structures they actually belong to (39 → ~19 ID types). Early, honest, and moving forward with intention.
+The project is at 0.4.0 — CI-complete (Windows x64, build 70). 0.5.0 next: the final datablock-audit version, folding six Bucket 3 IDs into the structures they actually belong to (39 → ~19 ID types). Early, honest, and moving forward with intention.
 
 What Blended Is
 ---------------
