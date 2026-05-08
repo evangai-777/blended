@@ -11,7 +11,7 @@ Blended
 
 Blended is a fork of [Blender](https://www.blender.org) being rebuilt from the foundation up around one stated identity: **free 2D and 3D software tools, with an explicit focus on the craft of animation.**
 
-The project is at 0.3.0 (tagged) — 0.4.0 pending CI (all 9 Bucket 5+6 fossil removals complete). Early, honest, and moving forward with intention.
+The project is at 0.4.0 — CI-complete (Windows x64, build 70). 0.5.0 next: the final datablock-audit version, folding six Bucket 3 IDs into the structures they actually belong to (39 → ~19 ID types). Early, honest, and moving forward with intention.
 
 What Blended Is
 ---------------
@@ -39,7 +39,7 @@ What's Different Right Now
 - **Pre-5.0 rig compatibility** — `blended_rig_compat.py` restores `action.fcurves` as a compatibility property on `bpy.types.Action`. Pre-Blender-5.0 Rigify rigs (including CGCookie Vonnbots rigs) that access `action.fcurves` directly work again. IK/FK bake operators no longer fail silently.
 - **Update notifications** — Background GitHub Releases check at startup (24-hour cache, non-blocking). Top-bar notification with version string when an update is available. One-click download via browser. "Blended Updates" panel in System Preferences.
 - **CI** — Windows x64 portable `.zip` builds via GitHub Actions. Branch pushes run a fast lite build for compile-error checking. Tags produce a full release artifact. `blended_release.cmake` disables GPU kernel pre-compilation (CUDA/HIP/OneAPI) to keep CI under an hour — runtime compilation covers the same hardware.
-- **Datablock audit — 0.4.x complete (pending CI).** Target: 39 → ~19 ID types. Removed: `ID_WS` ✓ (0.2.0), `ID_SCR` + `ID_WM` ✓ (0.3.0), `ID_PC` + `ID_SPK` + `ID_PA` + `ID_GD_LEGACY` + `ID_LS` + `ID_MB` + `ID_TE` + `ID_CU_LEGACY` + `ID_CF` ✓ (0.4.0). `ID_CF` removal: inline per-instance — `CacheFile *` replaced with inlined filepath/settings fields directly in `MeshSeqCacheModifierData` and `bTransformCacheConstraint`; `bmain->cachefiles` removed entirely (true fossil, no Scar 2). See [`CHANGELOG.md`](../CHANGELOG.md) for per-layer file detail.
+- **Datablock audit — 0.4.x CI-complete; 0.5.x in progress.** Target: 39 → ~19 ID types. Removed: `ID_WS` ✓ (0.2.0), `ID_SCR` + `ID_WM` ✓ (0.3.0), `ID_PC` + `ID_SPK` + `ID_PA` + `ID_GD_LEGACY` + `ID_LS` + `ID_MB` + `ID_TE` + `ID_CU_LEGACY` + `ID_CF` ✓ (0.4.0). 0.5.0 closes the audit with Bucket 3 fold-downs: `ID_BR`, `ID_PAL`, `ID_LT`, `ID_LP`, `ID_MSK`, `ID_VF` — each folded into the structure it actually belongs to. See [`CHANGELOG.md`](../CHANGELOG.md) for per-layer file detail.
 
 On the Horizon
 --------------
