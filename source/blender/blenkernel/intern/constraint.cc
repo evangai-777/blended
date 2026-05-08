@@ -20,6 +20,7 @@
 
 #include "BLI_kdopbvh.hh"
 #include "BLI_listbase.h"
+#include "BLI_path_utils.hh"
 #include "BLI_math_matrix.h"
 #include "BLI_math_rotation.h"
 #include "BLI_math_vector.h"
