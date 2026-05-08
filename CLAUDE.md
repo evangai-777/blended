@@ -116,26 +116,49 @@ BLI_listbase_clear(&bmain->linestyles);
 
 Bucket 3 is not chiseling. Read this before touching any of the six types.
 
-**What chiseling and fold-down share:** both remove the type from the ID system — `INIT_TYPE`, `INDEX_ID_XX`, `FILTER_ID_XX`, `BKE_main_lists_get` entry all go. Scar 4 applies (sweep both `CASE_IDINDEX` blocks in `idtype.cc`). Scar 8 applies (remove the `id_type` constexpr and its entire `#ifdef __cplusplus` block together). Scar 10 applies (allocation functions that called `BKE_libblock_alloc` must be rewritten using `MEM_new<T>` + manual listbase insert). The blast radius protocol still runs: literal grep first, true blast radius emerges during editing, document both.
+**The mindset distinction — get this right first.** A fold-down is halfway to a chisel and will make things worse if you treat it as one. The ID system surgery is identical: same scars apply, same blast radius protocol runs. But the intent is completely different. A chisel says "this functionality is dead, remove it." A fold-down says "this functionality is alive and staying alive — we are only removing its registration as first-class project data." If you approach a fold-down with fossil-removal energy, you will start deleting things that are still running. That is the failure mode.
 
-**What is different:** the functionality is not dead. The data structure stays. The runtime code that creates and uses these types keeps working. Nothing gets deleted.
+The operational test: at the end of a fold-down session, every tool and workflow that used the type before the session should still work after it. Sculpt mode still has brushes. Lattice deformers still work. EEVEE light probes still evaluate. VFont text objects still render. The only thing that changed is that these data blocks are no longer serialized as named, linkable, first-class datablocks in `.blended` files. They are now runtime-managed data that lives in non-indexed listbases.
 
-The Scar 2 rule is **mandatory and unconditional for all six Bucket 3 types:** keep `bmain->brushes` / `bmain->lattices` / `bmain->palettes` / `bmain->lightprobes` / `bmain->masks` / `bmain->fonts` as non-indexed listbases. Keep their `which_libbase` routing. These types are active at runtime — they are not fossils. Removing the field would break the runtime tool code, not just versioning passes.
+**What the ID system surgery involves (shared with chiseling):** `INIT_TYPE`, `INDEX_ID_XX`, `FILTER_ID_XX`, `BKE_main_lists_get` entry all go. Scar 4 applies (sweep both `CASE_IDINDEX` blocks in `idtype.cc`). Scar 8 applies (remove the `id_type` constexpr and its entire `#ifdef __cplusplus` block together). Scar 10 applies (allocation functions that called `BKE_libblock_alloc` must be rewritten using `MEM_new<T>` + manual listbase insert). The two-phase blast radius protocol still runs: literal grep first, true blast radius emerges during editing, document both.
 
-**What "fold into" means for 0.5.0:** it means deregistration only. The eventual architectural home for each type — brushes as user state, palette inline in brush, lattice owned by modifier, LightProbe merged into Light, Mask hanging off NodeTree, VFont as a path — is a design question for 0.7.x (launcher / app lenses). 0.5.0 closes the datablock audit number by removing these six from the ID system. The question of "where does this data truly live in the final product" is not a 0.5.0 question. Do not attempt to answer it in the chisel. If the code for brush-as-user-state doesn't exist yet, that's correct — it will exist in 0.7.x. The Scar 2 listbase is the bridge that keeps everything working in between.
+**What stays (everything else):** the struct definition in DNA, the files that implement the type, the allocation functions (patched per Scar 10), and all runtime code that creates and uses instances of the type. Nothing gets deleted. This is not a removal.
 
-**What not to do (the failure mode):** do not delete files that belong to the type. Do not remove the struct definition from DNA. Do not remove allocation functions (patch them per Scar 10). Do not search for a "replacement" for the functionality — there isn't one in this version. Do not treat this like a Bucket 6 fossil removal where the data and the function are both gone.
+**Scar 2 is mandatory and unconditional for all six types.** Keep `bmain->brushes` / `bmain->lattices` / `bmain->palettes` / `bmain->lightprobes` / `bmain->masks` / `bmain->fonts` as non-indexed listbases. Keep their `which_libbase` routing. These listbases serve two purposes simultaneously: (1) runtime tool code that reads and writes them during active sessions, and (2) the 0.9.x `.blend` import pipeline — the blenloader versioning infrastructure that reads upstream `.blend` files routes legacy data through `which_libbase`, and removing these listbases would break that read path before 0.9.x exists to replace it. The Scar 2 listbases are the bridge forward on two fronts at once.
 
-**The six types and their Scar 2 fields:**
+**The two-layer model — 0.5.0 and 0.7.x are separate operations.**
 
-| ID | bmain field | Scar 2 note |
+*Layer 1 — 0.5.0 (this version): deregistration only.* Remove these six from the ID system. Close the datablock audit number (39 → ~19). The Scar 2 listbases keep everything working. The "where does this data truly live in the final product" question is explicitly not answered here.
+
+*Layer 2 — 0.7.x (launcher / app lenses): the actual new homes.* Brushes become user state + shareable brush packs. Palette inlines into Brush. Lattice gets owned by its modifier. LightProbe merges into Light with a type flag. Mask hangs off compositor NodeTree. VFont becomes a filepath. None of this architecture exists in 0.5.0 and that is correct — it will be designed when the launcher is built. Do not attempt to implement it during the fold-down. If the code for brush-as-user-state doesn't exist yet, leave it absent. The Scar 2 listbase is the bridge.
+
+**The failure modes (named explicitly):**
+- Treating it like a Bucket 6 fossil removal — deleting files, removing struct definitions, gutting runtime code. Wrong. The functionality is alive.
+- Searching for a "replacement" for the functionality and trying to build it. Wrong. There is no replacement in 0.5.0. The replacement is 0.7.x architecture that doesn't exist yet.
+- Removing a `bmain->X` field because it "shouldn't be project data anymore." Wrong. Keep it. Scar 2 is unconditional.
+- Skipping Scar 10 because "the allocation function is probably not called." Wrong. These types are active at runtime — their allocation functions have live callers.
+
+**Pre-chisel blast radius reference (grepped 2026-05-08):**
+
+| ID | Literal hits | Files | Eventual home (0.7.x) |
+|----|-------------|-------|-----------------------|
+| `ID_LP` | 35 hits | 25 files | Merge into `ID_LA` with type flag |
+| `ID_PAL` | 38 hits | 24 files | Inline into Brush |
+| `ID_MSK` | 41 hits | 27 files | Hang off compositor NodeTree |
+| `ID_VF` | 45 hits | 27 files | Filepath on Text object |
+| `ID_LT` | 70 hits | 32 files | Owned by Lattice modifier |
+| `ID_BR` | 119 hits | 44 files | User state + shareable brush packs |
+
+**Scar 2 fields and runtime status:**
+
+| ID | bmain field | Runtime note |
 |----|-------------|-------------|
-| `ID_BR` | `bmain->brushes` | Active at runtime — every paint/sculpt mode uses this |
-| `ID_PAL` | `bmain->palettes` | Referenced by Brush; keep until palette-inline-in-brush is designed |
-| `ID_LT` | `bmain->lattices` | OB_LATTICE objects still deform meshes at runtime |
-| `ID_LP` | `bmain->lightprobes` | Active in EEVEE; merge-into-Light is 0.7.x work |
-| `ID_MSK` | `bmain->masks` | Used in motion tracking and compositor; NodeTree home is 0.7.x |
-| `ID_VF` | `bmain->fonts` | Text objects still reference these at runtime |
+| `ID_BR` | `bmain->brushes` | Every paint/sculpt mode reads this every frame |
+| `ID_PAL` | `bmain->palettes` | Referenced by Brush; active in any paint session |
+| `ID_LT` | `bmain->lattices` | OB_LATTICE objects actively deform meshes |
+| `ID_LP` | `bmain->lightprobes` | Active in EEVEE rendering |
+| `ID_MSK` | `bmain->masks` | Used in motion tracking and compositor |
+| `ID_VF` | `bmain->fonts` | Text objects reference these every render |
 
 ---
 
