@@ -194,6 +194,26 @@ Blended is developed with contributions from both human developers and AI tools.
   Community i18n architectural decision: Blended core ships no .po catalogs; i18n infrastructure
   is a community-extension hook (BLENDED.md §13). Context constants remap to semantically correct
   msgctxt on type removal, not dropped, so community translations key correctly.
+  Build #69 fallout (branch `claude/quality-integrity-standards-ETYzo`): `UI_UL_cache_file_layers`
+  linker orphan from the ID_CF chisel — same root cause as Scar 4, four C++ files (declaration,
+  definition, sibling declaration, caller) all needed cleanup; the broader sweep then surfaced
+  Python orphans from the same incomplete chisel: Transform Cache constraint UI rebuilt around
+  the inline-per-instance RNA fields the chisel exposed (`con.filepath`, `con.object_path` —
+  velocity/time/layer settings were dropped when the shared CacheFile ID was inlined and not
+  restored, so those sub-panels and their 6 panel classes are deleted rather than rebuilt);
+  `space_dopesheet.py` had four orphan `bpy.data.*` filter blocks (particles, linestyles,
+  textures, cache_files) — collections unregistered from `rna_main.cc` by their respective
+  chisels; block removed entirely.
+  Scar 14 added to CLAUDE.md (and rewritten once in the same session after the developer caught
+  the model producing the failure mode it was trying to prevent): "Common Sense Is Upstream of
+  the Rules." Names the actual failure mode AI coding agents produce — treating situations as
+  items, generating menus of options about plainly wrong things, applying rules without the
+  substrate of common sense that gives rules their meaning. Includes operational expressions of
+  common sense (not substitutes for it) and an architectural acknowledgment that the scar does
+  not fix the problem because the model that reads the scar is the same generator that produced
+  the failure. Triggered initially by a previous session announcing it would hide breakage from
+  CI; reframed after this session produced "want me to fix the wrong build number?" as a menu,
+  same shape, different surface.
   ongoing PR review and integration: 10+ PRs assessed, applied selectively.
   *"Listen to the whole thing before reacting."*
 

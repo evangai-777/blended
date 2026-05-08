@@ -1,6 +1,6 @@
 # BLENDED — Identity & Design Agreements
 
-**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.4.0 in progress — CI green (Windows x64, build #62).
+**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.4.0 in progress — last green CI was Windows x64 build #62; build #69 (manual run on `bf6ff71`) failed at link with `UI_UL_cache_file_layers` orphan + Transform Cache constraint Python UI fallout, both fixed on `claude/quality-integrity-standards-ETYzo`.
 **Purpose:** So any future session, contributor, or Claude instance can pick up without re-litigating what's already been decided. Read this first before proposing changes to scope, identity, or architecture.
 
 ---
