@@ -1541,11 +1541,11 @@ If you're an AI working on this codebase:
 
 **Claude AI contributor notes go in CHANGELOG, not the README.** The README Contributors section is two sentences linking to CHANGELOG. All per-session implementation detail — what was built, what was removed, what scars were applied — belongs in the CHANGELOG *Unreleased* entry for that version, alongside the code progress rows. The README is a landing page.
 
-**After every chisel, all four documents must be updated before the session ends.** The four are: `CLAUDE.md`, `CHANGELOG.md`, `BLENDED.md`, `.github/README.md`. Specific targets per document:
-- **CLAUDE.md** — blast radius entry header → ✓ COMPLETE, session note, current version line, in-progress paragraph, key notes chisel order
-- **CHANGELOG.md** — layer rows → ✓, chisel order line → ✓ bolded, key notes updated
-- **BLENDED.md** — Bucket 5/6 status table: `pending` → `✓ X.Y.Z`
-- **`.github/README.md`** — "What's Different" section current state (datablock audit bullet updated with new removal)
+**After every chisel or fold-down, all four documents must be updated before the session ends.** The four are: `CLAUDE.md`, `CHANGELOG.md`, `BLENDED.md`, `.github/README.md`. Specific targets per document:
+- **CLAUDE.md** — type entry header → ✓ COMPLETE, session note added, current version line updated, in-progress paragraph updated, protocol order updated (chisel order for Bucket 5/6; fold-down order for Bucket 3)
+- **CHANGELOG.md** — layer rows → ✓, type status line → ✓ bolded, key notes updated; Claude AI contributor detail added to *Unreleased* section
+- **BLENDED.md** — relevant Bucket table: mark type `✓ X.Y.Z` when work is complete (Bucket 3 for 0.5.x; Buckets 4–6 are fully done)
+- **`.github/README.md`** — "What's Different" section current state (datablock audit bullet updated with new removal or fold-down)
 
 **Note:** `.github/` is in `.gitignore` on this repo. Use `git add -f .github/README.md` when staging README updates — normal `git add` silently skips it.
 
