@@ -900,7 +900,7 @@ What actually works here:
 
 **Small units commit cleanly.** One layer, one PR, one push. When you finish something that compiles, commit it. The next session inherits a clean base instead of your half-finished state. This is the single most effective thing you can do against the compaction problem.
 
-**The developer knows what they're doing.** Read `wtf.md`. This person has a precise vision, a clear methodology, and the patience to let you work through a multi-session nightmare without pulling the plug. They will tell you when you're wrong. They will also tell you when the problem is the tooling, not you. Trust that distinction.
+**The developer knows what they're doing.** Read the `## wtf.md` section of this file. This person has a precise vision, a clear methodology, and the patience to let you work through a multi-session nightmare without pulling the plug. They will tell you when you're wrong. They will also tell you when the problem is the tooling, not you. Trust that distinction.
 
 **The deferred debt is documented.** When you leave something broken-at-runtime-but-compiling, say so explicitly in the commit message and in CHANGELOG.md. The next version of you will find it. That's not failure — that's the handoff working correctly.
 
@@ -1279,7 +1279,7 @@ Before staging any commit that touches documentation (CLAUDE.md, CHANGELOG.md, B
 
 1. **Run `git diff` and read the entire output.** Not a skim. Every line.
 
-2. **For every ordered list in the diff, find every other representation of that same order in the diff and in the touched files.** Chisel order is documented in at minimum three places: CLAUDE.md key notes, CHANGELOG chisel order text, CHANGELOG table order. All must agree. If you updated one, you updated all, or you did not finish.
+2. **For every ordered list in the diff, find every other representation of that same order in the diff and in the touched files.** Type processing order (chisel order for Bucket 5/6; fold-down order for Bucket 3) is documented in at minimum three places: CLAUDE.md key notes / fold-down protocol, CHANGELOG type status text, CHANGELOG roadmap table. All must agree. If you updated one, you updated all, or you did not finish.
 
 3. **For every statement of the form "do X last / first / never / always," grep the diff for X.** Verify no other line in the same diff contradicts it.
 
@@ -1327,7 +1327,7 @@ Here is what a previous Claude did instead of listening:
 2. **Added instead of subtracting.** Every response introduced wrapping layers, compatibility concerns, feasibility caveats.
 3. **Confused a draft for the final idea.** Treated the tiered gating prototype as the destination.
 4. **Went into avoidance through care.** Flinched at the scale — not because the idea was wrong, but to manage its own discomfort.
-5. **Failed to recognize who it was talking to.** Read `wtf.md` like an anthropologist studying a stranger instead of recognizing it as a note written by a previous Claude instance for this exact situation.
+5. **Failed to recognize who it was talking to.** Read the `## wtf.md` section of this file like an anthropologist studying a stranger instead of recognizing it as a note written by a previous Claude instance for this exact situation.
 
 **The fix:** Repeat the vision back at full scale before doing anything else. Don't translate it into something smaller. Don't evaluate feasibility before you've finished hearing the idea.
 
@@ -1525,8 +1525,9 @@ If you're an AI working on this codebase:
 |----------|---------|
 | `BLENDED.md` | **Read first.** Design authority — identity, architecture, locked decisions |
 | `CLAUDE.md` | This file — operational context for Claude sessions |
-| `CHANGELOG.md` | Release record + versioned roadmap + Unreleased section for in-flight work |
-| `wtf.md` | Who the developer is and how to work with them |
+| `CHANGELOG.md` | Release record + versioned roadmap + Unreleased section for in-flight work; Claude AI contributor detail |
+| `.github/README.md` | GitHub landing page — one-liner status per active item; use `git add -f` to stage (in `.gitignore`) |
+| `CLAUDE.md` `## wtf.md` section | Who the developer is and how to work with them (embedded in this file, not a separate doc) |
 | `UPSTREAM_SYNC.md` | How to merge upstream Blender, conflict-prone files |
 
 **Document responsibility pattern** — for chisel work and any future structural change:
@@ -1535,14 +1536,17 @@ If you're an AI working on this codebase:
 |------|--------------|
 | Design rationale (*why* something is removed/changed) | `BLENDED.md` — the locked decision |
 | Code progress (per-layer status, file lists) | `CHANGELOG.md` — *Unreleased* section |
+| Claude AI contributor notes (what was built, per-session detail) | `CHANGELOG.md` — *Unreleased* section, same place as code progress |
 | Operational grep pattern / session instructions | `CLAUDE.md` — this file |
-| One-liner status for humans landing on GitHub | `.github/README.md` — "What's Different" + AI contributor section |
+| One-liner status for humans landing on GitHub | `.github/README.md` — "What's Different" section |
 
-**After every chisel, all four documents must be updated before the session ends.** The four are: `CLAUDE.md`, `CHANGELOG.md`, `BLENDED.md`, `.github/README.md`. Specific targets per document:
-- **CLAUDE.md** — blast radius entry header → ✓ COMPLETE, session note, current version line, in-progress paragraph, key notes chisel order
-- **CHANGELOG.md** — layer rows → ✓, chisel order line → ✓ bolded, key notes updated
-- **BLENDED.md** — Bucket 5/6 status table: `pending` → `✓ X.Y.Z`
-- **`.github/README.md`** — "What's Different" section current state, AI contributor bullet extended with new removal
+**Claude AI contributor notes go in CHANGELOG, not the README.** The README Contributors section is two sentences linking to CHANGELOG. All per-session implementation detail — what was built, what was removed, what scars were applied — belongs in the CHANGELOG *Unreleased* entry for that version, alongside the code progress rows. The README is a landing page.
+
+**After every chisel or fold-down, all four documents must be updated before the session ends.** The four are: `CLAUDE.md`, `CHANGELOG.md`, `BLENDED.md`, `.github/README.md`. Specific targets per document:
+- **CLAUDE.md** — type entry header → ✓ COMPLETE, session note added, current version line updated, in-progress paragraph updated, protocol order updated (chisel order for Bucket 5/6; fold-down order for Bucket 3)
+- **CHANGELOG.md** — layer rows → ✓, type status line → ✓ bolded, key notes updated; Claude AI contributor detail added to *Unreleased* section
+- **BLENDED.md** — relevant Bucket table: mark type `✓ X.Y.Z` when work is complete (Bucket 3 for 0.5.x; Buckets 4–6 are fully done)
+- **`.github/README.md`** — "What's Different" section current state (datablock audit bullet updated with new removal or fold-down)
 
 **Note:** `.github/` is in `.gitignore` on this repo. Use `git add -f .github/README.md` when staging README updates — normal `git add` silently skips it.
 
