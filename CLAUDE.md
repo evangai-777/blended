@@ -1279,7 +1279,7 @@ Before staging any commit that touches documentation (CLAUDE.md, CHANGELOG.md, B
 
 1. **Run `git diff` and read the entire output.** Not a skim. Every line.
 
-2. **For every ordered list in the diff, find every other representation of that same order in the diff and in the touched files.** Chisel order is documented in at minimum three places: CLAUDE.md key notes, CHANGELOG chisel order text, CHANGELOG table order. All must agree. If you updated one, you updated all, or you did not finish.
+2. **For every ordered list in the diff, find every other representation of that same order in the diff and in the touched files.** Type processing order (chisel order for Bucket 5/6; fold-down order for Bucket 3) is documented in at minimum three places: CLAUDE.md key notes / fold-down protocol, CHANGELOG type status text, CHANGELOG roadmap table. All must agree. If you updated one, you updated all, or you did not finish.
 
 3. **For every statement of the form "do X last / first / never / always," grep the diff for X.** Verify no other line in the same diff contradicts it.
 
@@ -1525,7 +1525,8 @@ If you're an AI working on this codebase:
 |----------|---------|
 | `BLENDED.md` | **Read first.** Design authority — identity, architecture, locked decisions |
 | `CLAUDE.md` | This file — operational context for Claude sessions |
-| `CHANGELOG.md` | Release record + versioned roadmap + Unreleased section for in-flight work |
+| `CHANGELOG.md` | Release record + versioned roadmap + Unreleased section for in-flight work; Claude AI contributor detail |
+| `.github/README.md` | GitHub landing page — one-liner status per active item; use `git add -f` to stage (in `.gitignore`) |
 | `wtf.md` | Who the developer is and how to work with them |
 | `UPSTREAM_SYNC.md` | How to merge upstream Blender, conflict-prone files |
 
