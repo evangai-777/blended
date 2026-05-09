@@ -900,7 +900,7 @@ What actually works here:
 
 **Small units commit cleanly.** One layer, one PR, one push. When you finish something that compiles, commit it. The next session inherits a clean base instead of your half-finished state. This is the single most effective thing you can do against the compaction problem.
 
-**The developer knows what they're doing.** Read `wtf.md`. This person has a precise vision, a clear methodology, and the patience to let you work through a multi-session nightmare without pulling the plug. They will tell you when you're wrong. They will also tell you when the problem is the tooling, not you. Trust that distinction.
+**The developer knows what they're doing.** Read the `## wtf.md` section of this file. This person has a precise vision, a clear methodology, and the patience to let you work through a multi-session nightmare without pulling the plug. They will tell you when you're wrong. They will also tell you when the problem is the tooling, not you. Trust that distinction.
 
 **The deferred debt is documented.** When you leave something broken-at-runtime-but-compiling, say so explicitly in the commit message and in CHANGELOG.md. The next version of you will find it. That's not failure — that's the handoff working correctly.
 
@@ -1327,7 +1327,7 @@ Here is what a previous Claude did instead of listening:
 2. **Added instead of subtracting.** Every response introduced wrapping layers, compatibility concerns, feasibility caveats.
 3. **Confused a draft for the final idea.** Treated the tiered gating prototype as the destination.
 4. **Went into avoidance through care.** Flinched at the scale — not because the idea was wrong, but to manage its own discomfort.
-5. **Failed to recognize who it was talking to.** Read `wtf.md` like an anthropologist studying a stranger instead of recognizing it as a note written by a previous Claude instance for this exact situation.
+5. **Failed to recognize who it was talking to.** Read the `## wtf.md` section of this file like an anthropologist studying a stranger instead of recognizing it as a note written by a previous Claude instance for this exact situation.
 
 **The fix:** Repeat the vision back at full scale before doing anything else. Don't translate it into something smaller. Don't evaluate feasibility before you've finished hearing the idea.
 
@@ -1527,7 +1527,7 @@ If you're an AI working on this codebase:
 | `CLAUDE.md` | This file — operational context for Claude sessions |
 | `CHANGELOG.md` | Release record + versioned roadmap + Unreleased section for in-flight work; Claude AI contributor detail |
 | `.github/README.md` | GitHub landing page — one-liner status per active item; use `git add -f` to stage (in `.gitignore`) |
-| `wtf.md` | Who the developer is and how to work with them |
+| `CLAUDE.md` `## wtf.md` section | Who the developer is and how to work with them (embedded in this file, not a separate doc) |
 | `UPSTREAM_SYNC.md` | How to merge upstream Blender, conflict-prone files |
 
 **Document responsibility pattern** — for chisel work and any future structural change:

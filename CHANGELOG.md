@@ -484,4 +484,4 @@ First independent Blended release. Based on Blender 5.2 alpha.
 - `CLAUDE.md` — operational context for Claude sessions
 - `UPSTREAM_SYNC.md` — upstream merge workflow and conflict-prone files
 - `PHILOSOPHY.md` — project philosophy
-- `wtf.md` — who the developer is and how to work with them
+- `wtf.md` — who the developer is and how to work with them (later folded into `CLAUDE.md` `## wtf.md` section)
