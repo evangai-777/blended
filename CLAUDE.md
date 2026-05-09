@@ -1536,13 +1536,13 @@ If you're an AI working on this codebase:
 | Design rationale (*why* something is removed/changed) | `BLENDED.md` — the locked decision |
 | Code progress (per-layer status, file lists) | `CHANGELOG.md` — *Unreleased* section |
 | Operational grep pattern / session instructions | `CLAUDE.md` — this file |
-| One-liner status for humans landing on GitHub | `.github/README.md` — "What's Different" + AI contributor section |
+| One-liner status for humans landing on GitHub | `.github/README.md` — "What's Different" section |
 
 **After every chisel, all four documents must be updated before the session ends.** The four are: `CLAUDE.md`, `CHANGELOG.md`, `BLENDED.md`, `.github/README.md`. Specific targets per document:
 - **CLAUDE.md** — blast radius entry header → ✓ COMPLETE, session note, current version line, in-progress paragraph, key notes chisel order
 - **CHANGELOG.md** — layer rows → ✓, chisel order line → ✓ bolded, key notes updated
 - **BLENDED.md** — Bucket 5/6 status table: `pending` → `✓ X.Y.Z`
-- **`.github/README.md`** — "What's Different" section current state, AI contributor bullet extended with new removal
+- **`.github/README.md`** — "What's Different" section current state (datablock audit bullet updated with new removal)
 
 **Note:** `.github/` is in `.gitignore` on this repo. Use `git add -f .github/README.md` when staging README updates — normal `git add` silently skips it.
 
