@@ -126,11 +126,11 @@ The operational test: at the end of a fold-down session, every tool and workflow
 
 **Scar 2 is mandatory and unconditional for all six types.** Keep `bmain->brushes` / `bmain->lattices` / `bmain->palettes` / `bmain->lightprobes` / `bmain->masks` / `bmain->fonts` as non-indexed listbases. Keep their `which_libbase` routing. These listbases serve two purposes simultaneously: (1) runtime tool code that reads and writes them during active sessions, and (2) the 0.9.x `.blend` import pipeline — the blenloader versioning infrastructure that reads upstream `.blend` files routes legacy data through `which_libbase`, and removing these listbases would break that read path before 0.9.x exists to replace it. The Scar 2 listbases are the bridge forward on two fronts at once.
 
-**The two-layer model — 0.5.0 and 0.7.x are separate operations.**
+**0.5.0 and 0.7.x are separate versions — 0.6.x sits between them.**
 
-*Layer 1 — 0.5.0 (this version): deregistration only.* Remove these six from the ID system. Close the datablock audit number (39 → ~19). The Scar 2 listbases keep everything working. The "where does this data truly live in the final product" question is explicitly not answered here.
+*0.5.0 (this version) — deregistration only:* Remove these six from the ID system. Close the datablock audit number (39 → ~19). The Scar 2 listbases keep everything working. The "where does this data truly live in the final product" question is explicitly not answered here — that is not a failure, it is correct.
 
-*Layer 2 — 0.7.x (launcher / app lenses): the actual new homes.* Brushes become user state + shareable brush packs. Palette inlines into Brush. Lattice gets owned by its modifier. LightProbe merges into Light with a type flag. Mask hangs off compositor NodeTree. VFont becomes a filepath. None of this architecture exists in 0.5.0 and that is correct — it will be designed when the launcher is built. Do not attempt to implement it during the fold-down. If the code for brush-as-user-state doesn't exist yet, leave it absent. The Scar 2 listbase is the bridge.
+*0.7.x (two versions from now, after the 0.6.x depsgraph audit) — actual new homes:* Brushes become user state + shareable brush packs. Palette inlines into Brush. Lattice gets owned by its modifier. LightProbe merges into Light with a type flag. Mask hangs off compositor NodeTree. VFont becomes a filepath. None of this architecture exists in 0.5.0 and that is correct — it will be designed when the launcher is built. Do not attempt to implement it during the fold-down. If the code for brush-as-user-state doesn't exist yet, leave it absent. The Scar 2 listbase is the bridge.
 
 **The failure modes (named explicitly):**
 - Treating it like a Bucket 6 fossil removal — deleting files, removing struct definitions, gutting runtime code. Wrong. The functionality is alive.
