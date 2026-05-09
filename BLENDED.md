@@ -200,6 +200,7 @@ Next in the foundation chain:
 4. **Project-mode flag.** One `.blended` file that can hold 3D-primary, 2D-primary, or mixed projects — or enforce single-mode per file?
 5. **Per-format final decisions** in §5 Groups 2–6.
 6. **Detailed launcher UI** — deferred until foundation is solid.
+7. **`.blend` import pipeline (0.9.x).** Full investigation into reading upstream Blender `.blend` files seamlessly. Direction: one-way (`.blend` → `.blended`). Goal: read any `.blend` file with no crashes, no silent truncation, no errors — read what Blended can represent, and for everything that was removed or restructured, produce a **dropped-data manifest** (plain text file or in-app notification panel) listing exactly what didn't come through and why. Users open their existing Blender projects in Blended, get a working file, and receive an honest accounting of what they're missing. The blenloader versioning infrastructure preserved throughout 0.2–0.8 via Scar 2 listbases is the read pipeline this milestone audits and completes.
 
 ---
 
@@ -1240,6 +1241,20 @@ The v1 launcher was a tier-based door menu: substrate choice (3D vs 2D) at tier 
 ### 13.4 Stage-collapse note
 
 Earlier pipeline drafts had Assets, Environments, VFX, and Animate as standalone top-level stages. They're now modes inside §12.3 3D Animation. Game Design (now Game) was briefly nested under 3D Animation before being promoted to its own §12.4 section.
+
+---
+
+## 16. Product Identity [OPEN]
+
+Blended is a separate product, not a Blender skin. The GPL license that governs Blender grants full latitude to rebrand, redesign, and ship under a completely distinct identity — Blended exercises that latitude completely.
+
+This is genuinely uncharted territory. Every Blender fork to date has hedged: kept the name adjacent, kept the visual identity close, kept the splash screen shape familiar. None has committed to the full separate product path. Blended does.
+
+**Why 0.7.x is the right moment:** The launcher becoming real (§11) is when the product face becomes real. You can't separate brand identity from the moment a user first sees the product. The existing branding work — `BLENDED_VERSION_*` defines, "Blender, simplified." tagline, window titles, splash screen — is scaffolding toward a full identity, not the identity itself. 0.7.x is when the full visual design is done.
+
+**Direction [LOCKED]:** Full separate product identity. Blended looks like Blended, not like Blender. The word "Blender" appears only where GPL attribution requires it and in the import dialog ("Open .blend file").
+
+**Specifics [OPEN]:** Logo, color palette, app icon, typography, splash screen, window chrome — all to be designed in 0.7.x. The Bucket 3 architectural decisions (where brushes live as user state, etc.) will inform what the product's mental model communicates visually.
 
 ---
 

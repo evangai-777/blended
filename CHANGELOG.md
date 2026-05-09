@@ -3,7 +3,7 @@
 Versioning policy: each minor version (0.x.0) corresponds to a completed
 foundation layer from the build order in BLENDED.md §4. Patch releases
 (0.x.y) are stable points within a layer — CI fixes, doc updates, build
-repairs. 1.0.0 ships when all five foundation layers are honest and basic
+repairs. 1.0.0 ships when all six foundation layers are honest and basic
 pipeline navigation works.
 
 In-flight work lives in the *Unreleased* section below. Design rationale
@@ -20,8 +20,9 @@ carries a one-liner status per active item.
 | 0.4.x | Datablock audit — fossil removals (Buckets 5 + 6): 9 ID types |
 | 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) |
 | 0.6.x | Evaluation model — depsgraph audit |
-| 0.7.x | App lenses — launcher as canonical workspace system |
+| 0.7.x | App lenses — launcher as canonical workspace system + full product identity |
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary |
+| 0.9.x | `.blend` import — seamless read with dropped-data manifest output |
 | 1.0.0 | Foundation complete; basic pipeline navigation working |
 
 ---
@@ -363,7 +364,7 @@ depsgraph. This milestone cleans up what remains.
 
 ---
 
-### 0.7.x — App lenses (launcher)
+### 0.7.x — App lenses (launcher) + product identity
 
 The launcher model from BLENDED.md §11 becomes structurally real:
 
@@ -376,6 +377,10 @@ The launcher model from BLENDED.md §11 becomes structurally real:
 
 Fast intra-section mode switching. Project state reflected in the launcher.
 Global hotkey to return from any workspace.
+
+The launcher becoming real is also when the full product identity is designed.
+Logo, app icon, color palette, splash screen, window chrome — Blended as a
+distinct product, not a Blender skin. See BLENDED.md §16.
 
 ---
 
@@ -392,9 +397,25 @@ default workflow.
 
 ---
 
+### 0.9.x — `.blend` import pipeline
+
+Full investigation into reading upstream Blender `.blend` files seamlessly.
+Direction: one-way (`.blend` → `.blended`).
+
+Goal: read any `.blend` file with no crashes, no silent truncation, no errors.
+Read what Blended can represent; for everything removed or restructured, produce
+a **dropped-data manifest** — plain text file and/or in-app notification panel
+listing exactly what didn't come through and why. Users get a working project
+plus an honest accounting of what they're missing.
+
+The blenloader versioning infrastructure and Scar 2 listbases preserved
+throughout 0.2–0.8 are the read pipeline this milestone audits and completes.
+
+---
+
 ### 1.0.0 — Foundation complete
 
-All five foundation layers honest. Basic pipeline navigation working. A user can
+All six foundation layers honest. Basic pipeline navigation working. A user can
 walk up, pick a section from the launcher, do real creative work, and save a
 `.blended` file that travels cleanly to another machine.
 

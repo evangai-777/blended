@@ -44,7 +44,7 @@ What's Different Right Now
 On the Horizon
 --------------
 
-Five foundation layers to go — one minor version each, 1.0 when all five are honest. Full roadmap with per-milestone scope in [`CHANGELOG.md`](../CHANGELOG.md).
+Six foundation layers to go — one minor version each, 1.0 when all six are honest. Full roadmap with per-milestone scope in [`CHANGELOG.md`](../CHANGELOG.md).
 
 Changelog
 ---------
