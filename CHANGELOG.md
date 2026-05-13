@@ -63,6 +63,26 @@ Fold-down order: **ID_LP ✓** → ID_PAL → ID_LT → ID_MSK → ID_VF → ID_
 
 ### ID_LP — LightProbe ✓ complete
 
+**Pre-fold-down blast radius audit (35 literal / ~40 true hits):**
+
+makesdna (5 files): `DNA_ID_enums.h:154` (enum entry → deprecated #define); `DNA_lightprobe_types.h:113` (entire `#ifdef __cplusplus` block — Scar 8); `DNA_ID.h:1179,1195,1271` (FILTER_ID_LP, FILTER_ID_ALL, INDEX_ID_LP); `DNA_action_types.h:447` (ADS_FILTER_NOLIGHTPROBE); `DNA_object_types.h:740,752` (NO CHANGE — compiles via deprecated #define).
+
+blenkernel (3 files): `BKE_idtype.hh:326` (extern IDTypeInfo IDType_ID_LP); `idtype.cc:163` (INIT_TYPE + CASE_IDINDEX ×2 — Scar 4); `main.cc:152,1090` (CASE_ID_INDEX + lb[] removed; which_libbase `case ID_LP:` KEPT — Scar 2); `lightprobe.cc:51–55` (IDTypeInfo block removed; BKE_lightprobe_add → Scar 10 MEM_new).
+
+Scar 2 — kept (mandatory): `BKE_main.hh` (lightprobes field); `main.cc` which_libbase routing; `versioning_280.cc` (×2), `versioning_400.cc` (×3), `versioning_410.cc` (×1), `versioning_420.cc` (×1), `versioning_500.cc` (×1) — all kept as Scar 2 bridge.
+
+makesrna (8 files): `rna_ID.cc:46,131,407,479` (×4); `rna_main_api.cc:765` (RNA_def_main_lightprobes + collection accessor); `rna_main.cc` (listbase funcs + table entry); `rna_internal.hh` (RNA_def_main_lightprobes removed; RNA_def_lightprobe KEPT — Scar 15); `rna_action.cc:1558–1559` (show_lightprobes + ADS_FILTER_NOLIGHTPROBE); `rna_space.cc:3958` (FILTER_ID_LP); `BLT_translation.hh:124,198` (BLT_I18NCONTEXT_ID_LIGHTPROBE — Scar 13); `interface_template_id.cc:968` (BLT_I18N_MSGID_MULTI_CTXT entry).
+
+editors — standard sweep (KEPT per fold-down protocol): `interface_icons.cc`, `interface_template_id.cc`, `render_opengl.cc`, `outliner_draw.cc`, `outliner_intern.hh`, `outliner_select.cc`, `outliner_tools.cc`, `tree_element_id.cc`, `buttons_context.cc`.
+
+editors — anim chain (KEPT per fold-down protocol): `anim_channels_defines.cc` (ACF_DSLIGHTPROBE), `anim_channels_edit.cc` (9 cases), `anim_filter.cc` (function + dispatch; only ADS_FILTER_NOLIGHTPROBE block removed — forced by DNA removal), `anim_deps.cc`, `ED_anim_api.hh`, `nla_buttons.cc`, `nla_draw.cc`, `nla_tracks.cc`, `transform_convert_action.cc`.
+
+depsgraph (3 literal + 3 true blast radius): `deg_builder_nodes.cc:597` (case ID_LP: KEPT); `deg_builder_relations.cc:538` (KEPT); `depsgraph_tag.cc:622` (removed); `depsgraph_query.cc:134` (OOB guard added — true blast radius); `eevee_lightprobe_planar.cc:54` (→ `true` — true blast radius); `eevee_lightprobe_sphere.cc:24` (→ `true` — true blast radius).
+
+python (4 entries): `space_dopesheet.py:125–126`; `space_outliner.py:528`; `wm.py:2946`; `_bl_i18n_utils/settings.py:457`.
+
+Runtime code — all KEPT (fold-down, not chisel): all `eevee_lightprobe_*.cc/.hh`, `overlay_lightprobe.hh`, `object_add.cc` (OBJECT_OT_lightprobe_add), `render_shading.cc`, `properties_data_lightprobe.py`, `properties_world.py`, `rna_lightprobe.cc`, `DNA_lightprobe_types.h` (struct body), `BKE_lightprobe.h`.
+
 | Layer | Files touched | Status |
 |-------|--------------|--------|
 | `makesdna` | `DNA_ID_enums.h` (enum entry removed, deprecated `#define` added), `DNA_lightprobe_types.h` (Scar 8: entire `#ifdef __cplusplus` block removed), `DNA_ID.h` (`FILTER_ID_LP`, `INDEX_ID_LP`, `FILTER_ID_ALL` inclusion removed), `DNA_action_types.h` (`ADS_FILTER_NOLIGHTPROBE` removed from `eDopeSheet_FilterFlag2`) | ✓ |
