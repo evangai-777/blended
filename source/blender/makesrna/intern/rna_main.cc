@@ -149,7 +149,6 @@ static bool rna_MainColorspace_is_missing_opencolorio_config_get(PointerRNA *ptr
 
 RNA_MAIN_LISTBASE_FUNCS_DEF(actions)
 RNA_MAIN_LISTBASE_FUNCS_DEF(armatures)
-RNA_MAIN_LISTBASE_FUNCS_DEF(brushes)
 RNA_MAIN_LISTBASE_FUNCS_DEF(cameras)
 RNA_MAIN_LISTBASE_FUNCS_DEF(collections)
 
@@ -372,12 +371,6 @@ void RNA_def_main(BlenderRNA *brna)
        "Images",
        "Image data-blocks",
        RNA_def_main_images},
-      {"brushes",
-       "Brush",
-       "rna_Main_brushes_begin",
-       "Brushes",
-       "Brush data-blocks",
-       RNA_def_main_brushes},
       {"worlds",
        "World",
        "rna_Main_worlds_begin",

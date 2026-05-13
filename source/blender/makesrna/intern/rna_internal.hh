@@ -532,7 +532,6 @@ void RNA_def_main_libraries(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_screens(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_window_managers(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_images(BlenderRNA *brna, PropertyRNA *cprop);
-void RNA_def_main_brushes(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_worlds(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_collections(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_texts(BlenderRNA *brna, PropertyRNA *cprop);

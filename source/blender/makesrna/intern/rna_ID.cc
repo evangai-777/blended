@@ -31,7 +31,6 @@ namespace blender {
 const EnumPropertyItem rna_enum_id_type_items[] = {
     {ID_AC, "ACTION", ICON_ACTION, "Action", ""},
     {ID_AR, "ARMATURE", ICON_ARMATURE_DATA, "Armature", ""},
-    {ID_BR, "BRUSH", ICON_BRUSH_DATA, "Brush", ""},
     {ID_CA, "CAMERA", ICON_CAMERA_DATA, "Camera", ""},
     {ID_GR, "COLLECTION", ICON_OUTLINER_COLLECTION, "Collection", ""},
     {ID_CV, "CURVES", ICON_CURVES_DATA, "Curves", ""},
@@ -107,7 +106,6 @@ const IDFilterEnumPropertyItem rna_enum_id_type_filter_items[] = {
      ICON_ARMATURE_DATA,
      "Armatures",
      "Show Armature data-blocks"},
-    {FILTER_ID_BR, "filter_brush", ICON_BRUSH_DATA, "Brushes", "Show Brushes data-blocks"},
     {FILTER_ID_CA, "filter_camera", ICON_CAMERA_DATA, "Cameras", "Show Camera data-blocks"},
     {FILTER_ID_GP,
      "filter_grease_pencil",
