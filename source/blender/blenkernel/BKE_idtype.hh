@@ -319,7 +319,6 @@ extern IDTypeInfo IDType_ID_NT;
 extern IDTypeInfo IDType_ID_BR;
 
 extern IDTypeInfo IDType_ID_MC;
-extern IDTypeInfo IDType_ID_MSK;
 
 extern IDTypeInfo IDType_ID_CV;
 extern IDTypeInfo IDType_ID_PT;
