@@ -147,8 +147,8 @@ enum ID_Type {
   ID_NT = MAKE_ID2('N', 'T'),        /* bNodeTree */
   ID_BR = MAKE_ID2('B', 'R'),        /* Brush */
   ID_MC = MAKE_ID2('M', 'C'),        /* MovieClip */
-  ID_MSK = MAKE_ID2('M', 'S'),       /* Mask */
 
+  /* ID_MSK removed — see deprecated #define below. */
   /* ID_PAL removed — see deprecated #define below. */
   /* ID_CF removed — see deprecated #define below. */
   /* ID_LP removed — see deprecated #define below. */
@@ -175,6 +175,7 @@ enum ID_Type {
 #define ID_LP MAKE_ID2('L', 'P')        /* LightProbe — deregistered in Blended 0.5.0; runtime-only via Scar 2 */
 #define ID_PAL MAKE_ID2('P', 'L')       /* Palette — deregistered in Blended 0.5.0; runtime-only via Scar 2 */
 #define ID_LT MAKE_ID2('L', 'T')        /* Lattice — deregistered in Blended 0.5.0; runtime-only via Scar 2 */
+#define ID_MSK MAKE_ID2('M', 'S')       /* Mask — deregistered in Blended 0.5.0; runtime-only via Scar 2 */
 
 /* NOTE: Fake IDs, needed for `g.sipo->blocktype` or outliner. */
 #define ID_SEQ MAKE_ID2('S', 'Q')
