@@ -149,7 +149,6 @@ void BKE_main_clear(Main &bmain)
         CASE_ID_INDEX(INDEX_ID_LT);
         CASE_ID_INDEX(INDEX_ID_LA);
         CASE_ID_INDEX(INDEX_ID_CA);
-        CASE_ID_INDEX(INDEX_ID_LP);
         CASE_ID_INDEX(INDEX_ID_OB);
         CASE_ID_INDEX(INDEX_ID_GR);
         CASE_ID_INDEX(INDEX_ID_PAL);
@@ -1087,7 +1086,6 @@ MainListsArray BKE_main_lists_get(Main &bmain)
   lb[INDEX_ID_GR] = &(bmain.collections.cast<ID>());
   lb[INDEX_ID_PAL] = &(bmain.palettes.cast<ID>());
   lb[INDEX_ID_BR] = &(bmain.brushes.cast<ID>());
-  lb[INDEX_ID_LP] = &(bmain.lightprobes.cast<ID>());
 
   lb[INDEX_ID_WO] = &(bmain.worlds.cast<ID>());
   lb[INDEX_ID_MC] = &(bmain.movieclips.cast<ID>());

@@ -15,69 +15,15 @@
 #include "BLI_math_base.h"
 #include "BLI_utildefines.h"
 
-#include "BKE_idtype.hh"
+#include "MEM_guardedalloc.h"
+
+#include "BLI_listbase.h"
+
 #include "BKE_lib_id.hh"
-#include "BKE_lib_query.hh"
 #include "BKE_lightprobe.h"
-
-#include "BLT_translation.hh"
-
-#include "BLO_read_write.hh"
+#include "BKE_main.hh"
 
 namespace blender {
-
-static void lightprobe_init_data(ID *id)
-{
-  LightProbe *probe = id_cast<LightProbe *>(id);
-  INIT_DEFAULT_STRUCT_AFTER(probe, id);
-}
-
-static void lightprobe_foreach_id(ID *id, LibraryForeachIDData *data)
-{
-  LightProbe *probe = id_cast<LightProbe *>(id);
-
-  BKE_LIB_FOREACHID_PROCESS_IDSUPER(data, probe->visibility_grp, IDWALK_CB_NOP);
-}
-
-static void lightprobe_blend_write(BlendWriter *writer, ID *id, const void *id_address)
-{
-  LightProbe *prb = id_cast<LightProbe *>(id);
-
-  /* write LibData */
-  writer->write_id_struct(id_address, prb);
-  BKE_id_blend_write(writer, &prb->id);
-}
-
-IDTypeInfo IDType_ID_LP = {
-    .id_code = LightProbe::id_type,
-    .id_filter = FILTER_ID_LP,
-    .dependencies_id_types = FILTER_ID_IM,
-    .main_listbase_index = INDEX_ID_LP,
-    .struct_size = sizeof(LightProbe),
-    .name = "LightProbe",
-    .name_plural = N_("lightprobes"),
-    .translation_context = BLT_I18NCONTEXT_ID_LIGHTPROBE,
-    .flags = IDTYPE_FLAGS_APPEND_IS_REUSABLE,
-    .asset_type_info = nullptr,
-
-    .init_data = lightprobe_init_data,
-    .copy_data = nullptr,
-    .free_data = nullptr,
-    .make_local = nullptr,
-    .foreach_id = lightprobe_foreach_id,
-    .foreach_cache = nullptr,
-    .foreach_path = nullptr,
-    .foreach_working_space_color = nullptr,
-    .owner_pointer_get = nullptr,
-
-    .blend_write = lightprobe_blend_write,
-    .blend_read_data = nullptr,
-    .blend_read_after_liblink = nullptr,
-
-    .blend_read_undo_preserve = nullptr,
-
-    .lib_override_apply_post = nullptr,
-};
 
 void BKE_lightprobe_type_set(LightProbe *probe, const short lightprobe_type)
 {
@@ -105,10 +51,19 @@ void BKE_lightprobe_type_set(LightProbe *probe, const short lightprobe_type)
 
 LightProbe *BKE_lightprobe_add(Main *bmain, const char *name)
 {
-  LightProbe *probe;
-
-  probe = BKE_id_new<LightProbe>(bmain, name);
-
+  LightProbe *probe = MEM_new_zeroed<LightProbe>("LightProbe");
+  BKE_libblock_runtime_ensure(probe->id);
+  *(reinterpret_cast<short *>(probe->id.name)) = ID_LP;
+  probe->id.us = 1;
+  {
+    ListBase *lb = which_libbase(bmain, ID_LP);
+    BKE_main_lock(bmain);
+    BLI_addtail(lb, probe);
+    BKE_id_new_name_validate(*bmain, *lb, probe->id, name, IDNewNameMode::RenameExistingNever, true);
+    bmain->is_memfile_undo_written = false;
+    BKE_main_unlock(bmain);
+  }
+  BKE_lib_libblock_session_uid_ensure(&probe->id);
   return probe;
 }
 
