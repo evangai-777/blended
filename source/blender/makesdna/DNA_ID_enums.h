@@ -149,7 +149,7 @@ enum ID_Type {
   ID_MC = MAKE_ID2('M', 'C'),        /* MovieClip */
   ID_MSK = MAKE_ID2('M', 'S'),       /* Mask */
 
-  ID_PAL = MAKE_ID2('P', 'L'),       /* Palette */
+  /* ID_PAL removed — see deprecated #define below. */
   /* ID_CF removed — see deprecated #define below. */
   /* ID_LP removed — see deprecated #define below. */
   ID_CV = MAKE_ID2('C', 'V'),        /* Curves */
@@ -173,6 +173,7 @@ enum ID_Type {
 #define ID_CU_LEGACY MAKE_ID2('C', 'U') /* Curve (legacy) — removed in Blended 0.4.0; use ID_CV */
 #define ID_CF MAKE_ID2('C', 'F')        /* CacheFile — removed in Blended 0.4.0; inlined per-instance */
 #define ID_LP MAKE_ID2('L', 'P')        /* LightProbe — deregistered in Blended 0.5.0; runtime-only via Scar 2 */
+#define ID_PAL MAKE_ID2('P', 'L')       /* Palette — deregistered in Blended 0.5.0; runtime-only via Scar 2 */
 
 /* NOTE: Fake IDs, needed for `g.sipo->blocktype` or outliner. */
 #define ID_SEQ MAKE_ID2('S', 'Q')
