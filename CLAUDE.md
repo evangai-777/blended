@@ -23,7 +23,7 @@ The old approach (tiered UI, smart defaults, Emscripten) was prototyping toward 
 
 **`ID_WS` (WorkSpace) removal — compile-clean.** All layers merged (`makesdna`, `blenkernel`, `makesrna`, `editors`, `depsgraph`, `python`, `windowmanager`). `grep -rn "ID_WS" source/` returns zero hits. CI green at 0.2.0. Runtime debt (workspace cycle, reorder operators, factory name translation) documented in Scar 1 below.
 
-**`ID_SCR` and `ID_WM` removal — compile-clean, pending CI.** All layers merged. The blast radius was enormous — see Scar 2 below. Key architectural outcome: `bmain->screens` and `bmain->wm` kept as non-indexed runtime listbases; `ID_SCR_LEGACY` / `ID_WM_LEGACY` defines route through `which_libbase` for allocation but are excluded from `BKE_main_lists_get`. Branch: `claude/remove-id-scr-id-wm`. Layer-by-layer status in [`CHANGELOG.md`](CHANGELOG.md).
+**`ID_SCR` and `ID_WM` removal — CI-complete (Windows x64, build 49, commit `34a4d0da`).** All layers merged. The blast radius was enormous — see Scar 2 below. Key architectural outcome: `bmain->screens` and `bmain->wm` kept as non-indexed runtime listbases; `ID_SCR_LEGACY` / `ID_WM_LEGACY` defines route through `which_libbase` for allocation but are excluded from `BKE_main_lists_get`. Layer-by-layer status in [`CHANGELOG.md`](CHANGELOG.md).
 
 **Bucket 5 + 6 fossil removals (0.4.x) — complete.** All 9 types removed: `ID_PC` ✓ `ID_SPK` ✓ `ID_PA` ✓ `ID_GD_LEGACY` ✓ `ID_LS` ✓ `ID_MB` ✓ `ID_TE` ✓ `ID_CU_LEGACY` ✓ `ID_CF` ✓. Post-merge CI fixes complete. Next version: 0.5.x — Bucket 3 fold-downs (39 → ~19 ID types). See roadmap in CHANGELOG.md.
 
