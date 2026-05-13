@@ -88,16 +88,6 @@ BLI_listbase_clear(&bmain->linestyles);
 `BKE_id_free` skips the `IDTypeInfo::id_free` callback when the type is unregistered (INIT_TYPE removed) but still frees the memory block and animation data. Before using this pattern, audit the original `IDTypeInfo::id_free` implementation to confirm nothing non-trivial was being cleaned up there (e.g., GPU resources, runtime caches). For ID_LS, ID_PA, ID_TE, and ID_CU_LEGACY the callbacks were simple struct-internal frees with no GPU state — the drain is safe. Do NOT use `BKE_id_multi_tagged_delete` — that API operates on tagged blocks within the main indexed list and will not reach Scar 2 unindexed listbases.
 
 
-
-### Upcoming Chisel Roadmap
-
-| Order | ID type | Literal hits | Status |
-|-------|---------|-------------|--------|
-| ~~Done~~ | `ID_MB` — MetaBall | 60 hits / 32 files | ✓ |
-| ~~Done~~ | `ID_TE` — Texture | 76 hits / 45 files | ✓ |
-| ~~Done~~ | `ID_CU_LEGACY` — Legacy Curve | 74 hits / 33 files | ✓ |
-| ~~Done~~ | `ID_CF` — CacheFile | 29 literal / ~76 true | ✓ (inline per-instance) |
-
 ### Foundation Layer Roadmap
 
 | Version | Layer | Status |
@@ -976,7 +966,7 @@ make check_mypy     # Python type checking
 **The single source of truth:** `source/blender/blenkernel/BKE_blender_version.h` — three defines:
 ```c
 #define BLENDED_VERSION_MAJOR 0
-#define BLENDED_VERSION_MINOR 4   // ← bump this for each completed foundation layer
+#define BLENDED_VERSION_MINOR N   // ← bump this for each completed foundation layer
 #define BLENDED_VERSION_PATCH 0   // ← bump this for patch releases within a layer
 ```
 The CI workflow reads these at build time. Packaged artifact name (`Blended-X.Y.Z-windows-x64`) derives entirely from these defines — no other file needs to be changed for the package label to update.
@@ -1021,7 +1011,7 @@ The 0.4.0 CI-complete milestone (build 70) shipped without bumping the version h
 Target: 39 → ~19 ID types.
 - **Bucket 4 (UI state, remove):** `ID_WS` ✓ (0.2.0), `ID_SCR` ✓ (0.3.0 WIP), `ID_WM` ✓ (0.3.0 WIP)
 - **Bucket 5 (upstream deprecations, finish):** `ID_CU_LEGACY` ✓ (0.4.0), `ID_GD_LEGACY` ✓ (0.4.0)
-- **Bucket 6 (fossils, cut):** `ID_CF` — pending (design decision); `ID_PC` ✓ (0.4.0); `ID_SPK` ✓ (0.4.0); `ID_PA` ✓ (0.4.0); `ID_LS` ✓ (0.4.0); `ID_MB` ✓ (0.4.0); `ID_TE` ✓ (0.4.0)
+- **Bucket 6 (fossils, cut):** `ID_CF` ✓ (0.4.0); `ID_PC` ✓ (0.4.0); `ID_SPK` ✓ (0.4.0); `ID_PA` ✓ (0.4.0); `ID_LS` ✓ (0.4.0); `ID_MB` ✓ (0.4.0); `ID_TE` ✓ (0.4.0)
 
 ---
 
@@ -1115,8 +1105,6 @@ A chisel session that touches 7 layers and 60 files in one unbounded run is a co
 5. **Never hold 7 layers of changes in a single uncommitted working tree.** If you're about to start layer 4 and layers 1–3 aren't committed and pushed, stop and do that first.
 
 **Why this matters:** Context compaction is lossy. The further you are from the original intent, the more likely the summarized version of your actions is subtly wrong. The smaller the commit unit, the less damage a wrong summary can cause. One layer per commit+push = one layer of damage on worst case. Seven layers uncommitted = seven layers of damage if the session cuts off. Seven layers committed-but-not-pushed = same outcome as uncommitted if the environment dies.
-
----
 
 ---
 
