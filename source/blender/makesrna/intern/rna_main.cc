@@ -434,7 +434,6 @@ void RNA_def_main(BlenderRNA *brna)
        "Movie Clips",
        "Movie Clip data-blocks",
        RNA_def_main_movieclips},
-      {"masks", "Mask", "rna_Main_masks_begin", "Masks", "Masks data-blocks", RNA_def_main_masks},
 
       /**
        * \note The name `hair_curves` is chosen to be different than `curves`,

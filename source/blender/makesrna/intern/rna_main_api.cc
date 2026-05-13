@@ -713,7 +713,6 @@ RNA_MAIN_ID_TAG_FUNCS_DEF(armatures, armatures, ID_AR)
 RNA_MAIN_ID_TAG_FUNCS_DEF(actions, actions, ID_AC)
 RNA_MAIN_ID_TAG_FUNCS_DEF(grease_pencils, grease_pencils, ID_GP)
 RNA_MAIN_ID_TAG_FUNCS_DEF(movieclips, movieclips, ID_MC)
-RNA_MAIN_ID_TAG_FUNCS_DEF(masks, masks, ID_MSK)
 
 RNA_MAIN_ID_TAG_FUNCS_DEF(hair_curves, hair_curves, ID_CV)
 RNA_MAIN_ID_TAG_FUNCS_DEF(pointclouds, pointclouds, ID_PT)
@@ -1667,46 +1666,6 @@ void RNA_def_main_movieclips(BlenderRNA *brna, PropertyRNA *cprop)
   /* return type */
   parm = RNA_def_pointer(func, "clip", "MovieClip", "", "New movie clip data-block");
   RNA_def_function_return(func, parm);
-}
-
-void RNA_def_main_masks(BlenderRNA *brna, PropertyRNA *cprop)
-{
-  StructRNA *srna;
-  FunctionRNA *func;
-  PropertyRNA *parm;
-
-  RNA_def_property_srna(cprop, "BlendDataMasks");
-  srna = RNA_def_struct(brna, "BlendDataMasks", nullptr);
-  RNA_def_struct_sdna(srna, "Main");
-  RNA_def_struct_ui_text(srna, "Main Masks", "Collection of masks");
-
-  func = RNA_def_function(srna, "tag", "rna_Main_masks_tag");
-  parm = RNA_def_boolean(func, "value", false, "Value", "");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-
-  /* new func */
-  func = RNA_def_function(srna, "new", "rna_Main_mask_new");
-  RNA_def_function_ui_description(func, "Add a new mask with a given name to the main database");
-  parm = RNA_def_string(
-      func, "name", nullptr, MAX_ID_NAME - 2, "Mask", "Name of new mask data-block");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-  /* return type */
-  parm = RNA_def_pointer(func, "mask", "Mask", "", "New mask data-block");
-  RNA_def_function_return(func, parm);
-
-  /* remove func */
-  func = RNA_def_function(srna, "remove", "rna_Main_ID_remove");
-  RNA_def_function_flag(func, FUNC_USE_REPORTS);
-  RNA_def_function_ui_description(func, "Remove a mask from the current blendfile");
-  parm = RNA_def_pointer(func, "mask", "Mask", "", "Mask to remove");
-  RNA_def_parameter_flags(parm, PROP_NEVER_NULL, PARM_REQUIRED | PARM_RNAPTR);
-  RNA_def_parameter_clear_flags(parm, PROP_THICK_WRAP, ParameterFlag(0));
-  RNA_def_boolean(
-      func, "do_unlink", true, "", "Unlink all usages of this mask before deleting it");
-  RNA_def_boolean(
-      func, "do_id_user", true, "", "Decrement user counter of all data-blocks used by this mask");
-  RNA_def_boolean(
-      func, "do_ui_user", true, "", "Make sure interface does not reference this mask");
 }
 
 void RNA_def_main_hair_curves(BlenderRNA *brna, PropertyRNA *cprop)
