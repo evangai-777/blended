@@ -167,7 +167,6 @@ RNA_MAIN_LISTBASE_FUNCS_DEF(meshes)
 RNA_MAIN_LISTBASE_FUNCS_DEF(movieclips)
 RNA_MAIN_LISTBASE_FUNCS_DEF(nodetrees)
 RNA_MAIN_LISTBASE_FUNCS_DEF(objects)
-RNA_MAIN_LISTBASE_FUNCS_DEF(palettes)
 RNA_MAIN_LISTBASE_FUNCS_DEF(pointclouds)
 RNA_MAIN_LISTBASE_FUNCS_DEF(scenes)
 RNA_MAIN_LISTBASE_FUNCS_DEF(screens)
@@ -430,13 +429,6 @@ void RNA_def_main(BlenderRNA *brna)
        "Actions",
        "Action data-blocks",
        RNA_def_main_actions},
-      {"palettes",
-       "Palette",
-       "rna_Main_palettes_begin",
-       "Palettes",
-       "Palette data-blocks",
-       RNA_def_main_palettes},
-
       {"grease_pencils",
        "GreasePencil",
        "rna_Main_grease_pencils_begin",

@@ -49,7 +49,6 @@ const EnumPropertyItem rna_enum_id_type_items[] = {
     {ID_MC, "MOVIECLIP", ICON_TRACKER, "Movie Clip", ""},
     {ID_NT, "NODETREE", ICON_NODETREE, "Node Tree", ""},
     {ID_OB, "OBJECT", ICON_OBJECT_DATA, "Object", ""},
-    {ID_PAL, "PALETTE", ICON_COLOR, "Palette", ""},
     {ID_PT, "POINTCLOUD", ICON_POINTCLOUD_DATA, "Point Cloud", ""},
     {ID_SCE, "SCENE", ICON_SCENE_DATA, "Scene", ""},
     {ID_SO, "SOUND", ICON_SOUND, "Sound", ""},
@@ -141,7 +140,6 @@ const IDFilterEnumPropertyItem rna_enum_id_type_filter_items[] = {
     {FILTER_ID_MSK, "filter_mask", ICON_MOD_MASK, "Masks", "Show Mask data-blocks"},
     {FILTER_ID_NT, "filter_node_tree", ICON_NODETREE, "Node Trees", "Show Node Tree data-blocks"},
     {FILTER_ID_OB, "filter_object", ICON_OBJECT_DATA, "Objects", "Show Object data-blocks"},
-    {FILTER_ID_PAL, "filter_palette", ICON_COLOR, "Palettes", "Show Palette data-blocks"},
     {FILTER_ID_PT,
      "filter_pointcloud",
      ICON_POINTCLOUD_DATA,
@@ -389,9 +387,6 @@ short RNA_type_to_ID_code(const StructRNA *type)
   if (base_type == RNA_Object) {
     return ID_OB;
   }
-  if (base_type == RNA_Palette) {
-    return ID_PAL;
-  }
   if (base_type == RNA_PointCloud) {
     return ID_PT;
   }
@@ -461,8 +456,6 @@ StructRNA *ID_code_to_RNA_type(short idcode)
       return RNA_NodeTree;
     case ID_OB:
       return RNA_Object;
-    case ID_PAL:
-      return RNA_Palette;
     case ID_PT:
       return RNA_PointCloud;
     case ID_SCE:

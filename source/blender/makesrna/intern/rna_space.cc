@@ -3960,8 +3960,7 @@ static IDFilterEnumPropertyItem rna_enum_space_file_id_filter_categories[] = {
      ICON_WORLD_DATA,
      "Environment",
      "Show worlds, lights and cameras"},
-    {FILTER_ID_BR | FILTER_ID_PAL |
-         FILTER_ID_TXT | FILTER_ID_VF,
+    {FILTER_ID_BR | FILTER_ID_TXT | FILTER_ID_VF,
      "category_misc",
      ICON_GREASEPENCIL,
      "Miscellaneous",

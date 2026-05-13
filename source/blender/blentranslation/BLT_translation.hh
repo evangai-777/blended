@@ -127,7 +127,6 @@ StringRef BLT_translate_do_new_dataname(StringRef msgctxt, StringRef msgid);
 #define BLT_I18NCONTEXT_ID_MOVIECLIP "MovieClip"
 #define BLT_I18NCONTEXT_ID_NODETREE "NodeTree"
 #define BLT_I18NCONTEXT_ID_OBJECT "Object"
-#define BLT_I18NCONTEXT_ID_PALETTE "Palette"
 #define BLT_I18NCONTEXT_ID_PARTICLESETTINGS "ParticleSettings"
 #define BLT_I18NCONTEXT_ID_POINTCLOUD "PointCloud"
 #define BLT_I18NCONTEXT_ID_SCENE "Scene"
@@ -200,7 +199,6 @@ struct BLT_i18n_contexts_descriptor {
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_MOVIECLIP, "id_movieclip"), \
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_NODETREE, "id_nodetree"), \
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_OBJECT, "id_object"), \
-        BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_PALETTE, "id_palette"), \
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_PARTICLESETTINGS, "id_particlesettings"), \
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_POINTCLOUD, "id_pointcloud"), \
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_SCENE, "id_scene"), \

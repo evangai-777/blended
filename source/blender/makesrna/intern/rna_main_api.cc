@@ -599,18 +599,6 @@ static bAction *rna_Main_actions_new(Main *bmain, const char *name)
   return act;
 }
 
-static Palette *rna_Main_palettes_new(Main *bmain, const char *name)
-{
-  char safe_name[MAX_ID_NAME - 2];
-  rna_idname_validate(name, safe_name);
-
-  Palette *palette = BKE_palette_add(bmain, safe_name);
-  id_us_min(&palette->id);
-
-  WM_main_add_notifier(NC_ID | NA_ADDED, nullptr);
-
-  return static_cast<Palette *>(palette);
-}
 
 static MovieClip *rna_Main_movieclip_load(Main *bmain,
                                           ReportList *reports,
@@ -737,8 +725,6 @@ RNA_MAIN_ID_TAG_FUNCS_DEF(texts, texts, ID_TXT)
 RNA_MAIN_ID_TAG_FUNCS_DEF(sounds, sounds, ID_SO)
 RNA_MAIN_ID_TAG_FUNCS_DEF(armatures, armatures, ID_AR)
 RNA_MAIN_ID_TAG_FUNCS_DEF(actions, actions, ID_AC)
-RNA_MAIN_ID_TAG_FUNCS_DEF(palettes, palettes, ID_PAL)
-
 RNA_MAIN_ID_TAG_FUNCS_DEF(grease_pencils, grease_pencils, ID_GP)
 RNA_MAIN_ID_TAG_FUNCS_DEF(movieclips, movieclips, ID_MC)
 RNA_MAIN_ID_TAG_FUNCS_DEF(masks, masks, ID_MSK)
@@ -1645,45 +1631,7 @@ void RNA_def_main_actions(BlenderRNA *brna, PropertyRNA *cprop)
 }
 
 
-void RNA_def_main_palettes(BlenderRNA *brna, PropertyRNA *cprop)
-{
-  StructRNA *srna;
-  FunctionRNA *func;
-  PropertyRNA *parm;
 
-  RNA_def_property_srna(cprop, "BlendDataPalettes");
-  srna = RNA_def_struct(brna, "BlendDataPalettes", nullptr);
-  RNA_def_struct_sdna(srna, "Main");
-  RNA_def_struct_ui_text(srna, "Main Palettes", "Collection of palettes");
-
-  func = RNA_def_function(srna, "new", "rna_Main_palettes_new");
-  RNA_def_function_ui_description(func, "Add a new palette to the main database");
-  parm = RNA_def_string(func, "name", "Palette", 0, "", "New name for the data-block");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-  /* return type */
-  parm = RNA_def_pointer(func, "palette", "Palette", "", "New palette data-block");
-  RNA_def_function_return(func, parm);
-
-  func = RNA_def_function(srna, "remove", "rna_Main_ID_remove");
-  RNA_def_function_flag(func, FUNC_USE_REPORTS);
-  RNA_def_function_ui_description(func, "Remove a palette from the current blendfile");
-  parm = RNA_def_pointer(func, "palette", "Palette", "", "Palette to remove");
-  RNA_def_parameter_flags(parm, PROP_NEVER_NULL, PARM_REQUIRED | PARM_RNAPTR);
-  RNA_def_parameter_clear_flags(parm, PROP_THICK_WRAP, ParameterFlag(0));
-  RNA_def_boolean(
-      func, "do_unlink", true, "", "Unlink all usages of this palette before deleting it");
-  RNA_def_boolean(func,
-                  "do_id_user",
-                  true,
-                  "",
-                  "Decrement user counter of all data-blocks used by this palette");
-  RNA_def_boolean(
-      func, "do_ui_user", true, "", "Make sure interface does not reference this palette");
-
-  func = RNA_def_function(srna, "tag", "rna_Main_palettes_tag");
-  parm = RNA_def_boolean(func, "value", false, "Value", "");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-}
 void RNA_def_main_grease_pencil(BlenderRNA *brna, PropertyRNA *cprop)
 {
   StructRNA *srna;
