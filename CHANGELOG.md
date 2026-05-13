@@ -135,6 +135,20 @@ Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEG
 
 ### ID_GD_LEGACY — Old Grease Pencil ✓ complete
 
+*Session note (2026-04-30): Three key true-blast-radius findings: (1) bmain->gpencils kept as Scar 2 listbase — OB_GPENCIL_LEGACY and annotation creation still need it. (2) All depsgraph sites (depsgraph_tag.cc:72,626; deg_builder_nodes.cc:630; deg_builder_relations.cc:580,2758) left untouched — bGPdata evaluation must survive. (3) material.cc mat/totcol pointer cases initially removed then restored — OB_GPENCIL_LEGACY objects have material slots. Active migration: grease_pencil_convert_legacy.cc and blendfile_link_append.cc converter code kept; only the type registration went.*
+
+**Pre-chisel blast radius audit (56 hits, 32 files):**
+
+makesdna (4 files): `DNA_ID_enums.h:151` (enum entry → deprecated #define); `DNA_gpencil_legacy_types.h:711` (id_type constexpr); `DNA_object_types.h:747,762` (object type macros ×2); `DNA_ID.h:1162,1195,1244` (FILTER_ID_GD, FILTER_ID_ALL, INDEX_ID_GD).
+
+blenkernel (9 files): `BKE_idtype.hh:324` (extern decl); `gpencil_legacy.cc:267,269,271,654` (IDTypeInfo callbacks + alloc call); `idtype.cc:161` (INIT_TYPE + CASE_IDINDEX ×2); `main.cc:131,1027,1071` (CASE_ID_INDEX + which_libbase case + lb[] — KEEP which_libbase); `material.cc:427,455,850` (×3); `deform.cc:460,481` (×2); `grease_pencil_convert_legacy.cc:3057,3151` KEEP; `blendfile_link_append.cc:555` KEEP; `scene.cc:1611` (FILTER_ID_GD from deps); `movieclip.cc:298` (IDTypeInfo dep check).
+
+blenloader (2 files — KEEP): `versioning_250.cc:444` (GS write); `versioning_common.cc:61,62` (GD_LEGACY → GP v3 marker).
+
+editors (10 files): `interface_icons.cc:2055`; `interface_template_id.cc:588,885`; `object_data_transform.cc:816`; `render_opengl.cc:649`; `outliner_select.cc:1295`; `outliner_draw.cc:2556`; `outliner_intern.hh:156`; `outliner_tools.cc:156`; `tree_element_id.cc:56`; `space_node.cc:1537`; `space_image.cc:1214` (FILTER_ID_GD).
+
+draw (1 file): `draw_context.cc:1166` (DEG_id_type_any_exists → gpencil-only). depsgraph (3 files): `depsgraph_tag.cc:72,626`; `deg_builder_nodes.cc:630`; `deg_builder_relations.cc:580,2758`. makesrna (4 files): `rna_ID.cc:41,124,377,477`; `rna_main_api.cc:831`; `rna_main.cc`; `rna_space.cc:3975` (FILTER_ID_GD in misc filter — literal grep miss).
+
 | Layer | Files touched | Status |
 |-------|--------------|--------|
 | `makesdna` | `DNA_ID_enums.h` (enum entry → deprecated `#define`), `DNA_gpencil_legacy_types.h` (id_type constexpr), `DNA_object_types.h` (OB_DATA_SUPPORT_ID macros ×2), `DNA_ID.h` (FILTER_ID_GD_LEGACY, INDEX_ID_GD_LEGACY, FILTER_ID_ALL) | ✓ |
