@@ -1156,7 +1156,6 @@ enum IDRecalcFlag {
 /* To filter ID types (filter_id). 64 bit to fit all types. */
 #define FILTER_ID_AC (1ULL << 0)
 #define FILTER_ID_AR (1ULL << 1)
-#define FILTER_ID_BR (1ULL << 2)
 #define FILTER_ID_CA (1ULL << 3)
 #define FILTER_ID_GR (1ULL << 6)
 #define FILTER_ID_IM (1ULL << 7)
@@ -1182,7 +1181,7 @@ enum IDRecalcFlag {
 #define FILTER_ID_IP (1ULL << 41)
 
 #define FILTER_ID_ALL \
-  (FILTER_ID_AC | FILTER_ID_AR | FILTER_ID_BR | FILTER_ID_CA | \
+  (FILTER_ID_AC | FILTER_ID_AR | FILTER_ID_CA | \
    FILTER_ID_GR | FILTER_ID_IM | FILTER_ID_LA | \
    FILTER_ID_MA | FILTER_ID_MC | FILTER_ID_ME | \
    FILTER_ID_NT | FILTER_ID_OB | FILTER_ID_SCE | \
@@ -1265,10 +1264,6 @@ enum eID_Index {
   /* Collection and object types. */
   INDEX_ID_OB,
   INDEX_ID_GR,
-
-  /* Preset-like, not-really-data types, can use many other ID types but should never be used by
-   * any actual data type (besides Scene, due to tool settings). */
-  INDEX_ID_BR,
 
   /* Scene, after preset-like ID types because of tool settings. */
   INDEX_ID_SCE,
