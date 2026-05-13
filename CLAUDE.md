@@ -1388,6 +1388,39 @@ Before staging any commit that touches documentation (CLAUDE.md, CHANGELOG.md, B
 
 ---
 
+### Scar 15: Fold-Down Strips RNA_def_<type> Along With RNA_def_main_<types>
+
+**What happened:** The ID_LP fold-down correctly removed `RNA_def_main_lightprobes` from `rna_internal.hh` — that is the `bpy.data.lightprobes` collection accessor, which goes when the ID type is deregistered. But the same editing pass also stripped `RNA_def_lightprobe` — the LightProbe *struct* RNA definition. `rna_lightprobe.cc` is kept (fold-down protocol: runtime code stays), and `makesrna.cc` still calls `RNA_def_lightprobe` at line 4051. CI failed at step 4347/8093: `makesrna.cc(4051): error C2065: 'RNA_def_lightprobe': undeclared identifier`.
+
+**Why this is easy to do:** For every ID type there are two RNA declarations in `rna_internal.hh` that look similar:
+- `void RNA_def_main_lightprobes(BlenderRNA *brna, PropertyRNA *cprop);` — collection accessor, **goes** (the `bpy.data.lightprobes` collection is removed)
+- `void RNA_def_lightprobe(BlenderRNA *brna);` — struct RNA, **stays** (the `LightProbe` struct and its RNA defs are kept runtime code)
+
+During a fold-down, the instinct is to grep `lightprobe` in `rna_internal.hh` and remove all hits. That removes both. Only the collection accessor should go. The struct RNA declaration is not a registration artifact — it is the forward declaration for runtime RNA that must survive.
+
+**This failure mode is unique to fold-downs, not chisels.** In a chisel, both declarations go because the entire type goes. In a fold-down, the struct RNA stays — so only the `RNA_def_main_<types>` declaration is removed and `RNA_def_<type>` is kept.
+
+**The rule:** After any fold-down session that touches `rna_internal.hh`, explicitly verify that `RNA_def_<type>` (singular, no "main") is still present:
+```bash
+grep -n "RNA_def_lightprobe\b" source/blender/makesrna/intern/rna_internal.hh
+# Must return the declaration. If empty, it was accidentally stripped.
+```
+Then cross-check `makesrna.cc` for the matching table entry and `rna_<type>.cc` for the matching definition — all three must be present together.
+
+**For the remaining Bucket 3 fold-downs (ID_PAL, ID_LT, ID_MSK, ID_VF, ID_BR), the pairs to keep vs. remove:**
+
+| Type | Remove from rna_internal.hh | Keep in rna_internal.hh |
+|------|---------------------------|------------------------|
+| ID_PAL | `RNA_def_main_palettes(...)` | `RNA_def_palette(...)` |
+| ID_LT | `RNA_def_main_lattices(...)` | `RNA_def_lattice(...)` |
+| ID_MSK | `RNA_def_main_masks(...)` | `RNA_def_mask(...)` |
+| ID_VF | `RNA_def_main_fonts(...)` | `RNA_def_vfont(...)` |
+| ID_BR | `RNA_def_main_brushes(...)` | `RNA_def_brush(...)` |
+
+In every case: the `RNA_def_main_<types>` signature has a second `PropertyRNA *cprop` parameter (it is a collection accessor registered by `rna_main.cc`). The `RNA_def_<type>` signature takes only `BlenderRNA *brna`. That parameter difference is a visual check — if you're removing a declaration with two parameters, that is always the collection accessor. Single-parameter = struct RNA = keep.
+
+---
+
 ### Count Before You Claim
 
 If you say "three issues" there must be three issues. If you list a numbered set and then immediately dismiss one entry as "not a problem," you miscounted — that item was an observation, not an issue, and should never have been numbered. Do not announce N things and deliver N-1.
