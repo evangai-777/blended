@@ -121,7 +121,6 @@ StringRef BLT_translate_do_new_dataname(StringRef msgctxt, StringRef msgid);
 #define BLT_I18NCONTEXT_ID_LATTICE "Lattice"
 #define BLT_I18NCONTEXT_ID_LIBRARY "Library"
 #define BLT_I18NCONTEXT_ID_LIGHT "Light"
-#define BLT_I18NCONTEXT_ID_LIGHTPROBE "LightProbe"
 #define BLT_I18NCONTEXT_ID_MASK "Mask"
 #define BLT_I18NCONTEXT_ID_MATERIAL "Material"
 #define BLT_I18NCONTEXT_ID_MESH "Mesh"
@@ -195,7 +194,6 @@ struct BLT_i18n_contexts_descriptor {
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_LATTICE, "id_lattice"), \
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_LIBRARY, "id_library"), \
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_LIGHT, "id_light"), \
-        BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_LIGHTPROBE, "id_lightprobe"), \
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_MASK, "id_mask"), \
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_MATERIAL, "id_material"), \
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_MESH, "id_mesh"), \

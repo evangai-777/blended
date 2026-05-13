@@ -3955,7 +3955,7 @@ static IDFilterEnumPropertyItem rna_enum_space_file_id_filter_categories[] = {
      ICON_IMAGE_DATA,
      "Images & Sounds",
      "Show images, movie clips, sounds and masks"},
-    {FILTER_ID_CA | FILTER_ID_LA | FILTER_ID_LP | FILTER_ID_WO,
+    {FILTER_ID_CA | FILTER_ID_LA | FILTER_ID_WO,
      "category_environment",
      ICON_WORLD_DATA,
      "Environment",

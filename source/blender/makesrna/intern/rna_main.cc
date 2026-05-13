@@ -159,7 +159,6 @@ RNA_MAIN_LISTBASE_FUNCS_DEF(hair_curves)
 RNA_MAIN_LISTBASE_FUNCS_DEF(images)
 RNA_MAIN_LISTBASE_FUNCS_DEF(lattices)
 RNA_MAIN_LISTBASE_FUNCS_DEF(libraries)
-RNA_MAIN_LISTBASE_FUNCS_DEF(lightprobes)
 RNA_MAIN_LISTBASE_FUNCS_DEF(lights)
 
 RNA_MAIN_LISTBASE_FUNCS_DEF(masks)
@@ -452,12 +451,6 @@ void RNA_def_main(BlenderRNA *brna)
        RNA_def_main_movieclips},
       {"masks", "Mask", "rna_Main_masks_begin", "Masks", "Masks data-blocks", RNA_def_main_masks},
 
-      {"lightprobes",
-       "LightProbe",
-       "rna_Main_lightprobes_begin",
-       "Light Probes",
-       "Light Probe data-blocks",
-       RNA_def_main_lightprobes},
       /**
        * \note The name `hair_curves` is chosen to be different than `curves`,
        * but they are generic curve data-blocks, not just for hair.

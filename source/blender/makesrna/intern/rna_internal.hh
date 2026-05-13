@@ -194,7 +194,6 @@ void RNA_def_particle(BlenderRNA *brna);
 void RNA_def_pointcloud(BlenderRNA *brna);
 void RNA_def_pose(BlenderRNA *brna);
 void RNA_def_profile(BlenderRNA *brna);
-void RNA_def_lightprobe(BlenderRNA *brna);
 void RNA_def_render(BlenderRNA *brna);
 void RNA_def_rigidbody(BlenderRNA *brna);
 void RNA_def_rna(BlenderRNA *brna);
@@ -547,7 +546,6 @@ void RNA_def_main_grease_pencil(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_movieclips(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_masks(BlenderRNA *brna, PropertyRNA *cprop);
 
-void RNA_def_main_lightprobes(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_hair_curves(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_pointclouds(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_volumes(BlenderRNA *brna, PropertyRNA *cprop);
