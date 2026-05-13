@@ -297,46 +297,6 @@ When the true blast radius diverges from the literal count, **update the CLAUDE.
 >
 > **(4) `BKE_id_new<ParticleSettings>` template instantiation failure — `particle.cc:3770`.** Removing `static constexpr ID_Type id_type = ID_PA` from `ParticleSettings` also broke the template `BKE_id_new<T>`, which requires `T::id_type`. Initial fix replaced with `BKE_libblock_alloc(bmain, ID_PA, name, 0)` — that returned `nullptr` at runtime (no `INIT_TYPE`). **Corrected fix (Scar 10):** `BKE_particlesettings_add` now uses `MEM_new<ParticleSettings>` + manual insertion into `bmain->particles` via `which_libbase` Scar 2 routing. Returns a valid object. Particle system creation works. Memory is not freed by `BKE_main_free` (Category C leak). The depsgraph OOB issue (`add_id_node` → `BKE_idtype_idcode_to_index(ID_PA)` → -1) is guarded by the `id_type_index >= 0` check in `depsgraph.cc` applied during the ID_CU_LEGACY chisel.
 
-Core definition:
-- `makesdna/DNA_ID_enums.h:152` — enum entry `ID_PA = MAKE_ID2('P', 'A')`
-- `makesdna/DNA_particle_types.h:533` — `static constexpr ID_Type id_type = ID_PA`
-- `blenkernel/intern/idtype.cc:162` — `INIT_TYPE(ID_PA)`
-- `blenkernel/intern/main.cc:1032` — `which_libbase` case
-
-blenkernel (1 file):
-- `texture.cc:486,516` — texture slot handling (2 sites)
-
-editors (9 files):
-- `buttons_context.cc:517` — buttons context GS check
-- `interface_icons.cc:2081` — icon case
-- `interface_template_id.cc:636,891` — template checks
-- `render_shading.cc:3045,3075` — render shading (2 sites)
-- `render_opengl.cc:624` — render switch
-- `outliner_draw.cc:2585` — outliner draw
-- `outliner_intern.hh:157` — outliner macro
-- `outliner_tools.cc:157` — outliner tools
-- `tree_element_id.cc:77` — tree element
-- `anim_filter.cc:2676` — animation filter case
-- `anim_channels_defines.cc:329` — `ELEM(GS(...), ID_MA, ID_PA)` (shared with MA)
-
-depsgraph (4 files):
-- `depsgraph_tag.cc:157,635` — tag dispatch (2 sites)
-- `deg_builder_relations.cc:600` — relation builder
-- `deg_builder_nodes.cc:653` — node builder
-- `depsgraph.cc:160` — `clear_id_nodes_conditional` lambda: `id_type != ID_PA`
-
-animrig (1 file):
-- `animdata.cc:125` — animdata case
-
-makesrna (7 files):
-- `rna_ID.cc:59,442,534,1050` — RNA enum entry and switch cases (4 sites)
-- `rna_texture.cc:272` — texture slot RNA
-- `rna_particle.cc:1014` — `GS(id->name) == ID_PA` check
-- `rna_boid.cc:232` — `GS(id->name) == ID_PA` check
-- `rna_color.cc:386` — color ramp case
-- `rna_object_force.cc:671` — object force RNA check
-- `rna_main_api.cc:858` — `RNA_MAIN_ID_TAG_FUNCS_DEF(particles, particles, ID_PA)`
-
 ---
 
 **ID_MB — ✓ COMPLETE (0.4.0)** *(true blast radius: ~130+ files across 16 layers — editors/metaball subsystem, ABC/USD writers, overlay_metaball.hh, transform_convert_mball.cc, depsgraph MetaBall basis machinery, ANIMTYPE_DSMBALL channel, Python startup menus)*

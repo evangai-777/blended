@@ -124,6 +124,20 @@ Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEG
 
 ### ID_PA — ParticleSettings ✓ complete
 
+**Pre-chisel blast radius audit (35 hits):**
+
+makesdna (4 files): `DNA_ID_enums.h:152` (enum entry → deprecated #define); `DNA_particle_types.h:533` (id_type constexpr); `DNA_ID.h` (FILTER_ID_PA, INDEX_ID_PA, FILTER_ID_ALL).
+
+blenkernel (2 files): `idtype.cc:162` (INIT_TYPE + CASE_IDINDEX ×2); `main.cc:1032` (which_libbase case — KEEP particles field + Scar 2 routing); `texture.cc:486,516` (×2).
+
+editors (9+ files): `buttons_context.cc:517`; `interface_icons.cc:2081`; `interface_template_id.cc:636,891`; `render_shading.cc:3045,3075`; `render_opengl.cc:624`; `outliner_draw.cc:2585`; `outliner_intern.hh:157`; `outliner_tools.cc:157`; `tree_element_id.cc:77`; `anim_filter.cc:2676`; `anim_channels_defines.cc:329` (ELEM shared with MA).
+
+depsgraph (4 files): `depsgraph_tag.cc:157,635`; `deg_builder_relations.cc:600`; `deg_builder_nodes.cc:653`; `depsgraph.cc:160` (teardown guard → `!= ID_SCE`).
+
+animrig (1 file): `animdata.cc:125`.
+
+makesrna (7 files): `rna_ID.cc:59,442,534,1050` (×4); `rna_texture.cc:272`; `rna_particle.cc:1014`; `rna_boid.cc:232`; `rna_color.cc:386`; `rna_object_force.cc:671`; `rna_main_api.cc:858`.
+
 | Layer | Files touched | Status |
 |-------|--------------|--------|
 | `makesdna` | `DNA_ID_enums.h` (enum entry → deprecated `#define`), `DNA_particle_types.h` (id_type constexpr), `DNA_ID.h` (FILTER_ID_PA, INDEX_ID_PA, FILTER_ID_ALL) | ✓ |
