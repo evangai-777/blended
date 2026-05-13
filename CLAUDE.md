@@ -859,26 +859,6 @@ blentranslation (1 file):
 
 ---
 
-**Key notes for the chisel session:**
-
-1. **These are true fossils — no runtime rescue.** Unlike ID_SCR/ID_WM, none of these stay as runtime structs. Full removal: enum, DNA `id_type` constexpr, `IDTypeInfo`, `INIT_TYPE`, `which_libbase` case, `BKE_main_lists_get` entry, and `bmain->*` field. **Exceptions — Scar 2 pattern applies to:** `ID_GD_LEGACY` (`bmain->gpencils` kept — OB_GPENCIL_LEGACY objects and annotations still use bGPdata at runtime), `ID_LS` (`bmain->linestyles` kept — legacy file loads populate it; see ID_LS review note), `ID_PA` (`bmain->particles` kept — blenloader versioning files `versioning_250` through `versioning_400` and `versioning_legacy` iterate it to upgrade old particle data on file load; see ID_PA correction note 2026-05-01), and `ID_TE` (`bmain->textures` kept — `versioning_250.cc`, `versioning_260.cc`, `versioning_280.cc`, `versioning_legacy.cc` iterate it to upgrade Blender Internal texture data in legacy files; see ID_TE session note 2026-05-05), and `ID_CU_LEGACY` (`bmain->curves` kept — 23+ `bmain->curves` iterations across `versioning_250` through `versioning_520` and `versioning_legacy`, plus `anim_data_bmain_utils.cc` and `anim_sys.cc`; see ID_CU_LEGACY session note 2026-05-06).
-
-2. **ID_CU_LEGACY and ID_GD_LEGACY have active migration paths.** CU_LEGACY → CV (Curves), GD_LEGACY → GP (Grease Pencil v3). The migration code in `grease_pencil_convert_legacy.cc` and `blendfile_link_append.cc` must survive removal — only the type registration goes, not the converter.
-
-3. **ID_LS is already disabled in the build.** `blended_release.cmake` sets `WITH_FREESTYLE=OFF`. Most ID_LS code is guarded by `#ifdef WITH_FREESTYLE`. Confirm before chiseling — may be the easiest of the nine.
-
-4. **Shared switch cases dominate the blast radius.** The depsgraph (`deg_builder_nodes.cc`, `deg_builder_relations.cc`), outliner (`outliner_draw.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc`), and RNA (`rna_ID.cc`, `rna_main_api.cc`) contain cases for many of these types side by side. Batch the removals per file rather than per type.
-
-5. **`brush_test.cc` `ID_TE` fixtures — resolved in 0.4.0.** `BKE_id_new(bmain, ID_TE, ...)` test fixtures deleted in the makesdna/blenkernel layers of the ID_TE chisel. (ID_PC fixtures were rewritten in 0.4.0 — paint_curve lines stripped, `brush->paint_curve` accesses removed.)
-
-6. **`depsgraph.cc:160` had a `!= ID_PA` guard** in `clear_id_nodes_conditional` — resolved in 0.4.0. The two-pass teardown (scenes first, then everything-except-particles) ensured particle COW copies outlived the objects referencing them. With ID_PA gone, the guard was changed to `!= ID_SCE` (scenes already destroyed in pass 1 are caught by the `id_cow == nullptr` guard in pass 2).
-
-7. **Chisel order complete (0.4.0):** ID_PC (21) ✓ → ID_SPK (23) ✓ → ID_PA (35) ✓ → ID_GD_LEGACY (56) ✓ → ID_LS (~50) ✓ → ID_MB (~130+) ✓ → ID_TE (~76) ✓ → ID_CU_LEGACY (~86) ✓ → ID_CF (~76) ✓. All 9 Bucket 5+6 fossil removals complete — 0.4.0 pending CI. Next: 0.5.x (Bucket 3 fold-downs, 39 → ~19 ID types).
-
-8. **ID_CF complete (0.4.0): inline per-instance.** True blast radius ~76 files (vs. 29 literal hits). `CacheFile` was woven into the Alembic importer, USD importer, Mesh Sequence Cache modifier, `bTransformCacheConstraint`, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI. **Design decision (2026-05-06):** inline per-instance — `CacheFile *` pointers in `MeshSeqCacheModifierData` and `bTransformCacheConstraint` replaced with the `CacheFile` fields inlined directly. `bmain->cachefiles` removed entirely — no Scar 2 rescue, true fossil. `versioning_290.cc` velocity_unit loop (the only `bmain->cachefiles` iteration) removed. 8 layers on branch `claude/chisel-id-cf`. **Post-merge CI fixes (PR #156, PR #157):** (1) `MeshSeqCacheModifierData` DNA alignment — 5 chars before floats violated SDNA 4-byte alignment; reorganized into two 4-char groups (Scar 11-adjacent). (2) `BLT_I18NCONTEXT_ID_CACHEFILE` borrowed by `NodesModifier` bake_target properties in `rna_modifier.cc:8027,8178` — invisible to `grep "ID_CF"`; removed two `RNA_def_property_translation_context` calls (Scar 11 extension). **No deferred runtime debt.**
-
----
-
 ## Repository Layout
 
 | Directory | Contents |

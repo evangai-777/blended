@@ -90,9 +90,11 @@ Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEG
 *(Order corrected in PR #126 fix — initial commit had ID_CF first, contradicting CLAUDE.md Key note 8. Scar 7.)*
 
 **Key notes:**
+- **Scar 2 mandatory for:** `ID_GD_LEGACY` (`bmain->gpencils` — OB_GPENCIL_LEGACY objects still active), `ID_LS` (`bmain->linestyles` — legacy file loads populate it), `ID_PA` (`bmain->particles` — versioning_250–400 + versioning_legacy iterate it), `ID_TE` (`bmain->textures` — versioning_250/260/280/legacy iterate it), `ID_CU_LEGACY` (`bmain->curves` — 23+ iterations across versioning_250–520, anim_data_bmain_utils.cc, anim_sys.cc). `ID_PC`, `ID_SPK`, `ID_MB`, `ID_CF` — no Scar 2 rescue (true fossils; no versioning iteration).
 - `ID_CU_LEGACY` and `ID_GD_LEGACY` have active migration paths — only the type *registration* goes, not the converters.
 - ~~`ID_LS` is already guarded by `#ifdef WITH_FREESTYLE`~~ — verified false for core registration files; `linestyle.cc` and render_shading.cc ID_LS cases are outside the guard. Full removal required.
 - `ID_LS` known latent leak: opening a legacy `.blend` with Freestyle data in a `WITH_FREESTYLE=OFF` build populates `bmain->linestyles` via the kept `which_libbase` routing, but that listbase is not in `BKE_main_lists_get`, so `BKE_main_free` does not free those IDs. Accepted artifact — no Freestyle fixtures in CI, does not affect release builds. Fix if needed: blenloader post-read pass draining `bmain->linestyles` when `WITH_FREESTYLE=OFF`.
+- **Shared switch cases:** batch removals per file rather than per type — depsgraph (`deg_builder_nodes.cc`, `deg_builder_relations.cc`), outliner (`outliner_draw.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc`), and RNA (`rna_ID.cc`, `rna_main_api.cc`) contain cases for many types side by side.
 - ~~`brush_test.cc` uses `ID_TE` in test fixtures~~ — test fixtures deleted in makesdna/blenkernel layers.
 - ~~`depsgraph.cc:160` has a `!= ID_PA` guard~~ — resolved in ID_PA chisel; guard changed to `!= ID_SCE`.
 
