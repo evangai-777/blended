@@ -269,53 +269,6 @@ When the true blast radius diverges from the literal count, **update the CLAUDE.
 
 > **Session note (2026-05-06):** 6 layers committed (editors/draw had zero compile errors; all `case ID_CU_LEGACY:` sites in those layers compile fine because `ID_CU_LEGACY` is kept as a `#define` with the same value). Key decisions vs. pre-chisel audit: (1) **Scar 2 mandatory** — `bmain->curves` field and `which_libbase` routing kept; 23+ `bmain->curves` iterations across versioning files 250–520 + `anim_data_bmain_utils.cc` + `anim_sys.cc`. (2) **Scar 8 applied correctly** — `DNA_curve_types.h` `Curve` struct has `DNA_DEFINE_CXX_METHODS(Curve)` AND `id_type` in the same `#ifdef __cplusplus` block; removed only the `id_type` line, kept the rest. (3) **Scar 10** — `BKE_curve_add` calls `BKE_libblock_alloc(bmain, ID_CU_LEGACY, ...)` which crashes after INIT_TYPE removal; applied MEM_new<Curve> + manual-insert pattern; added `BKE_main.hh` include; `BKE_curve_add` has live callers: object.cc (3 types), Alembic NURBS reader, OBJ NURBS importer, mesh_convert.cc, rna_main_api.cc. (4) **Active migration path preserved** — `blenfile_link_append.cc` converter code untouched; case statements in `object.cc`, `material.cc`, `key.cc`, etc. left in place because Alembic/OBJ importers still create legacy curve objects at runtime. (5) **Two depsgraph OOB guards added** — same crash path as ID_TE `build_texture()` but different fix: `add_id_node()` in `depsgraph.cc` guarded with `id_type_index >= 0` check (legacy curves still get IDNodes; only `id_type_exist` write skipped), `DEG_graph_id_type_tag()` in `depsgraph_tag.cc` guarded with early return. (6) **makesrna cleanup** — `rna_Main_curves_new()`, `RNA_def_main_curves()`, `RNA_MAIN_ID_TAG_FUNCS_DEF(curves)`, listbase funcs, and table entry all removed. `rna_space.cc:3951` `FILTER_ID_CU_LEGACY |` in geometry filter removed (same grep-miss pattern). (7) **`FILTER_ID_CU_LEGACY`** was the primary compile-error source in non-core files; once removed from `DNA_ID.h`, `key.cc:173` `.dependencies_id_types` and `rna_space.cc:3951` were the two non-obvious grep-miss sites. (8) Deferred: `rna_curve.cc` entirely intact — `CU_BEZIER/CU_POLY/CU_NURBS` RNA enum arrays stay since `DNA_curve_types.h` is kept for runtime use.
 
-**ID_CU_LEGACY — 74 hits, 33 files** *(pre-chisel record below)*
-
-Core definition:
-- `makesdna/DNA_ID_enums.h:133` — enum entry `ID_CU_LEGACY = MAKE_ID2('C', 'U')`
-- `makesdna/DNA_curve_types.h:216` — `static constexpr ID_Type id_type = ID_CU_LEGACY`
-- `makesdna/DNA_object_types.h:736,742,758` — object type check macros (shared with ID_MB)
-- `blenkernel/intern/idtype.cc:143` — `INIT_TYPE(ID_CU_LEGACY)`
-- `blenkernel/intern/main.cc:992` — `which_libbase` case
-- `blenkernel/intern/curve.cc:410` — `BKE_libblock_alloc(bmain, ID_CU_LEGACY, name, 0)` — curve creation
-
-blenkernel (6 files):
-- `key.cc:256,1112,1251,1266` — GS checks for shape keys (4 sites)
-- `material.cc:423,451,480,517,539,838` — material slot handling (6 sites)
-- `object.cc:1123,1931,1963,2228,4277` — object data dispatch (5 sites)
-- `mesh_convert.cc:665,688,775` — mesh conversion GS checks
-- `lib_remap.cc:428,626` — library remapping
-- `object_update.cc:356` — update dispatch
-
-editors (11 files):
-- `interface_icons.cc:2053` — icon switch case
-- `interface_template_id.cc:582,857` — template checks
-- `object_data_transform.cc:389,570,702,797` — data transform dispatch (4 sites)
-- `object_edit.cc:1764` — GS check
-- `render_opengl.cc:609` — render switch
-- `transform_convert_object_texspace.cc:52` — `ELEM(GS(id->name), ID_ME, ID_CU_LEGACY, ID_MB)` (shared with MB)
-- `outliner_select.cc:1288` — outliner select
-- `outliner_draw.cc:2473` — outliner draw
-- `outliner_intern.hh:140` — outliner macro
-- `outliner_tools.cc:136,287` — outliner tools
-- `tree_element_id.cc:48` — tree element
-
-draw (2 files):
-- `overlay_bounds.hh:182` — bounds overlay
-- `draw_resource.hh:150` — draw resource
-
-depsgraph (4 files):
-- `depsgraph_tag.cc:72,344,627` — tag dispatch (shared ELEM with MB/GD_LEGACY)
-- `deg_eval_copy_on_write.cc:115,161,200,236,560,941` — COW special cases (6 sites)
-- `deg_builder_relations.cc:576,2587,2741` — relation builder
-- `deg_builder_nodes.cc:629,1795` — node builder
-
-makesrna (4 files):
-- `rna_ID.cc:38,388,498` — RNA enum entry and GS switch cases
-- `rna_key.cc:67,576,611,631,653,681,694,715` — shape key RNA (8 sites)
-- `rna_object.cc:572` — object RNA
-- `rna_main_api.cc:845` — `RNA_MAIN_ID_TAG_FUNCS_DEF(curves, curves, ID_CU_LEGACY)`
-
 ---
 
 **ID_GD_LEGACY — ✓ COMPLETE (0.4.0)** *(true blast radius: 5 layers removed, depsgraph/deform/material kept — ~31 files)*

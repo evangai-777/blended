@@ -227,6 +227,16 @@ Resolves two deferred-debt items, syncs a stale version define, and adds two ope
 
 *Session note (2026-05-06): True blast radius ~86 hits / 36 files vs. 74/33 pre-chisel estimate. Scar 2 applied (bmain->curves + which_libbase routing kept; 23+ versioning iterations). Scar 8 applied (DNA_DEFINE_CXX_METHODS kept in Curve #ifdef block; only id_type line removed). Scar 10 applied to BKE_curve_add (live callers: object.cc, Alembic NURBS, OBJ NURBS, mesh_convert.cc, rna_main_api.cc). Two depsgraph OOB guards added to add_id_node() and DEG_graph_id_type_tag() instead of no-op (legacy curves still created by importers). All case ID_CU_LEGACY: sites in editors/draw/blenkernel compile as-is since ID_CU_LEGACY remains a valid #define; those case statements left in place for correct runtime behavior. grep-miss sites: key.cc:173 FILTER_ID_CU_LEGACY in IDType_ID_KE.dependencies_id_types; rna_space.cc:3951 FILTER_ID_CU_LEGACY in asset browser geometry filter.*
 
+**Pre-chisel blast radius audit (74 hits, 33 files):**
+
+Core definition: `DNA_ID_enums.h:133` (enum entry); `DNA_curve_types.h:216` (id_type constexpr); `DNA_object_types.h:736,742,758` (object type check macros, shared with ID_MB); `idtype.cc:143` (INIT_TYPE); `main.cc:992` (which_libbase case); `curve.cc:410` (BKE_libblock_alloc call — Scar 10 site).
+
+blenkernel (6 files): `key.cc:256,1112,1251,1266` (GS checks for shape keys, 4 sites); `material.cc:423,451,480,517,539,838` (material slot handling, 6 sites); `object.cc:1123,1931,1963,2228,4277` (object data dispatch, 5 sites); `mesh_convert.cc:665,688,775` (mesh conversion GS checks); `lib_remap.cc:428,626` (library remapping); `object_update.cc:356` (update dispatch).
+
+editors (11 files): `interface_icons.cc:2053`; `interface_template_id.cc:582,857`; `object_data_transform.cc:389,570,702,797` (4 sites); `object_edit.cc:1764`; `render_opengl.cc:609`; `transform_convert_object_texspace.cc:52` (ELEM with ID_ME/ID_MB); `outliner_select.cc:1288`; `outliner_draw.cc:2473`; `outliner_intern.hh:140`; `outliner_tools.cc:136,287`; `tree_element_id.cc:48`.
+
+draw (2 files): `overlay_bounds.hh:182`; `draw_resource.hh:150`. depsgraph (4 files): `depsgraph_tag.cc:72,344,627`; `deg_eval_copy_on_write.cc:115,161,200,236,560,941` (6 sites); `deg_builder_relations.cc:576,2587,2741`; `deg_builder_nodes.cc:629,1795`. makesrna (4 files): `rna_ID.cc:38,388,498`; `rna_key.cc:67,576,611,631,653,681,694,715` (8 sites); `rna_object.cc:572`; `rna_main_api.cc:845` (RNA_MAIN_ID_TAG_FUNCS_DEF).
+
 | Layer | Files touched | Status |
 |-------|--------------|--------|
 | `makesdna` | `DNA_ID_enums.h`, `DNA_curve_types.h` (id_type constexpr only; kept #ifdef/__cplusplus/DNA_DEFINE_CXX_METHODS), `DNA_object_types.h` (3 macros), `DNA_ID.h` (FILTER, INDEX, FILTER_ID_ALL) | ✓ |
