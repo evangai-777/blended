@@ -353,6 +353,7 @@ void BKE_lattice_resize(Lattice *lt, int u_new, int v_new, int w_new, Object *lt
 Lattice *BKE_lattice_add(Main *bmain, const char *name)
 {
   Lattice *lt = MEM_new<Lattice>("Lattice");
+  lattice_init_data(&lt->id);
   BKE_libblock_runtime_ensure(lt->id);
   *(reinterpret_cast<short *>(lt->id.name)) = ID_LT;
   lt->id.us = 1;

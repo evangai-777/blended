@@ -1087,6 +1087,13 @@ MainListsArray BKE_main_lists_get(Main &bmain)
   lb[INDEX_ID_SCE] = &(bmain.scenes.cast<ID>());
   lb[INDEX_ID_MSK] = &(bmain.masks.cast<ID>());
 
+  /* Intentionally excluded — Blended 0.5.0 Bucket 3 fold-downs (Scar 2):
+   * bmain.lattices and bmain.palettes are kept as non-indexed runtime listbases
+   * so that which_libbase() routing and blenloader versioning paths remain intact.
+   * They are NOT registered ID types (INIT_TYPE removed) and are NOT freed by
+   * BKE_main_free — this is the known Category C deferred memory leak, accepted
+   * until a post-read drain pass is added in a future version. */
+
   return lb;
 }
 
