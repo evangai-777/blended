@@ -151,7 +151,6 @@ void BKE_main_clear(Main &bmain)
         CASE_ID_INDEX(INDEX_ID_CA);
         CASE_ID_INDEX(INDEX_ID_OB);
         CASE_ID_INDEX(INDEX_ID_GR);
-        CASE_ID_INDEX(INDEX_ID_PAL);
         CASE_ID_INDEX(INDEX_ID_BR);
         CASE_ID_INDEX(INDEX_ID_SCE);
         case INDEX_ID_NULL: {
@@ -1057,9 +1056,6 @@ MainListsArray BKE_main_lists_get(Main &bmain)
 
   lb[INDEX_ID_KE] = &(bmain.shapekeys.cast<ID>());
 
-  /* Referenced by gpencil, so needs to be before that to avoid crashes. */
-  lb[INDEX_ID_PAL] = &(bmain.palettes.cast<ID>());
-
   lb[INDEX_ID_GP] = &(bmain.grease_pencils.cast<ID>());
 
   lb[INDEX_ID_NT] = &(bmain.nodetrees.cast<ID>());
@@ -1084,7 +1080,6 @@ MainListsArray BKE_main_lists_get(Main &bmain)
   lb[INDEX_ID_TXT] = &(bmain.texts.cast<ID>());
   lb[INDEX_ID_SO] = &(bmain.sounds.cast<ID>());
   lb[INDEX_ID_GR] = &(bmain.collections.cast<ID>());
-  lb[INDEX_ID_PAL] = &(bmain.palettes.cast<ID>());
   lb[INDEX_ID_BR] = &(bmain.brushes.cast<ID>());
 
   lb[INDEX_ID_WO] = &(bmain.worlds.cast<ID>());

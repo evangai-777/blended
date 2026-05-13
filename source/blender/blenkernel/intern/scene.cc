@@ -1609,7 +1609,7 @@ IDTypeInfo IDType_ID_SCE = {
     .dependencies_id_types = (FILTER_ID_OB | FILTER_ID_WO | FILTER_ID_SCE | FILTER_ID_MC |
                               FILTER_ID_MA | FILTER_ID_GR | FILTER_ID_TXT |
                               FILTER_ID_MSK | FILTER_ID_SO | FILTER_ID_BR |
-                              FILTER_ID_PAL | FILTER_ID_IM | FILTER_ID_NT),
+                              FILTER_ID_IM | FILTER_ID_NT),
     .main_listbase_index = INDEX_ID_SCE,
     .struct_size = sizeof(Scene),
     .name = "Scene",
