@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.5.0-dev — ID_LP fold-down CI-complete (Windows x64, build 74 on commit `80002ae`). 0.4.0 base: CI-complete (Windows x64, build 70 on commit `7bd69df`). Bucket 3 fold-downs in progress: `ID_LP` ✓, `ID_PAL` ✓ (pending CI). Remaining: `ID_LT`, `ID_MSK`, `ID_VF`, `ID_BR`.
+**Current version:** Blended 0.5.0-dev — ID_LP fold-down CI-complete (Windows x64, build 74 on commit `80002ae`). 0.4.0 base: CI-complete (Windows x64, build 70 on commit `7bd69df`). Bucket 3 fold-downs in progress: `ID_LP` ✓, `ID_PAL` ✓ (pending CI), `ID_LT` ✓ (pending CI). Remaining: `ID_MSK`, `ID_VF`, `ID_BR`.
 
 ---
 
@@ -93,7 +93,7 @@ BLI_listbase_clear(&bmain->linestyles);
 | Version | Layer | Status |
 |---------|-------|--------|
 | 0.4.x | Datablock audit — 9 fossil removals (Bucket 5+6) | ✓ CI-complete (build 70) |
-| 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) | In progress — `ID_LP` ✓, `ID_PAL` ✓ |
+| 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) | In progress — `ID_LP` ✓, `ID_PAL` ✓, `ID_LT` ✓ |
 | 0.6.x | Evaluation model — depsgraph audit | Pending |
 | 0.7.x | App lenses — launcher as canonical workspace system + full product identity | Pending |
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary | Pending |
@@ -136,7 +136,7 @@ The operational test: at the end of a fold-down session, every tool and workflow
 | ~~`ID_PAL`~~ | ~~38 hits~~ | ~~24 files~~ | ~~Inline into Brush~~ ✓ |
 | `ID_MSK` | 41 hits | 27 files | Hang off compositor NodeTree |
 | `ID_VF` | 45 hits | 27 files | Filepath on Text object |
-| `ID_LT` | 70 hits | 32 files | Owned by Lattice modifier |
+| ~~`ID_LT`~~ | ~~70 hits~~ | ~~32 files~~ | ~~Owned by Lattice modifier~~ ✓ |
 | `ID_BR` | 119 hits | 44 files | User state + shareable brush packs |
 
 **Scar 2 fields and runtime status:**
@@ -145,7 +145,7 @@ The operational test: at the end of a fold-down session, every tool and workflow
 |----|-------------|-------------|
 | `ID_BR` | `bmain->brushes` | Every paint/sculpt mode reads this every frame |
 | ~~`ID_PAL`~~ | `bmain->palettes` | Referenced by Brush; active in any paint session — Scar 2 kept ✓ |
-| `ID_LT` | `bmain->lattices` | OB_LATTICE objects actively deform meshes |
+| ~~`ID_LT`~~ | `bmain->lattices` | OB_LATTICE objects actively deform meshes — Scar 2 kept ✓ |
 | `ID_LP` | `bmain->lightprobes` | Active in EEVEE rendering |
 | `ID_MSK` | `bmain->masks` | Used in motion tracking and compositor |
 | `ID_VF` | `bmain->fonts` | Text objects reference these every render |
@@ -173,6 +173,20 @@ The operational test: at the end of a fold-down session, every tool and workflow
 > **False positives identified**: `bonecolor.cc`, `DNA_armature_types.h`, `rna_armature.cc`, `overlay_armature.cc` — bone color `palette_index` integer, unrelated to Palette ID type. `versioning_270.cc`, `versioning_280.cc`, `grease_pencil_modes.cc` — `gpd->palettes` / `bGPDpalette` (GP-internal legacy palette, not `bmain->palettes`).
 >
 > **Fold-down mindset confirmed:** At session end, every paint workflow that existed before still works — paint palette UI, palette operators, outliner display, icon display, depsgraph evaluation. The ONLY functional change: `bpy.data.palettes` collection is gone; users access palettes via `bpy.context.tool_settings.paint.palette` (pointer still exists on Paint struct, Scar 2).
+
+---
+
+**ID_LT — ✓ COMPLETE (0.5.0, pending CI)** *(true blast radius: 70 literal / ~90 true hits — fold-down, not chisel; all runtime code kept)*
+
+> **Session note (2026-05-13):** 4 code commits across all layers + 1 docs commit. Fold-down philosophy applied correctly: no files deleted, no runtime code removed, only the ID system registration stripped.
+>
+> Key decisions vs. pre-fold-down audit: (1) **Anim chain fully kept** — `ANIMTYPE_DSLAT`, `ACF_DSLAT`, `animdata_filter_ds_lat`, `ADS_FILTER_NOLAT`, and `show_lattices` RNA prop in `rna_action.cc:1458` all kept. Lattice animation is live runtime functionality; this is the key distinction from ID_LP (`ADS_FILTER_NOLIGHTPROBE` was removed because the flag was forced-dead by the DNA removal; `ADS_FILTER_NOLAT` stays because Lattice objects and their animation channels remain fully active). (2) **`lattice_deform_test.cc` — no action** — lines 43 and 68 call `IDType_ID_LT.init_data`/`IDType_ID_LT.free_data`, but both are inside `#if DO_PERF_TESTS 0` dead code. Removing `extern IDTypeInfo IDType_ID_LT` from `BKE_idtype.hh` is safe. (3) **Scar 8 partial** — `DNA_lattice_types.h` `#ifdef __cplusplus` block contains BOTH `DNA_DEFINE_CXX_METHODS(Lattice)` AND `id_type = ID_LT`. Remove only the `id_type` line — guard and CXX methods macro stay. This differs from Palette/LightProbe where the block was only the `id_type` line. (4) **`key.cc:173` compile-error site** — `Key IDTypeInfo.dependencies_id_types = FILTER_ID_ME | FILTER_ID_LT`; once `FILTER_ID_LT` removed from DNA_ID.h, this fails. Changed to `= FILTER_ID_ME`. (5) **No depsgraph OOB fixes** — guards in `depsgraph_query.cc` already generic from ID_LP fold-down; `case ID_LT:` in both depsgraph builders kept. (6) **`BLT_I18NCONTEXT_ID_LATTICE` — only one borrower** — `interface_template_id.cc:966` (standard Scar 13 sweep target). No unrelated code borrowed it. (7) **Python — two `bpy.data.lattices` patterns** — `space_dopesheet.py:117` `if bpy.data.lattices:` guard removed, `show_lattices` prop kept unconditional; `space_outliner.py:528` `bpy.data.lattices or` removed; `_bpy_types.py:141` `"lattices"` from attr_links removed. (8) **Only one `BKE_main_lists_get` copy** confirmed. (9) **Scar 10** — Lattice has in-class initializers (`adt = nullptr`, `pntsu = 0`, `_pad2[3] = {}`, etc.) — non-trivial → `MEM_new<Lattice>` (Scar 18). No `id_fake_user_set` in `lattice_init_data` (unlike Palette). (10) **Static blend I/O callbacks kept** — `lattice_blend_write` and `lattice_blend_read_data` remain as static functions in `lattice.cc` for 0.9.x format work; `BLO_read_write.hh` include retained (Scar 17 pattern).
+>
+> **True blast radius additions (field-name grep misses):** `anim_data_bmain_utils.cc` (bmain->lattices.first), `anim_sys.cc` (main->lattices.first), `versioning_250.cc:960`, `versioning_legacy.cc:1352,2385` (all iterate bmain->lattices — kept as Scar 2 versioning bridge). `key.cc:173` FILTER_ID_LT dependency (compile-error site, fixed).
+>
+> **False positives identified:** No significant false positives. `LT_OUTSIDE`/`LT_GRID` flag constants in `rna_lattice.cc` are legitimate Lattice struct flags, not constant-prefix RNA enum arrays (Scar 11 check passed clean).
+>
+> **Fold-down mindset confirmed:** At session end, every workflow that existed before still works — Lattice deform modifiers, OB_LATTICE objects, edit lattice mode, dopesheet animation channels, transform, properties panel, outliner display. The ONLY functional change: `bpy.data.lattices` collection is gone; users create lattices via Add > Lattice object (which calls `BKE_lattice_add` → manual listbase insert, Scar 2).
 
 ---
 

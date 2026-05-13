@@ -59,7 +59,7 @@ carries a one-liner status per active item.
 
 Bucket 3 fold-downs — the last datablock-audit version. Six IDs that are property bags pretending to be first-class entities, each folded into the structure they actually belong to: `ID_BR` (Brush) → user state + shareable brush packs, `ID_PAL` (Palette) → brush property or inline, `ID_LT` (Lattice) → modifier, not a datablock, `ID_LP` (LightProbe) → merge into `ID_LA` with a type flag, `ID_MSK` (Mask) → hang off compositor NodeTree, `ID_VF` (VFont) → system font reference. Closes the datablock audit (39 → ~19 ID types).
 
-Fold-down order: **ID_LP ✓** → **ID_PAL ✓** → ID_LT → ID_MSK → ID_VF → ID_BR.
+Fold-down order: **ID_LP ✓** → **ID_PAL ✓** → **ID_LT ✓** → ID_MSK → ID_VF → ID_BR.
 
 ### ID_LP — LightProbe ✓ complete
 
@@ -127,6 +127,33 @@ python (1 file): `_bl_i18n_utils/settings.py:468` ("palettes" data path). No spa
 **What stays (fold-down keeps all runtime code):** `rna_palette.cc`, `palette.cc` (editors — 646 lines of paint/palette UI), `BKE_paint.hh` (BKE_palette_add, BKE_paint_palette, BKE_paint_palette_set), all editor dispatch (icons, outliner, template_id browse string, render_opengl), `ANIMTYPE_PALETTE` enum stub, depsgraph `case ID_PAL:` dispatch in both builders + depsgraph_tag.cc, all blenloader versioning paths over bmain->palettes (Scar 2 bridge). `makesrna.cc:4046` `{"rna_palette.cc", nullptr, RNA_def_palette}` entry kept.
 
 **Claude AI contributor (2026-05-13):** ID_PAL fold-down across 4 layers on branch `claude/review-docs-history-l0OGD`. 4 code commits + 1 docs commit. Cleaner than ID_LP: no forced anim_filter.cc change (no ADS_FILTER_NOPALETTE), no depsgraph OOB fixes needed (guards already generic from ID_LP fold-down), no eevee callers. Scar 10 id_fake_user_set explicit replication is the one detail specific to Palette. Pending CI.
+
+---
+
+### ID_LT — Lattice ✓ complete (pending CI)
+
+**Pre-fold-down blast radius audit (70 literal / ~90 true hits):**
+
+makesdna (3 files): `DNA_ID_enums.h:136` (enum entry → deprecated `#define`); `DNA_lattice_types.h:53-57` (Scar 8 partial: remove only `id_type = ID_LT` line — keep `#ifdef __cplusplus` guard + `DNA_DEFINE_CXX_METHODS(Lattice)`); `DNA_ID.h` (`FILTER_ID_LT`, `INDEX_ID_LT`, removed from `FILTER_ID_ALL`). `DNA_object_types.h` ELEM macros keep `ID_LT` — compile via deprecated `#define`, semantically correct (valid OB_LATTICE runtime check).
+
+blenkernel (5 files): `BKE_idtype.hh:308` (extern removed — `lattice_deform_test.cc` uses IDType_ID_LT but inside `#if DO_PERF_TESTS 0`, dead code); `idtype.cc:145` (INIT_TYPE + CASE_IDINDEX ×2 — Scar 4); `main.cc:149,1076` (CASE_ID_INDEX + lb[] removed; `case ID_LT:` which_libbase routing KEPT — Scar 2; only one `BKE_main_lists_get` copy confirmed); `lattice.cc` (IDTypeInfo IDType_ID_LT removed; `BKE_lattice_add` → Scar 10 `MEM_new<Lattice>` + manual insert; static blend I/O callbacks kept for 0.9.x, `BLO_read_write.hh` retained — Scar 17 pattern); `key.cc:173` (`FILTER_ID_LT` removed from Key IDTypeInfo `dependencies_id_types` — compile-error site).
+
+Scar 2 — kept (mandatory): `BKE_main.hh` (lattices field); `main.cc` which_libbase routing; `anim_data_bmain_utils.cc` (bmain->lattices.first); `anim_sys.cc` (main->lattices.first); `versioning_250.cc:960`; `versioning_legacy.cc:1352,2385` — all kept as Scar 2 bridge.
+
+makesrna (7 files): `rna_ID.cc` (×4 — enum item, filter item, base_type check, switch case); `rna_main_api.cc` (`rna_Main_lattices_new`, `RNA_MAIN_ID_TAG_FUNCS_DEF`, `RNA_def_main_lattices` all removed); `rna_main.cc` (`RNA_MAIN_LISTBASE_FUNCS_DEF(lattices)` + table entry); `rna_internal.hh` (`RNA_def_main_lattices` removed; `RNA_def_lattice` + `RNA_api_lattice` KEPT — Scar 15); `rna_space.cc:3942` (`FILTER_ID_LT` from `category_geometry`); `BLT_translation.hh:121,193` (define + ITEM — Scar 13, only one borrower: `interface_template_id.cc:966`); `interface_template_id.cc:966` (BLT_I18N_MSGID_MULTI_CTXT entry — Scar 13 sweep).
+
+python (4 files): `_bl_i18n_utils/settings.py:455` ("lattices" data path); `space_dopesheet.py:117` (`if bpy.data.lattices:` guard removed, `show_lattices` prop kept unconditional — `ADS_FILTER_NOLAT` stays, prop is valid); `space_outliner.py:528` (`bpy.data.lattices or` removed); `_bpy_types.py:141` ("lattices" from attr_links). `bl_ui/__init__.py`, `space_userpref.py`, `space_view3d.py`, `properties_data_lattice.py` all kept.
+
+| Layer | Files touched | Status |
+|-------|--------------|--------|
+| `makesdna` | `DNA_ID_enums.h` (enum removed, deprecated `#define` added), `DNA_lattice_types.h` (Scar 8 partial: `id_type` line only removed, guard + CXX methods kept), `DNA_ID.h` (`FILTER_ID_LT`, `INDEX_ID_LT`, FILTER_ID_ALL entry removed) | ✓ |
+| `blenkernel` | `BKE_idtype.hh` (extern removed), `idtype.cc` (INIT_TYPE + CASE_IDINDEX ×2 — Scar 4), `main.cc` (CASE_ID_INDEX + lb[] removed; which_libbase `case ID_LT:` KEPT — Scar 2), `lattice.cc` (IDTypeInfo block removed; BKE_lattice_add → MEM_new<Lattice> + manual insert — Scar 10; no id_fake_user_set; BLO_read_write.hh retained — Scar 17), `key.cc` (FILTER_ID_LT from dependencies_id_types) | ✓ |
+| `makesrna` | `rna_ID.cc` (4 entries), `rna_main_api.cc` (new + tag funcs + collection accessor), `rna_main.cc` (listbase funcs + table entry), `rna_internal.hh` (RNA_def_main_lattices removed; RNA_def_lattice + RNA_api_lattice KEPT — Scar 15), `rna_space.cc` (FILTER_ID_LT from category_geometry), `BLT_translation.hh` (define + ITEM — Scar 13), `interface_template_id.cc` (BLT_I18N_MSGID_MULTI_CTXT — Scar 13 sweep) | ✓ |
+| `python` | `_bl_i18n_utils/settings.py`, `space_dopesheet.py` (guard removed, prop kept), `space_outliner.py` (bpy.data.lattices condition removed), `_bpy_types.py` (attr_links) | ✓ |
+
+**What stays (fold-down keeps all runtime code):** `lattice.cc`, `editlattice_select.cc`, `editlattice_tools.cc`, `editlattice_undo.cc`, `lattice_ops.cc` (entire editors/lattice/ subsystem), `rna_lattice.cc`, `rna_lattice_api.cc`, `draw_cache_impl_lattice.cc`, `overlay_lattice.hh`, `transform_convert_lattice.cc`, `MOD_lattice.cc`, `MOD_grease_pencil_lattice.cc`, `BKE_lattice.hh`, depsgraph `case ID_LT:` dispatch in both builders + `depsgraph_tag.cc`, all blenloader versioning paths over `bmain->lattices` (Scar 2 bridge), full anim chain (`ANIMTYPE_DSLAT`, `ACF_DSLAT`, `animdata_filter_ds_lat`, `ADS_FILTER_NOLAT`, `show_lattices` RNA prop). `makesrna.cc:4026` `{"rna_lattice.cc",..., RNA_def_lattice}` entry kept.
+
+**Claude AI contributor (2026-05-13):** ID_LT fold-down across 4 layers on branch `claude/review-docs-history-l0OGD`. 4 code commits + 1 docs commit. Key distinction from previous fold-downs: anim chain fully kept (ANIMTYPE_DSLAT, ACF_DSLAT, ADS_FILTER_NOLAT — all live runtime code); Scar 8 partial (DNA_DEFINE_CXX_METHODS stays in the guard, unlike PAL/LP where the entire block went); lattice_deform_test.cc IDType_ID_LT usage dead code (#if DO_PERF_TESTS 0); key.cc FILTER_ID_LT compile-error dependency identified and fixed. Pending CI.
 
 ---
 
