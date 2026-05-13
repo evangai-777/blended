@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.4.0 — CI-complete (Windows x64, build 70 on commit `7bd69df`). All 9 Bucket 5+6 fossil removals shipped. 0.5.0 next — Bucket 3 fold-downs (39 → ~19 ID types: `ID_BR`, `ID_PAL`, `ID_LT`, `ID_LP`, `ID_MSK`, `ID_VF`).
+**Current version:** Blended 0.5.0-dev — ID_LP fold-down complete (compile-clean pending CI). 0.4.0 base: CI-complete (Windows x64, build 70 on commit `7bd69df`). Bucket 3 fold-downs in progress: `ID_LP` ✓ pending CI. Remaining: `ID_PAL`, `ID_LT`, `ID_MSK`, `ID_VF`, `ID_BR`.
 
 ---
 
@@ -103,7 +103,7 @@ BLI_listbase_clear(&bmain->linestyles);
 | Version | Layer | Status |
 |---------|-------|--------|
 | 0.4.x | Datablock audit — 9 fossil removals (Bucket 5+6) | ✓ CI-complete (build 70) |
-| 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) | Pending |
+| 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) | In progress — `ID_LP` ✓ |
 | 0.6.x | Evaluation model — depsgraph audit | Pending |
 | 0.7.x | App lenses — launcher as canonical workspace system + full product identity | Pending |
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary | Pending |
@@ -142,7 +142,7 @@ The operational test: at the end of a fold-down session, every tool and workflow
 
 | ID | Literal hits | Files | Eventual home (0.7.x) |
 |----|-------------|-------|-----------------------|
-| `ID_LP` | 35 hits | 25 files | Merge into `ID_LA` with type flag |
+| ~~`ID_LP`~~ | ~~35 hits~~ | ~~25 files~~ | ~~Merge into `ID_LA` with type flag~~ ✓ |
 | `ID_PAL` | 38 hits | 24 files | Inline into Brush |
 | `ID_MSK` | 41 hits | 27 files | Hang off compositor NodeTree |
 | `ID_VF` | 45 hits | 27 files | Filepath on Text object |
@@ -163,6 +163,14 @@ The operational test: at the end of a fold-down session, every tool and workflow
 ---
 
 ### Bucket 3 Fold-Down Audit (0.5.x)
+
+**ID_LP — ✓ COMPLETE (0.5.0)** *(true blast radius: ~40 hits / 28 files — fold-down, not chisel; all runtime code kept)*
+
+> **Session note (2026-05-13):** 5 commits across all layers. Fold-down philosophy applied correctly: no files deleted, no runtime code removed, only the ID system registration stripped.
+>
+> Key decisions vs. pre-fold-down audit: (1) **Editors standard sweep skipped entirely** — editor dispatch cases (icons, outliner, template_id browse string, buttons_context, render_opengl traversal) are runtime code and were kept. The fold-down protocol says "every tool and workflow should still work" — these cases make it work. (2) **Anim chain kept** — ANIMTYPE_DSLIGHTPROBE, ACF_DSLIGHTPROBE, all anim_channels_defines/edit/filter ANIMTYPE cases kept. Only the `if (ads_filterflag2 & ADS_FILTER_NOLIGHTPROBE)` block removed in anim_filter.cc (3 lines) — forced by makesdna removal of `ADS_FILTER_NOLIGHTPROBE`. LP animation still shows in dopesheet, just without per-type filter toggle. (3) **Depsgraph dispatch kept** — `case ID_LP:` in deg_builder_nodes.cc and deg_builder_relations.cc kept; build_lightprobe still called. Two OOB fixes applied: `DEG_id_type_any_exists` and `DEG_id_type_updated` in depsgraph_query.cc guarded with `if (id_type_index < 0) return false;` — needed because BKE_idtype_idcode_to_index(ID_LP) returns -1 after INIT_TYPE removal. EEVEE callers (eevee_lightprobe_planar.cc:54, eevee_lightprobe_sphere.cc:24) changed from `DEG_id_type_any_exists(depsgraph, ID_LP)` → `true` (conservative always-update). (4) **Scar 13 clean** — BLT_I18NCONTEXT_ID_LIGHTPROBE removed from BLT_translation.hh + BLT_I18N_MSGID_MULTI_CTXT in interface_template_id.cc; no borrowers found. (5) **wm.py LIGHT_PROBE operator entry removed** — the copy-to-selected operator accessed bpy.data.lightprobes which no longer exists; entry removed to prevent AttributeError at runtime. space_userpref.py use_duplicate_lightprobe kept — property lives in rna_userdef.cc, not tied to bpy.data collection. (6) **MEM_new_zeroed used** for Scar 10 allocator rewrite — LightProbe has no DNA_DEFINE_CXX_METHODS, no user-defined constructor, trivially constructible. (7) **DNA_action_types.h ADS_FILTER_NOLIGHTPROBE removed** — this was the one makesdna item that forced a runtime code change (anim_filter.cc), unlike the other DNA changes which only affected the ID system machinery.
+>
+> **Fold-down mindset confirmed:** At session end, every workflow that existed before still works — EEVEE probe rendering, properties panel, outliner display, animation dopesheet channels, icon display, outliner filter. The ONLY functional change: bpy.data.lightprobes collection is gone; users create light probes via Add > Light Probe object (which calls BKE_lightprobe_add → manual listbase insert, Scar 2).
 
 **ID_LP — 35 literal hits, 25 files** *(pre-fold-down audit — 2026-05-13)*
 
