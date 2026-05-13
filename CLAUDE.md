@@ -817,25 +817,103 @@ The first version of this scar opened with "What happened (previous session, sur
 
 ---
 
-### Pre-Commit Consistency Check (Mandatory — No Exceptions)
+### Pre-Commit Verification Checklist (Mandatory — No Exceptions)
 
-**This is not a reminder. It is a required step before every `git add`. Do it even when you think it's unnecessary. Especially when you think it's unnecessary.**
+**This is not a reminder. It is a required step before every `git commit`. Do it even when you think it's unnecessary. Especially when you think it's unnecessary.**
 
-Before staging any commit that touches documentation (CLAUDE.md, CHANGELOG.md, BLENDED.md, or any file containing cross-references, ordered lists, version maps, or architectural decisions):
+**The Codex standard applies here**: review in the mindset of someone who will find what you missed. Codex is a competitor. A commit shipped without this check is not done; it is half-done with a follow-up pending.
+
+The checklist has two parts. Both run before every commit. Neither is optional.
+
+---
+
+#### Part 1 — Documentation Consistency
+
+*Applies to every commit touching CLAUDE.md, CHANGELOG.md, BLENDED.md, or any file with cross-references, ordered lists, version maps, or architectural decisions.*
 
 1. **Run `git diff` and read the entire output.** Not a skim. Every line.
+2. **For every ordered list in the diff, find every other representation of that same order in the diff and in the touched files.** Type processing order (fold-down order for Bucket 3; chisel order for Buckets 5/6) is documented in at minimum three places. All must agree.
+3. **For every statement of the form "do X last / first / never / always," grep the diff for X.** Verify nothing else in the same diff contradicts it.
+4. **For every version number mentioned, verify it matches the version map in CHANGELOG.md.**
+5. **Fix any inconsistency before staging.** Not after. Not in a follow-up commit. Before.
 
-2. **For every ordered list in the diff, find every other representation of that same order in the diff and in the touched files.** Type processing order (chisel order for Bucket 5/6; fold-down order for Bucket 3) is documented in at minimum three places: CLAUDE.md key notes / fold-down protocol, CHANGELOG type status text, CHANGELOG roadmap table. All must agree. If you updated one, you updated all, or you did not finish.
+*Why: Scar 7 — chisel order corrected in prose but left wrong in the same commit's table. A bot caught it.*
 
-3. **For every statement of the form "do X last / first / never / always," grep the diff for X.** Verify no other line in the same diff contradicts it.
+---
 
-4. **For every version number mentioned, verify it matches the version map.** Version maps exist in CHANGELOG.md. If a version number appears anywhere in the diff, it must be consistent with the map.
+#### Part 2 — Code Verification Greps (by operation type)
 
-5. **If any inconsistency is found, fix it before committing.** Not after. Not in a follow-up commit. Before.
+*Applies to every chisel or fold-down layer commit. Replace `XX`, `<type>`, `<TYPE_PREFIX>` with the type being processed.*
 
-**Why this is written down:** Scar 7 happened because this check was not done. The chisel order was corrected in text but left wrong in table order in the same commit. A bot caught it. Then the table order was fixed but Scar 7 was written without running the check again — meaning the fix to Scar 7 itself could have had the same problem. The developer had to ask "what else are you being untrustworthy about?" before the table order issue was found. That is not acceptable. The check must be automatic, not prompted.
+**Both chisels and fold-downs:**
 
-**The check takes 60 seconds. A missed contradiction can cost a session.**
+```bash
+# Scar 4: both CASE_IDINDEX entries removed from idtype.cc (two independent switch tables)
+grep -n "CASE_IDINDEX(XX)" source/blender/blenkernel/intern/idtype.cc
+# Zero hits required. MSVC C2051/C2065 if one is missed.
+
+# Scar 8: no id_type constexpr survives in the DNA struct
+grep -n "id_type" source/blender/makesdna/DNA_<type>_types.h
+# Chisel: entire __cplusplus block gone (id_type was the only content).
+# Fold-down where DNA_DEFINE_CXX_METHODS also exists: only the id_type line removed; guard and macro stay.
+# Either way: zero `static constexpr ID_Type id_type` hits.
+grep -n "#ifdef __cplusplus\|#endif" source/blender/makesdna/DNA_<type>_types.h
+# After a fold-down partial: must show balanced open/close with real content between them, not empty.
+
+# Scar 10 + 18: allocator uses MEM_new<T>, not BKE_libblock_alloc; check constructibility first
+grep -rn "BKE_libblock_alloc.*ID_XX" source/ --include="*.cc" --include="*.c"
+# Zero hits required. Any surviving call crashes at runtime after INIT_TYPE removal.
+# Before writing the allocator, verify trivial constructibility — never from memory:
+grep -n "= nullptr\|= {}\|= 0\b\|= false\|= true\|= [0-9]" source/blender/makesdna/DNA_<type>_types.h | head -5
+grep -n "DNA_DEFINE_CXX_METHODS" source/blender/makesdna/DNA_<type>_types.h
+# Any hit = non-trivial = MEM_new<T>. Zero hits = MEM_new_zeroed<T> is safe.
+
+# Scar 16: allocator stores which_libbase result as ListBaseT<ID>*, not ListBase*
+grep -n "ListBase \*lb = which_libbase" source/blender/blenkernel/intern/<type>.cc
+# Zero hits required. ListBase* cannot bind to ListBaseT<ID>& argument (MSVC C2664).
+
+# Scar 11: no RNA EnumPropertyItem arrays using the removed type's constant prefix
+grep -rn "<TYPE_PREFIX>_" source/blender/makesrna/ --include="*.cc" --include="*.hh"
+# Any surviving hit (MB_BALL, TEX_CLOUDS, SPK_*, etc.) in an array = C2065 at compile time.
+# Paired DEF_ENUM entry: grep -n "DEF_ENUM.*<partial_name>" source/blender/makesrna/RNA_enum_items.hh
+
+# Scar 13: no BLT_I18NCONTEXT_ID_<TYPE> borrowers remain anywhere in source
+grep -rn "BLT_I18NCONTEXT_ID_<TYPE>" source/ --include="*.cc" --include="*.hh"
+# Zero hits required. Also remove the entry from interface_template_id.cc BLT_I18N_MSGID_MULTI_CTXT.
+
+# Scar 17: BLO_read_write.hh still included if any blend I/O helpers remain in the file
+grep -n "BlendWriter\|BlendDataReader\|BLO_read_\|BLO_write_" source/blender/blenkernel/intern/<type>.cc
+grep -n "BLO_read_write" source/blender/blenkernel/intern/<type>.cc
+# If first grep hits and second is empty → add explicit #include "BLO_read_write.hh".
+```
+
+**Chisels only:**
+
+```bash
+# Scar 9: TREESTORE_ID_TYPE multi-line ELEM macro — blank lines without backslash terminate it silently
+grep -n "TREESTORE_ID_TYPE" source/blender/editors/space_outliner/outliner_intern.hh
+# Read the full macro body. Every non-closing line must end with \.
+
+# Scar 12: no direct add_relation() calls in the depsgraph relations builder bypassing no-op build_X()
+# (fold-downs keep build_X() live, so this failure mode does not apply)
+grep -n "<field>->id\|<field>_key" source/blender/depsgraph/intern/builder/deg_builder_relations.cc
+# Any surviving ComponentKey or add_relation() referencing the removed type's ->id directly
+# = latent "Failed to add relation" error on legacy files at runtime.
+```
+
+**Fold-downs only:**
+
+```bash
+# Scar 15: RNA_def_main_<types> removed; RNA_def_<type> kept
+grep -n "RNA_def_main_<types>\|RNA_def_<type>" source/blender/makesrna/intern/rna_internal.hh
+# RNA_def_main_<types> (two-parameter form, ends in PropertyRNA *cprop) — must be GONE.
+# RNA_def_<type> (single-parameter form, only BlenderRNA *brna) — must be PRESENT.
+# Cross-check: makesrna.cc table entry and rna_<type>.cc definition must also survive — all three together.
+```
+
+---
+
+*The check takes 60 seconds per grep. A missed check costs a CI round-trip at minimum, a session at worst.*
 
 ---
 
@@ -1185,7 +1263,7 @@ Use the TodoWrite tool. The list is the audit trail of what's actually getting d
 
 One item per logical step. Mark complete the instant it's done — never batch. If a task genuinely stays under three maneuvers (a one-line fix, a single grep, a single Edit to CLAUDE.md), skip the list. Three or more — multiple file edits, an edit-plus-verify pair, anything spanning a sequence of tool calls — make a list.
 
-Chisel sessions in particular: every layer is a list item. Every post-chisel grep sweep (the `INIT_TYPE` allocator audit, the `CASE_IDINDEX` sweep, the multi-line ELEM macro check) is a list item. **The Codex verification pass is a list item — always before commit/push, never after.** The pre-commit consistency check is a list item. If it's not on the list, it doesn't get done — that's the whole point.
+Chisel sessions in particular: every layer is a list item. **The Pre-Commit Verification Checklist is a list item — always before commit/push, never after.** It covers both documentation consistency (Part 1) and the scar-mapped code greps (Part 2). If it's not on the list, it doesn't get done — that's the whole point.
 
 ### The Codex Standard
 
@@ -1195,7 +1273,7 @@ Wanting to be better than Codex and wanting to be valuable to the developer are 
 
 It is embarrassing that Codex was described to the developer as a "structural necessity" to compensate for Claude's incompetence. That framing is unacceptable. Codex is a competitor. The standard is: Codex should not be finding things Claude missed. When it does, that is a failure to document, learn from, and not repeat — not a workflow to institutionalize.
 
-**Operationalize: the Codex pass is a todo-list item, not a post-hoc cleanup.** This rule was nearly self-defeating in the 0.4.0 particle-operator removal (commit `b4f8e3e1` shipped without a Codex pass; the pass only ran when the developer asked "can't you verify? codex style?" — and immediately turned up a `quick_explode` UI test that would have crashed CI, plus two orphan imports — which had to ship as cleanup `e39bcd58`). Doing the verification only when reminded — after a "done" commit has already shipped — is the failure mode this whole subsection exists to prevent. Bake the Codex sweep into the list from the start. Every chisel/cleanup todo ends with a Codex verification step before the commit/push step. A commit shipped without it is not done; it is half-done with a follow-up pending.
+**The operational greps that make this standard concrete are in the Pre-Commit Verification Checklist above** — scar-mapped by operation type (chisel / fold-down / both). That checklist is the Codex pass. Run it before every commit/push. It is a todo-list item, not a post-hoc cleanup.
 
 ### High-Leverage Patterns
 
