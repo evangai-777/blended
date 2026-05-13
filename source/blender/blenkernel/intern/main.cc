@@ -146,7 +146,6 @@ void BKE_main_clear(Main &bmain)
         CASE_ID_INDEX(INDEX_ID_CV);
         CASE_ID_INDEX(INDEX_ID_PT);
         CASE_ID_INDEX(INDEX_ID_VO);
-        CASE_ID_INDEX(INDEX_ID_LT);
         CASE_ID_INDEX(INDEX_ID_LA);
         CASE_ID_INDEX(INDEX_ID_CA);
         CASE_ID_INDEX(INDEX_ID_OB);
@@ -1073,7 +1072,6 @@ MainListsArray BKE_main_lists_get(Main &bmain)
   lb[INDEX_ID_PT] = &(bmain.pointclouds.cast<ID>());
   lb[INDEX_ID_VO] = &(bmain.volumes.cast<ID>());
 
-  lb[INDEX_ID_LT] = &(bmain.lattices.cast<ID>());
   lb[INDEX_ID_LA] = &(bmain.lights.cast<ID>());
   lb[INDEX_ID_CA] = &(bmain.cameras.cast<ID>());
 
