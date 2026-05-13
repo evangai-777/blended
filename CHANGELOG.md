@@ -59,7 +59,7 @@ carries a one-liner status per active item.
 
 Bucket 3 fold-downs — the last datablock-audit version. Six IDs that are property bags pretending to be first-class entities, each folded into the structure they actually belong to: `ID_BR` (Brush) → user state + shareable brush packs, `ID_PAL` (Palette) → brush property or inline, `ID_LT` (Lattice) → modifier, not a datablock, `ID_LP` (LightProbe) → merge into `ID_LA` with a type flag, `ID_MSK` (Mask) → hang off compositor NodeTree, `ID_VF` (VFont) → system font reference. Closes the datablock audit (39 → ~19 ID types).
 
-Fold-down order: **ID_LP ✓** → **ID_PAL ✓** → **ID_LT ✓** → **ID_MSK ✓** → **ID_VF ✓** → ID_BR.
+Fold-down order: **ID_LP ✓** → **ID_PAL ✓** → **ID_LT ✓** → **ID_MSK ✓** → **ID_VF ✓** → **ID_BR ✓**. All Bucket 3 fold-downs complete. Datablock audit closed: 39 → ~19 ID types.
 
 ### ID_LP — LightProbe ✓ complete
 
@@ -214,6 +214,32 @@ VFont is a fold-down, not a chisel. All runtime functionality kept. Text objects
 **What stays (fold-down keeps all runtime code):** `vfont.cc` (all non-IDTypeInfo functions including `BKE_vfont_load`, `BKE_vfont_copy`, `vfont_blend_write`, `vfont_blend_read_data`), `BKE_vfont.hh`, all `curve_deform.cc` / `text_layout.cc` text rendering, all `OB_FONT` handling throughout editors, full depsgraph `build_vfont` dispatch, all SOCK_FONT geometry node / compositor handling. `bpy.context.object.data.font` still valid — font assignment via text object data, not `bpy.data.fonts`.
 
 **Claude AI contributor (2026-05-13):** ID_VF fold-down across 4 layers on branch `claude/update-ci-status-5uAPa`. 4 code commits pushed. Key distinction from other fold-downs: no dedicated `BKE_vfont_add()` — allocation lives inside `BKE_vfont_load()` which parses the font simultaneously; Scar 10 applied surgically inside that function. SOCK_FONT socket handling confirmed active runtime code and fully kept. BLT_I18NCONTEXT_ID_VFONT fully removed (no external borrowers unlike ID_MSK). Pending CI.
+
+---
+
+### ID_BR — Brush ✓ complete (pending CI)
+
+True blast radius: 119 literal / ~135 true hits — fold-down, not chisel; all runtime code kept.
+
+**Key notes:**
+- **No anim chain** — Brush has no ANIMTYPE_DSBRUSH, no ACF_DSBRUSH, no ADS_FILTER_NOBRUSH. Nothing to remove.
+- **Scar 8 partial** — `DNA_brush_types.h` block has `DNA_DEFINE_CXX_METHODS(Brush)` + `id_type = ID_BR`. Removed only `id_type` line; guard + CXX methods stay (same as ID_LT).
+- **Scar 10** — `BKE_brush_add` → `MEM_new<Brush>` + manual insert. `brush_init_data` (static in same file) called after insert. `lib_id_test.cc` secondary crash site patched: `BKE_id_new(ctx.bmain, ID_BR, ...)` → `&BKE_brush_add(...)→id`.
+- **Scar 13 partial** — `BLT_I18NCONTEXT_ID_BRUSH` KEPT (20+ borrowers in rna_brush.cc + dynamicpaint.cc). Only `interface_template_id.cc` MULTI_CTXT entry removed.
+- **Compile-error sites caught in audit** — `scene.cc:1611` FILTER_ID_BR in dependencies_id_types, `ED_asset_type.hh:21` FILTER_ID_BR in non-experimental flags. Both fixed by removing `FILTER_ID_BR |`.
+- **Python copy-to-selected** — `bpy.data.brushes` fallback in wm.py replaced with `[]`; outliner path still works.
+- **Final Bucket 3 fold-down** — datablock audit closed at 39 → ~19 ID types.
+
+| Layer | Files | Status |
+|-------|-------|--------|
+| `makesdna` | `DNA_ID_enums.h` (enum → deprecated `#define`), `DNA_brush_types.h` (Scar 8 partial: `id_type` line only; `DNA_DEFINE_CXX_METHODS` + guard kept), `DNA_ID.h` (`FILTER_ID_BR`, `INDEX_ID_BR`, FILTER_ID_ALL entry removed) | ✓ |
+| `blenkernel` | `BKE_idtype.hh` (extern removed), `idtype.cc` (INIT_TYPE + CASE_IDINDEX ×2 — Scar 4), `main.cc` (CASE_ID_INDEX + lb[] removed; which_libbase `case ID_BR:` KEPT — Scar 2), `brush.cc` (IDTypeInfo block removed; `BKE_brush_add` → MEM_new<Brush> + manual insert + brush_init_data call — Scar 10), `lib_id_test.cc` (BKE_id_new crash site patched) | ✓ |
+| `makesrna` | `rna_ID.cc` (enum items + filter items removed; both `case ID_BR:` runtime mappings KEPT), `rna_main_api.cc` (new func + tag funcs + collection accessor removed), `rna_main.cc` (listbase funcs + table entry removed), `rna_internal.hh` (`RNA_def_main_brushes` removed; `RNA_def_brush` KEPT — Scar 15), `rna_space.cc` (FILTER_ID_BR from category_misc), `interface_template_id.cc` (`BLT_I18NCONTEXT_ID_BRUSH` from MULTI_CTXT — Scar 13), `scene.cc` (FILTER_ID_BR from dependencies_id_types), `ED_asset_type.hh` (FILTER_ID_BR from non-experimental flags) | ✓ |
+| `python` | `settings.py` ("brushes" data path removed), `_bpy_types.py` ("brushes" from attr_links), `wm.py` (bpy.data.brushes fallback → `[]`) | ✓ |
+
+**What stays (fold-down keeps all runtime code):** `brush.cc` (all non-IDTypeInfo functions: `BKE_brush_add`, `BKE_brush_copy`, `BKE_brush_free`, `BKE_brush_size_get/set`, all paint/sculpt brush functions), `BKE_brush.hh`, all `rna_brush.cc` RNA definitions, full depsgraph brush dispatch, all paint mode brush panel UI, all sculpt mode brush functionality, all `BKE_paintmode_*` / `BKE_paint_*` brush accessors. `bpy.context.tool_settings.*.brush` still valid — brushes accessed via tool settings, not `bpy.data.brushes`.
+
+**Claude AI contributor (2026-05-13):** ID_BR fold-down across 4 layers on branch `claude/update-ci-status-5uAPa`. 4 code commits pushed. Final Bucket 3 fold-down; datablock audit closed at 39 → ~19 ID types. Key distinction: Brush is the highest blast radius type in Bucket 3 (119 literal hits); every paint and sculpt mode touches bmain->brushes every frame. All runtime paint/sculpt code confirmed kept. BLT_I18NCONTEXT_ID_BRUSH retained (20+ borrowers). Two compile-error sites (scene.cc, ED_asset_type.hh) caught during audit and fixed in makesrna layer. Pending CI.
 
 ---
 

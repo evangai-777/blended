@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.5.0-dev — ID_LP fold-down CI-complete (Windows x64, build 74 on commit `80002ae`). 0.4.0 base: CI-complete (Windows x64, build 70 on commit `7bd69df`). Bucket 3 fold-downs in progress: `ID_LP` ✓, `ID_PAL` ✓ (pending CI), `ID_LT` ✓ (pending CI), `ID_MSK` ✓ (pending CI), `ID_VF` ✓ (pending CI). Remaining: `ID_BR`.
+**Current version:** Blended 0.5.0-dev — ID_LP fold-down CI-complete (Windows x64, build 74 on commit `80002ae`). 0.4.0 base: CI-complete (Windows x64, build 70 on commit `7bd69df`). Bucket 3 fold-downs complete: `ID_LP` ✓, `ID_PAL` ✓ (pending CI), `ID_LT` ✓ (pending CI), `ID_MSK` ✓ (pending CI), `ID_VF` ✓ (pending CI), `ID_BR` ✓ (pending CI). Datablock audit closed: 39 → ~19 ID types.
 
 ---
 
@@ -137,13 +137,13 @@ The operational test: at the end of a fold-down session, every tool and workflow
 | ~~`ID_MSK`~~ | ~~41 hits~~ | ~~27 files~~ | ~~Hang off compositor NodeTree~~ ✓ |
 | ~~`ID_VF`~~ | ~~45 hits~~ | ~~27 files~~ | ~~Filepath on Text object~~ ✓ |
 | ~~`ID_LT`~~ | ~~70 hits~~ | ~~32 files~~ | ~~Owned by Lattice modifier~~ ✓ |
-| `ID_BR` | 119 hits | 44 files | User state + shareable brush packs |
+| ~~`ID_BR`~~ | ~~119 hits~~ | ~~44 files~~ | ~~User state + shareable brush packs~~ ✓ |
 
 **Scar 2 fields and runtime status:**
 
 | ID | bmain field | Runtime note |
 |----|-------------|-------------|
-| `ID_BR` | `bmain->brushes` | Every paint/sculpt mode reads this every frame |
+| ~~`ID_BR`~~ | `bmain->brushes` | Every paint/sculpt mode reads this every frame — Scar 2 kept ✓ |
 | ~~`ID_PAL`~~ | `bmain->palettes` | Referenced by Brush; active in any paint session — Scar 2 kept ✓ |
 | ~~`ID_LT`~~ | `bmain->lattices` | OB_LATTICE objects actively deform meshes — Scar 2 kept ✓ |
 | `ID_LP` | `bmain->lightprobes` | Active in EEVEE rendering |
@@ -215,6 +215,20 @@ The operational test: at the end of a fold-down session, every tool and workflow
 > **False positives identified:** All `SOCK_FONT` socket handling throughout geometry nodes and compositor — runtime code, all kept. `build_vfont` depsgraph builder — runtime code, kept. `case ID_VF:` in RNA bidirectional mappings (`rna_ID.cc`) and `interface_template_id.cc` browse string — runtime code, kept. `OB_FONT` object type handling throughout the codebase — text objects, entirely separate from VFont ID deregistration.
 >
 > **Fold-down mindset confirmed:** At session end, every workflow that existed before still works — text objects with custom fonts, geometry nodes string-to-curves, SOCK_FONT socket inputs, depsgraph evaluation of font data, properties panel, outliner display. The ONLY functional change: `bpy.data.fonts` collection is gone; users load fonts via the font selector on Text objects (which calls `BKE_vfont_load` → manual listbase insert, Scar 2).
+
+---
+
+**ID_BR — ✓ COMPLETE (0.5.0, pending CI)** *(true blast radius: 119 literal / ~135 true hits — fold-down, not chisel; all runtime code kept)*
+
+> **Session note (2026-05-13):** 4 code commits across all layers + 1 docs commit. Fold-down philosophy applied correctly: no files deleted, no runtime code removed, only the ID system registration stripped. Final Bucket 3 fold-down — datablock audit closed at 39 → ~19 ID types.
+>
+> Key decisions vs. pre-fold-down audit: (1) **No anim chain** — Brush has no `ANIMTYPE_DSBRUSH`, `ACF_DSBRUSH`, or `ADS_FILTER_NOBRUSH`. Brush is not directly animatable; paint strokes are driven by Object and tool settings. Nothing to remove in anim chain. (2) **Depsgraph dispatch kept** — `case ID_BR:` in both `deg_builder_nodes.cc` and `deg_builder_relations.cc` kept; build_brush still called. OOB guards already generic from ID_LP fold-down — no new per-type fix needed. (3) **Scar 8 partial** — `DNA_brush_types.h` `#ifdef __cplusplus` block contains BOTH `DNA_DEFINE_CXX_METHODS(Brush)` AND `id_type = ID_BR`. Remove only the `id_type` line — guard and CXX methods macro stay (same pattern as ID_LT). (4) **BLT_I18NCONTEXT_ID_BRUSH kept** — 20+ borrowers in `rna_brush.cc` + 1 in `dynamicpaint.cc` (Scar 13 partial: only the `interface_template_id.cc` MULTI_CTXT entry removed). (5) **Scar 10 — BKE_brush_add** — Brush has `DNA_DEFINE_CXX_METHODS(Brush)` + multiple in-class initializers → non-trivial → `MEM_new<Brush>` (Scar 18). `BKE_brush_add` calls `brush_init_data` (static in same file) after manual listbase insert — all curve setup and `id_fake_user_set` handled there. (6) **lib_id_test.cc Scar 10 secondary site** — `BKE_id_new(ctx.bmain, ID_BR, "BR_A")` replaced with `&BKE_brush_add(ctx.bmain, "BR_A", OB_MODE_OBJECT)->id` + `#include "BKE_brush.hh"` added. (7) **rna_space.cc category_misc** — `FILTER_ID_BR |` removed from `{FILTER_ID_BR | FILTER_ID_TXT, "category_misc", ...}` asset browser filter. (8) **scene.cc and ED_asset_type.hh compile sites** — `FILTER_ID_BR |` removed from `dependencies_id_types` in scene.cc IDTypeInfo and from `ED_ASSET_TYPE_IDS_NON_EXPERIMENTAL_FLAGS` macro — both would fail to compile with FILTER_ID_BR removed from DNA_ID.h. (9) **Python** — `settings.py` "brushes" data path removed; `_bpy_types.py` `"brushes"` from attr_links removed; `wm.py` copy-to-selected brush fallback replaced with `[]` (outliner path still works; non-outliner path silently returns no brushes, which is correct — brushes are not named project data in 0.5.0). (10) **No space_dopesheet.py or space_outliner.py changes** — no `bpy.data.brushes` guard conditions in those files.
+>
+> **True blast radius additions (field-name grep misses):** `anim_data_bmain_utils.cc` `ANIMDATA_IDS_CB(bmain->brushes.first)`, `anim_sys.cc` `EVAL_ANIM_IDS(main->brushes.first, ...)`, versioning files iterating `bmain->brushes` (versioning_280, versioning_290, versioning_legacy) — all kept as Scar 2 versioning bridge. `scene.cc:1611` `FILTER_ID_BR` in dependencies_id_types — compile-error site caught during audit. `ED_asset_type.hh:21` `FILTER_ID_BR` in non-experimental flags — compile-error site caught during audit.
+>
+> **False positives identified:** All `eevee_lightprobe_volume.cc` and `eevee_defines.hh` hits — matched broader grep due to `IRRADIANCE_GRID_BRICK_SIZE` substring "BR"; confirmed not ID_BR references. `PE_BRUSH_*` / `BRUSH_CURVE_*` / `BRUSH_AUTOMASKING_*` RNA enum items in `rna_sculpt_paint.cc` and `rna_dynamicpaint.cc` — flag constants on the kept Brush struct, not ID-type-registration artifacts (Scar 11 clean). All `rna_brush.cc` RNA struct definitions — runtime code, kept. `BKE_brush_*` function bodies throughout `brush.cc` — runtime code, kept.
+>
+> **Fold-down mindset confirmed:** At session end, every workflow that existed before still works — sculpt and paint brushes, brush panels, brush assets, depsgraph brush evaluation, dopesheet, properties panel, outliner display. The ONLY functional change: `bpy.data.brushes` collection is gone; brushes are accessed via `bpy.context.tool_settings.*.brush` pointer per paint mode (which calls `BKE_brush_add` → manual listbase insert, Scar 2). **Bucket 3 fold-down protocol complete. Datablock audit: 39 → ~19 ID types.**
 
 ---
 
