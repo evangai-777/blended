@@ -148,7 +148,6 @@ void BKE_main_clear(Main &bmain)
         CASE_ID_INDEX(INDEX_ID_CA);
         CASE_ID_INDEX(INDEX_ID_OB);
         CASE_ID_INDEX(INDEX_ID_GR);
-        CASE_ID_INDEX(INDEX_ID_BR);
         CASE_ID_INDEX(INDEX_ID_SCE);
         case INDEX_ID_NULL: {
           BLI_assert_unreachable();
@@ -1075,7 +1074,6 @@ MainListsArray BKE_main_lists_get(Main &bmain)
   lb[INDEX_ID_TXT] = &(bmain.texts.cast<ID>());
   lb[INDEX_ID_SO] = &(bmain.sounds.cast<ID>());
   lb[INDEX_ID_GR] = &(bmain.collections.cast<ID>());
-  lb[INDEX_ID_BR] = &(bmain.brushes.cast<ID>());
 
   lb[INDEX_ID_WO] = &(bmain.worlds.cast<ID>());
   lb[INDEX_ID_MC] = &(bmain.movieclips.cast<ID>());

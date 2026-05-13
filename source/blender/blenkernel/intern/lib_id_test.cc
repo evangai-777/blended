@@ -7,6 +7,7 @@
 #include "BLI_string.h"
 #include "BLI_string_ref.hh"
 
+#include "BKE_brush.hh"
 #include "BKE_idtype.hh"
 #include "BKE_lib_id.hh"
 #include "BKE_main.hh"
@@ -784,7 +785,7 @@ TEST(lib_id_make_local, brush)
   LibIDMainSortTestContext ctx;
 
   Library *lib_a = static_cast<Library *>(BKE_id_new(ctx.bmain, ID_LI, "LI_A"));
-  ID *br_a = static_cast<ID *>(BKE_id_new(ctx.bmain, ID_BR, "BR_A"));
+  ID *br_a = &BKE_brush_add(ctx.bmain, "BR_A", OB_MODE_OBJECT)->id;
 
   change_lib(ctx.bmain, br_a, lib_a);
 
