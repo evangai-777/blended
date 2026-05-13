@@ -2796,7 +2796,6 @@ class WM_OT_batch_rename(Operator):
             ('ARMATURE', "Armatures", "", 'ARMATURE_DATA', 8),
             ('LATTICE', "Lattices", "", 'LATTICE_DATA', 9),
             ('LIGHT', "Lights", "", 'LIGHT_DATA', 10),
-            ('LIGHT_PROBE', "Light Probes", "", 'OUTLINER_DATA_LIGHTPROBE', 11),
             ('CAMERA', "Cameras", "", 'CAMERA_DATA', 12),
             None,
             ('BONE', "Bones", "", 'BONE_DATA', 14),
@@ -2943,7 +2942,6 @@ class WM_OT_batch_rename(Operator):
             'ARMATURE': ("armatures", iface_("Armature(s)"), bpy.types.Armature),
             'LATTICE': ("lattices", iface_("Lattice(s)"), bpy.types.Lattice),
             'LIGHT': ("lights", iface_("Light(s)"), bpy.types.Light),
-            'LIGHT_PROBE': ("lightprobes", iface_("Light Probe(s)"), bpy.types.LightProbe),
             'CAMERA': ("cameras", iface_("Camera(s)"), bpy.types.Camera),
         }
 

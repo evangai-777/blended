@@ -454,7 +454,6 @@ WARN_MSGID_NOT_CAPITALIZED_ALLOWED = {
     "ipos",
     "lattices",
     "libraries",
-    "lightprobes",
     "lights",
     "linestyles",
     "link_placeholders",
