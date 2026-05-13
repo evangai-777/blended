@@ -1421,6 +1421,46 @@ In every case: the `RNA_def_main_<types>` signature has a second `PropertyRNA *c
 
 ---
 
+### Scar 16: Scar 10 Allocator Uses ListBase* Instead of ListBaseT<ID>*
+
+**What happened:** The ID_LP fold-down applied the Scar 10 manual allocator pattern to `BKE_lightprobe_add`. The template in CLAUDE.md correctly shows `ListBaseT<ID> *lb = which_libbase(bmain, ID_XX);`, but the implementation stored the result as `ListBase *lb`. CI failed at step 6624/8093: `error C2664: cannot convert argument 2 from 'blender::ListBase' to 'blender::ListBaseT<blender::ID> &'`.
+
+**Why it happens:** `which_libbase` returns `ListBaseT<ID>*`. `BKE_id_new_name_validate` takes `ListBaseT<ID>&` as its second argument. Storing the pointer as `ListBase*` and then dereferencing gives `ListBase`, which cannot bind to `ListBaseT<ID>&`. MSVC C2664 is the diagnostic.
+
+**The fix is one word:** `ListBase *lb` → `ListBaseT<ID> *lb`. The dereference `*lb` then yields `ListBaseT<ID>` and the call resolves.
+
+**Mandatory check after every Scar 10 application:**
+```bash
+grep -n "ListBase \*lb = which_libbase" source/blender/blenkernel/intern/<type>.cc
+# Must be empty. Any hit is a wrong-type bug waiting to hit CI.
+# Correct form:
+grep -n "ListBaseT<ID> \*lb = which_libbase" source/blender/blenkernel/intern/<type>.cc
+```
+
+**For the remaining Bucket 3 fold-downs** — every `BKE_<type>_add` rewritten under Scar 10 must use `ListBaseT<ID> *lb`, not `ListBase *lb`. The CLAUDE.md template is correct; the implementation must match it exactly.
+
+---
+
+### Scar 17: Removing IDTypeInfo Drops the Implicit Include Chain for Blend Write/Read
+
+**What happened:** The ID_LP fold-down removed the `IDTypeInfo IDType_ID_LP` block from `lightprobe.cc`. The IDTypeInfo callbacks (`lightprobe_blend_write`, `lightprobe_blend_read_data`) previously brought `BLO_read_write.hh` into the file's include chain. The fold-down kept `BKE_lightprobe_cache_blend_write` and `BKE_lightprobe_cache_blend_read` as public runtime functions (correct — these are called from object serialization, not from the ID type system). But without the IDTypeInfo callbacks, `BLO_read_write.hh` was no longer included, leaving `BlendWriter`, `BLO_read_struct_array`, `BLO_read_float3_array`, `BLO_read_float_array`, `BLO_read_int8_array`, and `BLO_read_struct` all undefined. CI failed at step 6624/8093 with 15+ C2027/C3861 errors.
+
+**Why this is easy to miss:** The IDTypeInfo callbacks and the public cache blend functions live in the same file and look related — they both do blend file I/O. But they are independent code paths. The IDTypeInfo callbacks write/read the `LightProbe` ID block itself. The cache functions write/read the runtime `LightProbeObjectCache` attached to `Object`. The fold-down correctly removed the first and kept the second. The broken include chain is a side effect, not a logic error.
+
+**The rule:** After removing any IDTypeInfo block from a `.cc` file, audit the remaining code for any use of `BlendWriter`, `BlendDataReader`, or `BLO_*` functions. If any remain, add `#include "BLO_read_write.hh"` explicitly. `blenkernel` links `bf::blenloader` (see `CMakeLists.txt:560`) so the include is always available — it just needs to be stated.
+
+**Detection grep — run after removing IDTypeInfo from any file:**
+```bash
+grep -n "BlendWriter\|BlendDataReader\|BLO_read_\|BLO_write_" source/blender/blenkernel/intern/<type>.cc
+# Any hit that is NOT inside a removed IDTypeInfo callback needs BLO_read_write.hh included.
+grep -n "BLO_read_write" source/blender/blenkernel/intern/<type>.cc
+# If empty and the above grep had hits, add the include.
+```
+
+**This applies to both chisels and fold-downs.** Any file that loses its IDTypeInfo but retains public blend I/O helpers must add the explicit include. The pattern will recur in any type that has object-level cache data (e.g., `LightProbeObjectCache`-style structs attached to `Object` rather than the ID itself).
+
+---
+
 ### Count Before You Claim
 
 If you say "three issues" there must be three issues. If you list a numbered set and then immediately dismiss one entry as "not a problem," you miscounted — that item was an observation, not an issue, and should never have been numbered. Do not announce N things and deliver N-1.

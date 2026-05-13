@@ -23,6 +23,8 @@
 #include "BKE_lightprobe.h"
 #include "BKE_main.hh"
 
+#include "BLO_read_write.hh"
+
 namespace blender {
 
 void BKE_lightprobe_type_set(LightProbe *probe, const short lightprobe_type)
@@ -56,7 +58,7 @@ LightProbe *BKE_lightprobe_add(Main *bmain, const char *name)
   *(reinterpret_cast<short *>(probe->id.name)) = ID_LP;
   probe->id.us = 1;
   {
-    ListBase *lb = which_libbase(bmain, ID_LP);
+    ListBaseT<ID> *lb = which_libbase(bmain, ID_LP);
     BKE_main_lock(bmain);
     BLI_addtail(lb, probe);
     BKE_id_new_name_validate(*bmain, *lb, probe->id, name, IDNewNameMode::RenameExistingNever, true);
