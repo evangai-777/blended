@@ -223,6 +223,22 @@ Resolves two deferred-debt items, syncs a stale version define, and adds two ope
 
 ### ID_TE — Texture ✓ complete
 
+*Session note (2026-05-05): Scar 2 applied — bmain->textures restored as non-indexed listbase (versioning_250/260/280/legacy iterate it). Field-name grep-miss 1: anim_sys.cc EVAL_ANIM_NODETREE_IDS (uses textures.first, not ID_TE). Field-name grep-miss 2: deg_eval_copy_on_write.cc block 3 copy variant — caught in post-chisel scar checks. brush_test.cc fixtures deleted. tree_element_id_texture.cc/.hh deleted.*
+
+**Pre-chisel blast radius audit (76 hits, 45 files):**
+
+Core definition: `DNA_ID_enums.h:135` (enum); `DNA_texture_types.h:350` (id_type constexpr); `DNA_ID.h:655,1177,1197,1258` (shared ELEM macro + FILTER_ID_TE + FILTER_ID_ALL + INDEX_ID_TE); `BKE_idtype.hh:308`; `idtype.cc:145` (INIT_TYPE + CASE_IDINDEX ×2); `main.cc:139,992,1073`.
+
+blenkernel (9 files): `texture.cc:183,185,187` (IDTypeInfo); `preview_image.cc:218,283`; `image.cc:2903`; `compositor.cc:280`; `node.cc:5148`; `light.cc:173` (FILTER_ID_TE in deps); `material.cc:249`; `brush.cc:549`; `world.cc:192`; `anim_data_bmain_utils.cc:62` (field-name grep-miss); `BKE_main.hh:368` (textures field); `brush_test.cc:64`.
+
+blenloader (2 files): `versioning_500.cc:4494`; `versioning_450.cc:5891`.
+
+editors (12 files): `buttons_texture.cc:373`; `interface_anim.cc:280`; `interface_icons.cc:1933,2084`; `interface_template_preview.cc:58,67`; `interface_template_id.cc:626,855,1453`; `node_group_operator.cc:772`; `render_opengl.cc:611`; `render_update.cc:359`; `render_preview.cc:412,543,607,1286,1310` (5 sites); `anim_filter.cc:2724`; `anim_channels_defines.cc:323`; `outliner_draw.cc:780,2504`; `outliner_intern.hh:143`; `outliner_tools.cc:140,2890`; `tree_element_id.cc:48`.
+
+depsgraph (4 files): `depsgraph_tag.cc:866`; `deg_builder_relations.cc:553,3032`; `deg_builder_nodes.cc:608,2020`; `deg_eval_copy_on_write.cc:108,153,191,226`. windowmanager (1 file): `wm_operators.cc:3898,3920,4031,4035,4049`. modifiers (1 file): `MOD_nodes.cc:214`.
+
+makesrna (8 files): `rna_ID.cc:61,166,426,500`; `rna_color.cc:352`; `rna_image.cc:291`; `rna_space.cc:2264,3960` (grep-miss at 3960); `rna_texture.cc:177`; `rna_main_api.cc:779`; `rna_main.cc:180,400,405` (grep-miss); `rna_internal.hh:539` (grep-miss).
+
 | Layer | Files touched | Status |
 |-------|--------------|--------|
 | `makesdna` | `DNA_ID_enums.h` (enum removed; deprecated `#define` added), `DNA_texture_types.h` (id_type constexpr removed; `#ifdef __cplusplus` / `DNA_DEFINE_CXX_METHODS` kept per Scar 8), `DNA_ID.h` (shared ELEM macro, FILTER_ID_TE, FILTER_ID_ALL, INDEX_ID_TE) | ✓ |
