@@ -81,6 +81,8 @@ Fold-down order: **ID_LP ✓** → ID_PAL → ID_LT → ID_MSK → ID_VF → ID_
 
 **Version bump (2026-05-13):** `BLENDED_VERSION_MINOR` updated from 3 to 4 in `BKE_blender_version.h`. Was stuck at 0.3.0 since the 0.4.0 CI-complete milestone (build 70). CI workflow reads this dynamically — packaged artifacts now correctly labelled `Blended-0.4.0-windows-x64`.
 
+**Version bump (2026-05-13):** `BLENDED_VERSION_MINOR` updated from 4 to 5. Per the new Version Management rule (CLAUDE.md — Version Management section): bump MINOR on the first commit of a new dev cycle, not at CI green. The 0.5.0 dev cycle started at commit `46af9695` (ID_LP makesdna layer); the header should have read 0.5.0 from that point. Immediately corrected after the rule was codified. Packaged artifacts now correctly labelled `Blended-0.5.0-windows-x64`.
+
 ---
 
 ## 0.4.0 — 2026-05-08
