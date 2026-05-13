@@ -396,6 +396,28 @@ draw (2 files): `overlay_bounds.hh:182`; `draw_resource.hh:150`. depsgraph (4 fi
 >
 > **Sweeps run before commit:** `grep -rn "UI_UL_cache_file_layers" source/` → 0; `grep -rn "uilisttypes_ui" source/` → 0; `grep -rn "template_cache_file" scripts/` → 0; `grep -rn "con\.cache_file" scripts/` → 0; `grep -rn "bpy\.data\.{particles,linestyles,textures,cache_files}" scripts/` → 0 live; `python3 -m py_compile` on both edited Python files → OK.
 
+**Pre-chisel blast radius audit (29 literal / 76 true hits):**
+
+makesdna (6 files): `DNA_ID_enums.h:153` (enum entry → deprecated #define); `DNA_cachefile_types.h:69` (id_type constexpr; struct body kept for SDNA read-skip); `DNA_ID.h` (FILTER_ID_CF, FILTER_ID_ALL, INDEX_ID_CF); `DNA_modifier_types.h` (MeshSeqCacheModifierData.cache_file → inline fields); `DNA_constraint_types.h` (bTransformCacheConstraint.cache_file → inline fields); `DNA_action_types.h` (ADS_FILTER_NOCACHEFILES).
+
+blenkernel (9 files): `idtype.cc:163` (INIT_TYPE + CASE_IDINDEX ×2); `main.cc:142,1036,1079` (CASE_ID_INDEX + which_libbase + lb[] — all removed; no Scar 2); `BKE_idtype.hh:326`; `BKE_main.hh` (cachefiles field removed); `cachefile.cc` (deleted); `BKE_cachefile.hh` (deleted); `anim_data_bmain_utils.cc` (field-name miss); `anim_sys.cc` (field-name miss); `constraint.cc`; `path_templates.cc`.
+
+blenloader (1 file): `versioning_290.cc` — velocity_unit loop removed.
+
+editors (20+ files): `io_cache.cc` (deleted); `io_cache.hh` (deleted); `interface_template_cache_file.cc` (deleted); `io_ops.cc`; `interface_icons.cc:2050`; `interface_template_id.cc:883`; `render_opengl.cc:638`; `render_update.cc`; `outliner_intern.hh:163`; `outliner_tools.cc:154`; `tree_element_id.cc:76`; `anim_channels_defines.cc` (ACF_DSCACHEFILE struct+3 callbacks+table entry); `anim_channels_edit.cc`; `anim_deps.cc`; `nla_buttons.cc`; `nla_draw.cc`; `nla_tracks.cc`; `transform_convert_action.cc`; `anim_filter.cc`; `keyframes_keylist.cc`; `ED_anim_api.hh`; `ED_keyframes_keylist.hh`; `UI_interface_c.hh`; `object_constraint.cc`; `space_file/filelist/filelist.cc`.
+
+depsgraph (8 files): `deg_builder_nodes.cc:636`; `deg_builder_nodes.h`; `deg_builder_nodes_view_layer.cc`; `deg_builder_relations.cc:576,3472`; `deg_builder_relations.h`; `deg_builder_relations_view_layer.cc`; `depsgraph_build.cc`; `DEG_depsgraph_build.hh`.
+
+modifiers (1 file): `MOD_meshsequencecache.cc` — CacheFile * replaced with inline struct fields throughout.
+
+io/alembic (~10 files): `alembic_capi.cc`; `abc_reader_object.cc/.h`; `abc_reader_mesh.cc/.h`; `abc_reader_curves.h`; `abc_reader_nurbs.h`; `abc_reader_camera.h`; `abc_reader_points.h`; `abc_reader_transform.h`; `abc_util.h`; `ABC_alembic.h`.
+
+io/usd (~8 files): `usd_capi_import.cc`; `usd_reader_stage.cc/.hh`; `usd_reader_geom.cc/.hh`; `usd_reader_xform.cc`; `usd_reader_prim.hh`; `usd_private.hh`.
+
+makesrna (11 files): `rna_ID.cc:35,119,353,448` (×4); `rna_cachefile.cc` (deleted); `rna_constraint.cc`; `rna_modifier.cc`; `rna_action.cc:1537`; `rna_space.cc:3973`; `rna_main_api.cc:765`; `rna_main.cc`; `rna_internal.hh`; `rna_ui_api.cc`; `makesrna.cc`.
+
+blentranslation (1 file): `BLT_translation.hh` (BLT_I18NCONTEXT_ID_CACHEFILE).
+
 | Layer | Files touched | Status |
 |-------|--------------|--------|
 | `makesdna` | `DNA_ID_enums.h` (enum entry + deprecated #define), `DNA_cachefile_types.h` (id_type constexpr removed; Scar 8), `DNA_ID.h` (FILTER/INDEX macros), `DNA_modifier_types.h` (inline migration), `DNA_constraint_types.h` (inline migration), `DNA_action_types.h` (ADS_FILTER_NOCACHEFILES) | ✓ |
