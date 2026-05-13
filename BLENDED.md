@@ -1,6 +1,6 @@
 # BLENDED — Identity & Design Agreements
 
-**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.5.0-dev — ID_LP fold-down CI-complete (Windows x64, build 74, commit `80002ae`). Base: 0.4.0 CI-complete (Windows x64, build 70, commit `7bd69df`). Bucket 3 in progress: `ID_LP` ✓ — remaining: `ID_PAL`, `ID_LT`, `ID_MSK`, `ID_VF`, `ID_BR`.
+**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.5.0-dev — ID_LP fold-down CI-complete (Windows x64, build 74, commit `80002ae`). Base: 0.4.0 CI-complete (Windows x64, build 70, commit `7bd69df`). Bucket 3 in progress: `ID_LP` ✓, `ID_PAL` ✓ (pending CI) — remaining: `ID_LT`, `ID_MSK`, `ID_VF`, `ID_BR`.
 **Purpose:** So any future session, contributor, or Claude instance can pick up without re-litigating what's already been decided. Read this first before proposing changes to scope, identity, or architecture.
 
 ---
@@ -250,7 +250,7 @@ Property bags pretending to be first-class entities:
 | ID | Name | Fold into |
 |---|---|---|
 | `ID_BR` | Brush | User state + shareable brush packs |
-| `ID_PAL` | Palette | Brush property or inline |
+| `ID_PAL` | Palette | Brush property or inline | ✓ 0.5.0 |
 | `ID_LT` | Lattice | Modifier, not a datablock |
 | `ID_LP` | LightProbe | Merge into `ID_LA` with a type flag | ✓ 0.5.0 |
 | `ID_MSK` | Mask | Hang off compositor NodeTree |

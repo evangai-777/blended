@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.5.0-dev — ID_LP fold-down CI-complete (Windows x64, build 74 on commit `80002ae`). 0.4.0 base: CI-complete (Windows x64, build 70 on commit `7bd69df`). Bucket 3 fold-downs in progress: `ID_LP` ✓. Remaining: `ID_PAL`, `ID_LT`, `ID_MSK`, `ID_VF`, `ID_BR`.
+**Current version:** Blended 0.5.0-dev — ID_LP fold-down CI-complete (Windows x64, build 74 on commit `80002ae`). 0.4.0 base: CI-complete (Windows x64, build 70 on commit `7bd69df`). Bucket 3 fold-downs in progress: `ID_LP` ✓, `ID_PAL` ✓ (pending CI). Remaining: `ID_LT`, `ID_MSK`, `ID_VF`, `ID_BR`.
 
 ---
 
@@ -93,7 +93,7 @@ BLI_listbase_clear(&bmain->linestyles);
 | Version | Layer | Status |
 |---------|-------|--------|
 | 0.4.x | Datablock audit — 9 fossil removals (Bucket 5+6) | ✓ CI-complete (build 70) |
-| 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) | In progress — `ID_LP` ✓ |
+| 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) | In progress — `ID_LP` ✓, `ID_PAL` ✓ |
 | 0.6.x | Evaluation model — depsgraph audit | Pending |
 | 0.7.x | App lenses — launcher as canonical workspace system + full product identity | Pending |
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary | Pending |
@@ -133,7 +133,7 @@ The operational test: at the end of a fold-down session, every tool and workflow
 | ID | Literal hits | Files | Eventual home (0.7.x) |
 |----|-------------|-------|-----------------------|
 | ~~`ID_LP`~~ | ~~35 hits~~ | ~~25 files~~ | ~~Merge into `ID_LA` with type flag~~ ✓ |
-| `ID_PAL` | 38 hits | 24 files | Inline into Brush |
+| ~~`ID_PAL`~~ | ~~38 hits~~ | ~~24 files~~ | ~~Inline into Brush~~ ✓ |
 | `ID_MSK` | 41 hits | 27 files | Hang off compositor NodeTree |
 | `ID_VF` | 45 hits | 27 files | Filepath on Text object |
 | `ID_LT` | 70 hits | 32 files | Owned by Lattice modifier |
@@ -144,7 +144,7 @@ The operational test: at the end of a fold-down session, every tool and workflow
 | ID | bmain field | Runtime note |
 |----|-------------|-------------|
 | `ID_BR` | `bmain->brushes` | Every paint/sculpt mode reads this every frame |
-| `ID_PAL` | `bmain->palettes` | Referenced by Brush; active in any paint session |
+| ~~`ID_PAL`~~ | `bmain->palettes` | Referenced by Brush; active in any paint session — Scar 2 kept ✓ |
 | `ID_LT` | `bmain->lattices` | OB_LATTICE objects actively deform meshes |
 | `ID_LP` | `bmain->lightprobes` | Active in EEVEE rendering |
 | `ID_MSK` | `bmain->masks` | Used in motion tracking and compositor |
@@ -161,6 +161,18 @@ The operational test: at the end of a fold-down session, every tool and workflow
 > Key decisions vs. pre-fold-down audit: (1) **Editors standard sweep skipped entirely** — editor dispatch cases (icons, outliner, template_id browse string, buttons_context, render_opengl traversal) are runtime code and were kept. The fold-down protocol says "every tool and workflow should still work" — these cases make it work. (2) **Anim chain kept** — ANIMTYPE_DSLIGHTPROBE, ACF_DSLIGHTPROBE, all anim_channels_defines/edit/filter ANIMTYPE cases kept. Only the `if (ads_filterflag2 & ADS_FILTER_NOLIGHTPROBE)` block removed in anim_filter.cc (3 lines) — forced by makesdna removal of `ADS_FILTER_NOLIGHTPROBE`. LP animation still shows in dopesheet, just without per-type filter toggle. (3) **Depsgraph dispatch kept** — `case ID_LP:` in deg_builder_nodes.cc and deg_builder_relations.cc kept; build_lightprobe still called. Two OOB fixes applied: `DEG_id_type_any_exists` and `DEG_id_type_updated` in depsgraph_query.cc guarded with `if (id_type_index < 0) return false;` — needed because BKE_idtype_idcode_to_index(ID_LP) returns -1 after INIT_TYPE removal. EEVEE callers (eevee_lightprobe_planar.cc:54, eevee_lightprobe_sphere.cc:24) changed from `DEG_id_type_any_exists(depsgraph, ID_LP)` → `true` (conservative always-update). (4) **Scar 13 clean** — BLT_I18NCONTEXT_ID_LIGHTPROBE removed from BLT_translation.hh + BLT_I18N_MSGID_MULTI_CTXT in interface_template_id.cc; no borrowers found. (5) **wm.py LIGHT_PROBE operator entry removed** — the copy-to-selected operator accessed bpy.data.lightprobes which no longer exists; entry removed to prevent AttributeError at runtime. space_userpref.py use_duplicate_lightprobe kept — property lives in rna_userdef.cc, not tied to bpy.data collection. (6) **MEM_new used** for Scar 10 allocator rewrite — LightProbe has in-class default member initializers throughout (`adt = nullptr`, `type = 0`, `falloff = 0.2f`, `clipsta = 0.8f`, etc.), making it non-trivially constructible. `MEM_new_zeroed` was used originally and rejected by static_assert at CI step 6612/8093 (Scar 18). Corrected to `MEM_new<LightProbe>`. (7) **DNA_action_types.h ADS_FILTER_NOLIGHTPROBE removed** — this was the one makesdna item that forced a runtime code change (anim_filter.cc), unlike the other DNA changes which only affected the ID system machinery.
 >
 > **Fold-down mindset confirmed:** At session end, every workflow that existed before still works — EEVEE probe rendering, properties panel, outliner display, animation dopesheet channels, icon display, outliner filter. The ONLY functional change: bpy.data.lightprobes collection is gone; users create light probes via Add > Light Probe object (which calls BKE_lightprobe_add → manual listbase insert, Scar 2).
+
+---
+
+**ID_PAL — ✓ COMPLETE (0.5.0, pending CI)** *(true blast radius: 38 literal / ~46 true hits — fold-down, not chisel; all runtime code kept)*
+
+> **Session note (2026-05-13):** 4 code commits across all layers + 1 docs commit. Fold-down philosophy applied correctly: no files deleted, no runtime code removed, only the ID system registration stripped.
+>
+> Key decisions vs. pre-fold-down audit: (1) **No anim chain removal** — `ANIMTYPE_PALETTE` in `ED_anim_api.hh:233` is a stub enum value that only appears as a fallthrough case in `anim_channels_edit.cc:966`. No `ACF_DSPALETTE` or `animdata_filter_ds_palette` function exists. No dopesheet filter property (`ADS_FILTER_NOPALETTE` does not exist in DNA). Nothing to remove — all kept. (2) **No rna_action.cc change** — `ID_PAL` had no `ADS_FILTER_NOPALETTE` flag in DNA_action_types.h (unlike LP's `ADS_FILTER_NOLIGHTPROBE`). Cleaner than ID_LP — zero forced runtime code changes from the DNA sweep. (3) **Depsgraph dispatch kept** — `case ID_PAL:` in both `deg_builder_nodes.cc:643` and `deg_builder_relations.cc:584` (fallthrough to `build_generic_id`). OOB guards already generic in `depsgraph_query.cc` from ID_LP fold-down — no new per-type fix needed. (4) **No eevee callers** — no site calls `DEG_id_type_any_exists(depsgraph, ID_PAL)`, so no `→ true` substitution needed (unlike ID_LP). (5) **Scar 8** — `DNA_brush_types.h` Palette struct had `id_type = ID_PAL` in `#ifdef __cplusplus` block. Verified DNA_brush_types.h has one remaining `#ifdef __cplusplus` (Brush struct with `DNA_DEFINE_CXX_METHODS` + `id_type = ID_BR` — correct, untouched). (6) **Scar 10** — `BKE_palette_add` used `BKE_id_new<Palette>` — rewritten to `MEM_new<Palette>` + manual listbase insert. Palette has `ListBaseT<PaletteColor> colors = {nullptr, nullptr}` in-class initializer — non-trivial → `MEM_new` confirmed correct (Scar 18). `palette_init_data`'s `id_fake_user_set` call explicitly replicated in the Scar 10 allocator. (7) **Scar 13 clean** — `BLT_I18NCONTEXT_ID_PALETTE` had no external borrowers (grep clean). (8) **Python** — only `settings.py` "palettes" data path removed. No entries in space_dopesheet.py, space_outliner.py, or wm.py (no copy-to-selected entry, no outliner filter). (9) **True blast radius additions**: `anim_data_bmain_utils.cc:110`, `anim_sys.cc:4155`, `gpencil_legacy.cc:1170,1174`, `versioning_500.cc:3950` (all Scar 2 field-name grep misses, kept); `versioning_290.cc:843` `{ID_BR, ID_PAL}` which_libbase call (kept — versioning repair path).
+>
+> **False positives identified**: `bonecolor.cc`, `DNA_armature_types.h`, `rna_armature.cc`, `overlay_armature.cc` — bone color `palette_index` integer, unrelated to Palette ID type. `versioning_270.cc`, `versioning_280.cc`, `grease_pencil_modes.cc` — `gpd->palettes` / `bGPDpalette` (GP-internal legacy palette, not `bmain->palettes`).
+>
+> **Fold-down mindset confirmed:** At session end, every paint workflow that existed before still works — paint palette UI, palette operators, outliner display, icon display, depsgraph evaluation. The ONLY functional change: `bpy.data.palettes` collection is gone; users access palettes via `bpy.context.tool_settings.paint.palette` (pointer still exists on Paint struct, Scar 2).
 
 ---
 

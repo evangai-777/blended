@@ -59,7 +59,7 @@ carries a one-liner status per active item.
 
 Bucket 3 fold-downs — the last datablock-audit version. Six IDs that are property bags pretending to be first-class entities, each folded into the structure they actually belong to: `ID_BR` (Brush) → user state + shareable brush packs, `ID_PAL` (Palette) → brush property or inline, `ID_LT` (Lattice) → modifier, not a datablock, `ID_LP` (LightProbe) → merge into `ID_LA` with a type flag, `ID_MSK` (Mask) → hang off compositor NodeTree, `ID_VF` (VFont) → system font reference. Closes the datablock audit (39 → ~19 ID types).
 
-Fold-down order: **ID_LP ✓** → ID_PAL → ID_LT → ID_MSK → ID_VF → ID_BR.
+Fold-down order: **ID_LP ✓** → **ID_PAL ✓** → ID_LT → ID_MSK → ID_VF → ID_BR.
 
 ### ID_LP — LightProbe ✓ complete
 
@@ -102,6 +102,31 @@ Runtime code — all KEPT (fold-down, not chisel): all `eevee_lightprobe_*.cc/.h
 **Version bump (2026-05-13):** `BLENDED_VERSION_MINOR` updated from 3 to 4 in `BKE_blender_version.h`. Was stuck at 0.3.0 since the 0.4.0 CI-complete milestone (build 70). CI workflow reads this dynamically — packaged artifacts now correctly labelled `Blended-0.4.0-windows-x64`.
 
 **Version bump (2026-05-13):** `BLENDED_VERSION_MINOR` updated from 4 to 5. Per the new Version Management rule (CLAUDE.md — Version Management section): bump MINOR on the first commit of a new dev cycle, not at CI green. The 0.5.0 dev cycle started at commit `46af9695` (ID_LP makesdna layer); the header should have read 0.5.0 from that point. Immediately corrected after the rule was codified. Packaged artifacts now correctly labelled `Blended-0.5.0-windows-x64`.
+
+### ID_PAL — Palette ✓ complete (pending CI)
+
+**Pre-fold-down blast radius audit (38 literal / ~46 true hits):**
+
+makesdna (3 files): `DNA_ID_enums.h:152` (enum entry → deprecated `#define`); `DNA_brush_types.h:466-474` (entire `#ifdef __cplusplus` block — Scar 8); `DNA_ID.h` (`FILTER_ID_PAL`, `INDEX_ID_PAL`, removed from `FILTER_ID_ALL`). `DNA_ID.h:695` `!ELEM` macro keeps `ID_PAL` — still compiles via deprecated `#define`, semantically correct.
+
+blenkernel (5 files): `BKE_idtype.hh:325` (extern removed); `idtype.cc:162` (INIT_TYPE + CASE_IDINDEX ×2 — Scar 4); `main.cc:154,1061,1087` (CASE_ID_INDEX + lb[] ×2 removed; `case ID_PAL:` which_libbase routing KEPT — Scar 2); `paint.cc` (IDTypeInfo IDType_ID_PAL removed; `BKE_palette_add` → Scar 10 MEM_new<Palette>); `scene.cc:1612` (FILTER_ID_PAL from Scene IDTypeInfo dependencies_id_types).
+
+Scar 2 — kept (mandatory): `BKE_main.hh` (palettes field); `main.cc` which_libbase routing; `anim_data_bmain_utils.cc:110`; `anim_sys.cc:4155`; `gpencil_legacy.cc:1170,1174`; `versioning_500.cc:3950`; `versioning_290.cc:843` — all kept as Scar 2 bridge.
+
+makesrna (7 files): `rna_ID.cc:52,144,393,464` (×4 — enum item, filter item, base_type check, switch case); `rna_main_api.cc:602,740,1648` (rna_Main_palettes_new, RNA_MAIN_ID_TAG_FUNCS_DEF, RNA_def_main_palettes all removed); `rna_main.cc:170,433` (RNA_MAIN_LISTBASE_FUNCS_DEF + table entry); `rna_internal.hh:544` (RNA_def_main_palettes removed; RNA_def_palette KEPT — Scar 15); `rna_space.cc:3963` (FILTER_ID_PAL from category_misc); `BLT_translation.hh:130,203` (define + ITEM — Scar 13, no external borrowers); `interface_template_id.cc:974` (BLT_I18N_MSGID_MULTI_CTXT entry — Scar 13 sweep).
+
+python (1 file): `_bl_i18n_utils/settings.py:468` ("palettes" data path). No space_dopesheet.py / space_outliner.py / wm.py changes — ID_PAL had no ADS_FILTER_NOPALETTE, no copy-to-selected entry, no outliner filter entry.
+
+| Layer | Files touched | Status |
+|-------|--------------|--------|
+| `makesdna` | `DNA_ID_enums.h` (enum removed, deprecated `#define` added), `DNA_brush_types.h` (Scar 8: `#ifdef __cplusplus` block removed), `DNA_ID.h` (`FILTER_ID_PAL`, `INDEX_ID_PAL`, FILTER_ID_ALL entry removed) | ✓ |
+| `blenkernel` | `BKE_idtype.hh` (extern removed), `idtype.cc` (INIT_TYPE + CASE_IDINDEX ×2 — Scar 4), `main.cc` (CASE_ID_INDEX + lb[] ×2 removed; which_libbase `case ID_PAL:` KEPT — Scar 2), `paint.cc` (IDTypeInfo block removed; BKE_palette_add → MEM_new<Palette> + manual insert — Scar 10; id_fake_user_set replicated explicitly), `scene.cc` (FILTER_ID_PAL from dependencies_id_types) | ✓ |
+| `makesrna` | `rna_ID.cc` (4 entries), `rna_main_api.cc` (new + tag funcs + collection accessor), `rna_main.cc` (listbase funcs + table entry), `rna_internal.hh` (RNA_def_main_palettes removed; RNA_def_palette KEPT — Scar 15), `rna_space.cc` (FILTER_ID_PAL from category_misc), `BLT_translation.hh` (define + ITEM — Scar 13), `interface_template_id.cc` (BLT_I18N_MSGID_MULTI_CTXT — Scar 13 sweep) | ✓ |
+| `python` | `_bl_i18n_utils/settings.py` ("palettes" data path removed) | ✓ |
+
+**What stays (fold-down keeps all runtime code):** `rna_palette.cc`, `palette.cc` (editors — 646 lines of paint/palette UI), `BKE_paint.hh` (BKE_palette_add, BKE_paint_palette, BKE_paint_palette_set), all editor dispatch (icons, outliner, template_id browse string, render_opengl), `ANIMTYPE_PALETTE` enum stub, depsgraph `case ID_PAL:` dispatch in both builders + depsgraph_tag.cc, all blenloader versioning paths over bmain->palettes (Scar 2 bridge). `makesrna.cc:4046` `{"rna_palette.cc", nullptr, RNA_def_palette}` entry kept.
+
+**Claude AI contributor (2026-05-13):** ID_PAL fold-down across 4 layers on branch `claude/review-docs-history-l0OGD`. 4 code commits + 1 docs commit. Cleaner than ID_LP: no forced anim_filter.cc change (no ADS_FILTER_NOPALETTE), no depsgraph OOB fixes needed (guards already generic from ID_LP fold-down), no eevee callers. Scar 10 id_fake_user_set explicit replication is the one detail specific to Palette. Pending CI.
 
 ---
 
