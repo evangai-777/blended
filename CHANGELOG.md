@@ -216,6 +216,26 @@ Resolves two deferred-debt items, syncs a stale version define, and adds two ope
 
 ### ID_MB — MetaBall ✓ (0.4.0)
 
+**Pre-chisel blast radius audit (60 literal / 130+ true hits):**
+
+makesdna (4 files): `DNA_ID_enums.h:134` (enum → deprecated #define); `DNA_meta_types.h:91` (id_type constexpr); `DNA_object_types.h:735,742,756` (OB_MBALL macros shared w/ CU_LEGACY); `DNA_ID.h:1169,1196,1274` (FILTER_ID_MB, FILTER_ID_ALL, INDEX_ID_MB).
+
+blenkernel (12+ files): `BKE_idtype.hh:307`; `idtype.cc:144` (INIT_TYPE + CASE_IDINDEX ×2); `main.cc:149,991,1088` (CASE_ID_INDEX + which_libbase + lb[] — all removed, no Scar 2); `BKE_main.hh:369` (metaballs field removed — true fossil); `material.cc:425,453,486,519,542,847` (×6); `object.cc:1933,1977,2225,4279` (×4); `object_update.cc:157,291`; `object_dupli.cc:312`; `lib_remap.cc:627`; `mesh_convert.cc:921,989`; `context.cc:1415,1498`; `lib_id.cc:2412`; `anim_sys.cc:4135`; `anim_data_bmain_utils.cc:77`; DELETED: `mball_tessellate.cc`, `BKE_mball.hh`, `BKE_mball_tessellate.hh`.
+
+blenloader (1 file — KEEP): `versioning_legacy.cc:2382` (KEEP — bmain->metaballs iteration for legacy ID property fix; only versioning pass site).
+
+editors (40+ files): `interface_icons.cc`; `interface_template_id.cc:583,854`; `object_data_transform.cc` (×4); `transform_convert_object_texspace.cc:52` (ELEM w/ CU_LEGACY); `render_opengl.cc:610`; `outliner_select.cc:1289`; `outliner_draw.cc:2485`; `outliner_intern.hh:141` (Scar 9); `outliner_tools.cc:136,287`; `tree_element_id.cc:49`; DELETED: `tree_element_id_metaball.cc/.hh`, `metaball/mball_edit.cc`, `metaball/mball_ops.cc`, `metaball/editmball_undo.cc`, `metaball/mball_intern.hh`, `ED_mball.hh`; `anim_channels_defines.cc` (ACF_DSMBALL + 3 callbacks); `anim_filter.cc` (animdata_filter_ds_metaball); `ED_anim_api.hh` (ANIMTYPE_DSMBALL + FILTER_MBALL_OBJD); `anim_channels_edit.cc` (9 fallthrough sites) + nla/transform fallthrough; `object_add.cc`, `object_bake_api.cc`, `object_edit.cc`, `object_hook.cc`, `object_modes.cc`, `object_modifier.cc`, `object_relations.cc`, `object_transform.cc`, `object_utils.cc`, `screen_ops.cc`, `spacetypes.cc`, `buttons_context.cc`, `info_stats.cc`, `view3d_buttons.cc`, `view3d_iterators.cc`, `view3d_select.cc`, `view3d_snap.cc`, `transform.cc`, `transform_convert.cc`, `transform_convert.hh`; DELETED: `transform_convert_mball.cc`; `transform_gizmo_3d.cc`, `transform_mode.cc`, `transform_orientations.cc`, `transform_snap.cc`, `undo_system_types.cc`, `ed_transverts.cc`.
+
+draw (9 files): `overlay_bounds.hh:188`; `draw_resource.hh:157`; `overlay_instance.cc/.hh`; `overlay_private.hh`; `overlay_shape.cc`; `draw_context.cc`; `draw_handle.hh`; DELETED: `overlay_metaball.hh`.
+
+depsgraph (5 files): `depsgraph_tag.cc:72,618`; `deg_eval_copy_on_write.cc:557,938`; `deg_builder_relations.cc:570,2716`; `deg_builder_nodes.cc:624,1769`; `depsgraph_query_iter.cc:479`.
+
+makesrna (8 files): `rna_ID.cc:53,150,398,485` (×4); `rna_main_api.cc:794`; `rna_main.cc`; `rna_internal.hh:538`; `rna_action.cc:1521`; `rna_space.cc:3954` (FILTER_ID_MB in geometry filter); DELETED: `rna_meta.cc`, `rna_meta_api.cc`.
+
+io (6 files): `abc_hierarchy_iterator.cc:205`; `abstract_hierarchy_iterator.cc:840`; `usd_hierarchy_iterator.cc:61,321`; `usd/hydra/object.cc:37,69,87`; DELETED: `abc_writer_mball.cc`, `usd_writer_metaball.cc`.
+
+windowmanager (2 files): `WM_types.hh:603`; `wm_init_exit.cc:566`.
+
 | Layer | Files touched | Status |
 |-------|--------------|--------|
 | `makesdna` | `DNA_ID_enums.h` (deprecated `#define`), `DNA_meta_types.h` (id_type constexpr removed), `DNA_object_types.h` (3 macros patched; `OB_MBALL=5` kept for .blend compat) | ✓ |
