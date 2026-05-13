@@ -525,7 +525,6 @@ class OUTLINER_PT_filter(Panel):
                 (hasattr(bpy.data, "hair_curves") and bpy.data.hair_curves) or
                 (hasattr(bpy.data, "pointclouds") and bpy.data.pointclouds) or
                 bpy.data.volumes or
-                bpy.data.lightprobes or
                 bpy.data.lattices or
                 bpy.data.fonts or
         ):

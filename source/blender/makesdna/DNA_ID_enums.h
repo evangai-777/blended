@@ -151,7 +151,7 @@ enum ID_Type {
 
   ID_PAL = MAKE_ID2('P', 'L'),       /* Palette */
   /* ID_CF removed — see deprecated #define below. */
-  ID_LP = MAKE_ID2('L', 'P'),        /* LightProbe */
+  /* ID_LP removed — see deprecated #define below. */
   ID_CV = MAKE_ID2('C', 'V'),        /* Curves */
   ID_PT = MAKE_ID2('P', 'T'),        /* PointCloud */
   ID_VO = MAKE_ID2('V', 'O'),        /* Volume */
@@ -172,6 +172,7 @@ enum ID_Type {
 #define ID_TE MAKE_ID2('T', 'E')        /* Tex (Texture) — removed in Blended 0.4.0 */
 #define ID_CU_LEGACY MAKE_ID2('C', 'U') /* Curve (legacy) — removed in Blended 0.4.0; use ID_CV */
 #define ID_CF MAKE_ID2('C', 'F')        /* CacheFile — removed in Blended 0.4.0; inlined per-instance */
+#define ID_LP MAKE_ID2('L', 'P')        /* LightProbe — deregistered in Blended 0.5.0; runtime-only via Scar 2 */
 
 /* NOTE: Fake IDs, needed for `g.sipo->blocktype` or outliner. */
 #define ID_SEQ MAKE_ID2('S', 'Q')

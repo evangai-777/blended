@@ -59,6 +59,24 @@ carries a one-liner status per active item.
 
 Bucket 3 fold-downs — the last datablock-audit version. Six IDs that are property bags pretending to be first-class entities, each folded into the structure they actually belong to: `ID_BR` (Brush) → user state + shareable brush packs, `ID_PAL` (Palette) → brush property or inline, `ID_LT` (Lattice) → modifier, not a datablock, `ID_LP` (LightProbe) → merge into `ID_LA` with a type flag, `ID_MSK` (Mask) → hang off compositor NodeTree, `ID_VF` (VFont) → system font reference. Closes the datablock audit (39 → ~19 ID types).
 
+Fold-down order: **ID_LP ✓** → ID_PAL → ID_LT → ID_MSK → ID_VF → ID_BR.
+
+### ID_LP — LightProbe ✓ complete
+
+| Layer | Files touched | Status |
+|-------|--------------|--------|
+| `makesdna` | `DNA_ID_enums.h` (enum entry removed, deprecated `#define` added), `DNA_lightprobe_types.h` (Scar 8: entire `#ifdef __cplusplus` block removed), `DNA_ID.h` (`FILTER_ID_LP`, `INDEX_ID_LP`, `FILTER_ID_ALL` inclusion removed), `DNA_action_types.h` (`ADS_FILTER_NOLIGHTPROBE` removed from `eDopeSheet_FilterFlag2`) | ✓ |
+| `blenkernel` | `BKE_idtype.hh` (extern decl removed), `idtype.cc` (`INIT_TYPE(ID_LP)` + both `CASE_IDINDEX(LP)` entries removed — Scar 4), `main.cc` (`CASE_ID_INDEX(INDEX_ID_LP)` + `lb[INDEX_ID_LP]` removed; `case ID_LP:` which_libbase routing KEPT — Scar 2), `lightprobe.cc` (`IDTypeInfo IDType_ID_LP` + static callbacks removed; `BKE_lightprobe_add` rewritten with MEM_new_zeroed + manual listbase insert — Scar 10; BKE/BLT/BLO includes removed, BLI/MEM includes added) | ✓ |
+| `makesrna` | `rna_ID.cc` (RNA enum item, FILTER_ID_LP filter item, base_type check, `case ID_LP:` switch case removed), `rna_main_api.cc` (`rna_Main_lightprobe_new`, `RNA_MAIN_ID_TAG_FUNCS_DEF`, `RNA_def_main_lightprobes`, DNA/BKE includes removed), `rna_main.cc` (`RNA_MAIN_LISTBASE_FUNCS_DEF(lightprobes)` + table entry removed), `rna_internal.hh` (both declarations removed), `rna_action.cc` (`show_lightprobes` + `ADS_FILTER_NOLIGHTPROBE` RNA prop removed), `rna_space.cc` (`FILTER_ID_LP` removed from environment category filter), `BLT_translation.hh` (define + ITEM removed), `interface_template_id.cc` (`BLT_I18NCONTEXT_ID_LIGHTPROBE` from `BLT_I18N_MSGID_MULTI_CTXT` — Scar 13) | ✓ |
+| `editors/anim` | `anim_filter.cc`: removed `if (ads_filterflag2 & ADS_FILTER_NOLIGHTPROBE) { return 0; }` (forced by DNA removal). All other anim chain code KEPT: `ANIMTYPE_DSLIGHTPROBE`, `ACF_DSLIGHTPROBE`, all switch cases in anim_channels_edit/deps/nla_*/transform_convert_action — fold-down keeps runtime anim. | ✓ |
+| `depsgraph` | `depsgraph_query.cc`: OOB guard added to `DEG_id_type_any_exists` and `DEG_id_type_updated` — `BKE_idtype_idcode_to_index(ID_LP)` returns -1 after INIT_TYPE removal; guard returns `false` safely. All `case ID_LP:` dispatch in deg_builder_nodes/relations KEPT — LightProbe depsgraph evaluation still runs. | ✓ |
+| `draw/eevee` | `eevee_lightprobe_planar.cc:54`, `eevee_lightprobe_sphere.cc:24`: `DEG_id_type_any_exists(depsgraph, ID_LP)` → `true` — OOB guard would return false (LP not in index system), killing probe updates. Conservative always-update is correct. | ✓ |
+| `python` | `space_dopesheet.py` (bpy.data.lightprobes check + show_lightprobes prop removed), `space_outliner.py` (bpy.data.lightprobes from outliner filter), `wm.py` (LIGHT_PROBE enum + collection mapping from copy-to-selected operator), `_bl_i18n_utils/settings.py` ("lightprobes" data path) | ✓ |
+
+**What stays (fold-down keeps all runtime code):** `rna_lightprobe.cc` (LightProbe RNA struct props), `BKE_lightprobe.hh` (allocation + cache API), `lightprobe.cc` (all non-IDTypeInfo functions), all editor dispatch for icons/outliner/template_id/buttons_context/render_opengl, full anim channel chain (ANIMTYPE_DSLIGHTPROBE, ACF_DSLIGHTPROBE, all case statements), full depsgraph builder dispatch (build_lightprobe, build_object_data_lightprobe, relations), all blenloader versioning loops over bmain->lightprobes (5 files, Scar 2 bridge). `use_duplicate_lightprobe` in space_userpref.py KEPT (property lives in rna_userdef.cc, not tied to bpy.data collection).
+
+**Claude AI contributor (2026-05-13):** ID_LP fold-down across all 7 layers in one session on branch `claude/review-claude-md-7cDGm`. 5 commits pushed. Key distinction from prior chisel sessions: fold-down mindset confirmed — the standard editor sweep and anim chain removal that would apply to a chisel were correctly NOT applied here. Only compile-forced changes (ADS_FILTER_NOLIGHTPROBE, OOB crash, bpy.data collection gone) were made. All runtime workflows intact.
+
 ---
 
 ## 0.4.0 — 2026-05-08

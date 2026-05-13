@@ -2906,10 +2906,6 @@ static size_t animdata_filter_ds_obdata(bAnimContext *ac,
     {
       LightProbe *probe = id_cast<LightProbe *>(ob->data);
 
-      if (ads_filterflag2 & ADS_FILTER_NOLIGHTPROBE) {
-        return 0;
-      }
-
       type = ANIMTYPE_DSLIGHTPROBE;
       expanded = FILTER_LIGHTPROBE_OBJD(probe);
       break;

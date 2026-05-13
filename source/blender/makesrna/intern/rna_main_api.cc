@@ -38,7 +38,6 @@
 #  include "BKE_lib_remap.hh"
 #  include "BKE_library.hh"
 #  include "BKE_light.h"
-#  include "BKE_lightprobe.h"
 #  include "BKE_linestyle.h"
 #  include "BKE_main_invariants.hh"
 #  include "BKE_mask.hh"
@@ -71,7 +70,6 @@
 #  include "DNA_gpencil_legacy_types.h"
 #  include "DNA_lattice_types.h"
 #  include "DNA_light_types.h"
-#  include "DNA_lightprobe_types.h"
 #  include "DNA_mask_types.h"
 #  include "DNA_material_types.h"
 #  include "DNA_mesh_types.h"
@@ -661,23 +659,6 @@ static Mask *rna_Main_mask_new(Main *bmain, const char *name)
   return mask;
 }
 
-
-static LightProbe *rna_Main_lightprobe_new(Main *bmain, const char *name, int type)
-{
-  char safe_name[MAX_ID_NAME - 2];
-  rna_idname_validate(name, safe_name);
-
-  LightProbe *probe = BKE_lightprobe_add(bmain, safe_name);
-
-  BKE_lightprobe_type_set(probe, type);
-
-  id_us_min(&probe->id);
-
-  WM_main_add_notifier(NC_ID | NA_ADDED, nullptr);
-
-  return probe;
-}
-
 static GreasePencil *rna_Main_grease_pencils_new(Main *bmain, const char *name)
 {
   char safe_name[MAX_ID_NAME - 2];
@@ -762,7 +743,6 @@ RNA_MAIN_ID_TAG_FUNCS_DEF(grease_pencils, grease_pencils, ID_GP)
 RNA_MAIN_ID_TAG_FUNCS_DEF(movieclips, movieclips, ID_MC)
 RNA_MAIN_ID_TAG_FUNCS_DEF(masks, masks, ID_MSK)
 
-RNA_MAIN_ID_TAG_FUNCS_DEF(lightprobes, lightprobes, ID_LP)
 RNA_MAIN_ID_TAG_FUNCS_DEF(hair_curves, hair_curves, ID_CV)
 RNA_MAIN_ID_TAG_FUNCS_DEF(pointclouds, pointclouds, ID_PT)
 RNA_MAIN_ID_TAG_FUNCS_DEF(volumes, volumes, ID_VO)
@@ -1836,53 +1816,6 @@ void RNA_def_main_masks(BlenderRNA *brna, PropertyRNA *cprop)
       func, "do_id_user", true, "", "Decrement user counter of all data-blocks used by this mask");
   RNA_def_boolean(
       func, "do_ui_user", true, "", "Make sure interface does not reference this mask");
-}
-
-void RNA_def_main_lightprobes(BlenderRNA *brna, PropertyRNA *cprop)
-{
-  StructRNA *srna;
-  FunctionRNA *func;
-  PropertyRNA *parm;
-
-  RNA_def_property_srna(cprop, "BlendDataProbes");
-  srna = RNA_def_struct(brna, "BlendDataProbes", nullptr);
-  RNA_def_struct_sdna(srna, "Main");
-  RNA_def_struct_ui_text(srna, "Main Light Probes", "Collection of light probes");
-
-  func = RNA_def_function(srna, "new", "rna_Main_lightprobe_new");
-  RNA_def_function_ui_description(func, "Add a new light probe to the main database");
-  parm = RNA_def_string(func, "name", "Probe", 0, "", "New name for the data-block");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-  parm = RNA_def_enum(
-      func, "type", rna_enum_lightprobes_type_items, 0, "Type", "The type of light probe to add");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-  /* return type */
-  parm = RNA_def_pointer(func, "lightprobe", "LightProbe", "", "New light probe data-block");
-  RNA_def_function_return(func, parm);
-
-  func = RNA_def_function(srna, "remove", "rna_Main_ID_remove");
-  RNA_def_function_flag(func, FUNC_USE_REPORTS);
-  RNA_def_function_ui_description(func, "Remove a light probe from the current blendfile");
-  parm = RNA_def_pointer(func, "lightprobe", "LightProbe", "", "Light probe to remove");
-  RNA_def_parameter_flags(parm, PROP_NEVER_NULL, PARM_REQUIRED | PARM_RNAPTR);
-  RNA_def_parameter_clear_flags(parm, PROP_THICK_WRAP, ParameterFlag(0));
-  RNA_def_boolean(func,
-                  "do_unlink",
-                  true,
-                  "",
-                  "Unlink all usages of this light probe before deleting it "
-                  "(WARNING: will also delete objects instancing that light probe data)");
-  RNA_def_boolean(func,
-                  "do_id_user",
-                  true,
-                  "",
-                  "Decrement user counter of all data-blocks used by this light probe");
-  RNA_def_boolean(
-      func, "do_ui_user", true, "", "Make sure interface does not reference this light probe");
-
-  func = RNA_def_function(srna, "tag", "rna_Main_lightprobes_tag");
-  parm = RNA_def_boolean(func, "value", false, "Value", "");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
 }
 
 void RNA_def_main_hair_curves(BlenderRNA *brna, PropertyRNA *cprop)

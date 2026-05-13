@@ -110,8 +110,12 @@ float DEG_get_ctime(const Depsgraph *graph)
 
 bool DEG_id_type_updated(const Depsgraph *graph, short id_type)
 {
+  const int id_type_index = BKE_idtype_idcode_to_index(id_type);
+  if (id_type_index < 0) {
+    return false;
+  }
   const deg::Depsgraph *deg_graph = reinterpret_cast<const deg::Depsgraph *>(graph);
-  return deg_graph->id_type_updated[BKE_idtype_idcode_to_index(id_type)] != 0;
+  return deg_graph->id_type_updated[id_type_index] != 0;
 }
 
 bool DEG_id_type_any_updated(const Depsgraph *graph)
@@ -130,8 +134,12 @@ bool DEG_id_type_any_updated(const Depsgraph *graph)
 
 bool DEG_id_type_any_exists(const Depsgraph *depsgraph, short id_type)
 {
+  const int id_type_index = BKE_idtype_idcode_to_index(id_type);
+  if (id_type_index < 0) {
+    return false;
+  }
   const deg::Depsgraph *deg_graph = reinterpret_cast<const deg::Depsgraph *>(depsgraph);
-  return deg_graph->id_type_exist[BKE_idtype_idcode_to_index(id_type)] != 0;
+  return deg_graph->id_type_exist[id_type_index] != 0;
 }
 
 uint32_t DEG_get_eval_flags_for_id(const Depsgraph *graph, const ID *id)

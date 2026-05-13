@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.4.0 — CI-complete (Windows x64, build 70 on commit `7bd69df`). All 9 Bucket 5+6 fossil removals shipped. 0.5.0 next — Bucket 3 fold-downs (39 → ~19 ID types: `ID_BR`, `ID_PAL`, `ID_LT`, `ID_LP`, `ID_MSK`, `ID_VF`).
+**Current version:** Blended 0.5.0-dev — ID_LP fold-down complete (compile-clean pending CI). 0.4.0 base: CI-complete (Windows x64, build 70 on commit `7bd69df`). Bucket 3 fold-downs in progress: `ID_LP` ✓ pending CI. Remaining: `ID_PAL`, `ID_LT`, `ID_MSK`, `ID_VF`, `ID_BR`.
 
 ---
 
@@ -103,7 +103,7 @@ BLI_listbase_clear(&bmain->linestyles);
 | Version | Layer | Status |
 |---------|-------|--------|
 | 0.4.x | Datablock audit — 9 fossil removals (Bucket 5+6) | ✓ CI-complete (build 70) |
-| 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) | Pending |
+| 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) | In progress — `ID_LP` ✓ |
 | 0.6.x | Evaluation model — depsgraph audit | Pending |
 | 0.7.x | App lenses — launcher as canonical workspace system + full product identity | Pending |
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary | Pending |
@@ -142,7 +142,7 @@ The operational test: at the end of a fold-down session, every tool and workflow
 
 | ID | Literal hits | Files | Eventual home (0.7.x) |
 |----|-------------|-------|-----------------------|
-| `ID_LP` | 35 hits | 25 files | Merge into `ID_LA` with type flag |
+| ~~`ID_LP`~~ | ~~35 hits~~ | ~~25 files~~ | ~~Merge into `ID_LA` with type flag~~ ✓ |
 | `ID_PAL` | 38 hits | 24 files | Inline into Brush |
 | `ID_MSK` | 41 hits | 27 files | Hang off compositor NodeTree |
 | `ID_VF` | 45 hits | 27 files | Filepath on Text object |
@@ -159,6 +159,101 @@ The operational test: at the end of a fold-down session, every tool and workflow
 | `ID_LP` | `bmain->lightprobes` | Active in EEVEE rendering |
 | `ID_MSK` | `bmain->masks` | Used in motion tracking and compositor |
 | `ID_VF` | `bmain->fonts` | Text objects reference these every render |
+
+---
+
+### Bucket 3 Fold-Down Audit (0.5.x)
+
+**ID_LP — ✓ COMPLETE (0.5.0)** *(true blast radius: ~40 hits / 28 files — fold-down, not chisel; all runtime code kept)*
+
+> **Session note (2026-05-13):** 5 commits across all layers. Fold-down philosophy applied correctly: no files deleted, no runtime code removed, only the ID system registration stripped.
+>
+> Key decisions vs. pre-fold-down audit: (1) **Editors standard sweep skipped entirely** — editor dispatch cases (icons, outliner, template_id browse string, buttons_context, render_opengl traversal) are runtime code and were kept. The fold-down protocol says "every tool and workflow should still work" — these cases make it work. (2) **Anim chain kept** — ANIMTYPE_DSLIGHTPROBE, ACF_DSLIGHTPROBE, all anim_channels_defines/edit/filter ANIMTYPE cases kept. Only the `if (ads_filterflag2 & ADS_FILTER_NOLIGHTPROBE)` block removed in anim_filter.cc (3 lines) — forced by makesdna removal of `ADS_FILTER_NOLIGHTPROBE`. LP animation still shows in dopesheet, just without per-type filter toggle. (3) **Depsgraph dispatch kept** — `case ID_LP:` in deg_builder_nodes.cc and deg_builder_relations.cc kept; build_lightprobe still called. Two OOB fixes applied: `DEG_id_type_any_exists` and `DEG_id_type_updated` in depsgraph_query.cc guarded with `if (id_type_index < 0) return false;` — needed because BKE_idtype_idcode_to_index(ID_LP) returns -1 after INIT_TYPE removal. EEVEE callers (eevee_lightprobe_planar.cc:54, eevee_lightprobe_sphere.cc:24) changed from `DEG_id_type_any_exists(depsgraph, ID_LP)` → `true` (conservative always-update). (4) **Scar 13 clean** — BLT_I18NCONTEXT_ID_LIGHTPROBE removed from BLT_translation.hh + BLT_I18N_MSGID_MULTI_CTXT in interface_template_id.cc; no borrowers found. (5) **wm.py LIGHT_PROBE operator entry removed** — the copy-to-selected operator accessed bpy.data.lightprobes which no longer exists; entry removed to prevent AttributeError at runtime. space_userpref.py use_duplicate_lightprobe kept — property lives in rna_userdef.cc, not tied to bpy.data collection. (6) **MEM_new_zeroed used** for Scar 10 allocator rewrite — LightProbe has no DNA_DEFINE_CXX_METHODS, no user-defined constructor, trivially constructible. (7) **DNA_action_types.h ADS_FILTER_NOLIGHTPROBE removed** — this was the one makesdna item that forced a runtime code change (anim_filter.cc), unlike the other DNA changes which only affected the ID system machinery.
+>
+> **Fold-down mindset confirmed:** At session end, every workflow that existed before still works — EEVEE probe rendering, properties panel, outliner display, animation dopesheet channels, icon display, outliner filter. The ONLY functional change: bpy.data.lightprobes collection is gone; users create light probes via Add > Light Probe object (which calls BKE_lightprobe_add → manual listbase insert, Scar 2).
+
+**ID_LP — 35 literal hits, 25 files** *(pre-fold-down audit — 2026-05-13)*
+
+Core definition (ID system surgery — goes):
+- `makesdna/DNA_ID_enums.h:154` — enum entry `ID_LP = MAKE_ID2('L', 'P')` — remove; add deprecated `#define`
+- `makesdna/DNA_lightprobe_types.h:113` — `static constexpr ID_Type id_type = ID_LP` — remove entire `#ifdef __cplusplus` block (Scar 8)
+- `makesdna/DNA_ID.h:1179,1195,1271` — `FILTER_ID_LP`, `FILTER_ID_ALL` inclusion, `INDEX_ID_LP` — remove all three
+- `makesdna/DNA_action_types.h:447` — `ADS_FILTER_NOLIGHTPROBE = (1 << 7)` — remove
+- `makesdna/DNA_object_types.h:740,752` — NO CHANGE: `ID_LP` in object macros still compiles via deprecated `#define`
+- `blenkernel/BKE_idtype.hh:326` — `extern IDTypeInfo IDType_ID_LP` — remove
+- `blenkernel/intern/idtype.cc:163` — `INIT_TYPE(ID_LP)` + both `CASE_IDINDEX(LP)` entries (Scar 4) — remove
+- `blenkernel/intern/main.cc:152,1090` — `CASE_ID_INDEX(INDEX_ID_LP)`, `lb[INDEX_ID_LP]` — remove; KEEP `case ID_LP:` routing (Scar 2)
+- `blenkernel/intern/lightprobe.cc:51–55` — `IDTypeInfo IDType_ID_LP` block — remove; `BKE_lightprobe_add` allocator fix (Scar 10)
+
+Scar 2 (mandatory — keep):
+- `blenkernel/BKE_main.hh` — `ListBaseT<LightProbe> lightprobes` field — KEEP
+- `blenkernel/intern/main.cc` — `case ID_LP: return &(bmain->lightprobes.cast<ID>());` in `which_libbase` — KEEP
+- `blenloader/intern/versioning_280.cc` — 2 × `for (LightProbe &probe : bmain->lightprobes)` — KEEP
+- `blenloader/intern/versioning_400.cc` — 3 × `for (LightProbe &lightprobe : bmain->lightprobes)` — KEEP
+- `blenloader/intern/versioning_410.cc` — 1 × `for (LightProbe &lightprobe : bmain->lightprobes)` — KEEP
+- `blenloader/intern/versioning_420.cc` — 1 × `for (LightProbe &probe : bmain->lightprobes)` — KEEP
+- `blenloader/intern/versioning_500.cc` — 1 × `for (LightProbe &lightprobe : bmain->lightprobes)` — KEEP
+
+makesrna (registration goes, runtime RNA stays):
+- `rna_ID.cc:46,131,407,479` — RNA enum item, filter item, base_type check, switch case — remove all 4
+- `rna_main_api.cc:765` — `RNA_MAIN_ID_TAG_FUNCS_DEF(lightprobes, lightprobes, ID_LP)` + `rna_Main_lightprobes_new()` + `RNA_def_main_lightprobes()` — remove
+- `rna_main.cc` — `RNA_MAIN_LISTBASE_FUNCS_DEF(lightprobes)` + table entry — remove
+- `rna_internal.hh` — `RNA_def_main_lightprobes` declaration — remove
+- `rna_action.cc:1558–1559` — `show_lightprobes` RNA prop + `ADS_FILTER_NOLIGHTPROBE` binding — remove
+- `rna_space.cc:3958` — `FILTER_ID_LP |` in asset browser lighting filter — remove
+- `blentranslation/BLT_translation.hh:124,198` — `BLT_I18NCONTEXT_ID_LIGHTPROBE` define + ITEM entry — remove
+- `interface_template_id.cc:968` — `BLT_I18NCONTEXT_ID_LIGHTPROBE` in `BLT_I18N_MSGID_MULTI_CTXT` registration — remove (Scar 13)
+- `rna_lightprobe.cc` — KEEP entire file (LightProbe struct RNA defs; OB_LIGHTPROBE objects still exist at runtime)
+- `makesrna/intern/makesrna.cc` — KEEP `rna_lightprobe` entry
+
+editors standard sweep:
+- `interface/interface_icons.cc:2075` — `case ID_LP:` — remove
+- `interface/templates/interface_template_id.cc:883` — `case ID_LP:` browse string — remove
+- `render/render_opengl.cc:623` — `case ID_LP:` — remove
+- `space_outliner/outliner_draw.cc:2548` — `case ID_LP:` — remove
+- `space_outliner/outliner_intern.hh:154` — `ID_LP` from `TREESTORE_ID_TYPE` macro — remove; Scar 9 check
+- `space_outliner/outliner_select.cc:1295` — `case ID_LP:` — remove
+- `space_outliner/outliner_tools.cc:154` — `case ID_LP:` — remove
+- `space_outliner/tree/tree_element_id.cc:67` — `case ID_LP:` — remove
+- `space_buttons/buttons_context.cc:235,829,935` — `RNA_LightProbe` check, `"lightprobe"` context string, `CTX_data_equals` member — remove
+
+editors anim chain (DSLIGHTPROBE — same pattern as DSSPK/DSLINESTYLE):
+- `animation/anim_channels_defines.cc` — `ACF_DSLIGHTPROBE` struct + 3 callbacks + `animchannelTypeInfo` table entry — remove
+- `animation/anim_channels_edit.cc` — 9 `ANIMTYPE_DSLIGHTPROBE` fallthrough cases (lines 302,382,433,592,760,2652,2829,3656,4527) — remove
+- `animation/anim_filter.cc` — `ANIMTYPE_DSLIGHTPROBE` case + `animdata_filter_ds_lightprobe` function + call site — remove
+- `animation/anim_deps.cc` — `ANIMTYPE_DSLIGHTPROBE` fallthrough case — remove
+- `include/ED_anim_api.hh` — `ANIMTYPE_DSLIGHTPROBE` enum value + `FILTER_LIGHTPROBE_OBJD` macro — remove
+- `space_nla/nla_buttons.cc` — `ANIMTYPE_DSLIGHTPROBE` case — remove
+- `space_nla/nla_draw.cc` — `ANIMTYPE_DSLIGHTPROBE` case — remove
+- `space_nla/nla_tracks.cc` — `ANIMTYPE_DSLIGHTPROBE` case — remove
+- `transform/transform_convert_action.cc` — `ANIMTYPE_DSLIGHTPROBE` case — remove
+
+depsgraph (3 literal + 3 true-blast-radius additions):
+- `depsgraph/intern/builder/deg_builder_nodes.cc:597` — `case ID_LP:` in main ID dispatch — remove; KEEP `build_lightprobe()` and `build_object_data_lightprobe()` (called via OB_LIGHTPROBE object path)
+- `depsgraph/intern/builder/deg_builder_relations.cc:538` — `case ID_LP:` in main ID dispatch — remove; KEEP relation-building functions
+- `depsgraph/intern/depsgraph_tag.cc:622` — `case ID_LP:` — remove
+- `depsgraph/intern/depsgraph_query.cc:134` — **TRUE BLAST RADIUS** — `DEG_id_type_any_exists` does `id_type_exist[BKE_idtype_idcode_to_index(id_type)]` with no OOB guard — add `if (id_type_index < 0) { return false; }` guard
+- `draw/engines/eevee/eevee_lightprobe_planar.cc:54` — **TRUE BLAST RADIUS** — `DEG_id_type_any_exists(inst_.depsgraph, ID_LP)` — change to `true` (OOB crash after INIT_TYPE removal)
+- `draw/engines/eevee/eevee_lightprobe_sphere.cc:24` — **TRUE BLAST RADIUS** — `DEG_id_type_any_exists(instance_.depsgraph, ID_LP)` — change to `true`
+
+Python (entries that go — not the files that stay):
+- `scripts/startup/bl_ui/space_dopesheet.py:125–126` — `bpy.data.lightprobes` check + `show_lightprobes` filter — remove
+- `scripts/startup/bl_ui/space_outliner.py:528` — `bpy.data.lightprobes or` — remove
+- `scripts/startup/bl_operators/wm.py:2946` — `'LIGHT_PROBE': ("lightprobes", ...)` rename entry — remove
+- `scripts/modules/_bl_i18n_utils/settings.py:457` — `"lightprobes"` in main list names — remove
+
+Runtime code that stays (fold-down — not chisel):
+- All `draw/engines/eevee/eevee_lightprobe_*.cc/.hh` — KEEP (EEVEE evaluation stays)
+- `draw/engines/overlay/overlay_lightprobe.hh` — KEEP (visualization stays)
+- `editors/object/object_add.cc` — KEEP (`OBJECT_OT_lightprobe_add` + helpers)
+- `editors/render/render_shading.cc` — KEEP (`OBJECT_OT_lightprobe_cache_bake/free`)
+- `scripts/startup/bl_ui/properties_data_lightprobe.py` — KEEP (OB_LIGHTPROBE properties panel)
+- `scripts/startup/bl_ui/properties_world.py` — KEEP (world lightprobe panels)
+- `makesrna/intern/rna_lightprobe.cc` — KEEP (LightProbe struct RNA)
+- `makesdna/DNA_lightprobe_types.h` — KEEP struct body (only id_type constexpr + #ifdef __cplusplus block removed)
+- `blenkernel/BKE_lightprobe.h` — KEEP entire API header
+- `USER_DUP_LIGHTPROBE`, `OB_LIGHTPROBE`, `LIGHT_PROBE_EVAL` depsgraph opcode — all KEEP
+- `deg_builder_nodes.cc` `build_lightprobe()` / `build_object_data_lightprobe()` — KEEP (OB_LIGHTPROBE object path)
 
 ---
 
