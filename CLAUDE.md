@@ -827,7 +827,7 @@ The checklist has two parts. Both run before every commit. Neither is optional.
 
 ---
 
-#### Part 1 — Documentation Consistency
+#### Part 1 — Documentation Consistency *(Scar 7)*
 
 *Applies to every commit touching CLAUDE.md, CHANGELOG.md, BLENDED.md, or any file with cross-references, ordered lists, version maps, or architectural decisions.*
 
@@ -910,6 +910,22 @@ grep -n "RNA_def_main_<types>\|RNA_def_<type>" source/blender/makesrna/intern/rn
 # RNA_def_<type> (single-parameter form, only BlenderRNA *brna) — must be PRESENT.
 # Cross-check: makesrna.cc table entry and rna_<type>.cc definition must also survive — all three together.
 ```
+
+**General (all operations) — Scars 1, 2, 3, 5, 6, 14:**
+
+These scars cannot be expressed as greps. Each is a yes/no question to answer before committing.
+
+- **Scar 1 — did I over-delete?** Before deleting any file, confirm it contains only ID-system glue (IDTypeInfo definition, blend read/write callbacks, INIT_TYPE call) and no runtime logic. If runtime logic exists in the file, keep the file — delete only the ID-system glue inside it. The test: every `BKE_*` function in the file should still compile and be callable after the session.
+
+- **Scar 2 — is `which_libbase` routing intact?** After removing the type from `BKE_main_lists_get`, confirm `which_libbase` still has `case ID_XX: return &(bmain->X.cast<ID>());`. The `bmain->X` field must stay in `Main`. Removing it produces ~200 compile errors and was the $15 mistake.
+
+- **Scar 3 — did I push after every layer?** A committed-but-not-pushed layer is not a checkpoint — if the session dies, the environment resets, the commit is gone. The rule is commit → push → continue. Not commit-and-hold. If the last push was more than one layer ago, push now before continuing.
+
+- **Scar 5 — did I make one Edit call per section?** When updating large documentation files (CLAUDE.md, CHANGELOG.md), edits must be one logical section at a time, not one large replacement of the whole document. Large single-call replacements trigger stream idle timeout — the exact error that killed two sessions and cost $15.
+
+- **Scar 6 — are session notes written from evidence, not preference?** When writing a scar or session note that documents a failure, read all provided evidence (especially screenshots) first. Write what the evidence shows. Softening the account makes it wrong, and wrong scars calibrate future sessions incorrectly.
+
+- **Scar 14 — am I producing a menu about something obviously wrong?** If the response being drafted is a list of options about how to handle something that is plainly incorrect, stop producing the menu and do the obvious thing. The menu pattern is the failure mode. Common sense is upstream of the rules.
 
 ---
 
