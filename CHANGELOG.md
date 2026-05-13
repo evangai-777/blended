@@ -175,6 +175,22 @@ draw (1 file): `draw_context.cc:1166` (DEG_id_type_any_exists → gpencil-only).
 
 ### ID_LS — FreestyleLineStyle ✓ complete
 
+**Pre-chisel blast radius audit (28 literal / ~50 true hits):**
+
+makesdna (4 files): `DNA_ID_enums.h:156` (enum → deprecated #define); `DNA_linestyle_types.h:649` (id_type constexpr); `DNA_ID.h` (FILTER_ID_LS, INDEX_ID_LS, FILTER_ID_ALL); `DNA_action_types.h` (ADS_FILTER_NOLINESTYLE).
+
+blenkernel (4+ files): `BKE_idtype.hh` (extern decl); `idtype.cc:166` (INIT_TYPE + CASE_IDINDEX ×2); `main.cc:1042` (CASE_ID_INDEX + lb[] — KEEP which_libbase routing + linestyles Scar 2); `linestyle.cc` (IDTypeInfo block removed — KEEP BKE_linestyle_new); `node.cc:5153`; `texture.cc:480,513` (×2); `scene.cc` (FILTER_ID_LS from deps).
+
+blenloader (2 files): `versioning_500.cc:4494`; `versioning_450.cc:5891`.
+
+editors (26 files): `buttons_texture.cc`; `buttons_context.cc` (linestyle path fn + pinnable fn + dispatch + "line_style" member + FS texture slot); `interface_icons.cc`; `interface_template_id.cc`; `interface_template_preview.cc` (×3); `render_shading.cc` (×3 incl. FreestyleLineStyle paste context); `render_opengl.cc`; `outliner_draw.cc`; `outliner_intern.hh`; `outliner_tools.cc`; `tree_element_id.cc`; DELETED: `tree_element_id_linestyle.cc/.hh`; `space_node.cc` (NC_LINESTYLE ×2); `anim_channels_defines.cc` (ACF_DSLINESTYLE 3 fns + struct + table entry); `anim_channels_edit.cc` (ANIMTYPE_DSLINESTYLE ×9); `anim_deps.cc`; `anim_filter.cc` (fn + call site + case); `ED_anim_api.hh` (ANIMTYPE_DSLINESTYLE + FILTER_LS_SCED); `nla_buttons.cc`; `nla_draw.cc`; `nla_tracks.cc`; `transform_convert_action.cc`; `rna_action.cc` (show_linestyles prop).
+
+depsgraph (5 files): `deg_eval_copy_on_write.cc` (SPECIAL_CASE ×4 + sizeof + include removed); `deg_builder_relations.cc/.h` (case + fn + decl); `deg_builder_nodes.cc/.h` (case + fn + decl); `deg_builder_relations_view_layer.cc`; `deg_builder_nodes_view_layer.cc`.
+
+nodes (2 files): `shader_nodes_inline.cc` (ShaderNodeOutputLineStyle case); `node_texture_tree.cc` (unguarded SNODE_TEX_LINESTYLE branch + include).
+
+makesrna (7 files): `rna_ID.cc`; `rna_texture.cc` (NC_LINESTYLE case); `rna_color.cc` (×3); `rna_space.cc` (FILTER_ID_LS in shading filter); `rna_main_api.cc`; `rna_main.cc`; `rna_internal.hh`.
+
 | Layer | Files touched | Status |
 |-------|--------------|--------|
 | `makesdna` | `DNA_ID_enums.h` (enum → deprecated `#define`), `DNA_linestyle_types.h` (id_type constexpr), `DNA_ID.h` (FILTER_ID_LS, INDEX_ID_LS, FILTER_ID_ALL), `DNA_action_types.h` (ADS_FILTER_NOLINESTYLE) | ✓ |
