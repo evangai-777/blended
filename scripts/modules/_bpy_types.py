@@ -136,7 +136,7 @@ class Library(_types.ID):
         # See: `readblenentry.cc`, IDTYPE_FLAGS_ISLINKABLE,
         # we could make this an attribute in rna.
         attr_links = (
-            "actions", "armatures", "brushes", "cameras",
+            "actions", "armatures", "cameras",
             "curves", "grease_pencils", "collections", "images",
             "lights", "materials",
             "meshes", "node_groups", "objects", "scenes",
