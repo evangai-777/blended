@@ -430,19 +430,6 @@ static Image *rna_Main_images_load(Main *bmain,
   return ima;
 }
 
-static Lattice *rna_Main_lattices_new(Main *bmain, const char *name)
-{
-  char safe_name[MAX_ID_NAME - 2];
-  rna_idname_validate(name, safe_name);
-
-  Lattice *lt = BKE_lattice_add(bmain, safe_name);
-  id_us_min(&lt->id);
-
-  WM_main_add_notifier(NC_ID | NA_ADDED, nullptr);
-
-  return lt;
-}
-
 static VFont *rna_Main_fonts_load(Main *bmain,
                                   ReportList *reports,
                                   const char *filepath,
@@ -715,7 +702,6 @@ RNA_MAIN_ID_TAG_FUNCS_DEF(meshes, meshes, ID_ME)
 RNA_MAIN_ID_TAG_FUNCS_DEF(lights, lights, ID_LA)
 RNA_MAIN_ID_TAG_FUNCS_DEF(libraries, libraries, ID_LI)
 RNA_MAIN_ID_TAG_FUNCS_DEF(images, images, ID_IM)
-RNA_MAIN_ID_TAG_FUNCS_DEF(lattices, lattices, ID_LT)
 RNA_MAIN_ID_TAG_FUNCS_DEF(fonts, fonts, ID_VF)
 RNA_MAIN_ID_TAG_FUNCS_DEF(brushes, brushes, ID_BR)
 RNA_MAIN_ID_TAG_FUNCS_DEF(worlds, worlds, ID_WO)
@@ -1232,49 +1218,6 @@ void RNA_def_main_images(BlenderRNA *brna, PropertyRNA *cprop)
   RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
 }
 
-void RNA_def_main_lattices(BlenderRNA *brna, PropertyRNA *cprop)
-{
-  StructRNA *srna;
-  FunctionRNA *func;
-  PropertyRNA *parm;
-
-  RNA_def_property_srna(cprop, "BlendDataLattices");
-  srna = RNA_def_struct(brna, "BlendDataLattices", nullptr);
-  RNA_def_struct_sdna(srna, "Main");
-  RNA_def_struct_ui_text(srna, "Main Lattices", "Collection of lattices");
-
-  func = RNA_def_function(srna, "new", "rna_Main_lattices_new");
-  RNA_def_function_ui_description(func, "Add a new lattice to the main database");
-  parm = RNA_def_string(func, "name", "Lattice", 0, "", "New name for the data-block");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-  /* return type */
-  parm = RNA_def_pointer(func, "lattice", "Lattice", "", "New lattice data-block");
-  RNA_def_function_return(func, parm);
-
-  func = RNA_def_function(srna, "remove", "rna_Main_ID_remove");
-  RNA_def_function_flag(func, FUNC_USE_REPORTS);
-  RNA_def_function_ui_description(func, "Remove a lattice from the current blendfile");
-  parm = RNA_def_pointer(func, "lattice", "Lattice", "", "Lattice to remove");
-  RNA_def_parameter_flags(parm, PROP_NEVER_NULL, PARM_REQUIRED | PARM_RNAPTR);
-  RNA_def_parameter_clear_flags(parm, PROP_THICK_WRAP, ParameterFlag(0));
-  RNA_def_boolean(func,
-                  "do_unlink",
-                  true,
-                  "",
-                  "Unlink all usages of this lattice before deleting it "
-                  "(WARNING: will also delete objects instancing that lattice data)");
-  RNA_def_boolean(func,
-                  "do_id_user",
-                  true,
-                  "",
-                  "Decrement user counter of all data-blocks used by this lattice data");
-  RNA_def_boolean(
-      func, "do_ui_user", true, "", "Make sure interface does not reference this lattice data");
-
-  func = RNA_def_function(srna, "tag", "rna_Main_lattices_tag");
-  parm = RNA_def_boolean(func, "value", false, "Value", "");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-}
 void RNA_def_main_fonts(BlenderRNA *brna, PropertyRNA *cprop)
 {
   StructRNA *srna;

@@ -40,7 +40,6 @@ const EnumPropertyItem rna_enum_id_type_items[] = {
     {ID_GP, "GREASEPENCIL_V3", ICON_GREASEPENCIL, "Grease Pencil v3", ""},
     {ID_IM, "IMAGE", ICON_IMAGE_DATA, "Image", ""},
     {ID_KE, "KEY", ICON_SHAPEKEY_DATA, "Key", ""},
-    {ID_LT, "LATTICE", ICON_LATTICE_DATA, "Lattice", ""},
     {ID_LI, "LIBRARY", ICON_LIBRARY_DATA_DIRECT, "Library", ""},
     {ID_LA, "LIGHT", ICON_LIGHT_DATA, "Light", ""},
     {ID_MSK, "MASK", ICON_MOD_MASK, "Mask", ""},
@@ -125,7 +124,6 @@ const IDFilterEnumPropertyItem rna_enum_id_type_filter_items[] = {
      "Show/hide Curves data-blocks"},
     {FILTER_ID_IM, "filter_image", ICON_IMAGE_DATA, "Images", "Show Image data-blocks"},
     {FILTER_ID_LA, "filter_light", ICON_LIGHT_DATA, "Lights", "Show Light data-blocks"},
-    {FILTER_ID_LT, "filter_lattice", ICON_LATTICE_DATA, "Lattices", "Show Lattice data-blocks"},
     {FILTER_ID_MA,
      "filter_material",
      ICON_MATERIAL_DATA,
@@ -366,9 +364,6 @@ short RNA_type_to_ID_code(const StructRNA *type)
   if (base_type == RNA_Curves) {
     return ID_CV;
   }
-  if (base_type == RNA_Lattice) {
-    return ID_LT;
-  }
   if (base_type == RNA_Material) {
     return ID_MA;
   }
@@ -442,8 +437,6 @@ StructRNA *ID_code_to_RNA_type(short idcode)
     case ID_LI:
       return RNA_Library;
 
-    case ID_LT:
-      return RNA_Lattice;
     case ID_MA:
       return RNA_Material;
     case ID_MC:

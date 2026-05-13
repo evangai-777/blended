@@ -157,7 +157,6 @@ RNA_MAIN_LISTBASE_FUNCS_DEF(fonts)
 RNA_MAIN_LISTBASE_FUNCS_DEF(grease_pencils)
 RNA_MAIN_LISTBASE_FUNCS_DEF(hair_curves)
 RNA_MAIN_LISTBASE_FUNCS_DEF(images)
-RNA_MAIN_LISTBASE_FUNCS_DEF(lattices)
 RNA_MAIN_LISTBASE_FUNCS_DEF(libraries)
 RNA_MAIN_LISTBASE_FUNCS_DEF(lights)
 
@@ -374,12 +373,6 @@ void RNA_def_main(BlenderRNA *brna)
        "Images",
        "Image data-blocks",
        RNA_def_main_images},
-      {"lattices",
-       "Lattice",
-       "rna_Main_lattices_begin",
-       "Lattices",
-       "Lattice data-blocks",
-       RNA_def_main_lattices},
       {"fonts",
        "VectorFont",
        "rna_Main_fonts_begin",

@@ -118,7 +118,6 @@ StringRef BLT_translate_do_new_dataname(StringRef msgctxt, StringRef msgid);
 #define BLT_I18NCONTEXT_ID_ID "ID"
 #define BLT_I18NCONTEXT_ID_IMAGE "Image"
 // #define BLT_I18NCONTEXT_ID_IPO "Ipo" /* DEPRECATED */
-#define BLT_I18NCONTEXT_ID_LATTICE "Lattice"
 #define BLT_I18NCONTEXT_ID_LIBRARY "Library"
 #define BLT_I18NCONTEXT_ID_LIGHT "Light"
 #define BLT_I18NCONTEXT_ID_MASK "Mask"
@@ -190,7 +189,6 @@ struct BLT_i18n_contexts_descriptor {
         BLT_I18NCONTEXTS_ITEM( \
             BLT_I18NCONTEXT_ID_IMAGE, \
             "id_image"), /* BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_IPO, "id_ipo"), */ \
-        BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_LATTICE, "id_lattice"), \
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_LIBRARY, "id_library"), \
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_LIGHT, "id_light"), \
         BLT_I18NCONTEXTS_ITEM(BLT_I18NCONTEXT_ID_MASK, "id_mask"), \
