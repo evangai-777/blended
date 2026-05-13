@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.5.0-dev — ID_LP fold-down complete (compile-clean pending CI). 0.4.0 base: CI-complete (Windows x64, build 70 on commit `7bd69df`). Bucket 3 fold-downs in progress: `ID_LP` ✓ pending CI. Remaining: `ID_PAL`, `ID_LT`, `ID_MSK`, `ID_VF`, `ID_BR`.
+**Current version:** Blended 0.5.0-dev — ID_LP fold-down CI-complete (Windows x64, build 74 on commit `80002ae`). 0.4.0 base: CI-complete (Windows x64, build 70 on commit `7bd69df`). Bucket 3 fold-downs in progress: `ID_LP` ✓. Remaining: `ID_PAL`, `ID_LT`, `ID_MSK`, `ID_VF`, `ID_BR`.
 
 ---
 
@@ -947,7 +947,7 @@ make check_mypy     # Python type checking
 
 ### Branding
 - `CMakeLists.txt:81` — `project(Blended)`
-- `source/blender/blenkernel/BKE_blender_version.h` — `BLENDED_VERSION_MAJOR/MINOR/PATCH` defines (currently 0.3.0; bump on first commit of a new dev cycle, not at release time), plus `BKE_blended_version_string()` declaration
+- `source/blender/blenkernel/BKE_blender_version.h` — `BLENDED_VERSION_MAJOR/MINOR/PATCH` defines (currently 0.4.0; see Version Management section for bump procedure), plus `BKE_blended_version_string()` declaration
 - `source/blender/blenkernel/intern/blender.cc` — `blended_version_string` built in `blender_version_init()`, `BKE_blended_version_string()` implemented
 - `source/blender/windowmanager/intern/wm_window.cc` — fallback title `"Blended"`, title suffix `"- Blended X.Y.Z"` via `BKE_blended_version_string()` (rendered dynamically from the defines above)
 - `source/blender/windowmanager/intern/wm_splash_screen.cc` — about dialog name/description, tagline `"Blender, simplified."`, splash version label
@@ -970,6 +970,52 @@ make check_mypy     # Python type checking
 ### CI / Build Config
 - `.github/workflows/build-windows.yml` — branch pushes: lite build (compile check); tags/manual: full release build → artifact + GitHub Release
 - `build_files/cmake/config/blended_release.cmake` — inherits `blender_release.cmake`, disables `WITH_CYCLES_CUDA/HIP/ONEAPI_BINARIES` and `WITH_FREESTYLE`
+
+### Version Management
+
+**The single source of truth:** `source/blender/blenkernel/BKE_blender_version.h` — three defines:
+```c
+#define BLENDED_VERSION_MAJOR 0
+#define BLENDED_VERSION_MINOR 4   // ← bump this for each completed foundation layer
+#define BLENDED_VERSION_PATCH 0   // ← bump this for patch releases within a layer
+```
+The CI workflow reads these at build time. Packaged artifact name (`Blended-X.Y.Z-windows-x64`) derives entirely from these defines — no other file needs to be changed for the package label to update.
+
+**When to bump MINOR (new dev-cycle start):**
+Bump `BLENDED_VERSION_MINOR` on the **first commit of a new dev cycle**, not when CI goes green. Example: the first commit of 0.5.x work bumps minor to 5 even though 0.5.0 won't be CI-complete for weeks. This way the version string in a dev build always names the cycle in progress. *Do not wait for CI to go green before bumping.*
+
+**When to bump PATCH:**
+Bump `BLENDED_VERSION_PATCH` for CI fixes, doc updates, and build repairs within an existing layer that don't add new foundation work. A patch release is a stable point within a cycle — e.g., the ID_LP CI-fix PRs within 0.5.x would be 0.5.1 if they warranted a tagged release.
+
+**Version lag — what happened with 0.3.0 → 0.4.0:**
+The 0.4.0 CI-complete milestone (build 70) shipped without bumping the version header from 0.3.0. The product ran as "0.3.0" for the entire 0.5.x dev cycle until manually caught. The fix: treat the version bump as a required checklist item when a layer goes CI-green, not as something to do later.
+
+**Full procedure — bump + update all four mandatory docs:**
+
+1. **`BKE_blender_version.h`** — increment `BLENDED_VERSION_MINOR` (or `PATCH`).
+
+2. **`CLAUDE.md`** (this file) — update the "Current version" line at the top:
+   - For a new dev-cycle start: `Blended X.Y.0-dev — [first type] fold-down/chisel in progress`
+   - For a CI-complete milestone: `Blended X.Y.0-dev — [type] CI-complete (Windows x64, build N on commit XXXXXXX)`
+   - Keep the base version reference accurate: `X.(Y-1).0 base: CI-complete (build N, commit XXXXXXX)`
+
+3. **`CHANGELOG.md`** — add a version bump note to the active *Unreleased* section (or the completed version section):
+   - One line: which define changed, old value → new value, what triggered it, commit reference.
+   - If CI just went green: also add a CI-complete note with build number and commit hash.
+
+4. **`BLENDED.md`** — update the **Status** line at the top of the file to match.
+
+5. **`.github/README.md`** — update the version/status sentence under the repo description. Stage with `git add -f .github/README.md` (it is in `.gitignore`).
+
+**Quick checklist (run after any CI-green milestone or new dev-cycle start):**
+```
+□ BKE_blender_version.h — MINOR or PATCH bumped
+□ CLAUDE.md — "Current version" line updated
+□ CHANGELOG.md — version bump note + CI-complete note added
+□ BLENDED.md — Status line updated
+□ .github/README.md — version/status sentence updated (git add -f)
+□ All five changes in one commit, pushed to the working branch
+```
 
 ### Datablock Cuts in Progress (BLENDED.md §10)
 Target: 39 → ~19 ID types.
