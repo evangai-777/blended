@@ -1,6 +1,6 @@
 # BLENDED — Identity & Design Agreements
 
-**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.5.0-dev — ID_LP fold-down CI-complete (Windows x64, build 74, commit `80002ae`). Base: 0.4.0 CI-complete (Windows x64, build 70, commit `7bd69df`). Bucket 3 in progress: `ID_LP` ✓, `ID_PAL` ✓ (pending CI), `ID_LT` ✓ (pending CI), `ID_MSK` ✓ (pending CI) — remaining: `ID_VF`, `ID_BR`.
+**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.5.0-dev — ID_LP fold-down CI-complete (Windows x64, build 74, commit `80002ae`). Base: 0.4.0 CI-complete (Windows x64, build 70, commit `7bd69df`). Bucket 3 in progress: `ID_LP` ✓, `ID_PAL` ✓ (pending CI), `ID_LT` ✓ (pending CI), `ID_MSK` ✓ (pending CI), `ID_VF` ✓ (pending CI) — remaining: `ID_BR`.
 **Purpose:** So any future session, contributor, or Claude instance can pick up without re-litigating what's already been decided. Read this first before proposing changes to scope, identity, or architecture.
 
 ---
@@ -254,7 +254,7 @@ Property bags pretending to be first-class entities:
 | `ID_LT` | Lattice | Modifier, not a datablock | ✓ 0.5.0 |
 | `ID_LP` | LightProbe | Merge into `ID_LA` with a type flag | ✓ 0.5.0 |
 | `ID_MSK` | Mask | Hang off compositor NodeTree | ✓ 0.5.0 |
-| `ID_VF` | VFont | System font reference; FreeType handles the rest |
+| `ID_VF` | VFont | System font reference; FreeType handles the rest | ✓ 0.5.0 |
 
 ### Bucket 4 — UI state removals [LOCKED]
 

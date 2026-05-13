@@ -59,7 +59,7 @@ carries a one-liner status per active item.
 
 Bucket 3 fold-downs — the last datablock-audit version. Six IDs that are property bags pretending to be first-class entities, each folded into the structure they actually belong to: `ID_BR` (Brush) → user state + shareable brush packs, `ID_PAL` (Palette) → brush property or inline, `ID_LT` (Lattice) → modifier, not a datablock, `ID_LP` (LightProbe) → merge into `ID_LA` with a type flag, `ID_MSK` (Mask) → hang off compositor NodeTree, `ID_VF` (VFont) → system font reference. Closes the datablock audit (39 → ~19 ID types).
 
-Fold-down order: **ID_LP ✓** → **ID_PAL ✓** → **ID_LT ✓** → **ID_MSK ✓** → ID_VF → ID_BR.
+Fold-down order: **ID_LP ✓** → **ID_PAL ✓** → **ID_LT ✓** → **ID_MSK ✓** → **ID_VF ✓** → ID_BR.
 
 ### ID_LP — LightProbe ✓ complete
 
@@ -187,6 +187,33 @@ python (1 file): `space_sequencer.py` (bpy.data.masks length conditional → alw
 **What stays (fold-down keeps all runtime code):** `rna_mask.cc`, `BKE_mask.hh`, `mask.cc` (all non-IDTypeInfo functions), `mask_query.cc`, `mask_evaluate.cc`, `mask_ops.cc`, `mask_draw.cc`, all editor dispatch (icons, outliner, template_id browse string, buttons_context), full `ANIMTYPE_MASKLAYER` anim channel chain (mask uses per-layer channels, not a DS-wrapper — no ANIMTYPE_DSMASK exists), full depsgraph builder dispatch, all `BKE_mask_*` API. `bpy.context.edit_mask` and `bpy.context.active_object.mask` still valid — the runtime mask object is accessed via context, not `bpy.data.masks`.
 
 **Claude AI contributor (2026-05-13):** ID_MSK fold-down across 4 layers on branch `claude/update-ci-status-5uAPa`. 4 code commits pushed. Key distinctions: no ANIMTYPE_DSMASK exists (mask anim uses ANIMTYPE_MASKLAYER — per-layer channels, not a type-level DS-wrapper), so no anim chain cleanup needed; `BLT_I18NCONTEXT_ID_MASK` kept unlike LP/PAL (legitimate non-ID borrowers in rna_mask.cc and rna_brush.cc); `sequencer_edit.cc` needed hardcoded string fix because `BKE_idtype_idcode_to_name` returns nullptr after INIT_TYPE removal; `editmesh_bisect.cc` Scar 13 remap (unrelated `use_fill` prop borrowed the mask i18n context). Pending CI.
+
+---
+
+### ID_VF — VFont ✓ complete (pending CI)
+
+Literal grep: 45 hits. True blast radius: ~55 hits across ~30 files.
+
+VFont is a fold-down, not a chisel. All runtime functionality kept. Text objects, geometry nodes string-to-curves, SOCK_FONT node sockets, depsgraph evaluation — all preserved. Only the ID registration machinery removed.
+
+**Key notes:**
+- **No anim chain removal** — VFont has no `ANIMTYPE_DSVFONT`, no `ACF_DSVFONT`, no `ADS_FILTER_NOVFONT`. VFont is not animatable directly; text object properties are animated via Object ID, not VFont. Nothing to touch in the anim system.
+- **Scar 10 inside BKE_vfont_load()** — VFont's allocation happens inside `BKE_vfont_load()` (which also parses the font file), unlike other types that have a dedicated `BKE_X_add()`. Scar 10 applied surgically: only the `BKE_libblock_alloc` call replaced with `MEM_new<VFont>` + manual listbase insert; remaining `BKE_vfont_load` logic unchanged.
+- **BLT_I18NCONTEXT_ID_VFONT fully removed** — no external borrowers (unlike ID_MSK where rna_mask.cc/rna_brush.cc legitimately used the constant). Not present in `interface_template_id.cc` MULTI_CTXT list (VFont was never added there). Fully removed from `BLT_translation.hh`.
+- **SOCK_FONT kept** — active geometry nodes socket type; `node_geo_input_font.cc`, `node_geo_string_to_curves.cc`, all SOCK_FONT handling kept entirely.
+- **`rna_space.cc` category_misc** — `FILTER_ID_VF |` removed from asset browser `category_misc` filter group.
+- **`sequencer_clipboard.cc` VSE_COPYBUFFER_IDTYPES** — includes `ID_VF`; stays valid since deprecated define has same numeric value.
+
+| Layer | Files changed | Status |
+|-------|--------------|--------|
+| `makesdna` | `DNA_ID_enums.h` (enum entry → deprecated `#define`), `DNA_vfont_types.h` (Scar 8: entire `#ifdef __cplusplus` block removed — id_type only, no DNA_DEFINE_CXX_METHODS), `DNA_ID.h` (`FILTER_ID_VF`, `INDEX_ID_VF`, FILTER_ID_ALL entry removed) | ✓ |
+| `blenkernel` | `BKE_idtype.hh` (extern removed), `idtype.cc` (INIT_TYPE + CASE_IDINDEX ×2 — Scar 4), `main.cc` (CASE_ID_INDEX + lb[] removed; which_libbase `case ID_VF:` KEPT — Scar 2), `vfont.cc` (IDTypeInfo block removed; `BKE_vfont_load()` → MEM_new<VFont> + manual insert — Scar 10; static blend I/O callbacks kept — Scar 17) | ✓ |
+| `makesrna` | `rna_ID.cc` (4 entries — enum item, filter item, base_type check, switch case; both `case ID_VF:` runtime mappings KEPT), `rna_main_api.cc` (load func + tag funcs + collection accessor removed), `rna_main.cc` (listbase funcs + table entry), `rna_internal.hh` (RNA_def_main_fonts removed; RNA_def_vfont KEPT — Scar 15), `rna_space.cc` (FILTER_ID_VF from category_misc), `BLT_translation.hh` (BLT_I18NCONTEXT_ID_VFONT removed — Scar 13; not in MULTI_CTXT list) | ✓ |
+| `python` | `settings.py` ("fonts" data path), `_bpy_types.py` ("fonts" attr_links), `space_outliner.py` (bpy.data.fonts orphan condition) | ✓ |
+
+**What stays (fold-down keeps all runtime code):** `vfont.cc` (all non-IDTypeInfo functions including `BKE_vfont_load`, `BKE_vfont_copy`, `vfont_blend_write`, `vfont_blend_read_data`), `BKE_vfont.hh`, all `curve_deform.cc` / `text_layout.cc` text rendering, all `OB_FONT` handling throughout editors, full depsgraph `build_vfont` dispatch, all SOCK_FONT geometry node / compositor handling. `bpy.context.object.data.font` still valid — font assignment via text object data, not `bpy.data.fonts`.
+
+**Claude AI contributor (2026-05-13):** ID_VF fold-down across 4 layers on branch `claude/update-ci-status-5uAPa`. 4 code commits pushed. Key distinction from other fold-downs: no dedicated `BKE_vfont_add()` — allocation lives inside `BKE_vfont_load()` which parses the font simultaneously; Scar 10 applied surgically inside that function. SOCK_FONT socket handling confirmed active runtime code and fully kept. BLT_I18NCONTEXT_ID_VFONT fully removed (no external borrowers unlike ID_MSK). Pending CI.
 
 ---
 

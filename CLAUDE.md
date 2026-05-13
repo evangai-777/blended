@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.5.0-dev — ID_LP fold-down CI-complete (Windows x64, build 74 on commit `80002ae`). 0.4.0 base: CI-complete (Windows x64, build 70 on commit `7bd69df`). Bucket 3 fold-downs in progress: `ID_LP` ✓, `ID_PAL` ✓ (pending CI), `ID_LT` ✓ (pending CI), `ID_MSK` ✓ (pending CI). Remaining: `ID_VF`, `ID_BR`.
+**Current version:** Blended 0.5.0-dev — ID_LP fold-down CI-complete (Windows x64, build 74 on commit `80002ae`). 0.4.0 base: CI-complete (Windows x64, build 70 on commit `7bd69df`). Bucket 3 fold-downs in progress: `ID_LP` ✓, `ID_PAL` ✓ (pending CI), `ID_LT` ✓ (pending CI), `ID_MSK` ✓ (pending CI), `ID_VF` ✓ (pending CI). Remaining: `ID_BR`.
 
 ---
 
@@ -135,7 +135,7 @@ The operational test: at the end of a fold-down session, every tool and workflow
 | ~~`ID_LP`~~ | ~~35 hits~~ | ~~25 files~~ | ~~Merge into `ID_LA` with type flag~~ ✓ |
 | ~~`ID_PAL`~~ | ~~38 hits~~ | ~~24 files~~ | ~~Inline into Brush~~ ✓ |
 | ~~`ID_MSK`~~ | ~~41 hits~~ | ~~27 files~~ | ~~Hang off compositor NodeTree~~ ✓ |
-| `ID_VF` | 45 hits | 27 files | Filepath on Text object |
+| ~~`ID_VF`~~ | ~~45 hits~~ | ~~27 files~~ | ~~Filepath on Text object~~ ✓ |
 | ~~`ID_LT`~~ | ~~70 hits~~ | ~~32 files~~ | ~~Owned by Lattice modifier~~ ✓ |
 | `ID_BR` | 119 hits | 44 files | User state + shareable brush packs |
 
@@ -148,7 +148,7 @@ The operational test: at the end of a fold-down session, every tool and workflow
 | ~~`ID_LT`~~ | `bmain->lattices` | OB_LATTICE objects actively deform meshes — Scar 2 kept ✓ |
 | `ID_LP` | `bmain->lightprobes` | Active in EEVEE rendering |
 | ~~`ID_MSK`~~ | `bmain->masks` | Used in motion tracking and compositor — Scar 2 kept ✓ |
-| `ID_VF` | `bmain->fonts` | Text objects reference these every render |
+| ~~`ID_VF`~~ | `bmain->fonts` | Text objects reference these every render — Scar 2 kept ✓ |
 
 ---
 
@@ -201,6 +201,20 @@ The operational test: at the end of a fold-down session, every tool and workflow
 > **False positives identified:** All `editors/mask/` subsystem, `transform_convert_mask.cc`, `TransConvertType_Mask` in `transform_convert.cc`, `MaskModifierData::mask` pointer, `StripSeqData::mask_id` pointer, `ANIMTYPE_MASKLAYER` cases throughout anim editors, `MOD_mask.cc` (modifiers + sequencer) — all runtime code, all kept. `MASK_OVERLAY_*` / `MASK_PARENT_*` / `MASK_SPLINE_OFFSET_*` enum constants in `rna_mask.cc` / `rna_space.cc` — legitimate DNA constants in kept runtime files, not removable RNA enum item arrays (Scar 11 check clean).
 >
 > **Fold-down mindset confirmed:** At session end, every workflow that existed before still works — mask editing, motion tracking masks, compositor mask input, sequencer mask strips, Mask modifier, dopesheet animation channels, properties panel, outliner display. The ONLY functional changes: `bpy.data.masks` collection gone; sequencer add-mask menu simplified to always-invoke-dialog.
+
+---
+
+**ID_VF — ✓ COMPLETE (0.5.0, pending CI)** *(true blast radius: 45 literal / ~55 true hits — fold-down, not chisel; all runtime code kept)*
+
+> **Session note (2026-05-13):** 4 code commits across all layers + 1 docs commit. Fold-down philosophy applied correctly: no files deleted, no runtime code removed, only the ID system registration stripped.
+>
+> Key decisions vs. pre-fold-down audit: (1) **No anim chain** — VFont has no `ANIMTYPE_DSVFONT`, no `ACF_DSVFONT`, no `ADS_FILTER_NOVFONT`. VFont is not animatable directly; text object position/rotation is animated via Object, not VFont. Nothing to remove in anim chain. (2) **Depsgraph dispatch kept** — `case ID_VF:` in both `deg_builder_nodes.cc` and `deg_builder_relations.cc` kept; `build_vfont` still called for OB_FONT objects. OOB guards already generic from ID_LP fold-down — no new per-type fix needed. (3) **Scar 8 clean** — `DNA_vfont_types.h` `#ifdef __cplusplus` block contained only `id_type`; entire block removed. (4) **BLT_I18NCONTEXT_ID_VFONT fully removed** — unlike ID_MSK where `rna_mask.cc` / `rna_brush.cc` were legitimate borrowers, VFont's context was only used by the IDTypeInfo block itself. No external borrowers found (grep clean). Fully removed from `BLT_translation.hh`. Not present in `interface_template_id.cc` MULTI_CTXT list (VFont was never added there). (5) **Scar 10 — allocator inside BKE_vfont_load()** — unlike other fold-downs where a dedicated `BKE_X_add()` was the sole allocator, VFont allocation happens inside `BKE_vfont_load()` which also parses the font file. Scar 10 pattern applied surgically: replaced only the `BKE_libblock_alloc` call with `MEM_new<VFont>` + manual listbase insert, then continued setting `vfont->data` and other fields. VFont has in-class initializers (`filepath = ""`, `data = nullptr`, `packedfile = nullptr`, `temp_pf = nullptr`) — non-trivial → `MEM_new<VFont>` (Scar 18). No `id_fake_user_set` call (IDTypeInfo had no `init_data` that set it). (6) **SOCK_FONT kept** — VFont has an active node socket type `SOCK_FONT` used throughout geometry nodes (`node_geo_input_font.cc`, `node_geo_string_to_curves.cc`) and compositor. All SOCK_FONT handling kept entirely — fold-down protocol. (7) **`rna_space.cc` category_misc** — `FILTER_ID_VF |` removed from `{FILTER_ID_BR | FILTER_ID_TXT | FILTER_ID_VF, "category_misc", ...}` asset browser filter. (8) **Python** — `settings.py` "fonts" data path removed; `_bpy_types.py` `"fonts"` from attr_links removed; `space_outliner.py` `bpy.data.fonts or` removed from orphan data condition. No entries in space_dopesheet.py or wm.py (no copy-to-selected operator for fonts, no dopesheet filter).
+>
+> **True blast radius additions (field-name grep misses):** `anim_data_bmain_utils.cc` `ANIMDATA_IDS_CB(bmain->fonts.first)`, `anim_sys.cc` `EVAL_ANIM_IDS(main->fonts.first, ...)`, versioning files iterating `bmain->fonts` (versioning_250, versioning_260, versioning_280, versioning_legacy) — all kept as Scar 2 versioning bridge. `sequencer_clipboard.cc` `VSE_COPYBUFFER_IDTYPES` macro includes `ID_VF` — stays valid since deprecated define has same value.
+>
+> **False positives identified:** All `SOCK_FONT` socket handling throughout geometry nodes and compositor — runtime code, all kept. `build_vfont` depsgraph builder — runtime code, kept. `case ID_VF:` in RNA bidirectional mappings (`rna_ID.cc`) and `interface_template_id.cc` browse string — runtime code, kept. `OB_FONT` object type handling throughout the codebase — text objects, entirely separate from VFont ID deregistration.
+>
+> **Fold-down mindset confirmed:** At session end, every workflow that existed before still works — text objects with custom fonts, geometry nodes string-to-curves, SOCK_FONT socket inputs, depsgraph evaluation of font data, properties panel, outliner display. The ONLY functional change: `bpy.data.fonts` collection is gone; users load fonts via the font selector on Text objects (which calls `BKE_vfont_load` → manual listbase insert, Scar 2).
 
 ---
 
