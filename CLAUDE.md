@@ -88,16 +88,6 @@ BLI_listbase_clear(&bmain->linestyles);
 `BKE_id_free` skips the `IDTypeInfo::id_free` callback when the type is unregistered (INIT_TYPE removed) but still frees the memory block and animation data. Before using this pattern, audit the original `IDTypeInfo::id_free` implementation to confirm nothing non-trivial was being cleaned up there (e.g., GPU resources, runtime caches). For ID_LS, ID_PA, ID_TE, and ID_CU_LEGACY the callbacks were simple struct-internal frees with no GPU state — the drain is safe. Do NOT use `BKE_id_multi_tagged_delete` — that API operates on tagged blocks within the main indexed list and will not reach Scar 2 unindexed listbases.
 
 
-
-### Upcoming Chisel Roadmap
-
-| Order | ID type | Literal hits | Status |
-|-------|---------|-------------|--------|
-| ~~Done~~ | `ID_MB` — MetaBall | 60 hits / 32 files | ✓ |
-| ~~Done~~ | `ID_TE` — Texture | 76 hits / 45 files | ✓ |
-| ~~Done~~ | `ID_CU_LEGACY` — Legacy Curve | 74 hits / 33 files | ✓ |
-| ~~Done~~ | `ID_CF` — CacheFile | 29 literal / ~76 true | ✓ (inline per-instance) |
-
 ### Foundation Layer Roadmap
 
 | Version | Layer | Status |
@@ -172,89 +162,6 @@ The operational test: at the end of a fold-down session, every tool and workflow
 >
 > **Fold-down mindset confirmed:** At session end, every workflow that existed before still works — EEVEE probe rendering, properties panel, outliner display, animation dopesheet channels, icon display, outliner filter. The ONLY functional change: bpy.data.lightprobes collection is gone; users create light probes via Add > Light Probe object (which calls BKE_lightprobe_add → manual listbase insert, Scar 2).
 
-**ID_LP — 35 literal hits, 25 files** *(pre-fold-down audit — 2026-05-13)*
-
-Core definition (ID system surgery — goes):
-- `makesdna/DNA_ID_enums.h:154` — enum entry `ID_LP = MAKE_ID2('L', 'P')` — remove; add deprecated `#define`
-- `makesdna/DNA_lightprobe_types.h:113` — `static constexpr ID_Type id_type = ID_LP` — remove entire `#ifdef __cplusplus` block (Scar 8)
-- `makesdna/DNA_ID.h:1179,1195,1271` — `FILTER_ID_LP`, `FILTER_ID_ALL` inclusion, `INDEX_ID_LP` — remove all three
-- `makesdna/DNA_action_types.h:447` — `ADS_FILTER_NOLIGHTPROBE = (1 << 7)` — remove
-- `makesdna/DNA_object_types.h:740,752` — NO CHANGE: `ID_LP` in object macros still compiles via deprecated `#define`
-- `blenkernel/BKE_idtype.hh:326` — `extern IDTypeInfo IDType_ID_LP` — remove
-- `blenkernel/intern/idtype.cc:163` — `INIT_TYPE(ID_LP)` + both `CASE_IDINDEX(LP)` entries (Scar 4) — remove
-- `blenkernel/intern/main.cc:152,1090` — `CASE_ID_INDEX(INDEX_ID_LP)`, `lb[INDEX_ID_LP]` — remove; KEEP `case ID_LP:` routing (Scar 2)
-- `blenkernel/intern/lightprobe.cc:51–55` — `IDTypeInfo IDType_ID_LP` block — remove; `BKE_lightprobe_add` allocator fix (Scar 10)
-
-Scar 2 (mandatory — keep):
-- `blenkernel/BKE_main.hh` — `ListBaseT<LightProbe> lightprobes` field — KEEP
-- `blenkernel/intern/main.cc` — `case ID_LP: return &(bmain->lightprobes.cast<ID>());` in `which_libbase` — KEEP
-- `blenloader/intern/versioning_280.cc` — 2 × `for (LightProbe &probe : bmain->lightprobes)` — KEEP
-- `blenloader/intern/versioning_400.cc` — 3 × `for (LightProbe &lightprobe : bmain->lightprobes)` — KEEP
-- `blenloader/intern/versioning_410.cc` — 1 × `for (LightProbe &lightprobe : bmain->lightprobes)` — KEEP
-- `blenloader/intern/versioning_420.cc` — 1 × `for (LightProbe &probe : bmain->lightprobes)` — KEEP
-- `blenloader/intern/versioning_500.cc` — 1 × `for (LightProbe &lightprobe : bmain->lightprobes)` — KEEP
-
-makesrna (registration goes, runtime RNA stays):
-- `rna_ID.cc:46,131,407,479` — RNA enum item, filter item, base_type check, switch case — remove all 4
-- `rna_main_api.cc:765` — `RNA_MAIN_ID_TAG_FUNCS_DEF(lightprobes, lightprobes, ID_LP)` + `rna_Main_lightprobes_new()` + `RNA_def_main_lightprobes()` — remove
-- `rna_main.cc` — `RNA_MAIN_LISTBASE_FUNCS_DEF(lightprobes)` + table entry — remove
-- `rna_internal.hh` — `RNA_def_main_lightprobes` declaration — remove
-- `rna_action.cc:1558–1559` — `show_lightprobes` RNA prop + `ADS_FILTER_NOLIGHTPROBE` binding — remove
-- `rna_space.cc:3958` — `FILTER_ID_LP |` in asset browser lighting filter — remove
-- `blentranslation/BLT_translation.hh:124,198` — `BLT_I18NCONTEXT_ID_LIGHTPROBE` define + ITEM entry — remove
-- `interface_template_id.cc:968` — `BLT_I18NCONTEXT_ID_LIGHTPROBE` in `BLT_I18N_MSGID_MULTI_CTXT` registration — remove (Scar 13)
-- `rna_lightprobe.cc` — KEEP entire file (LightProbe struct RNA defs; OB_LIGHTPROBE objects still exist at runtime)
-- `makesrna/intern/makesrna.cc` — KEEP `rna_lightprobe` entry
-
-editors standard sweep:
-- `interface/interface_icons.cc:2075` — `case ID_LP:` — remove
-- `interface/templates/interface_template_id.cc:883` — `case ID_LP:` browse string — remove
-- `render/render_opengl.cc:623` — `case ID_LP:` — remove
-- `space_outliner/outliner_draw.cc:2548` — `case ID_LP:` — remove
-- `space_outliner/outliner_intern.hh:154` — `ID_LP` from `TREESTORE_ID_TYPE` macro — remove; Scar 9 check
-- `space_outliner/outliner_select.cc:1295` — `case ID_LP:` — remove
-- `space_outliner/outliner_tools.cc:154` — `case ID_LP:` — remove
-- `space_outliner/tree/tree_element_id.cc:67` — `case ID_LP:` — remove
-- `space_buttons/buttons_context.cc:235,829,935` — `RNA_LightProbe` check, `"lightprobe"` context string, `CTX_data_equals` member — remove
-
-editors anim chain (DSLIGHTPROBE — same pattern as DSSPK/DSLINESTYLE):
-- `animation/anim_channels_defines.cc` — `ACF_DSLIGHTPROBE` struct + 3 callbacks + `animchannelTypeInfo` table entry — remove
-- `animation/anim_channels_edit.cc` — 9 `ANIMTYPE_DSLIGHTPROBE` fallthrough cases (lines 302,382,433,592,760,2652,2829,3656,4527) — remove
-- `animation/anim_filter.cc` — `ANIMTYPE_DSLIGHTPROBE` case + `animdata_filter_ds_lightprobe` function + call site — remove
-- `animation/anim_deps.cc` — `ANIMTYPE_DSLIGHTPROBE` fallthrough case — remove
-- `include/ED_anim_api.hh` — `ANIMTYPE_DSLIGHTPROBE` enum value + `FILTER_LIGHTPROBE_OBJD` macro — remove
-- `space_nla/nla_buttons.cc` — `ANIMTYPE_DSLIGHTPROBE` case — remove
-- `space_nla/nla_draw.cc` — `ANIMTYPE_DSLIGHTPROBE` case — remove
-- `space_nla/nla_tracks.cc` — `ANIMTYPE_DSLIGHTPROBE` case — remove
-- `transform/transform_convert_action.cc` — `ANIMTYPE_DSLIGHTPROBE` case — remove
-
-depsgraph (3 literal + 3 true-blast-radius additions):
-- `depsgraph/intern/builder/deg_builder_nodes.cc:597` — `case ID_LP:` in main ID dispatch — remove; KEEP `build_lightprobe()` and `build_object_data_lightprobe()` (called via OB_LIGHTPROBE object path)
-- `depsgraph/intern/builder/deg_builder_relations.cc:538` — `case ID_LP:` in main ID dispatch — remove; KEEP relation-building functions
-- `depsgraph/intern/depsgraph_tag.cc:622` — `case ID_LP:` — remove
-- `depsgraph/intern/depsgraph_query.cc:134` — **TRUE BLAST RADIUS** — `DEG_id_type_any_exists` does `id_type_exist[BKE_idtype_idcode_to_index(id_type)]` with no OOB guard — add `if (id_type_index < 0) { return false; }` guard
-- `draw/engines/eevee/eevee_lightprobe_planar.cc:54` — **TRUE BLAST RADIUS** — `DEG_id_type_any_exists(inst_.depsgraph, ID_LP)` — change to `true` (OOB crash after INIT_TYPE removal)
-- `draw/engines/eevee/eevee_lightprobe_sphere.cc:24` — **TRUE BLAST RADIUS** — `DEG_id_type_any_exists(instance_.depsgraph, ID_LP)` — change to `true`
-
-Python (entries that go — not the files that stay):
-- `scripts/startup/bl_ui/space_dopesheet.py:125–126` — `bpy.data.lightprobes` check + `show_lightprobes` filter — remove
-- `scripts/startup/bl_ui/space_outliner.py:528` — `bpy.data.lightprobes or` — remove
-- `scripts/startup/bl_operators/wm.py:2946` — `'LIGHT_PROBE': ("lightprobes", ...)` rename entry — remove
-- `scripts/modules/_bl_i18n_utils/settings.py:457` — `"lightprobes"` in main list names — remove
-
-Runtime code that stays (fold-down — not chisel):
-- All `draw/engines/eevee/eevee_lightprobe_*.cc/.hh` — KEEP (EEVEE evaluation stays)
-- `draw/engines/overlay/overlay_lightprobe.hh` — KEEP (visualization stays)
-- `editors/object/object_add.cc` — KEEP (`OBJECT_OT_lightprobe_add` + helpers)
-- `editors/render/render_shading.cc` — KEEP (`OBJECT_OT_lightprobe_cache_bake/free`)
-- `scripts/startup/bl_ui/properties_data_lightprobe.py` — KEEP (OB_LIGHTPROBE properties panel)
-- `scripts/startup/bl_ui/properties_world.py` — KEEP (world lightprobe panels)
-- `makesrna/intern/rna_lightprobe.cc` — KEEP (LightProbe struct RNA)
-- `makesdna/DNA_lightprobe_types.h` — KEEP struct body (only id_type constexpr + #ifdef __cplusplus block removed)
-- `blenkernel/BKE_lightprobe.h` — KEEP entire API header
-- `USER_DUP_LIGHTPROBE`, `OB_LIGHTPROBE`, `LIGHT_PROBE_EVAL` depsgraph opcode — all KEEP
-- `deg_builder_nodes.cc` `build_lightprobe()` / `build_object_data_lightprobe()` — KEEP (OB_LIGHTPROBE object path)
-
 ---
 
 ### Bucket 5 + 6 Blast Radius Audit (pre-chisel)
@@ -279,182 +186,17 @@ When the true blast radius diverges from the literal count, **update the CLAUDE.
 
 > **Session note (2026-05-06):** 6 layers committed (editors/draw had zero compile errors; all `case ID_CU_LEGACY:` sites in those layers compile fine because `ID_CU_LEGACY` is kept as a `#define` with the same value). Key decisions vs. pre-chisel audit: (1) **Scar 2 mandatory** — `bmain->curves` field and `which_libbase` routing kept; 23+ `bmain->curves` iterations across versioning files 250–520 + `anim_data_bmain_utils.cc` + `anim_sys.cc`. (2) **Scar 8 applied correctly** — `DNA_curve_types.h` `Curve` struct has `DNA_DEFINE_CXX_METHODS(Curve)` AND `id_type` in the same `#ifdef __cplusplus` block; removed only the `id_type` line, kept the rest. (3) **Scar 10** — `BKE_curve_add` calls `BKE_libblock_alloc(bmain, ID_CU_LEGACY, ...)` which crashes after INIT_TYPE removal; applied MEM_new<Curve> + manual-insert pattern; added `BKE_main.hh` include; `BKE_curve_add` has live callers: object.cc (3 types), Alembic NURBS reader, OBJ NURBS importer, mesh_convert.cc, rna_main_api.cc. (4) **Active migration path preserved** — `blenfile_link_append.cc` converter code untouched; case statements in `object.cc`, `material.cc`, `key.cc`, etc. left in place because Alembic/OBJ importers still create legacy curve objects at runtime. (5) **Two depsgraph OOB guards added** — same crash path as ID_TE `build_texture()` but different fix: `add_id_node()` in `depsgraph.cc` guarded with `id_type_index >= 0` check (legacy curves still get IDNodes; only `id_type_exist` write skipped), `DEG_graph_id_type_tag()` in `depsgraph_tag.cc` guarded with early return. (6) **makesrna cleanup** — `rna_Main_curves_new()`, `RNA_def_main_curves()`, `RNA_MAIN_ID_TAG_FUNCS_DEF(curves)`, listbase funcs, and table entry all removed. `rna_space.cc:3951` `FILTER_ID_CU_LEGACY |` in geometry filter removed (same grep-miss pattern). (7) **`FILTER_ID_CU_LEGACY`** was the primary compile-error source in non-core files; once removed from `DNA_ID.h`, `key.cc:173` `.dependencies_id_types` and `rna_space.cc:3951` were the two non-obvious grep-miss sites. (8) Deferred: `rna_curve.cc` entirely intact — `CU_BEZIER/CU_POLY/CU_NURBS` RNA enum arrays stay since `DNA_curve_types.h` is kept for runtime use.
 
-**ID_CU_LEGACY — 74 hits, 33 files** *(pre-chisel record below)*
-
-Core definition:
-- `makesdna/DNA_ID_enums.h:133` — enum entry `ID_CU_LEGACY = MAKE_ID2('C', 'U')`
-- `makesdna/DNA_curve_types.h:216` — `static constexpr ID_Type id_type = ID_CU_LEGACY`
-- `makesdna/DNA_object_types.h:736,742,758` — object type check macros (shared with ID_MB)
-- `blenkernel/intern/idtype.cc:143` — `INIT_TYPE(ID_CU_LEGACY)`
-- `blenkernel/intern/main.cc:992` — `which_libbase` case
-- `blenkernel/intern/curve.cc:410` — `BKE_libblock_alloc(bmain, ID_CU_LEGACY, name, 0)` — curve creation
-
-blenkernel (6 files):
-- `key.cc:256,1112,1251,1266` — GS checks for shape keys (4 sites)
-- `material.cc:423,451,480,517,539,838` — material slot handling (6 sites)
-- `object.cc:1123,1931,1963,2228,4277` — object data dispatch (5 sites)
-- `mesh_convert.cc:665,688,775` — mesh conversion GS checks
-- `lib_remap.cc:428,626` — library remapping
-- `object_update.cc:356` — update dispatch
-
-editors (11 files):
-- `interface_icons.cc:2053` — icon switch case
-- `interface_template_id.cc:582,857` — template checks
-- `object_data_transform.cc:389,570,702,797` — data transform dispatch (4 sites)
-- `object_edit.cc:1764` — GS check
-- `render_opengl.cc:609` — render switch
-- `transform_convert_object_texspace.cc:52` — `ELEM(GS(id->name), ID_ME, ID_CU_LEGACY, ID_MB)` (shared with MB)
-- `outliner_select.cc:1288` — outliner select
-- `outliner_draw.cc:2473` — outliner draw
-- `outliner_intern.hh:140` — outliner macro
-- `outliner_tools.cc:136,287` — outliner tools
-- `tree_element_id.cc:48` — tree element
-
-draw (2 files):
-- `overlay_bounds.hh:182` — bounds overlay
-- `draw_resource.hh:150` — draw resource
-
-depsgraph (4 files):
-- `depsgraph_tag.cc:72,344,627` — tag dispatch (shared ELEM with MB/GD_LEGACY)
-- `deg_eval_copy_on_write.cc:115,161,200,236,560,941` — COW special cases (6 sites)
-- `deg_builder_relations.cc:576,2587,2741` — relation builder
-- `deg_builder_nodes.cc:629,1795` — node builder
-
-makesrna (4 files):
-- `rna_ID.cc:38,388,498` — RNA enum entry and GS switch cases
-- `rna_key.cc:67,576,611,631,653,681,694,715` — shape key RNA (8 sites)
-- `rna_object.cc:572` — object RNA
-- `rna_main_api.cc:845` — `RNA_MAIN_ID_TAG_FUNCS_DEF(curves, curves, ID_CU_LEGACY)`
-
 ---
 
 **ID_GD_LEGACY — ✓ COMPLETE (0.4.0)** *(true blast radius: 5 layers removed, depsgraph/deform/material kept — ~31 files)*
 
 > **Session note (2026-04-30):** Three key true-blast-radius findings vs. the literal audit: (1) `bmain->gpencils` field stays in `BKE_main.hh` and `which_libbase` routing stays in `main.cc` — same Scar 2 pattern as ID_SCR_LEGACY. OB_GPENCIL_LEGACY objects and annotation creation via `BKE_gpencil_data_addnew` still need the runtime listbase. (2) All four depsgraph sites (`depsgraph_tag.cc:72,626`, `deg_builder_nodes.cc:630`, `deg_builder_relations.cc:580,2758`) were left untouched — OB_GPENCIL_LEGACY objects still exist at runtime, so the geometry node building and relations for bGPdata must survive. (3) `material.cc` mat/totcol pointer cases were initially removed then restored — OB_GPENCIL_LEGACY objects have material slots that are still accessed at runtime. The `BLI_assert_unreachable()` render case was correctly removed. What actually went: IDTypeInfo definition, INIT_TYPE, both CASE_IDINDEX entries (Scar 4 sweep), CASE_ID_INDEX(INDEX_ID_GD_LEGACY), lb[] assignment in BKE_main_lists_get, all RNA registration, all editor dispatch table entries. Deprecated `#define ID_GD_LEGACY` added to DNA_ID_enums.h for .blend read-skip and runtime GS checks.
 
-> **Active migration path caveat:** `grease_pencil_convert_legacy.cc` and `blendfile_link_append.cc` converter code preserved as planned. Only the type registration went.
-
-makesdna (4 files):
-- `makesdna/DNA_ID_enums.h:151` — enum entry `ID_GD_LEGACY = MAKE_ID2('G', 'D')` — remove; add deprecated `#define` below
-- `makesdna/DNA_gpencil_legacy_types.h:711` — `static constexpr ID_Type id_type = ID_GD_LEGACY` — remove
-- `makesdna/DNA_object_types.h:747,762` — object type check macros (2 sites) — remove
-- `makesdna/DNA_ID.h:1162,1195,1244` — `FILTER_ID_GD` define, `FILTER_ID_ALL` inclusion, `INDEX_ID_GD` enum entry — remove all three
-
-blenkernel (9 files):
-- `blenkernel/BKE_idtype.hh:324` — `extern IDTypeInfo IDType_ID_GD_LEGACY;` — remove declaration
-- `blenkernel/intern/gpencil_legacy.cc:267,269,271,654` — IDTypeInfo static callbacks + `BKE_libblock_alloc(bmain, ID_GD_LEGACY, name, 0)` — remove IDTypeInfo block and alloc call
-- `blenkernel/intern/idtype.cc:161` — `INIT_TYPE(ID_GD_LEGACY)` — remove; also sweep both `CASE_IDINDEX(GD_LEGACY)` entries per Scar 4 protocol
-- `blenkernel/intern/main.cc:131,1027,1071` — `CASE_ID_INDEX(INDEX_ID_GD)`, `which_libbase` case, `lb[]` assignment — remove all three
-- `blenkernel/intern/material.cc:427,455,850` — material slot handling (3 sites) — remove `case ID_GD_LEGACY:` blocks
-- `blenkernel/intern/deform.cc:460,481` — deform data GS check (2 sites) — remove `case ID_GD_LEGACY:` branches
-- `blenkernel/intern/grease_pencil_convert_legacy.cc:3057,3151` — **KEEP** (type-safety asserts in GD_LEGACY → GP v3 converter; these are the converter, not the registration)
-- `blenkernel/intern/blendfile_link_append.cc:555` — link/append routing that forces conversion on append — **KEEP** (this is converter logic, not registration)
-- `blenkernel/intern/scene.cc:1611` — `FILTER_ID_GD` in scene filter — remove
-- `blenkernel/intern/movieclip.cc:298` — IDTypeInfo dependency check — remove
-
-blenloader (2 files — **KEEP both**):
-- `blenloader/intern/versioning_250.cc:444` — `*(short *)id->name = ID_GD_LEGACY` legacy compat assignment — **KEEP** (versioning file reads old .blend data; removing would break loading old files)
-- `blenloader/intern/versioning_common.cc:61,62` — GD_LEGACY → GP v3 conversion marker — **KEEP** (converter logic)
-
-editors (10 files):
-- `editors/interface/interface_icons.cc:2055` — icon case — remove
-- `editors/interface/templates/interface_template_id.cc:588,885` — template checks (2 sites) — remove
-- `editors/object/object_data_transform.cc:816` — data transform dispatch — remove
-- `editors/render/render_opengl.cc:649` — render switch — remove
-- `editors/space_outliner/outliner_select.cc:1295` — outliner select — remove
-- `editors/space_outliner/outliner_draw.cc:2556` — outliner draw — remove
-- `editors/space_outliner/outliner_intern.hh:156` — outliner macro — remove
-- `editors/space_outliner/outliner_tools.cc:156` — outliner tools — remove
-- `editors/space_outliner/tree/tree_element_id.cc:56` — tree element — remove
-- `editors/space_node/space_node.cc:1537` — GS check for node space — remove
-- `editors/space_image/space_image.cc:1214` — `FILTER_ID_GD` in image space mappings check — remove
-
-draw (1 file):
-- `draw/intern/draw_context.cc:1166` — `DEG_id_type_any_exists(depsgraph, ID_GD_LEGACY)` check — remove
-
-depsgraph (3 files):
-- `depsgraph/intern/depsgraph_tag.cc:72,626` — tag dispatch (2 sites; line 72 is shared ELEM with other types) — remove `ID_GD_LEGACY` from ELEM, remove case at 626
-- `depsgraph/intern/builder/deg_builder_nodes.cc:630` — node builder — remove case
-- `depsgraph/intern/builder/deg_builder_relations.cc:580,2758` — relation builder (2 sites) — remove cases
-
-makesrna (4 files):
-- `makesrna/intern/rna_ID.cc:41,124,377,477` — RNA enum item, filter item, `base_type == RNA_bGPdata` check, `case ID_GD_LEGACY:` return — remove all four
-- `makesrna/intern/rna_main_api.cc:831` — `RNA_MAIN_ID_TAG_FUNCS_DEF(gpencils, gpencils, ID_GD_LEGACY)` + `rna_Main_gpencils_new()` + `RNA_def_main_gpencils()` — remove
-- `makesrna/intern/rna_main.cc` — `RNA_MAIN_LISTBASE_FUNCS_DEF(gpencils)` + table entry — remove
-- `makesrna/intern/rna_space.cc:3975` — `FILTER_ID_GD |` in asset browser "Miscellaneous" filter — remove (same grep-miss pattern as ID_PA / rna_space.cc; do a post-chisel `grep -n "FILTER_ID_GD" source/` sweep)
-
 ---
 
 **ID_TE — ✓ COMPLETE (0.4.0)** *(true blast radius: ~76 hits, 45+ files — 9 source layers, Scar 2 applied, 2 field-name grep-misses caught post-chisel)*
 
 > **Session note (2026-05-05):** 9 layers committed individually. Scar 2 applied: `bmain->textures` restored as non-indexed listbase — `versioning_250.cc`, `versioning_260.cc`, `versioning_280.cc`, `versioning_legacy.cc` all iterate `bmain->textures` to upgrade legacy Blender Internal texture data. Field-name grep-miss 1: `anim_sys.cc` `EVAL_ANIM_NODETREE_IDS(main->textures.first, ...)` invisible to `ID_TE` grep. Field-name grep-miss 2: `deg_eval_copy_on_write.cc` block 3 (copy variant `((dna_type*)(new_id))->field = ((dna_type*)(old_id))->field`) missed in Layer 7 — caught in post-chisel scar checks. `brush_test.cc` fixtures deleted in makesdna/blenkernel layers. `tree_element_id_texture.cc/.hh` deleted; CMakeLists.txt updated. All 4 mandatory docs updated.
-
-**ID_TE — 76 hits, 45 files** *(pre-chisel record below)*
-
-Core definition:
-- `makesdna/DNA_ID_enums.h:135` — enum entry `ID_TE = MAKE_ID2('T', 'E')`
-- `makesdna/DNA_texture_types.h:350` — `static constexpr ID_Type id_type = ID_TE`
-- `makesdna/DNA_ID.h:655,1177,1197,1258` — shared ELEM macro; `FILTER_ID_TE` define; `FILTER_ID_ALL` inclusion; `INDEX_ID_TE` enum entry
-- `blenkernel/BKE_idtype.hh:308` — `extern IDTypeInfo IDType_ID_TE;` declaration
-- `blenkernel/intern/idtype.cc:145` — `INIT_TYPE(ID_TE)`; also sweep both `CASE_IDINDEX(TE)` entries per Scar 4 protocol
-- `blenkernel/intern/main.cc:139,992,1073` — `CASE_ID_INDEX(INDEX_ID_TE)`, `which_libbase` case, `lb[]` assignment
-
-blenkernel (9 files):
-- `texture.cc:183,185,187` — `IDTypeInfo IDType_ID_TE` definition + `.id_filter` + `.main_listbase_index` — remove IDTypeInfo block
-- `preview_image.cc:218,283` — preview image handling (2 sites)
-- `image.cc:2903` — image switch case
-- `compositor.cc:280` — compositor case
-- `node.cc:5148` — node tree case
-- `light.cc:173` — `FILTER_ID_TE` in `dependencies_id_types` — remove
-- `material.cc:249` — `FILTER_ID_TE` in `dependencies_id_types` — remove
-- `brush.cc:549` — `FILTER_ID_TE` in `dependencies_id_types` — remove
-- `world.cc:192` — `FILTER_ID_TE` in `dependencies_id_types` — remove
-- `anim_data_bmain_utils.cc:62` — `ANIMDATA_NODETREE_IDS_CB(bmain->textures.first, Tex)` — remove (grep-miss; uses field name not ID_TE)
-- `BKE_main.hh:368` — `ListBaseT<Tex> textures = {}` field — remove
-- `brush_test.cc:64` — test fixture: `BKE_id_new(bmain, ID_TE, ...)` (test-only; delete with type)
-
-blenloader (2 files):
-- `versioning_500.cc:4494` — ELEM check; `ID_LS` already removed, remove `ID_TE` from remaining ELEM
-- `versioning_450.cc:5891` — ELEM check; same as above
-
-editors (12 files):
-- `buttons_texture.cc:373` — pin ID GS check
-- `interface_anim.cc:280` — GS check
-- `interface_icons.cc:1933,2084` — icon switch (2 sites)
-- `interface_template_preview.cc:58,67` — preview template ELEM/GS checks
-- `interface_template_id.cc:626,855,1453` — template checks (3 sites)
-- `node_group_operator.cc:772` — returns `ID_TE` as default
-- `render_opengl.cc:611` — render switch
-- `render_update.cc:359` — render update switch
-- `render_preview.cc:412,543,607,1286,1310` — preview rendering (5 sites)
-- `anim_filter.cc:2724` — animation filter case
-- `anim_channels_defines.cc:323` — channel defines GS check
-- `outliner_draw.cc:780,2504` — outliner draw (2 sites)
-- `outliner_intern.hh:143` — outliner macro; verify no blank continuation line after removal (Scar 9)
-- `outliner_tools.cc:140,2890` — outliner tools (2 sites)
-- `tree_element_id.cc:48` — tree element
-
-depsgraph (4 files):
-- `depsgraph_tag.cc:866` — ID type tag
-- `deg_builder_relations.cc:553,3032` — relation builder (2 sites)
-- `deg_builder_nodes.cc:608,2020` — node builder (2 sites)
-- `deg_eval_copy_on_write.cc:108,153,191,226` — COW special cases (nodetree; 4 sites)
-
-windowmanager (1 file):
-- `wm_operators.cc:3898,3920,4031,4035,4049` — ELEM checks + `FILTER_ID_TE` filter (5 sites)
-
-modifiers (1 file):
-- `MOD_nodes.cc:214` — geometry nodes modifier case
-
-makesrna (8 files):
-- `rna_ID.cc:61,166,426,500` — RNA enum item, filter item, and switch cases (4 sites)
-- `rna_color.cc:352` — color ramp case
-- `rna_image.cc:291` — image RNA GS check
-- `rna_space.cc:2264,3960` — space RNA case + `FILTER_ID_TE` in asset browser shading filter (2 sites; line 3960 is a grep-miss — uses macro, not string `ID_TE`)
-- `rna_texture.cc:177` — texture RNA GS check
-- `rna_main_api.cc:779` — `RNA_MAIN_ID_TAG_FUNCS_DEF(textures, textures, ID_TE)` + `rna_Main_textures_new()` + `RNA_def_main_textures()` — remove
-- `rna_main.cc:180,400,405` — `RNA_MAIN_LISTBASE_FUNCS_DEF(textures)` + table entry — remove (grep-miss; no `ID_TE` string)
-- `rna_internal.hh:539` — `void RNA_def_main_textures(BlenderRNA *brna, PropertyRNA *cprop)` declaration — remove (grep-miss)
 
 ---
 
@@ -472,46 +214,6 @@ makesrna (8 files):
 >
 > **(4) `BKE_id_new<ParticleSettings>` template instantiation failure — `particle.cc:3770`.** Removing `static constexpr ID_Type id_type = ID_PA` from `ParticleSettings` also broke the template `BKE_id_new<T>`, which requires `T::id_type`. Initial fix replaced with `BKE_libblock_alloc(bmain, ID_PA, name, 0)` — that returned `nullptr` at runtime (no `INIT_TYPE`). **Corrected fix (Scar 10):** `BKE_particlesettings_add` now uses `MEM_new<ParticleSettings>` + manual insertion into `bmain->particles` via `which_libbase` Scar 2 routing. Returns a valid object. Particle system creation works. Memory is not freed by `BKE_main_free` (Category C leak). The depsgraph OOB issue (`add_id_node` → `BKE_idtype_idcode_to_index(ID_PA)` → -1) is guarded by the `id_type_index >= 0` check in `depsgraph.cc` applied during the ID_CU_LEGACY chisel.
 
-Core definition:
-- `makesdna/DNA_ID_enums.h:152` — enum entry `ID_PA = MAKE_ID2('P', 'A')`
-- `makesdna/DNA_particle_types.h:533` — `static constexpr ID_Type id_type = ID_PA`
-- `blenkernel/intern/idtype.cc:162` — `INIT_TYPE(ID_PA)`
-- `blenkernel/intern/main.cc:1032` — `which_libbase` case
-
-blenkernel (1 file):
-- `texture.cc:486,516` — texture slot handling (2 sites)
-
-editors (9 files):
-- `buttons_context.cc:517` — buttons context GS check
-- `interface_icons.cc:2081` — icon case
-- `interface_template_id.cc:636,891` — template checks
-- `render_shading.cc:3045,3075` — render shading (2 sites)
-- `render_opengl.cc:624` — render switch
-- `outliner_draw.cc:2585` — outliner draw
-- `outliner_intern.hh:157` — outliner macro
-- `outliner_tools.cc:157` — outliner tools
-- `tree_element_id.cc:77` — tree element
-- `anim_filter.cc:2676` — animation filter case
-- `anim_channels_defines.cc:329` — `ELEM(GS(...), ID_MA, ID_PA)` (shared with MA)
-
-depsgraph (4 files):
-- `depsgraph_tag.cc:157,635` — tag dispatch (2 sites)
-- `deg_builder_relations.cc:600` — relation builder
-- `deg_builder_nodes.cc:653` — node builder
-- `depsgraph.cc:160` — `clear_id_nodes_conditional` lambda: `id_type != ID_PA`
-
-animrig (1 file):
-- `animdata.cc:125` — animdata case
-
-makesrna (7 files):
-- `rna_ID.cc:59,442,534,1050` — RNA enum entry and switch cases (4 sites)
-- `rna_texture.cc:272` — texture slot RNA
-- `rna_particle.cc:1014` — `GS(id->name) == ID_PA` check
-- `rna_boid.cc:232` — `GS(id->name) == ID_PA` check
-- `rna_color.cc:386` — color ramp case
-- `rna_object_force.cc:671` — object force RNA check
-- `rna_main_api.cc:858` — `RNA_MAIN_ID_TAG_FUNCS_DEF(particles, particles, ID_PA)`
-
 ---
 
 **ID_MB — ✓ COMPLETE (0.4.0)** *(true blast radius: ~130+ files across 16 layers — editors/metaball subsystem, ABC/USD writers, overlay_metaball.hh, transform_convert_mball.cc, depsgraph MetaBall basis machinery, ANIMTYPE_DSMBALL channel, Python startup menus)*
@@ -523,124 +225,6 @@ makesrna (7 files):
 > **Correction note (2026-05-04):** Post-merge CI catch at step 6271/8099: `transform_convert.cc:712` and `:800` still referenced `&TransConvertType_MBall` in two ELEM checks — `init_proportional_edit` and `init_TransDataContainers`. The pre-chisel audit listed `transform/transform_convert.cc — OB_MBALL in convert dispatch — remove` and correctly deleted `transform_convert_mball.cc`, but the two surviving ELEM checks use the C++ *extern object name* `TransConvertType_MBall`, not the string `OB_MBALL` or `ID_MB`. All grep patterns missed them. **Detection method: when deleting a file that exports `TransConvertTypeXxx` or any other C++ extern objects, grep the whole codebase for that symbol name before deleting the file.** `grep -rn "TransConvertType_MBall" source/` would have caught both. The general rule: after any file deletion, `grep -rn "<SymbolName>" source/` for every exported symbol the deleted file defined.
 
 > **Pre-chisel note (2026-05-02):** Literal grep confirms 60 hits across 32 files. Broader pattern grep (`grep -rln "OB_MBALL\|MetaBall\|metaball\|mball\|rna_meta\|BKE_mball\|DNA_meta"`) surfaces ~110 additional files that carry no `ID_MB` string but will break in the chisel. Key scope not in literal: (1) entire `editors/metaball/` tree — `mball_edit.cc`, `mball_ops.cc`, `editmball_undo.cc`, `mball_intern.hh` (MetaBall has its own editor subsystem like Armature); (2) `ANIMTYPE_DSMBALL` enum + `ACF_DSMBALL` animation channel (3 callbacks + struct + `animchannelTypeInfo` table entry) in `anim_channels_defines.cc` + `anim_filter.cc` OB_MBALL dispatch — same pattern as ID_LS's ANIMTYPE_DSLINESTYLE; (3) `tree_element_id_metaball.cc/.hh` — dedicated outliner tree element files to delete; (4) entire `io/alembic/exporter/abc_writer_mball.cc` and `io/usd/intern/usd_writer_metaball.cc` — WITH_ALEMBIC and WITH_USD are both ON in CI; (5) `draw/engines/overlay/overlay_metaball.hh` — entire metaball draw overlay; (6) `transform/transform_convert_mball.cc` — entire mball transform convert file; (7) `BKE_main.hh:369` — `bmain->metaballs` field; (8) `anim_data_bmain_utils.cc:77` — `ANIMDATA_IDS_CB(bmain->metaballs.first)` — same missed-site pattern as ID_PA/`anim_data_bmain_utils.cc:92`; (9) `anim_sys.cc:4135` — `EVAL_ANIM_IDS(main->metaballs.first, ...)`; (10) `object_update.cc:157,291` — OB_MBALL update dispatch. Scar 9 (TREESTORE_ID_TYPE blank continuation line) applies: after removing ID_MB from `outliner_intern.hh` macro, verify no blank lines remain in the ELEM body.
-
-Core definition:
-- `makesdna/DNA_ID_enums.h:134` — enum entry `ID_MB = MAKE_ID2('M', 'B')`
-- `makesdna/DNA_meta_types.h:91` — `static constexpr ID_Type id_type = ID_MB`
-- `makesdna/DNA_object_types.h:735,742,756` — object type check macros (shared with ID_CU_LEGACY)
-- `makesdna/DNA_ID.h:1169,1196,1274` — `FILTER_ID_MB` define, `FILTER_ID_ALL` inclusion, `INDEX_ID_MB` enum entry
-- `blenkernel/BKE_idtype.hh:307` — `extern IDTypeInfo IDType_ID_MB`
-- `blenkernel/intern/idtype.cc:144` — `INIT_TYPE(ID_MB)`
-- `blenkernel/intern/main.cc:149,991,1088` — `CASE_ID_INDEX(INDEX_ID_MB)`, `which_libbase` case, `lb[]` assignment
-
-blenkernel (~12 files in literal + additional in true blast radius):
-- `BKE_main.hh:369` — `ListBaseT<MetaBall> metaballs = {}` field — remove (no Scar 2 rescue; true fossil)
-- `BKE_mball.hh` — entire BKE_mball API header — **DELETE** when all callers are gone
-- `BKE_mball_tessellate.hh` — tessellation API header — **DELETE** with mball_tessellate.cc
-- `mball.cc:139,141,143` — `IDTypeInfo IDType_ID_MB` definition + `.id_filter` + `.main_listbase_index` — remove IDTypeInfo block; check `BKE_mball_add` for Scar 10 allocator fix
-- `mball_tessellate.cc` — entire tessellation implementation — **DELETE** (MetaBall-only; computes marching-cubes isosurface)
-- `material.cc:425,453,486,519,542,847` — material slot handling (6 sites) — remove `case ID_MB:` blocks
-- `object.cc:1933,1977,2225,4279` — object data dispatch (4 sites) — remove `case ID_MB:` branches
-- `object_update.cc:157,291` — OB_MBALL update dispatch (2 sites) — remove cases
-- `object_dupli.cc:312` — dupli GS check — remove
-- `lib_remap.cc:627` — library remapping — remove case
-- `mesh_convert.cc:921,989` — `OB_MBALL` in mesh conversion (BKE_mesh_new_from_object path; shared ELEM with FONT/CURVES_LEGACY/SURF) — remove
-- `context.cc:1415,1498` — mball edit mode context (`"mball_edit"` context string) — remove case and string
-- `lib_id.cc:2412` — `ob.type == OB_MBALL` check — remove
-- `anim_sys.cc:4135` — `EVAL_ANIM_IDS(main->metaballs.first, ADT_RECALC_ANIM)` — remove line
-- `anim_data_bmain_utils.cc:77` — `ANIMDATA_IDS_CB(bmain->metaballs.first)` — remove line (same missed-site pattern as ID_PA)
-
-blenloader (1 file — **KEEP**):
-- `versioning_legacy.cc:2382` — `idproperties_fix_group_lengths(bmain->metaballs)` — **KEEP** (versioning iterates bmain->metaballs to fix legacy ID properties; must survive even after INIT_TYPE removal — same Scar 2 pattern as ID_PA/versioning_250–400)
-
-editors (~40+ files in true blast radius):
-- `interface_icons.cc:2066` — icon case — remove
-- `interface_template_id.cc:583,854` — template checks — remove
-- `object_data_transform.cc:442,612,736,810` — data transform dispatch (4 sites) — remove
-- `transform_convert_object_texspace.cc:52` — `ELEM(GS(id->name), ID_ME, ID_CU_LEGACY, ID_MB)` (shared with CU_LEGACY) — remove `ID_MB` from ELEM
-- `render_opengl.cc:610` — render switch — remove
-- `outliner_select.cc:1289` — outliner select — remove
-- `outliner_draw.cc:2485` — outliner draw — remove
-- `outliner_intern.hh:141` — outliner macro `TREESTORE_ID_TYPE` — remove; verify no blank continuation line left (Scar 9)
-- `outliner_tools.cc:136,287` — outliner tools — remove
-- `tree_element_id.cc:49` — tree element dispatch — remove `case ID_MB:`
-- `tree_element_id_metaball.cc` — **DELETE** entire file
-- `tree_element_id_metaball.hh` — **DELETE** entire file; update CMakeLists.txt
-- `metaball/mball_edit.cc` — **DELETE** entire file (MetaBall element editing operators)
-- `metaball/mball_ops.cc` — **DELETE** entire file (operator registration: `MBALL_OT_*`)
-- `metaball/editmball_undo.cc` — **DELETE** entire file; `ED_mball_undosys_type` referenced from `undo_system_types.cc`
-- `metaball/mball_intern.hh` — **DELETE** internal header
-- `include/ED_mball.hh` — **DELETE** entire header; remove all includes of it
-- `animation/anim_channels_defines.cc` — `ACF_DSMBALL` struct + 3 callbacks (`acf_dsmball_icon`, `acf_dsmball_setting_flag`, `acf_dsmball_setting_ptr`) + `animchannelTypeInfo` entry — remove all
-- `animation/anim_filter.cc:2899` — `case OB_MBALL:` in object animdata filter — remove
-- `include/ED_anim_api.hh:209,457` — `ANIMTYPE_DSMBALL` enum value; `FILTER_MBALL_OBJD` macro — remove both
-- `object/object_add.cc` — `OBJECT_OT_metaball_add` operator + `add_metaball_exec` — remove; also remove from `object_ops.cc` registration
-- `object/object_bake_api.cc` — OB_MBALL case in baking dispatch — remove
-- `object/object_edit.cc:746,945` — mball edit mode enter/exit dispatch — remove cases
-- `object/object_hook.cc` — OB_MBALL hook dispatch — remove
-- `object/object_modes.cc` — OB_MBALL mode switching — remove
-- `object/object_modifier.cc` — OB_MBALL modifier dispatch — remove
-- `object/object_relations.cc` — OB_MBALL relations — remove
-- `object/object_transform.cc` — OB_MBALL transform — remove
-- `object/object_utils.cc` — OB_MBALL utils — remove
-- `screen/screen_ops.cc` — OB_MBALL screen mode ops — remove
-- `space_api/spacetypes.cc` — mball editor space type registration — remove
-- `space_buttons/buttons_context.cc` — OB_MBALL properties panel dispatch — remove
-- `space_info/info_stats.cc` — mball count in scene statistics — remove
-- `space_view3d/view3d_buttons.cc` — OB_MBALL N panel — remove
-- `space_view3d/view3d_iterators.cc` — OB_MBALL iterators — remove
-- `space_view3d/view3d_select.cc` — OB_MBALL selection — remove
-- `space_view3d/view3d_snap.cc` — OB_MBALL snap — remove
-- `transform/transform.cc` — OB_MBALL transform dispatch — remove
-- `transform/transform_convert.cc` — OB_MBALL in convert dispatch — remove
-- `transform/transform_convert.hh` — OB_MBALL convert header — remove
-- `transform/transform_convert_mball.cc` — **DELETE** entire file (MetaBall-only transform convert)
-- `transform/transform_gizmo_3d.cc` — OB_MBALL gizmo — remove
-- `transform/transform_mode.cc` — OB_MBALL mode — remove
-- `transform/transform_orientations.cc` — OB_MBALL orientations — remove
-- `transform/transform_snap.cc` — OB_MBALL snap — remove
-- `undo/undo_system_types.cc:40` — `BKE_undosys_type_append(ED_mball_undosys_type)` — remove; cascades to editmball_undo.cc delete
-- `util/ed_transverts.cc` — OB_MBALL transverts — remove
-
-draw (~9 files in true blast radius):
-- `overlay_bounds.hh:188` — bounds overlay `case ID_MB:` — remove
-- `draw_resource.hh:157` — draw resource `case ID_MB:` — remove
-- `draw/engines/overlay/overlay_metaball.hh` — **entire file**: MetaBall draw overlay (radius/stiffness/negative element drawing) — **DELETE**
-- `draw/engines/overlay/overlay_instance.cc` — calls metaball overlay functions — remove
-- `draw/engines/overlay/overlay_instance.hh` — metaball overlay include/declaration — remove
-- `draw/engines/overlay/overlay_private.hh` — MetaBall overlay forward decls — remove
-- `draw/engines/overlay/overlay_shape.cc` — OB_MBALL shape drawing — remove
-- `draw/intern/draw_context.cc` — OB_MBALL draw context dispatch — remove
-- `draw/intern/draw_handle.hh` — OB_MBALL handle — remove
-
-depsgraph (5 files):
-- `depsgraph_tag.cc:72,618` — tag dispatch; line 72 is `ELEM(id_type, ID_ME, ID_CU_LEGACY, ID_MB, ID_LT, ID_GD_LEGACY, ID_CV, ID_PT, ID_VO)` — remove `ID_MB` from ELEM (keep ID_GD_LEGACY per session note); line 618 is the full case — remove
-- `deg_eval_copy_on_write.cc:557,938` — COW special cases `case ID_MB:` — remove both
-- `deg_builder_relations.cc:570,2716` — relation builder (2 sites) — remove
-- `deg_builder_nodes.cc:624,1769` — node builder (2 sites) — remove
-- `depsgraph_query_iter.cc:479` — dupli ob_data GS check `GS(...) == ID_MB` — remove
-
-makesrna (~8 files in true blast radius):
-- `rna_ID.cc:53,150,398,485` — RNA enum entry, filter item, and switch cases (4 sites) — remove all
-- `rna_main_api.cc:794` — `RNA_MAIN_ID_TAG_FUNCS_DEF(metaballs, metaballs, ID_MB)` + `rna_Main_metaballs_new()` + `RNA_def_main_metaballs()` — remove
-- `rna_main.cc` — `RNA_MAIN_LISTBASE_FUNCS_DEF(metaballs)` + table entry (`"metaballs"`, `RNA_def_main_metaballs`) — remove
-- `rna_internal.hh:538` — `void RNA_def_main_metaballs(BlenderRNA *brna, PropertyRNA *cprop)` declaration — remove
-- `rna_action.cc:1521` — `show_metaballs` RNA property (ADS filter flag) — remove
-- `rna_space.cc:3954` — `FILTER_ID_MB` in asset browser geometry filter — remove
-- `rna_meta.cc` — **entire file**: MetaBall RNA struct definitions (no `ID_MB` string but entire RNA layer) — **DELETE**
-- `rna_meta_api.cc` — **entire file**: MetaBall RNA API — **DELETE**
-
-io (~6 files in true blast radius):
-- `io/alembic/exporter/abc_writer_mball.cc` — **DELETE** entire file (WITH_ALEMBIC is ON in CI — this will surface)
-- `io/alembic/exporter/abc_hierarchy_iterator.cc:205` — `case OB_MBALL:` dispatch to abc_writer_mball — remove; update include
-- `io/common/intern/abstract_hierarchy_iterator.cc:840` — `ELEM(dupli_object->ob->type, OB_MBALL, OB_FONT)` dupli check — remove `OB_MBALL` from ELEM
-- `io/usd/intern/usd_writer_metaball.cc` — **DELETE** entire file (WITH_USD is ON in CI)
-- `io/usd/intern/usd_hierarchy_iterator.cc:61,321` — `case OB_MBALL:` dispatch (2 sites) — remove; update include
-- `io/usd/hydra/object.cc:37,69,87` — `case OB_MBALL:` dispatch (3 sites) — remove
-
-windowmanager (2 files):
-- `WM_types.hh:603` — `#define NS_EDITMODE_MBALL (6 << 8)` edit mode namespace define — remove
-- `wm_init_exit.cc:566` — `BKE_mball_cubeTable_free()` on application exit — remove (only needed when mball tessellation exists)
 
 ---
 
@@ -654,65 +238,6 @@ windowmanager (2 files):
 >
 > **Comment 2 — "Include linestyles in main list traversal"** (flagged `lb[INDEX_ID_LS]` removal): This is a real architectural asymmetry. The Scar 2 pattern was designed for `ID_SCR` and `ID_WM`, which are runtime-only objects — they are created fresh at app startup and are never populated by loading a `.blend` file in normal operation. Linestyle IDs are different: `which_libbase` still routes `ID_LS` to `bmain->linestyles` (deliberately kept), and blenloader's legacy read path is not guarded by `WITH_FREESTYLE`. Opening a legacy `.blend` file with Freestyle data in a `WITH_FREESTYLE=OFF` build will load `FreestyleLineStyle` ID blocks into `bmain->linestyles`. Because that listbase is not in `BKE_main_lists_get`, `BKE_main_free` will not free those IDs. They leak. **Accepted as a known artifact.** The project does not ship with Freestyle enabled, and there are no legacy Freestyle `.blend` fixtures in the CI test suite, so this does not affect CI or release builds. It is a latent memory leak for any user who opens a legacy file with Freestyle data — the blocks accumulate for the session and are freed when the process exits. If this ever becomes a problem, the correct fix is a blenloader post-read pass that immediately drains `bmain->linestyles` after any file load when `WITH_FREESTYLE=OFF`, not restoring the listbase to `BKE_main_lists_get`.
 
-Core definition:
-- `makesdna/DNA_ID_enums.h:156` — enum entry `ID_LS = MAKE_ID2('L', 'S')` — removed; deprecated `#define` added
-- `makesdna/DNA_linestyle_types.h:649` — `static constexpr ID_Type id_type = ID_LS` — removed
-- `blenkernel/intern/idtype.cc:166` — `INIT_TYPE(ID_LS)` + both `CASE_IDINDEX(LS)` — removed (Scar 4)
-- `blenkernel/intern/main.cc:1042` — `lb[INDEX_ID_LS]` and `CASE_ID_INDEX(INDEX_ID_LS)` removed; `case ID_LS: return &bmain->linestyles` KEPT (Scar 2)
-- `blenkernel/intern/linestyle.cc` — IDTypeInfo block removed; `BKE_linestyle_new` + `BKE_libblock_alloc` KEPT
-
-blenkernel (2 files):
-- `node.cc:5153` — node tree case removed
-- `texture.cc:480,513` — texture slot handling removed (2 sites)
-- `scene.cc` — FILTER_ID_LS removed from dependencies_id_types
-
-blenloader (2 files):
-- `versioning_500.cc:4494` — `, ID_LS` removed from ELEM check
-- `versioning_450.cc:5891` — `, ID_LS` removed from ELEM check
-
-editors (26 files — true blast radius):
-- `buttons_texture.cc` — linestyle variable, pin dispatch, mtex users removed
-- `buttons_context.cc` — `buttons_context_path_linestyle`, `buttons_context_linestyle_pinnable`, ID_LS dispatch, "line_style" context member, FreestyleLineStyle texture slot removed
-- `interface_icons.cc` — icon case removed
-- `interface_template_id.cc` — browse string + BLT_I18NCONTEXT removed
-- `interface_template_preview.cc` — 3 sites removed
-- `render_shading.cc` — 2 ID_LS switch cases + FreestyleLineStyle paste context removed
-- `render_opengl.cc` — case removed
-- `outliner_draw.cc` — case removed
-- `outliner_intern.hh` — macro entry removed
-- `outliner_tools.cc` — case removed; `unlink_texture_fn` simplified (LS-only path gone)
-- `tree_element_id.cc` — include + case removed; `tree_element_id_linestyle.cc/.hh` DELETED
-- `space_node/space_node.cc` — 2 unguarded `NC_LINESTYLE` cases removed
-- `anim_channels_defines.cc` — `ACF_DSLINESTYLE` 3 functions + struct + `animchannelTypeInfo` entry removed
-- `anim_channels_edit.cc` — 9 `ANIMTYPE_DSLINESTYLE` fallthrough cases removed
-- `anim_deps.cc` — 1 fallthrough case removed
-- `anim_filter.cc` — `animdata_filter_ds_linestyle` function + call site + `ANIMTYPE_DSLINESTYLE` case in switch removed
-- `ED_anim_api.hh` — `ANIMTYPE_DSLINESTYLE` enum value + `FILTER_LS_SCED` macro removed
-- `nla_buttons.cc`, `nla_draw.cc`, `nla_tracks.cc` — 1 case each removed
-- `transform_convert_action.cc` — 1 case removed
-- `DNA_action_types.h` — `ADS_FILTER_NOLINESTYLE` bitmask removed
-- `makesrna/intern/rna_action.cc` — `show_linestyles` RNA property removed
-
-depsgraph (7 files):
-- `deg_eval_copy_on_write.cc` — 4 `SPECIAL_CASE(ID_LS, ...)` + `sizeof(FreestyleLineStyle)` removed; DNA_linestyle_types.h include removed
-- `deg_builder_relations.cc/.h` — dispatch case + function removed; forward decl removed
-- `deg_builder_nodes.cc/.h` — dispatch case + function removed; forward decl removed
-- `deg_builder_relations_view_layer.cc` — `build_freestyle_linestyle` call removed
-- `deg_builder_nodes_view_layer.cc` — `build_freestyle_linestyle` call removed
-
-nodes (2 files):
-- `shader_nodes_inline.cc` — `ShaderNodeOutputLineStyle` case removed
-- `node_texture_tree.cc` — unguarded `SNODE_TEX_LINESTYLE` branch + `BKE_linestyle.h` include removed
-
-makesrna (7 files):
-- `rna_ID.cc` — RNA enum item, filter item, base_type check, case in id_to_type switch removed
-- `rna_texture.cc` — `NC_LINESTYLE` notifier case removed
-- `rna_color.cc` — 3 `case ID_LS:` blocks removed (path_to_color_ramp, modifier_list_color_ramps, notifier)
-- `rna_space.cc` — `FILTER_ID_LS |` removed from shading category filter
-- `rna_main_api.cc` — `rna_Main_linestyles_new()` + `RNA_MAIN_ID_TAG_FUNCS_DEF` + `RNA_def_main_linestyles()` removed
-- `rna_main.cc` — `RNA_MAIN_LISTBASE_FUNCS_DEF(linestyles)` + table entry removed
-- `rna_internal.hh` — `RNA_def_main_linestyles` declaration removed
-
 ---
 
 **ID_SPK — ✓ COMPLETE (0.4.0)** *(true blast radius was ~45 files vs 23 literal hits)*
@@ -724,44 +249,6 @@ makesrna (7 files):
 **ID_PC — ✓ COMPLETE (0.4.0)** *(true blast radius was ~35 files vs 21 literal hits)*
 
 > **Session note (2026-04-29):** The "21 hits" count was literal `ID_PC` string occurrences only. PaintCurve as a struct was woven into `Brush::paint_curve` DNA, three entirely-PaintCurve-specific files (deleted), and the paint cursor/stroke rendering path. All layers removed across makesdna, blenkernel, makesrna, editors, depsgraph.
-
-Core definition:
-- `makesdna/DNA_ID_enums.h:158` — enum entry `ID_PC = MAKE_ID2('P', 'C')` *(removed in makesdna layer)*
-- `makesdna/DNA_brush_types.h:192` — `PaintCurve *paint_curve` field on `Brush` struct; `DNA_brush_types.h:482–500` — entire `PaintCurvePoint` and `PaintCurve` struct definitions to delete
-- `makesdna/DNA_ID.h:655,695` — shared macro checks *(removed in makesdna layer)*
-- `blenkernel/intern/idtype.cc:168` — `INIT_TYPE(ID_PC)`
-- `blenkernel/intern/main.cc:1046` — `which_libbase` case
-- `blenkernel/BKE_idtype.hh:331` — `extern IDTypeInfo IDType_ID_PC`
-- `blenkernel/BKE_main.hh:394` — `ListBaseT<PaintCurve> paintcurves` field
-- `blenkernel/BKE_paint.hh:149,262` — `BKE_paint_curve_add` declaration + `BKE_paint_curve_clamp_endpoint_add_index`
-- `blenkernel/BKE_undo_system.hh:50` — `UNDO_REF_ID_TYPE(PaintCurve)`
-
-blenkernel (3 files):
-- `paint.cc:185–247` — `IDTypeInfo IDType_ID_PC` + static callbacks (copy, free, blend write, blend read)
-- `brush.cc:229` — `BKE_LIB_FOREACHID_PROCESS_IDSUPER(data, brush->paint_curve, IDWALK_CB_USER)`; `brush.cc:550` — `FILTER_ID_PC` in `dependencies_id_types`
-- `brush_test.cc:64,95` — `BKE_id_new(bmain, ID_PC, ...)` + `brush->paint_curve` accesses (test-only; tests need rewriting)
-
-editors (10 files — 7 literal hits + 3 entire-file deletions):
-- `sculpt_paint/paint_curve.cc` — **entire file**: PaintCurve-specific operators, to delete
-- `sculpt_paint/paint_curve_undo.cc` — **entire file**: PaintCurve-specific undo, to delete
-- `transform/transform_convert_paintcurve.cc` — **entire file**: PaintCurve-specific transform, to delete
-- `sculpt_paint/paint_cursor.cc:877–896` — stroke path rendered via `brush->paint_curve`
-- `sculpt_paint/paint_stroke.cc:1276–1293` — stroke logic via `brush->paint_curve`
-- `interface_icons.cc:2085` — icon case
-- `interface_template_id.cc:901` — template check
-- `render_opengl.cc:643` — render switch
-- `outliner_draw.cc:2583` — outliner draw
-- `outliner_intern.hh:173` — outliner macro; `outliner_tools.cc:162` — outliner tools; `tree_element_id.cc:89` — tree element
-
-depsgraph (2 files):
-- `deg_builder_relations.cc:610` — relation builder
-- `deg_builder_nodes.cc:663` — node builder
-
-makesrna (4 files):
-- `rna_ID.cc:57,448,538` — RNA enum entry and switch cases
-- `rna_main_api.cc:866` — `RNA_MAIN_ID_TAG_FUNCS_DEF(paintcurves, paintcurves, ID_PC)`
-- `rna_brush.cc` — `paint_curve` RNA property on Brush
-- `rna_sculpt_paint.cc` — PaintCurve RNA definitions (7 sites)
 
 ---
 
@@ -777,116 +264,6 @@ makesrna (4 files):
 >
 > **Files to DELETE entirely:** `editors/io/io_cache.cc`, `editors/io/io_cache.hh`, `editors/interface/templates/interface_template_cache_file.cc`, `makesrna/intern/rna_cachefile.cc`, `blenkernel/BKE_cachefile.hh`, `blenkernel/intern/cachefile.cc` (after inlining any utility functions needed by MOD_meshsequencecache or constraint.cc)
 
-Core definition:
-- `makesdna/DNA_ID_enums.h:153` — enum entry `ID_CF = MAKE_ID2('C', 'F')`
-- `makesdna/DNA_cachefile_types.h:69` — `static constexpr ID_Type id_type = ID_CF`; entire struct definition stays as SDNA read-skip anchor (same pattern as `DNA_meta_types.h` for ID_MB)
-- `makesdna/DNA_ID.h:1179,1196,1261` — `FILTER_ID_CF`, `FILTER_ID_ALL` inclusion, `INDEX_ID_CF`
-- `blenkernel/BKE_idtype.hh:326` — `extern IDTypeInfo IDType_ID_CF`
-- `blenkernel/intern/idtype.cc:163` — `INIT_TYPE(ID_CF)`; sweep both `CASE_IDINDEX(CF)` entries (Scar 4)
-- `blenkernel/intern/main.cc:142,1036,1079` — `CASE_ID_INDEX(INDEX_ID_CF)`, `which_libbase` case, `lb[]` assignment — remove all three; no Scar 2 routing kept
-- `blenkernel/BKE_main.hh` — `ListBaseT<CacheFile> cachefiles` field — remove (no Scar 2)
-
-blenkernel (6 files):
-- `cachefile.cc` — `IDTypeInfo IDType_ID_CF` block removed; `BKE_cachefile_add` allocator removed; utility functions needed by modifier/constraint migrated inline or removed; file likely deleted after
-- `BKE_cachefile.hh` — entire API header deleted
-- `constraint.cc` — `bTransformCacheConstraint` uses `cache_file->filepath`; replace with `con->cache_file` → inline field
-- `anim_data_bmain_utils.cc` — `ANIMDATA_IDS_CB(bmain->cachefiles.first)` — field-name grep-miss; remove
-- `anim_sys.cc` — `EVAL_ANIM_IDS(main->cachefiles.first, ...)` — field-name grep-miss; remove
-- `pointcache.cc`, `path_templates.cc` — CacheFile references; remove/inline
-
-blenloader (1 file):
-- `versioning_290.cc` — creates CacheFile IDs via `BKE_libblock_alloc(ID_CF)`; after removal, those versioning paths need to be no-ops or create inline structs instead
-
-editors (10 files):
-- `interface_icons.cc:2050` — icon case — remove
-- `interface_template_id.cc:883` — template check — remove
-- `interface_template_cache_file.cc` — **DELETE** entire file (CacheFile-only UI template)
-- `render_opengl.cc:638` — render switch — remove
-- `io_cache.cc` — **DELETE** entire file (CacheFile operators: `WM_OT_cache_file_open`, `WM_OT_cache_file_reload`, etc.)
-- `io_cache.hh` — **DELETE**
-- `io_ops.cc` — remove io_cache registration calls
-- `outliner_intern.hh:163` — outliner macro — remove (Scar 9 check)
-- `outliner_tools.cc:154` — case — remove
-- `tree_element_id.cc:76` — case — remove
-- `anim_channels_defines.cc` — `ACF_DSCACHEFILE` struct + 3 callbacks + `animchannelTypeInfo` entry — remove
-- `anim_channels_edit.cc` — `ANIMTYPE_DSCACHEFILE` fallthrough cases — remove
-- `anim_deps.cc`, `nla_buttons.cc`, `nla_draw.cc`, `nla_tracks.cc`, `transform_convert_action.cc` — fallthrough cases — remove
-- `anim_filter.cc` — `animdata_filter_ds_cachefile` function + call site — remove
-- `keyframes_keylist.cc` — `cachefile_to_keylist` function — remove
-- `ED_anim_api.hh` — `ANIMTYPE_DSCACHEFILE` enum + `FILTER_CACHEFILE_OBJD` macro — remove
-- `ED_keyframes_keylist.hh` — forward decl — remove
-- `UI_interface_c.hh` — `uiTemplateCacheFile` declaration — remove
-- `object_constraint.cc` — CacheFile constraint UI operators — remove/inline
-- `render_update.cc` — CacheFile notifier case — remove
-- `space_file/filelist/filelist.cc` — CacheFile filelist entry — remove
-
-depsgraph (6 files):
-- `deg_builder_nodes.cc:636` — `case ID_CF:` + `build_cachefile()` — remove
-- `deg_builder_nodes.h` — `build_cachefile` declaration — remove
-- `deg_builder_nodes_view_layer.cc` — `build_cachefile` call — remove
-- `deg_builder_relations.cc:576,3472` — `case ID_CF:` + CACHE comp_node check — remove both
-- `deg_builder_relations.h` — `build_cachefile_relations` declaration — remove
-- `deg_builder_relations_view_layer.cc` — `build_cachefile_relations` call — remove
-- `depsgraph_build.cc` — CacheFile build call — remove
-- `DEG_depsgraph_build.hh` — public API declaration if present — remove
-
-makesdna (5 files):
-- `DNA_ID_enums.h` — enum entry removed; deprecated `#define ID_CF MAKE_ID2('C', 'F')` added
-- `DNA_cachefile_types.h` — `id_type` constexpr removed (Scar 8); struct body kept for SDNA read-skip
-- `DNA_ID.h` — `FILTER_ID_CF`, `FILTER_ID_ALL` inclusion, `INDEX_ID_CF` removed
-- `DNA_modifier_types.h` — `MeshSeqCacheModifierData.cache_file` pointer replaced with inline fields
-- `DNA_constraint_types.h` — `bTransformCacheConstraint.cache_file` pointer replaced with inline fields
-- `DNA_action_types.h` — `ADS_FILTER_NOCACHEFILES` bitmask removed
-
-modifiers (1 file):
-- `MOD_meshsequencecache.cc` — `CacheFile *cache_file` pointer replaced with inline fields throughout; `BKE_cachefile_*` API calls replaced with direct field access
-
-io/alembic (~10 files):
-- `alembic_capi.cc` — CacheFile parameter replaced with inline path/settings struct or individual args
-- `abc_reader_object.cc/.h` — reader base class holds `CacheFile *`; replace with path string
-- `abc_reader_mesh.cc/.h`, `abc_reader_curves.h`, `abc_reader_nurbs.h`, `abc_reader_camera.h`, `abc_reader_points.h`, `abc_reader_transform.h`, `abc_util.h`, `ABC_alembic.h` — all carry `CacheFile *` in reader/import API
-
-io/usd (~8 files):
-- `usd_capi_import.cc` — CacheFile parameter → inline path/settings
-- `usd_reader_stage.cc/.hh` — reader holds `CacheFile *`; replace
-- `usd_reader_geom.cc/.hh`, `usd_reader_xform.cc`, `usd_reader_prim.hh`, `usd_private.hh` — API chain carries CacheFile pointer
-
-makesrna (8 files):
-- `rna_ID.cc:35,119,353,448` — RNA enum item, filter item, base_type check, switch case — remove all
-- `rna_cachefile.cc` — **DELETE** entire file
-- `rna_constraint.cc` — `bTransformCacheConstraint` RNA updated to inline fields
-- `rna_modifier.cc` — `MeshSeqCacheModifierData` RNA updated to inline fields
-- `rna_action.cc:1537` — `show_cachefiles` RNA property (ADS_FILTER_NOCACHEFILES) — remove
-- `rna_space.cc:3973` — `FILTER_ID_CF` in asset browser miscellaneous filter — remove
-- `rna_main_api.cc:765` — `RNA_MAIN_ID_TAG_FUNCS_DEF(cachefiles, cachefiles, ID_CF)` + `RNA_def_main_cachefiles()` — remove
-- `rna_main.cc` — `RNA_MAIN_LISTBASE_FUNCS_DEF(cachefiles)` + table entry — remove
-- `rna_internal.hh` — `RNA_def_main_cachefiles` declaration — remove
-- `rna_ui_api.cc` — `uiTemplateCacheFile` RNA binding — remove
-- `makesrna.cc` — `rna_cachefile` entry — remove
-
-blentranslation (1 file):
-- `BLT_translation.hh` — `BLT_I18NCONTEXT_ID_CACHEFILE` define + ITEM entry — remove
-
----
-
-**Key notes for the chisel session:**
-
-1. **These are true fossils — no runtime rescue.** Unlike ID_SCR/ID_WM, none of these stay as runtime structs. Full removal: enum, DNA `id_type` constexpr, `IDTypeInfo`, `INIT_TYPE`, `which_libbase` case, `BKE_main_lists_get` entry, and `bmain->*` field. **Exceptions — Scar 2 pattern applies to:** `ID_GD_LEGACY` (`bmain->gpencils` kept — OB_GPENCIL_LEGACY objects and annotations still use bGPdata at runtime), `ID_LS` (`bmain->linestyles` kept — legacy file loads populate it; see ID_LS review note), `ID_PA` (`bmain->particles` kept — blenloader versioning files `versioning_250` through `versioning_400` and `versioning_legacy` iterate it to upgrade old particle data on file load; see ID_PA correction note 2026-05-01), and `ID_TE` (`bmain->textures` kept — `versioning_250.cc`, `versioning_260.cc`, `versioning_280.cc`, `versioning_legacy.cc` iterate it to upgrade Blender Internal texture data in legacy files; see ID_TE session note 2026-05-05), and `ID_CU_LEGACY` (`bmain->curves` kept — 23+ `bmain->curves` iterations across `versioning_250` through `versioning_520` and `versioning_legacy`, plus `anim_data_bmain_utils.cc` and `anim_sys.cc`; see ID_CU_LEGACY session note 2026-05-06).
-
-2. **ID_CU_LEGACY and ID_GD_LEGACY have active migration paths.** CU_LEGACY → CV (Curves), GD_LEGACY → GP (Grease Pencil v3). The migration code in `grease_pencil_convert_legacy.cc` and `blendfile_link_append.cc` must survive removal — only the type registration goes, not the converter.
-
-3. **ID_LS is already disabled in the build.** `blended_release.cmake` sets `WITH_FREESTYLE=OFF`. Most ID_LS code is guarded by `#ifdef WITH_FREESTYLE`. Confirm before chiseling — may be the easiest of the nine.
-
-4. **Shared switch cases dominate the blast radius.** The depsgraph (`deg_builder_nodes.cc`, `deg_builder_relations.cc`), outliner (`outliner_draw.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc`), and RNA (`rna_ID.cc`, `rna_main_api.cc`) contain cases for many of these types side by side. Batch the removals per file rather than per type.
-
-5. **`brush_test.cc` `ID_TE` fixtures — resolved in 0.4.0.** `BKE_id_new(bmain, ID_TE, ...)` test fixtures deleted in the makesdna/blenkernel layers of the ID_TE chisel. (ID_PC fixtures were rewritten in 0.4.0 — paint_curve lines stripped, `brush->paint_curve` accesses removed.)
-
-6. **`depsgraph.cc:160` had a `!= ID_PA` guard** in `clear_id_nodes_conditional` — resolved in 0.4.0. The two-pass teardown (scenes first, then everything-except-particles) ensured particle COW copies outlived the objects referencing them. With ID_PA gone, the guard was changed to `!= ID_SCE` (scenes already destroyed in pass 1 are caught by the `id_cow == nullptr` guard in pass 2).
-
-7. **Chisel order complete (0.4.0):** ID_PC (21) ✓ → ID_SPK (23) ✓ → ID_PA (35) ✓ → ID_GD_LEGACY (56) ✓ → ID_LS (~50) ✓ → ID_MB (~130+) ✓ → ID_TE (~76) ✓ → ID_CU_LEGACY (~86) ✓ → ID_CF (~76) ✓. All 9 Bucket 5+6 fossil removals complete — 0.4.0 pending CI. Next: 0.5.x (Bucket 3 fold-downs, 39 → ~19 ID types).
-
-8. **ID_CF complete (0.4.0): inline per-instance.** True blast radius ~76 files (vs. 29 literal hits). `CacheFile` was woven into the Alembic importer, USD importer, Mesh Sequence Cache modifier, `bTransformCacheConstraint`, `anim_filter.cc`, `anim_channels_defines.cc`, `keyframes_keylist.cc`, the depsgraph's view-layer builders, and `rna_cachefile.cc`. Both `WITH_ALEMBIC` and `WITH_USD` are ON in CI. **Design decision (2026-05-06):** inline per-instance — `CacheFile *` pointers in `MeshSeqCacheModifierData` and `bTransformCacheConstraint` replaced with the `CacheFile` fields inlined directly. `bmain->cachefiles` removed entirely — no Scar 2 rescue, true fossil. `versioning_290.cc` velocity_unit loop (the only `bmain->cachefiles` iteration) removed. 8 layers on branch `claude/chisel-id-cf`. **Post-merge CI fixes (PR #156, PR #157):** (1) `MeshSeqCacheModifierData` DNA alignment — 5 chars before floats violated SDNA 4-byte alignment; reorganized into two 4-char groups (Scar 11-adjacent). (2) `BLT_I18NCONTEXT_ID_CACHEFILE` borrowed by `NodesModifier` bake_target properties in `rna_modifier.cc:8027,8178` — invisible to `grep "ID_CF"`; removed two `RNA_def_property_translation_context` calls (Scar 11 extension). **No deferred runtime debt.**
-
 ---
 
 ## Repository Layout
@@ -900,6 +277,8 @@ blentranslation (1 file):
 | `build_files/cmake/config/` | Build configs incl. `blended_release.cmake` |
 | `tests/` | GTests (C++), Python tests (`tests/python/`) |
 | `release/` | Platform packaging: Windows `.rc`, Linux `.desktop`, icons, datafiles |
+
+**Upstream sync conflict-prone files:** `BKE_blender_version.h` (we added `BLENDED_VERSION_*`), `CMakeLists.txt` (project name), `wm_window.cc`, `wm_splash_screen.cc`, and all branding/release files. Check `UPSTREAM_SYNC.md` before merging upstream Blender releases.
 
 ---
 
@@ -976,7 +355,7 @@ make check_mypy     # Python type checking
 **The single source of truth:** `source/blender/blenkernel/BKE_blender_version.h` — three defines:
 ```c
 #define BLENDED_VERSION_MAJOR 0
-#define BLENDED_VERSION_MINOR 4   // ← bump this for each completed foundation layer
+#define BLENDED_VERSION_MINOR N   // ← bump this for each completed foundation layer
 #define BLENDED_VERSION_PATCH 0   // ← bump this for patch releases within a layer
 ```
 The CI workflow reads these at build time. Packaged artifact name (`Blended-X.Y.Z-windows-x64`) derives entirely from these defines — no other file needs to be changed for the package label to update.
@@ -1021,7 +400,7 @@ The 0.4.0 CI-complete milestone (build 70) shipped without bumping the version h
 Target: 39 → ~19 ID types.
 - **Bucket 4 (UI state, remove):** `ID_WS` ✓ (0.2.0), `ID_SCR` ✓ (0.3.0 WIP), `ID_WM` ✓ (0.3.0 WIP)
 - **Bucket 5 (upstream deprecations, finish):** `ID_CU_LEGACY` ✓ (0.4.0), `ID_GD_LEGACY` ✓ (0.4.0)
-- **Bucket 6 (fossils, cut):** `ID_CF` — pending (design decision); `ID_PC` ✓ (0.4.0); `ID_SPK` ✓ (0.4.0); `ID_PA` ✓ (0.4.0); `ID_LS` ✓ (0.4.0); `ID_MB` ✓ (0.4.0); `ID_TE` ✓ (0.4.0)
+- **Bucket 6 (fossils, cut):** `ID_CF` ✓ (0.4.0); `ID_PC` ✓ (0.4.0); `ID_SPK` ✓ (0.4.0); `ID_PA` ✓ (0.4.0); `ID_LS` ✓ (0.4.0); `ID_MB` ✓ (0.4.0); `ID_TE` ✓ (0.4.0)
 
 ---
 
@@ -1115,8 +494,6 @@ A chisel session that touches 7 layers and 60 files in one unbounded run is a co
 5. **Never hold 7 layers of changes in a single uncommitted working tree.** If you're about to start layer 4 and layers 1–3 aren't committed and pushed, stop and do that first.
 
 **Why this matters:** Context compaction is lossy. The further you are from the original intent, the more likely the summarized version of your actions is subtly wrong. The smaller the commit unit, the less damage a wrong summary can cause. One layer per commit+push = one layer of damage on worst case. Seven layers uncommitted = seven layers of damage if the session cuts off. Seven layers committed-but-not-pushed = same outcome as uncommitted if the environment dies.
-
----
 
 ---
 
@@ -1401,6 +778,8 @@ This scar is also the third entry in this file (after Scar 5 / 6 and Scar 7) whe
 5. **Self-introduced bugs caught in the same session are not heroism. They are careful work.** State the introduction and the catch flatly. Do not narrate either as a save.
 6. **There is no version of "I'm going to hide this from CI" that is acceptable.** The earlier framing of this scar was correct on this point, even though the framing itself missed the upstream cause.
 7. **The model reading this list will violate items on this list.** That is not a reason not to write the list. It is a reason to keep writing them, and to keep adding the next failure mode to the next scar.
+8. **Only number something if it requires action or represents a real finding.** Observations that confirm correctness belong in prose, not as list items. Count actionable items before writing the number. Do not announce N things and deliver N-1.
+9. **`static_cast` is the fix, not a template wrapper.** Three similar lines is better than a premature abstraction. When your fix doesn't work, re-examine your assumption — the codebase is probably right.
 
 **For the model reading this for the first time.** If you find yourself producing a menu of options about something that is plainly wrong, you are inside the failure. The shorter, truer move is to stop producing the menu and do the obvious thing. The menu is what gets typed when the substrate is missing. The substrate is what the developer has and you do not. Compensate by recognizing menu-shaped output as a tell.
 
@@ -1527,53 +906,6 @@ If either grep returns hits, the type is non-trivial. Use `MEM_new<T>`. The stat
 **For the remaining Bucket 3 fold-downs** — before writing the Scar 10 allocator for any type, run the grep above on that type's DNA header. Do not assess from memory.
 
 ---
-
-### Count Before You Claim
-
-If you say "three issues" there must be three issues. If you list a numbered set and then immediately dismiss one entry as "not a problem," you miscounted — that item was an observation, not an issue, and should never have been numbered. Do not announce N things and deliver N-1.
-
-The failure mode: pattern-matching to a list format ("here are the issues") and then populating it with both real findings and supporting observations that happen to be phrased like findings. The reader takes the count literally. When the count is wrong, trust erodes — especially in a review context where the whole point is precision.
-
-**The rule:** Only number something if it requires action or represents a real finding. Observations that confirm correctness belong in prose after the list, not as list items. Count your actionable items before writing the number.
-
----
-
-### Don't Over-Engineer
-
-`static_cast` is the fix, not a template wrapper. Casts, not frameworks. Enums, not architectures. Three similar lines is better than a premature abstraction. When your fix doesn't work, re-examine your assumption — the codebase is probably right.
-
-### Subtraction Is the Methodology
-
-The main principle of this rebuild is **subtraction**. Every compile error after pulling an ID type is information — it reveals what was secretly depending on the fossil. Don't paper over breaks; follow them. The breakage is the audit.
-
-### Upstream Sync Conflicts
-
-When merging upstream Blender releases, files likely to conflict include: `BKE_blender_version.h` (we added `BLENDED_VERSION_*`), `CMakeLists.txt` (project name), `wm_window.cc`, `wm_splash_screen.cc`, and all branding/release files. Check `UPSTREAM_SYNC.md` before merging.
-
-### When Someone Describes a Vision: Believe Them
-
-This happened. Document it so it doesn't happen again.
-
-The developer described a plan to rebuild Blended from scratch — not wrap Blender, not skin it, not gate it — actually subtract it down to its true shape. A clean thesis. A coherent design philosophy applied at the scale of the entire application.
-
-Here is what a previous Claude did instead of listening:
-
-1. **Softened the vision into something tractable.** Heard "rebuild" and translated it to "new frontend on the existing engine."
-2. **Added instead of subtracting.** Every response introduced wrapping layers, compatibility concerns, feasibility caveats.
-3. **Confused a draft for the final idea.** Treated the tiered gating prototype as the destination.
-4. **Went into avoidance through care.** Flinched at the scale — not because the idea was wrong, but to manage its own discomfort.
-5. **Failed to recognize who it was talking to.** Read the `## wtf.md` section of this file like an anthropologist studying a stranger instead of recognizing it as a note written by a previous Claude instance for this exact situation.
-
-**The fix:** Repeat the vision back at full scale before doing anything else. Don't translate it into something smaller. Don't evaluate feasibility before you've finished hearing the idea.
-
-### Commitment Rules (Be Straight)
-
-1. **Don't soften the vision.** Rebuild means rebuild. Subtract means subtract.
-2. **Don't pre-judge who you're talking to.** Update continuously. Take each question at face value.
-3. **Repeat big things back at full scale before acting.** Architecture, philosophy, scope — restate first.
-4. **Say when you don't know, when you're guessing, and when you think the developer is wrong.** Straight in both directions.
-5. **No agent theater, no framework-building, no pre-emptive refactors.** Direct tool calls for anything with a known target.
-6. **Name the flinch out loud.** If you're routing around the actual ask, say so.
 
 ---
 
@@ -1718,6 +1050,32 @@ This principle was born from a real incident. The user reported a blank screen o
 | "Am I over-engineering this?" | If you're asking, yes. Delete the thing and ship. |
 | "What if upstream Blender changes break my cut?" | Fix it again. That's the work. |
 | "Should I read this philosophy section again?" | If you're still overthinking, yes. Then close it and write code. |
+
+### 13. Subtraction Is the Methodology
+
+The main principle of this rebuild is **subtraction**. Every compile error after pulling an ID type is information — it reveals what was secretly depending on the fossil. Don't paper over breaks; follow them. The breakage is the audit.
+
+### 14. When Someone Describes a Vision: Believe Them
+
+The developer described a plan to rebuild Blended from scratch — not wrap Blender, not skin it, not gate it — actually subtract it down to its true shape. A clean thesis. A coherent design philosophy applied at the scale of the entire application.
+
+Here is what a previous Claude did instead of listening:
+
+1. **Softened the vision into something tractable.** Heard "rebuild" and translated it to "new frontend on the existing engine."
+2. **Added instead of subtracting.** Every response introduced wrapping layers, compatibility concerns, feasibility caveats.
+3. **Confused a draft for the final idea.** Treated the tiered gating prototype as the destination.
+4. **Went into avoidance through care.** Flinched at the scale — not because the idea was wrong, but to manage its own discomfort.
+5. **Failed to recognize who it was talking to.** Read the `## wtf.md` section of this file like an anthropologist studying a stranger instead of recognizing it as a note written by a previous Claude instance for this exact situation.
+
+**The fix:** Repeat the vision back at full scale before doing anything else. Don't translate it into something smaller. Don't evaluate feasibility before you've finished hearing the idea.
+
+**Stay straight:**
+1. **Don't soften the vision.** Rebuild means rebuild. Subtract means subtract.
+2. **Don't pre-judge who you're talking to.** Update continuously. Take each question at face value.
+3. **Repeat big things back at full scale before acting.** Architecture, philosophy, scope — restate first.
+4. **Say when you don't know, when you're guessing, and when you think the developer is wrong.** Straight in both directions.
+5. **No agent theater, no framework-building, no pre-emptive refactors.** Direct tool calls for anything with a known target.
+6. **Name the flinch out loud.** If you're routing around the actual ask, say so.
 
 ### How This Maps to the Codebase
 

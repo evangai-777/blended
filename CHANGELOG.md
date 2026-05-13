@@ -63,6 +63,26 @@ Fold-down order: **ID_LP ✓** → ID_PAL → ID_LT → ID_MSK → ID_VF → ID_
 
 ### ID_LP — LightProbe ✓ complete
 
+**Pre-fold-down blast radius audit (35 literal / ~40 true hits):**
+
+makesdna (5 files): `DNA_ID_enums.h:154` (enum entry → deprecated #define); `DNA_lightprobe_types.h:113` (entire `#ifdef __cplusplus` block — Scar 8); `DNA_ID.h:1179,1195,1271` (FILTER_ID_LP, FILTER_ID_ALL, INDEX_ID_LP); `DNA_action_types.h:447` (ADS_FILTER_NOLIGHTPROBE); `DNA_object_types.h:740,752` (NO CHANGE — compiles via deprecated #define).
+
+blenkernel (3 files): `BKE_idtype.hh:326` (extern IDTypeInfo IDType_ID_LP); `idtype.cc:163` (INIT_TYPE + CASE_IDINDEX ×2 — Scar 4); `main.cc:152,1090` (CASE_ID_INDEX + lb[] removed; which_libbase `case ID_LP:` KEPT — Scar 2); `lightprobe.cc:51–55` (IDTypeInfo block removed; BKE_lightprobe_add → Scar 10 MEM_new).
+
+Scar 2 — kept (mandatory): `BKE_main.hh` (lightprobes field); `main.cc` which_libbase routing; `versioning_280.cc` (×2), `versioning_400.cc` (×3), `versioning_410.cc` (×1), `versioning_420.cc` (×1), `versioning_500.cc` (×1) — all kept as Scar 2 bridge.
+
+makesrna (8 files): `rna_ID.cc:46,131,407,479` (×4); `rna_main_api.cc:765` (RNA_def_main_lightprobes + collection accessor); `rna_main.cc` (listbase funcs + table entry); `rna_internal.hh` (RNA_def_main_lightprobes removed; RNA_def_lightprobe KEPT — Scar 15); `rna_action.cc:1558–1559` (show_lightprobes + ADS_FILTER_NOLIGHTPROBE); `rna_space.cc:3958` (FILTER_ID_LP); `BLT_translation.hh:124,198` (BLT_I18NCONTEXT_ID_LIGHTPROBE — Scar 13); `interface_template_id.cc:968` (BLT_I18N_MSGID_MULTI_CTXT entry).
+
+editors — standard sweep (KEPT per fold-down protocol): `interface_icons.cc`, `interface_template_id.cc`, `render_opengl.cc`, `outliner_draw.cc`, `outliner_intern.hh`, `outliner_select.cc`, `outliner_tools.cc`, `tree_element_id.cc`, `buttons_context.cc`.
+
+editors — anim chain (KEPT per fold-down protocol): `anim_channels_defines.cc` (ACF_DSLIGHTPROBE), `anim_channels_edit.cc` (9 cases), `anim_filter.cc` (function + dispatch; only ADS_FILTER_NOLIGHTPROBE block removed — forced by DNA removal), `anim_deps.cc`, `ED_anim_api.hh`, `nla_buttons.cc`, `nla_draw.cc`, `nla_tracks.cc`, `transform_convert_action.cc`.
+
+depsgraph (3 literal + 3 true blast radius): `deg_builder_nodes.cc:597` (case ID_LP: KEPT); `deg_builder_relations.cc:538` (KEPT); `depsgraph_tag.cc:622` (removed); `depsgraph_query.cc:134` (OOB guard added — true blast radius); `eevee_lightprobe_planar.cc:54` (→ `true` — true blast radius); `eevee_lightprobe_sphere.cc:24` (→ `true` — true blast radius).
+
+python (4 entries): `space_dopesheet.py:125–126`; `space_outliner.py:528`; `wm.py:2946`; `_bl_i18n_utils/settings.py:457`.
+
+Runtime code — all KEPT (fold-down, not chisel): all `eevee_lightprobe_*.cc/.hh`, `overlay_lightprobe.hh`, `object_add.cc` (OBJECT_OT_lightprobe_add), `render_shading.cc`, `properties_data_lightprobe.py`, `properties_world.py`, `rna_lightprobe.cc`, `DNA_lightprobe_types.h` (struct body), `BKE_lightprobe.h`.
+
 | Layer | Files touched | Status |
 |-------|--------------|--------|
 | `makesdna` | `DNA_ID_enums.h` (enum entry removed, deprecated `#define` added), `DNA_lightprobe_types.h` (Scar 8: entire `#ifdef __cplusplus` block removed), `DNA_ID.h` (`FILTER_ID_LP`, `INDEX_ID_LP`, `FILTER_ID_ALL` inclusion removed), `DNA_action_types.h` (`ADS_FILTER_NOLIGHTPROBE` removed from `eDopeSheet_FilterFlag2`) | ✓ |
@@ -92,13 +112,27 @@ Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEG
 *(Order corrected in PR #126 fix — initial commit had ID_CF first, contradicting CLAUDE.md Key note 8. Scar 7.)*
 
 **Key notes:**
+- **Scar 2 mandatory for:** `ID_GD_LEGACY` (`bmain->gpencils` — OB_GPENCIL_LEGACY objects still active), `ID_LS` (`bmain->linestyles` — legacy file loads populate it), `ID_PA` (`bmain->particles` — versioning_250–400 + versioning_legacy iterate it), `ID_TE` (`bmain->textures` — versioning_250/260/280/legacy iterate it), `ID_CU_LEGACY` (`bmain->curves` — 23+ iterations across versioning_250–520, anim_data_bmain_utils.cc, anim_sys.cc). `ID_PC`, `ID_SPK`, `ID_MB`, `ID_CF` — no Scar 2 rescue (true fossils; no versioning iteration).
 - `ID_CU_LEGACY` and `ID_GD_LEGACY` have active migration paths — only the type *registration* goes, not the converters.
 - ~~`ID_LS` is already guarded by `#ifdef WITH_FREESTYLE`~~ — verified false for core registration files; `linestyle.cc` and render_shading.cc ID_LS cases are outside the guard. Full removal required.
 - `ID_LS` known latent leak: opening a legacy `.blend` with Freestyle data in a `WITH_FREESTYLE=OFF` build populates `bmain->linestyles` via the kept `which_libbase` routing, but that listbase is not in `BKE_main_lists_get`, so `BKE_main_free` does not free those IDs. Accepted artifact — no Freestyle fixtures in CI, does not affect release builds. Fix if needed: blenloader post-read pass draining `bmain->linestyles` when `WITH_FREESTYLE=OFF`.
+- **Shared switch cases:** batch removals per file rather than per type — depsgraph (`deg_builder_nodes.cc`, `deg_builder_relations.cc`), outliner (`outliner_draw.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc`), and RNA (`rna_ID.cc`, `rna_main_api.cc`) contain cases for many types side by side.
 - ~~`brush_test.cc` uses `ID_TE` in test fixtures~~ — test fixtures deleted in makesdna/blenkernel layers.
 - ~~`depsgraph.cc:160` has a `!= ID_PA` guard~~ — resolved in ID_PA chisel; guard changed to `!= ID_SCE`.
 
 ### ID_PC — PaintCurve ✓ complete
+
+**Pre-chisel blast radius audit (21 literal / ~35 true hits):**
+
+makesdna (3 files): `DNA_ID_enums.h:158` (enum → deprecated #define); `DNA_brush_types.h:192` (Brush::paint_curve field) + `:482–500` (PaintCurvePoint/PaintCurve struct definitions); `DNA_ID.h:655,695` (shared macro checks); `DNA_undo_system_types.h` (UNDO_REF_ID_TYPE).
+
+blenkernel (5 files): `BKE_idtype.hh:331`; `idtype.cc:168` (INIT_TYPE + CASE_IDINDEX ×2); `main.cc:1046` (CASE_ID_INDEX + lb[] — no Scar 2); `BKE_main.hh:394` (paintcurves field); `paint.cc:185–247` (IDTypeInfo + copy/free/blend-write/read callbacks); `brush.cc:229,550` (FOREACHID + FILTER_ID_PC in deps); `brush_test.cc:64,95` (test fixtures rewritten); `BKE_paint.hh:149,262`; `BKE_undo_system.hh:50`.
+
+editors (10 files): DELETED: `paint_curve.cc`, `paint_curve_undo.cc`, `transform_convert_paintcurve.cc`; `paint_cursor.cc:877–896`; `paint_stroke.cc:1276–1293`; `interface_icons.cc:2085`; `interface_template_id.cc:901`; `render_opengl.cc:643`; `outliner_draw.cc:2583`; `outliner_intern.hh:173`; `outliner_tools.cc:162`; `tree_element_id.cc:89`.
+
+depsgraph (2 files): `deg_builder_relations.cc:610`; `deg_builder_nodes.cc:663`.
+
+makesrna (4 files): `rna_ID.cc:57,448,538`; `rna_main_api.cc:866`; `rna_brush.cc` (paint_curve RNA prop); `rna_sculpt_paint.cc` (PaintCurve RNA defs, 7 sites).
 
 | Layer | Files touched | Status |
 |-------|--------------|--------|
@@ -109,6 +143,26 @@ Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEG
 | `depsgraph` | `deg_builder_relations.cc`, `deg_builder_nodes.cc` | ✓ |
 
 ### ID_SPK — Speaker ✓ complete
+
+**Pre-chisel blast radius audit (23 literal / ~45 true hits):**
+
+makesdna (5 files): `DNA_ID_enums.h` (enum → deprecated #define); `DNA_ID.h` (FILTER_ID_SPK, INDEX_ID_SPK, FILTER_ID_ALL); `DNA_object_types.h` (OB_SPEAKER enum + macros); `DNA_userdef_types.h` (dupflag default); DELETED: `DNA_speaker_types.h` (entire struct).
+
+blenkernel (10+ files): `idtype.cc` (INIT_TYPE + CASE_IDINDEX ×2); `main.cc` (CASE_ID_INDEX + lb[] — no Scar 2); `object.cc`; `sound.cc` (speaker loop + speaker_handles removed); `nla.cc` (BKE_nla_add_soundstrip removed); `anim_data_bmain_utils.cc`; `anim_sys.cc`; `geometry_set_instances.cc`; DELETED: `speaker.cc`, `BKE_speaker.hh`; headers: `BKE_idtype.hh`, `BKE_main.hh`, `BKE_nla.hh`, `BKE_scene_runtime.hh`.
+
+makesrna (9 files): `rna_ID.cc`; `rna_main_api.cc`; `rna_main.cc`; `rna_object.cc`; `rna_userdef.cc`; `rna_action.cc`; `rna_space.cc`; `rna_space_api.cc`; `rna_internal.hh`; DELETED: `rna_speaker.cc`.
+
+editors (26+ files): `interface_icons.cc`; `interface_template_id.cc`; `render_opengl.cc`; `outliner_draw.cc`; `outliner_select.cc`; `outliner_intern.hh`; `outliner_tools.cc`; `tree_element_id.cc`; `space_view3d.cc`; `buttons_context.cc`; `object_add.cc` (OBJECT_OT_speaker_add deleted); `object_intern.hh`; `object_ops.cc`; `object_relations.cc`; `nla_edit.cc` (NLA_OT_soundclip_add deleted); `nla_intern.hh`; `nla_ops.cc`; `nla_draw.cc`; `nla_tracks.cc`; `nla_buttons.cc`; `anim_filter.cc`; `anim_channels_defines.cc` (ACF_DSSPK + 3 callbacks + table entry); `anim_channels_edit.cc` (ANIMTYPE_DSSPK ×9 fallthroughs); `anim_deps.cc`; `transform_convert_action.cc`; `BLT_translation.hh` (BLT_I18NCONTEXT_ID_SPEAKER); `ED_anim_api.hh` (ANIMTYPE_DSSPK enum).
+
+draw (5 files): `overlay_instance.hh/.cc`; `overlay_private.hh`; `overlay_bounds.hh`; DELETED: `overlay_speaker.hh`.
+
+depsgraph (8 files): `deg_builder_nodes.cc/.h`; `deg_builder_nodes_scene.cc`; `deg_builder_relations.cc/.h`; `deg_builder_relations_scene.cc`; `deg_node_operation.hh/.cc` (SPEAKER_EVAL opcode removed).
+
+python (10 files): `bl_ui/__init__.py`; `space_dopesheet.py`; `space_outliner.py`; `space_userpref.py`; `space_view3d.py`; `bl_operators/wm.py`; `_bpy_types.py`; `_bl_i18n_utils/settings.py`; `_rna_manual_reference.py`; DELETED: `properties_data_speaker.py`.
+
+blenloader (1 file): `versioning_520.cc` (502.23 pass — OB_SPEAKER → OB_EMPTY).
+
+io (2 files): `usd_hierarchy_iterator.cc`; `abc_hierarchy_iterator.cc`.
 
 | Layer | Files touched | Status |
 |-------|--------------|--------|
@@ -124,6 +178,20 @@ Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEG
 
 ### ID_PA — ParticleSettings ✓ complete
 
+**Pre-chisel blast radius audit (35 hits):**
+
+makesdna (4 files): `DNA_ID_enums.h:152` (enum entry → deprecated #define); `DNA_particle_types.h:533` (id_type constexpr); `DNA_ID.h` (FILTER_ID_PA, INDEX_ID_PA, FILTER_ID_ALL).
+
+blenkernel (2 files): `idtype.cc:162` (INIT_TYPE + CASE_IDINDEX ×2); `main.cc:1032` (which_libbase case — KEEP particles field + Scar 2 routing); `texture.cc:486,516` (×2).
+
+editors (9+ files): `buttons_context.cc:517`; `interface_icons.cc:2081`; `interface_template_id.cc:636,891`; `render_shading.cc:3045,3075`; `render_opengl.cc:624`; `outliner_draw.cc:2585`; `outliner_intern.hh:157`; `outliner_tools.cc:157`; `tree_element_id.cc:77`; `anim_filter.cc:2676`; `anim_channels_defines.cc:329` (ELEM shared with MA).
+
+depsgraph (4 files): `depsgraph_tag.cc:157,635`; `deg_builder_relations.cc:600`; `deg_builder_nodes.cc:653`; `depsgraph.cc:160` (teardown guard → `!= ID_SCE`).
+
+animrig (1 file): `animdata.cc:125`.
+
+makesrna (7 files): `rna_ID.cc:59,442,534,1050` (×4); `rna_texture.cc:272`; `rna_particle.cc:1014`; `rna_boid.cc:232`; `rna_color.cc:386`; `rna_object_force.cc:671`; `rna_main_api.cc:858`.
+
 | Layer | Files touched | Status |
 |-------|--------------|--------|
 | `makesdna` | `DNA_ID_enums.h` (enum entry → deprecated `#define`), `DNA_particle_types.h` (id_type constexpr), `DNA_ID.h` (FILTER_ID_PA, INDEX_ID_PA, FILTER_ID_ALL) | ✓ |
@@ -134,6 +202,20 @@ Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEG
 | `animrig` | `animdata.cc` | ✓ |
 
 ### ID_GD_LEGACY — Old Grease Pencil ✓ complete
+
+*Session note (2026-04-30): Three key true-blast-radius findings: (1) bmain->gpencils kept as Scar 2 listbase — OB_GPENCIL_LEGACY and annotation creation still need it. (2) All depsgraph sites (depsgraph_tag.cc:72,626; deg_builder_nodes.cc:630; deg_builder_relations.cc:580,2758) left untouched — bGPdata evaluation must survive. (3) material.cc mat/totcol pointer cases initially removed then restored — OB_GPENCIL_LEGACY objects have material slots. Active migration: grease_pencil_convert_legacy.cc and blendfile_link_append.cc converter code kept; only the type registration went.*
+
+**Pre-chisel blast radius audit (56 hits, 32 files):**
+
+makesdna (4 files): `DNA_ID_enums.h:151` (enum entry → deprecated #define); `DNA_gpencil_legacy_types.h:711` (id_type constexpr); `DNA_object_types.h:747,762` (object type macros ×2); `DNA_ID.h:1162,1195,1244` (FILTER_ID_GD, FILTER_ID_ALL, INDEX_ID_GD).
+
+blenkernel (9 files): `BKE_idtype.hh:324` (extern decl); `gpencil_legacy.cc:267,269,271,654` (IDTypeInfo callbacks + alloc call); `idtype.cc:161` (INIT_TYPE + CASE_IDINDEX ×2); `main.cc:131,1027,1071` (CASE_ID_INDEX + which_libbase case + lb[] — KEEP which_libbase); `material.cc:427,455,850` (×3); `deform.cc:460,481` (×2); `grease_pencil_convert_legacy.cc:3057,3151` KEEP; `blendfile_link_append.cc:555` KEEP; `scene.cc:1611` (FILTER_ID_GD from deps); `movieclip.cc:298` (IDTypeInfo dep check).
+
+blenloader (2 files — KEEP): `versioning_250.cc:444` (GS write); `versioning_common.cc:61,62` (GD_LEGACY → GP v3 marker).
+
+editors (10 files): `interface_icons.cc:2055`; `interface_template_id.cc:588,885`; `object_data_transform.cc:816`; `render_opengl.cc:649`; `outliner_select.cc:1295`; `outliner_draw.cc:2556`; `outliner_intern.hh:156`; `outliner_tools.cc:156`; `tree_element_id.cc:56`; `space_node.cc:1537`; `space_image.cc:1214` (FILTER_ID_GD).
+
+draw (1 file): `draw_context.cc:1166` (DEG_id_type_any_exists → gpencil-only). depsgraph (3 files): `depsgraph_tag.cc:72,626`; `deg_builder_nodes.cc:630`; `deg_builder_relations.cc:580,2758`. makesrna (4 files): `rna_ID.cc:41,124,377,477`; `rna_main_api.cc:831`; `rna_main.cc`; `rna_space.cc:3975` (FILTER_ID_GD in misc filter — literal grep miss).
 
 | Layer | Files touched | Status |
 |-------|--------------|--------|
@@ -146,6 +228,22 @@ Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEG
 | `depsgraph` | `depsgraph_tag.cc`, `deg_builder_nodes.cc`, `deg_builder_relations.cc` — **ALL KEPT** (OB_GPENCIL_LEGACY objects still exist at runtime; geometry node building and relations for bGPdata must survive) | ✓ |
 
 ### ID_LS — FreestyleLineStyle ✓ complete
+
+**Pre-chisel blast radius audit (28 literal / ~50 true hits):**
+
+makesdna (4 files): `DNA_ID_enums.h:156` (enum → deprecated #define); `DNA_linestyle_types.h:649` (id_type constexpr); `DNA_ID.h` (FILTER_ID_LS, INDEX_ID_LS, FILTER_ID_ALL); `DNA_action_types.h` (ADS_FILTER_NOLINESTYLE).
+
+blenkernel (4+ files): `BKE_idtype.hh` (extern decl); `idtype.cc:166` (INIT_TYPE + CASE_IDINDEX ×2); `main.cc:1042` (CASE_ID_INDEX + lb[] — KEEP which_libbase routing + linestyles Scar 2); `linestyle.cc` (IDTypeInfo block removed — KEEP BKE_linestyle_new); `node.cc:5153`; `texture.cc:480,513` (×2); `scene.cc` (FILTER_ID_LS from deps).
+
+blenloader (2 files): `versioning_500.cc:4494`; `versioning_450.cc:5891`.
+
+editors (26 files): `buttons_texture.cc`; `buttons_context.cc` (linestyle path fn + pinnable fn + dispatch + "line_style" member + FS texture slot); `interface_icons.cc`; `interface_template_id.cc`; `interface_template_preview.cc` (×3); `render_shading.cc` (×3 incl. FreestyleLineStyle paste context); `render_opengl.cc`; `outliner_draw.cc`; `outliner_intern.hh`; `outliner_tools.cc`; `tree_element_id.cc`; DELETED: `tree_element_id_linestyle.cc/.hh`; `space_node.cc` (NC_LINESTYLE ×2); `anim_channels_defines.cc` (ACF_DSLINESTYLE 3 fns + struct + table entry); `anim_channels_edit.cc` (ANIMTYPE_DSLINESTYLE ×9); `anim_deps.cc`; `anim_filter.cc` (fn + call site + case); `ED_anim_api.hh` (ANIMTYPE_DSLINESTYLE + FILTER_LS_SCED); `nla_buttons.cc`; `nla_draw.cc`; `nla_tracks.cc`; `transform_convert_action.cc`; `rna_action.cc` (show_linestyles prop).
+
+depsgraph (5 files): `deg_eval_copy_on_write.cc` (SPECIAL_CASE ×4 + sizeof + include removed); `deg_builder_relations.cc/.h` (case + fn + decl); `deg_builder_nodes.cc/.h` (case + fn + decl); `deg_builder_relations_view_layer.cc`; `deg_builder_nodes_view_layer.cc`.
+
+nodes (2 files): `shader_nodes_inline.cc` (ShaderNodeOutputLineStyle case); `node_texture_tree.cc` (unguarded SNODE_TEX_LINESTYLE branch + include).
+
+makesrna (7 files): `rna_ID.cc`; `rna_texture.cc` (NC_LINESTYLE case); `rna_color.cc` (×3); `rna_space.cc` (FILTER_ID_LS in shading filter); `rna_main_api.cc`; `rna_main.cc`; `rna_internal.hh`.
 
 | Layer | Files touched | Status |
 |-------|--------------|--------|
@@ -188,6 +286,26 @@ Resolves two deferred-debt items, syncs a stale version define, and adds two ope
 
 ### ID_MB — MetaBall ✓ (0.4.0)
 
+**Pre-chisel blast radius audit (60 literal / 130+ true hits):**
+
+makesdna (4 files): `DNA_ID_enums.h:134` (enum → deprecated #define); `DNA_meta_types.h:91` (id_type constexpr); `DNA_object_types.h:735,742,756` (OB_MBALL macros shared w/ CU_LEGACY); `DNA_ID.h:1169,1196,1274` (FILTER_ID_MB, FILTER_ID_ALL, INDEX_ID_MB).
+
+blenkernel (12+ files): `BKE_idtype.hh:307`; `idtype.cc:144` (INIT_TYPE + CASE_IDINDEX ×2); `main.cc:149,991,1088` (CASE_ID_INDEX + which_libbase + lb[] — all removed, no Scar 2); `BKE_main.hh:369` (metaballs field removed — true fossil); `material.cc:425,453,486,519,542,847` (×6); `object.cc:1933,1977,2225,4279` (×4); `object_update.cc:157,291`; `object_dupli.cc:312`; `lib_remap.cc:627`; `mesh_convert.cc:921,989`; `context.cc:1415,1498`; `lib_id.cc:2412`; `anim_sys.cc:4135`; `anim_data_bmain_utils.cc:77`; DELETED: `mball_tessellate.cc`, `BKE_mball.hh`, `BKE_mball_tessellate.hh`.
+
+blenloader (1 file — KEEP): `versioning_legacy.cc:2382` (KEEP — bmain->metaballs iteration for legacy ID property fix; only versioning pass site).
+
+editors (40+ files): `interface_icons.cc`; `interface_template_id.cc:583,854`; `object_data_transform.cc` (×4); `transform_convert_object_texspace.cc:52` (ELEM w/ CU_LEGACY); `render_opengl.cc:610`; `outliner_select.cc:1289`; `outliner_draw.cc:2485`; `outliner_intern.hh:141` (Scar 9); `outliner_tools.cc:136,287`; `tree_element_id.cc:49`; DELETED: `tree_element_id_metaball.cc/.hh`, `metaball/mball_edit.cc`, `metaball/mball_ops.cc`, `metaball/editmball_undo.cc`, `metaball/mball_intern.hh`, `ED_mball.hh`; `anim_channels_defines.cc` (ACF_DSMBALL + 3 callbacks); `anim_filter.cc` (animdata_filter_ds_metaball); `ED_anim_api.hh` (ANIMTYPE_DSMBALL + FILTER_MBALL_OBJD); `anim_channels_edit.cc` (9 fallthrough sites) + nla/transform fallthrough; `object_add.cc`, `object_bake_api.cc`, `object_edit.cc`, `object_hook.cc`, `object_modes.cc`, `object_modifier.cc`, `object_relations.cc`, `object_transform.cc`, `object_utils.cc`, `screen_ops.cc`, `spacetypes.cc`, `buttons_context.cc`, `info_stats.cc`, `view3d_buttons.cc`, `view3d_iterators.cc`, `view3d_select.cc`, `view3d_snap.cc`, `transform.cc`, `transform_convert.cc`, `transform_convert.hh`; DELETED: `transform_convert_mball.cc`; `transform_gizmo_3d.cc`, `transform_mode.cc`, `transform_orientations.cc`, `transform_snap.cc`, `undo_system_types.cc`, `ed_transverts.cc`.
+
+draw (9 files): `overlay_bounds.hh:188`; `draw_resource.hh:157`; `overlay_instance.cc/.hh`; `overlay_private.hh`; `overlay_shape.cc`; `draw_context.cc`; `draw_handle.hh`; DELETED: `overlay_metaball.hh`.
+
+depsgraph (5 files): `depsgraph_tag.cc:72,618`; `deg_eval_copy_on_write.cc:557,938`; `deg_builder_relations.cc:570,2716`; `deg_builder_nodes.cc:624,1769`; `depsgraph_query_iter.cc:479`.
+
+makesrna (8 files): `rna_ID.cc:53,150,398,485` (×4); `rna_main_api.cc:794`; `rna_main.cc`; `rna_internal.hh:538`; `rna_action.cc:1521`; `rna_space.cc:3954` (FILTER_ID_MB in geometry filter); DELETED: `rna_meta.cc`, `rna_meta_api.cc`.
+
+io (6 files): `abc_hierarchy_iterator.cc:205`; `abstract_hierarchy_iterator.cc:840`; `usd_hierarchy_iterator.cc:61,321`; `usd/hydra/object.cc:37,69,87`; DELETED: `abc_writer_mball.cc`, `usd_writer_metaball.cc`.
+
+windowmanager (2 files): `WM_types.hh:603`; `wm_init_exit.cc:566`.
+
 | Layer | Files touched | Status |
 |-------|--------------|--------|
 | `makesdna` | `DNA_ID_enums.h` (deprecated `#define`), `DNA_meta_types.h` (id_type constexpr removed), `DNA_object_types.h` (3 macros patched; `OB_MBALL=5` kept for .blend compat) | ✓ |
@@ -209,6 +327,22 @@ Resolves two deferred-debt items, syncs a stale version define, and adds two ope
 
 ### ID_TE — Texture ✓ complete
 
+*Session note (2026-05-05): Scar 2 applied — bmain->textures restored as non-indexed listbase (versioning_250/260/280/legacy iterate it). Field-name grep-miss 1: anim_sys.cc EVAL_ANIM_NODETREE_IDS (uses textures.first, not ID_TE). Field-name grep-miss 2: deg_eval_copy_on_write.cc block 3 copy variant — caught in post-chisel scar checks. brush_test.cc fixtures deleted. tree_element_id_texture.cc/.hh deleted.*
+
+**Pre-chisel blast radius audit (76 hits, 45 files):**
+
+Core definition: `DNA_ID_enums.h:135` (enum); `DNA_texture_types.h:350` (id_type constexpr); `DNA_ID.h:655,1177,1197,1258` (shared ELEM macro + FILTER_ID_TE + FILTER_ID_ALL + INDEX_ID_TE); `BKE_idtype.hh:308`; `idtype.cc:145` (INIT_TYPE + CASE_IDINDEX ×2); `main.cc:139,992,1073`.
+
+blenkernel (9 files): `texture.cc:183,185,187` (IDTypeInfo); `preview_image.cc:218,283`; `image.cc:2903`; `compositor.cc:280`; `node.cc:5148`; `light.cc:173` (FILTER_ID_TE in deps); `material.cc:249`; `brush.cc:549`; `world.cc:192`; `anim_data_bmain_utils.cc:62` (field-name grep-miss); `BKE_main.hh:368` (textures field); `brush_test.cc:64`.
+
+blenloader (2 files): `versioning_500.cc:4494`; `versioning_450.cc:5891`.
+
+editors (12 files): `buttons_texture.cc:373`; `interface_anim.cc:280`; `interface_icons.cc:1933,2084`; `interface_template_preview.cc:58,67`; `interface_template_id.cc:626,855,1453`; `node_group_operator.cc:772`; `render_opengl.cc:611`; `render_update.cc:359`; `render_preview.cc:412,543,607,1286,1310` (5 sites); `anim_filter.cc:2724`; `anim_channels_defines.cc:323`; `outliner_draw.cc:780,2504`; `outliner_intern.hh:143`; `outliner_tools.cc:140,2890`; `tree_element_id.cc:48`.
+
+depsgraph (4 files): `depsgraph_tag.cc:866`; `deg_builder_relations.cc:553,3032`; `deg_builder_nodes.cc:608,2020`; `deg_eval_copy_on_write.cc:108,153,191,226`. windowmanager (1 file): `wm_operators.cc:3898,3920,4031,4035,4049`. modifiers (1 file): `MOD_nodes.cc:214`.
+
+makesrna (8 files): `rna_ID.cc:61,166,426,500`; `rna_color.cc:352`; `rna_image.cc:291`; `rna_space.cc:2264,3960` (grep-miss at 3960); `rna_texture.cc:177`; `rna_main_api.cc:779`; `rna_main.cc:180,400,405` (grep-miss); `rna_internal.hh:539` (grep-miss).
+
 | Layer | Files touched | Status |
 |-------|--------------|--------|
 | `makesdna` | `DNA_ID_enums.h` (enum removed; deprecated `#define` added), `DNA_texture_types.h` (id_type constexpr removed; `#ifdef __cplusplus` / `DNA_DEFINE_CXX_METHODS` kept per Scar 8), `DNA_ID.h` (shared ELEM macro, FILTER_ID_TE, FILTER_ID_ALL, INDEX_ID_TE) | ✓ |
@@ -226,6 +360,16 @@ Resolves two deferred-debt items, syncs a stale version define, and adds two ope
 ### ID_CU_LEGACY — Legacy Curve ✓ complete
 
 *Session note (2026-05-06): True blast radius ~86 hits / 36 files vs. 74/33 pre-chisel estimate. Scar 2 applied (bmain->curves + which_libbase routing kept; 23+ versioning iterations). Scar 8 applied (DNA_DEFINE_CXX_METHODS kept in Curve #ifdef block; only id_type line removed). Scar 10 applied to BKE_curve_add (live callers: object.cc, Alembic NURBS, OBJ NURBS, mesh_convert.cc, rna_main_api.cc). Two depsgraph OOB guards added to add_id_node() and DEG_graph_id_type_tag() instead of no-op (legacy curves still created by importers). All case ID_CU_LEGACY: sites in editors/draw/blenkernel compile as-is since ID_CU_LEGACY remains a valid #define; those case statements left in place for correct runtime behavior. grep-miss sites: key.cc:173 FILTER_ID_CU_LEGACY in IDType_ID_KE.dependencies_id_types; rna_space.cc:3951 FILTER_ID_CU_LEGACY in asset browser geometry filter.*
+
+**Pre-chisel blast radius audit (74 hits, 33 files):**
+
+Core definition: `DNA_ID_enums.h:133` (enum entry); `DNA_curve_types.h:216` (id_type constexpr); `DNA_object_types.h:736,742,758` (object type check macros, shared with ID_MB); `idtype.cc:143` (INIT_TYPE); `main.cc:992` (which_libbase case); `curve.cc:410` (BKE_libblock_alloc call — Scar 10 site).
+
+blenkernel (6 files): `key.cc:256,1112,1251,1266` (GS checks for shape keys, 4 sites); `material.cc:423,451,480,517,539,838` (material slot handling, 6 sites); `object.cc:1123,1931,1963,2228,4277` (object data dispatch, 5 sites); `mesh_convert.cc:665,688,775` (mesh conversion GS checks); `lib_remap.cc:428,626` (library remapping); `object_update.cc:356` (update dispatch).
+
+editors (11 files): `interface_icons.cc:2053`; `interface_template_id.cc:582,857`; `object_data_transform.cc:389,570,702,797` (4 sites); `object_edit.cc:1764`; `render_opengl.cc:609`; `transform_convert_object_texspace.cc:52` (ELEM with ID_ME/ID_MB); `outliner_select.cc:1288`; `outliner_draw.cc:2473`; `outliner_intern.hh:140`; `outliner_tools.cc:136,287`; `tree_element_id.cc:48`.
+
+draw (2 files): `overlay_bounds.hh:182`; `draw_resource.hh:150`. depsgraph (4 files): `depsgraph_tag.cc:72,344,627`; `deg_eval_copy_on_write.cc:115,161,200,236,560,941` (6 sites); `deg_builder_relations.cc:576,2587,2741`; `deg_builder_nodes.cc:629,1795`. makesrna (4 files): `rna_ID.cc:38,388,498`; `rna_key.cc:67,576,611,631,653,681,694,715` (8 sites); `rna_object.cc:572`; `rna_main_api.cc:845` (RNA_MAIN_ID_TAG_FUNCS_DEF).
 
 | Layer | Files touched | Status |
 |-------|--------------|--------|
@@ -273,6 +417,28 @@ Resolves two deferred-debt items, syncs a stale version define, and adds two ope
 > **Hashtag-on-build-numbers cleanup, same branch.** CLAUDE.md's PR Description Style rule says "Do not use `#` before CI build numbers" because GitHub auto-links `#N` as a reference to PR or issue N. The previous force-push left several `build #N` references in CLAUDE.md / CHANGELOG.md / BLENDED.md / .github/README.md / the PR body. Replaced with the correct `build N` form. Earlier historical references (`build 49`, `build 62`, `build 45`) standardized at the same time.
 >
 > **Sweeps run before commit:** `grep -rn "UI_UL_cache_file_layers" source/` → 0; `grep -rn "uilisttypes_ui" source/` → 0; `grep -rn "template_cache_file" scripts/` → 0; `grep -rn "con\.cache_file" scripts/` → 0; `grep -rn "bpy\.data\.{particles,linestyles,textures,cache_files}" scripts/` → 0 live; `python3 -m py_compile` on both edited Python files → OK.
+
+**Pre-chisel blast radius audit (29 literal / 76 true hits):**
+
+makesdna (6 files): `DNA_ID_enums.h:153` (enum entry → deprecated #define); `DNA_cachefile_types.h:69` (id_type constexpr; struct body kept for SDNA read-skip); `DNA_ID.h` (FILTER_ID_CF, FILTER_ID_ALL, INDEX_ID_CF); `DNA_modifier_types.h` (MeshSeqCacheModifierData.cache_file → inline fields); `DNA_constraint_types.h` (bTransformCacheConstraint.cache_file → inline fields); `DNA_action_types.h` (ADS_FILTER_NOCACHEFILES).
+
+blenkernel (9 files): `idtype.cc:163` (INIT_TYPE + CASE_IDINDEX ×2); `main.cc:142,1036,1079` (CASE_ID_INDEX + which_libbase + lb[] — all removed; no Scar 2); `BKE_idtype.hh:326`; `BKE_main.hh` (cachefiles field removed); `cachefile.cc` (deleted); `BKE_cachefile.hh` (deleted); `anim_data_bmain_utils.cc` (field-name miss); `anim_sys.cc` (field-name miss); `constraint.cc`; `path_templates.cc`.
+
+blenloader (1 file): `versioning_290.cc` — velocity_unit loop removed.
+
+editors (20+ files): `io_cache.cc` (deleted); `io_cache.hh` (deleted); `interface_template_cache_file.cc` (deleted); `io_ops.cc`; `interface_icons.cc:2050`; `interface_template_id.cc:883`; `render_opengl.cc:638`; `render_update.cc`; `outliner_intern.hh:163`; `outliner_tools.cc:154`; `tree_element_id.cc:76`; `anim_channels_defines.cc` (ACF_DSCACHEFILE struct+3 callbacks+table entry); `anim_channels_edit.cc`; `anim_deps.cc`; `nla_buttons.cc`; `nla_draw.cc`; `nla_tracks.cc`; `transform_convert_action.cc`; `anim_filter.cc`; `keyframes_keylist.cc`; `ED_anim_api.hh`; `ED_keyframes_keylist.hh`; `UI_interface_c.hh`; `object_constraint.cc`; `space_file/filelist/filelist.cc`.
+
+depsgraph (8 files): `deg_builder_nodes.cc:636`; `deg_builder_nodes.h`; `deg_builder_nodes_view_layer.cc`; `deg_builder_relations.cc:576,3472`; `deg_builder_relations.h`; `deg_builder_relations_view_layer.cc`; `depsgraph_build.cc`; `DEG_depsgraph_build.hh`.
+
+modifiers (1 file): `MOD_meshsequencecache.cc` — CacheFile * replaced with inline struct fields throughout.
+
+io/alembic (~10 files): `alembic_capi.cc`; `abc_reader_object.cc/.h`; `abc_reader_mesh.cc/.h`; `abc_reader_curves.h`; `abc_reader_nurbs.h`; `abc_reader_camera.h`; `abc_reader_points.h`; `abc_reader_transform.h`; `abc_util.h`; `ABC_alembic.h`.
+
+io/usd (~8 files): `usd_capi_import.cc`; `usd_reader_stage.cc/.hh`; `usd_reader_geom.cc/.hh`; `usd_reader_xform.cc`; `usd_reader_prim.hh`; `usd_private.hh`.
+
+makesrna (11 files): `rna_ID.cc:35,119,353,448` (×4); `rna_cachefile.cc` (deleted); `rna_constraint.cc`; `rna_modifier.cc`; `rna_action.cc:1537`; `rna_space.cc:3973`; `rna_main_api.cc:765`; `rna_main.cc`; `rna_internal.hh`; `rna_ui_api.cc`; `makesrna.cc`.
+
+blentranslation (1 file): `BLT_translation.hh` (BLT_I18NCONTEXT_ID_CACHEFILE).
 
 | Layer | Files touched | Status |
 |-------|--------------|--------|
