@@ -532,7 +532,6 @@ void RNA_def_main_libraries(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_screens(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_window_managers(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_images(BlenderRNA *brna, PropertyRNA *cprop);
-void RNA_def_main_lattices(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_fonts(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_brushes(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_worlds(BlenderRNA *brna, PropertyRNA *cprop);
@@ -541,8 +540,6 @@ void RNA_def_main_texts(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_sounds(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_armatures(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_actions(BlenderRNA *brna, PropertyRNA *cprop);
-void RNA_def_main_palettes(BlenderRNA *brna, PropertyRNA *cprop);
-
 void RNA_def_main_grease_pencil(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_movieclips(BlenderRNA *brna, PropertyRNA *cprop);
 void RNA_def_main_masks(BlenderRNA *brna, PropertyRNA *cprop);

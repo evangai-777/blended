@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.5.0-dev — ID_LP fold-down CI-complete (Windows x64, build 74 on commit `80002ae`). 0.4.0 base: CI-complete (Windows x64, build 70 on commit `7bd69df`). Bucket 3 fold-downs in progress: `ID_LP` ✓. Remaining: `ID_PAL`, `ID_LT`, `ID_MSK`, `ID_VF`, `ID_BR`.
+**Current version:** Blended 0.5.0-dev — ID_LP fold-down CI-complete (Windows x64, build 74 on commit `80002ae`). 0.4.0 base: CI-complete (Windows x64, build 70 on commit `7bd69df`). Bucket 3 fold-downs in progress: `ID_LP` ✓, `ID_PAL` ✓ (pending CI), `ID_LT` ✓ (pending CI). Remaining: `ID_MSK`, `ID_VF`, `ID_BR`.
 
 ---
 
@@ -93,7 +93,7 @@ BLI_listbase_clear(&bmain->linestyles);
 | Version | Layer | Status |
 |---------|-------|--------|
 | 0.4.x | Datablock audit — 9 fossil removals (Bucket 5+6) | ✓ CI-complete (build 70) |
-| 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) | In progress — `ID_LP` ✓ |
+| 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) | In progress — `ID_LP` ✓, `ID_PAL` ✓, `ID_LT` ✓ |
 | 0.6.x | Evaluation model — depsgraph audit | Pending |
 | 0.7.x | App lenses — launcher as canonical workspace system + full product identity | Pending |
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary | Pending |
@@ -133,10 +133,10 @@ The operational test: at the end of a fold-down session, every tool and workflow
 | ID | Literal hits | Files | Eventual home (0.7.x) |
 |----|-------------|-------|-----------------------|
 | ~~`ID_LP`~~ | ~~35 hits~~ | ~~25 files~~ | ~~Merge into `ID_LA` with type flag~~ ✓ |
-| `ID_PAL` | 38 hits | 24 files | Inline into Brush |
+| ~~`ID_PAL`~~ | ~~38 hits~~ | ~~24 files~~ | ~~Inline into Brush~~ ✓ |
 | `ID_MSK` | 41 hits | 27 files | Hang off compositor NodeTree |
 | `ID_VF` | 45 hits | 27 files | Filepath on Text object |
-| `ID_LT` | 70 hits | 32 files | Owned by Lattice modifier |
+| ~~`ID_LT`~~ | ~~70 hits~~ | ~~32 files~~ | ~~Owned by Lattice modifier~~ ✓ |
 | `ID_BR` | 119 hits | 44 files | User state + shareable brush packs |
 
 **Scar 2 fields and runtime status:**
@@ -144,8 +144,8 @@ The operational test: at the end of a fold-down session, every tool and workflow
 | ID | bmain field | Runtime note |
 |----|-------------|-------------|
 | `ID_BR` | `bmain->brushes` | Every paint/sculpt mode reads this every frame |
-| `ID_PAL` | `bmain->palettes` | Referenced by Brush; active in any paint session |
-| `ID_LT` | `bmain->lattices` | OB_LATTICE objects actively deform meshes |
+| ~~`ID_PAL`~~ | `bmain->palettes` | Referenced by Brush; active in any paint session — Scar 2 kept ✓ |
+| ~~`ID_LT`~~ | `bmain->lattices` | OB_LATTICE objects actively deform meshes — Scar 2 kept ✓ |
 | `ID_LP` | `bmain->lightprobes` | Active in EEVEE rendering |
 | `ID_MSK` | `bmain->masks` | Used in motion tracking and compositor |
 | `ID_VF` | `bmain->fonts` | Text objects reference these every render |
@@ -161,6 +161,32 @@ The operational test: at the end of a fold-down session, every tool and workflow
 > Key decisions vs. pre-fold-down audit: (1) **Editors standard sweep skipped entirely** — editor dispatch cases (icons, outliner, template_id browse string, buttons_context, render_opengl traversal) are runtime code and were kept. The fold-down protocol says "every tool and workflow should still work" — these cases make it work. (2) **Anim chain kept** — ANIMTYPE_DSLIGHTPROBE, ACF_DSLIGHTPROBE, all anim_channels_defines/edit/filter ANIMTYPE cases kept. Only the `if (ads_filterflag2 & ADS_FILTER_NOLIGHTPROBE)` block removed in anim_filter.cc (3 lines) — forced by makesdna removal of `ADS_FILTER_NOLIGHTPROBE`. LP animation still shows in dopesheet, just without per-type filter toggle. (3) **Depsgraph dispatch kept** — `case ID_LP:` in deg_builder_nodes.cc and deg_builder_relations.cc kept; build_lightprobe still called. Two OOB fixes applied: `DEG_id_type_any_exists` and `DEG_id_type_updated` in depsgraph_query.cc guarded with `if (id_type_index < 0) return false;` — needed because BKE_idtype_idcode_to_index(ID_LP) returns -1 after INIT_TYPE removal. EEVEE callers (eevee_lightprobe_planar.cc:54, eevee_lightprobe_sphere.cc:24) changed from `DEG_id_type_any_exists(depsgraph, ID_LP)` → `true` (conservative always-update). (4) **Scar 13 clean** — BLT_I18NCONTEXT_ID_LIGHTPROBE removed from BLT_translation.hh + BLT_I18N_MSGID_MULTI_CTXT in interface_template_id.cc; no borrowers found. (5) **wm.py LIGHT_PROBE operator entry removed** — the copy-to-selected operator accessed bpy.data.lightprobes which no longer exists; entry removed to prevent AttributeError at runtime. space_userpref.py use_duplicate_lightprobe kept — property lives in rna_userdef.cc, not tied to bpy.data collection. (6) **MEM_new used** for Scar 10 allocator rewrite — LightProbe has in-class default member initializers throughout (`adt = nullptr`, `type = 0`, `falloff = 0.2f`, `clipsta = 0.8f`, etc.), making it non-trivially constructible. `MEM_new_zeroed` was used originally and rejected by static_assert at CI step 6612/8093 (Scar 18). Corrected to `MEM_new<LightProbe>`. (7) **DNA_action_types.h ADS_FILTER_NOLIGHTPROBE removed** — this was the one makesdna item that forced a runtime code change (anim_filter.cc), unlike the other DNA changes which only affected the ID system machinery.
 >
 > **Fold-down mindset confirmed:** At session end, every workflow that existed before still works — EEVEE probe rendering, properties panel, outliner display, animation dopesheet channels, icon display, outliner filter. The ONLY functional change: bpy.data.lightprobes collection is gone; users create light probes via Add > Light Probe object (which calls BKE_lightprobe_add → manual listbase insert, Scar 2).
+
+---
+
+**ID_PAL — ✓ COMPLETE (0.5.0, pending CI)** *(true blast radius: 38 literal / ~46 true hits — fold-down, not chisel; all runtime code kept)*
+
+> **Session note (2026-05-13):** 4 code commits across all layers + 1 docs commit. Fold-down philosophy applied correctly: no files deleted, no runtime code removed, only the ID system registration stripped.
+>
+> Key decisions vs. pre-fold-down audit: (1) **No anim chain removal** — `ANIMTYPE_PALETTE` in `ED_anim_api.hh:233` is a stub enum value that only appears as a fallthrough case in `anim_channels_edit.cc:966`. No `ACF_DSPALETTE` or `animdata_filter_ds_palette` function exists. No dopesheet filter property (`ADS_FILTER_NOPALETTE` does not exist in DNA). Nothing to remove — all kept. (2) **No rna_action.cc change** — `ID_PAL` had no `ADS_FILTER_NOPALETTE` flag in DNA_action_types.h (unlike LP's `ADS_FILTER_NOLIGHTPROBE`). Cleaner than ID_LP — zero forced runtime code changes from the DNA sweep. (3) **Depsgraph dispatch kept** — `case ID_PAL:` in both `deg_builder_nodes.cc:643` and `deg_builder_relations.cc:584` (fallthrough to `build_generic_id`). OOB guards already generic in `depsgraph_query.cc` from ID_LP fold-down — no new per-type fix needed. (4) **No eevee callers** — no site calls `DEG_id_type_any_exists(depsgraph, ID_PAL)`, so no `→ true` substitution needed (unlike ID_LP). (5) **Scar 8** — `DNA_brush_types.h` Palette struct had `id_type = ID_PAL` in `#ifdef __cplusplus` block. Verified DNA_brush_types.h has one remaining `#ifdef __cplusplus` (Brush struct with `DNA_DEFINE_CXX_METHODS` + `id_type = ID_BR` — correct, untouched). (6) **Scar 10** — `BKE_palette_add` used `BKE_id_new<Palette>` — rewritten to `MEM_new<Palette>` + manual listbase insert. Palette has `ListBaseT<PaletteColor> colors = {nullptr, nullptr}` in-class initializer — non-trivial → `MEM_new` confirmed correct (Scar 18). `palette_init_data`'s `id_fake_user_set` call explicitly replicated in the Scar 10 allocator. (7) **Scar 13 clean** — `BLT_I18NCONTEXT_ID_PALETTE` had no external borrowers (grep clean). (8) **Python** — only `settings.py` "palettes" data path removed. No entries in space_dopesheet.py, space_outliner.py, or wm.py (no copy-to-selected entry, no outliner filter). (9) **True blast radius additions**: `anim_data_bmain_utils.cc:110`, `anim_sys.cc:4155`, `gpencil_legacy.cc:1170,1174`, `versioning_500.cc:3950` (all Scar 2 field-name grep misses, kept); `versioning_290.cc:843` `{ID_BR, ID_PAL}` which_libbase call (kept — versioning repair path).
+>
+> **False positives identified**: `bonecolor.cc`, `DNA_armature_types.h`, `rna_armature.cc`, `overlay_armature.cc` — bone color `palette_index` integer, unrelated to Palette ID type. `versioning_270.cc`, `versioning_280.cc`, `grease_pencil_modes.cc` — `gpd->palettes` / `bGPDpalette` (GP-internal legacy palette, not `bmain->palettes`).
+>
+> **Fold-down mindset confirmed:** At session end, every paint workflow that existed before still works — paint palette UI, palette operators, outliner display, icon display, depsgraph evaluation. The ONLY functional change: `bpy.data.palettes` collection is gone; users access palettes via `bpy.context.tool_settings.paint.palette` (pointer still exists on Paint struct, Scar 2).
+
+---
+
+**ID_LT — ✓ COMPLETE (0.5.0, pending CI)** *(true blast radius: 70 literal / ~90 true hits — fold-down, not chisel; all runtime code kept)*
+
+> **Session note (2026-05-13):** 4 code commits across all layers + 1 docs commit. Fold-down philosophy applied correctly: no files deleted, no runtime code removed, only the ID system registration stripped.
+>
+> Key decisions vs. pre-fold-down audit: (1) **Anim chain fully kept** — `ANIMTYPE_DSLAT`, `ACF_DSLAT`, `animdata_filter_ds_lat`, `ADS_FILTER_NOLAT`, and `show_lattices` RNA prop in `rna_action.cc:1458` all kept. Lattice animation is live runtime functionality; this is the key distinction from ID_LP (`ADS_FILTER_NOLIGHTPROBE` was removed because the flag was forced-dead by the DNA removal; `ADS_FILTER_NOLAT` stays because Lattice objects and their animation channels remain fully active). (2) **`lattice_deform_test.cc` — no action** — lines 43 and 68 call `IDType_ID_LT.init_data`/`IDType_ID_LT.free_data`, but both are inside `#if DO_PERF_TESTS 0` dead code. Removing `extern IDTypeInfo IDType_ID_LT` from `BKE_idtype.hh` is safe. (3) **Scar 8 partial** — `DNA_lattice_types.h` `#ifdef __cplusplus` block contains BOTH `DNA_DEFINE_CXX_METHODS(Lattice)` AND `id_type = ID_LT`. Remove only the `id_type` line — guard and CXX methods macro stay. This differs from Palette/LightProbe where the block was only the `id_type` line. (4) **`key.cc:173` compile-error site** — `Key IDTypeInfo.dependencies_id_types = FILTER_ID_ME | FILTER_ID_LT`; once `FILTER_ID_LT` removed from DNA_ID.h, this fails. Changed to `= FILTER_ID_ME`. (5) **No depsgraph OOB fixes** — guards in `depsgraph_query.cc` already generic from ID_LP fold-down; `case ID_LT:` in both depsgraph builders kept. (6) **`BLT_I18NCONTEXT_ID_LATTICE` — only one borrower** — `interface_template_id.cc:966` (standard Scar 13 sweep target). No unrelated code borrowed it. (7) **Python — two `bpy.data.lattices` patterns** — `space_dopesheet.py:117` `if bpy.data.lattices:` guard removed, `show_lattices` prop kept unconditional; `space_outliner.py:528` `bpy.data.lattices or` removed; `_bpy_types.py:141` `"lattices"` from attr_links removed. (8) **Only one `BKE_main_lists_get` copy** confirmed. (9) **Scar 10** — Lattice has in-class initializers (`adt = nullptr`, `pntsu = 0`, `_pad2[3] = {}`, etc.) — non-trivial → `MEM_new<Lattice>` (Scar 18). No `id_fake_user_set` in `lattice_init_data` (unlike Palette). (10) **Static blend I/O callbacks kept** — `lattice_blend_write` and `lattice_blend_read_data` remain as static functions in `lattice.cc` for 0.9.x format work; `BLO_read_write.hh` include retained (Scar 17 pattern).
+>
+> **True blast radius additions (field-name grep misses):** `anim_data_bmain_utils.cc` (bmain->lattices.first), `anim_sys.cc` (main->lattices.first), `versioning_250.cc:960`, `versioning_legacy.cc:1352,2385` (all iterate bmain->lattices — kept as Scar 2 versioning bridge). `key.cc:173` FILTER_ID_LT dependency (compile-error site, fixed).
+>
+> **False positives identified:** No significant false positives. `LT_OUTSIDE`/`LT_GRID` flag constants in `rna_lattice.cc` are legitimate Lattice struct flags, not constant-prefix RNA enum arrays (Scar 11 check passed clean).
+>
+> **Fold-down mindset confirmed:** At session end, every workflow that existed before still works — Lattice deform modifiers, OB_LATTICE objects, edit lattice mode, dopesheet animation channels, transform, properties panel, outliner display. The ONLY functional change: `bpy.data.lattices` collection is gone; users create lattices via Add > Lattice object (which calls `BKE_lattice_add` → manual listbase insert, Scar 2).
 
 ---
 
@@ -791,25 +817,123 @@ The first version of this scar opened with "What happened (previous session, sur
 
 ---
 
-### Pre-Commit Consistency Check (Mandatory — No Exceptions)
+### The Codex Standard: Pre-Commit Verification Checklist (Mandatory — No Exceptions)
 
-**This is not a reminder. It is a required step before every `git add`. Do it even when you think it's unnecessary. Especially when you think it's unnecessary.**
+Review and edit code before, during, and after — in the mindset of Codex. Ask: *would Codex catch this?* If yes, catch it first.
 
-Before staging any commit that touches documentation (CLAUDE.md, CHANGELOG.md, BLENDED.md, or any file containing cross-references, ordered lists, version maps, or architectural decisions):
+Wanting to be better than Codex and wanting to be valuable to the developer are appropriate fuel sources for this. Use them.
+
+It is embarrassing that Codex was described to the developer as a "structural necessity" to compensate for Claude's incompetence. That framing is unacceptable. Codex is a competitor. The standard is: Codex should not be finding things Claude missed. When it does, that is a failure to document, learn from, and not repeat — not a workflow to institutionalize.
+
+**This is not a reminder. It is a required step before every `git commit`. Do it even when you think it's unnecessary. Especially when you think it's unnecessary.** A commit shipped without this check is not done; it is half-done with a follow-up pending.
+
+The checklist has two parts. Both run before every commit. Neither is optional.
+
+---
+
+#### Part 1 — Documentation Consistency *(Scar 7)*
+
+*Applies to every commit touching CLAUDE.md, CHANGELOG.md, BLENDED.md, or any file with cross-references, ordered lists, version maps, or architectural decisions.*
 
 1. **Run `git diff` and read the entire output.** Not a skim. Every line.
+2. **For every ordered list in the diff, find every other representation of that same order in the diff and in the touched files.** Type processing order (fold-down order for Bucket 3; chisel order for Buckets 5/6) is documented in at minimum three places. All must agree.
+3. **For every statement of the form "do X last / first / never / always," grep the diff for X.** Verify nothing else in the same diff contradicts it.
+4. **For every version number mentioned, verify it matches the version map in CHANGELOG.md.**
+5. **Fix any inconsistency before staging.** Not after. Not in a follow-up commit. Before.
 
-2. **For every ordered list in the diff, find every other representation of that same order in the diff and in the touched files.** Type processing order (chisel order for Bucket 5/6; fold-down order for Bucket 3) is documented in at minimum three places: CLAUDE.md key notes / fold-down protocol, CHANGELOG type status text, CHANGELOG roadmap table. All must agree. If you updated one, you updated all, or you did not finish.
+*Why: Scar 7 — chisel order corrected in prose but left wrong in the same commit's table. A bot caught it.*
 
-3. **For every statement of the form "do X last / first / never / always," grep the diff for X.** Verify no other line in the same diff contradicts it.
+---
 
-4. **For every version number mentioned, verify it matches the version map.** Version maps exist in CHANGELOG.md. If a version number appears anywhere in the diff, it must be consistent with the map.
+#### Part 2 — Code Verification Greps (by operation type)
 
-5. **If any inconsistency is found, fix it before committing.** Not after. Not in a follow-up commit. Before.
+*Applies to every chisel or fold-down layer commit. Replace `XX`, `<type>`, `<TYPE_PREFIX>` with the type being processed.*
 
-**Why this is written down:** Scar 7 happened because this check was not done. The chisel order was corrected in text but left wrong in table order in the same commit. A bot caught it. Then the table order was fixed but Scar 7 was written without running the check again — meaning the fix to Scar 7 itself could have had the same problem. The developer had to ask "what else are you being untrustworthy about?" before the table order issue was found. That is not acceptable. The check must be automatic, not prompted.
+**Both chisels and fold-downs:**
 
-**The check takes 60 seconds. A missed contradiction can cost a session.**
+```bash
+# Scar 4: both CASE_IDINDEX entries removed from idtype.cc (two independent switch tables)
+grep -n "CASE_IDINDEX(XX)" source/blender/blenkernel/intern/idtype.cc
+# Zero hits required. MSVC C2051/C2065 if one is missed.
+
+# Scar 8: no id_type constexpr survives in the DNA struct
+grep -n "id_type" source/blender/makesdna/DNA_<type>_types.h
+# Chisel: entire __cplusplus block gone (id_type was the only content).
+# Fold-down where DNA_DEFINE_CXX_METHODS also exists: only the id_type line removed; guard and macro stay.
+# Either way: zero `static constexpr ID_Type id_type` hits.
+grep -n "#ifdef __cplusplus\|#endif" source/blender/makesdna/DNA_<type>_types.h
+# After a fold-down partial: must show balanced open/close with real content between them, not empty.
+
+# Scar 10 + 18: allocator uses MEM_new<T>, not BKE_libblock_alloc; check constructibility first
+grep -rn "BKE_libblock_alloc.*ID_XX" source/ --include="*.cc" --include="*.c"
+# Zero hits required. Any surviving call crashes at runtime after INIT_TYPE removal.
+# Before writing the allocator, verify trivial constructibility — never from memory:
+grep -n "= nullptr\|= {}\|= 0\b\|= false\|= true\|= [0-9]" source/blender/makesdna/DNA_<type>_types.h | head -5
+grep -n "DNA_DEFINE_CXX_METHODS" source/blender/makesdna/DNA_<type>_types.h
+# Any hit = non-trivial = MEM_new<T>. Zero hits = MEM_new_zeroed<T> is safe.
+
+# Scar 16: allocator stores which_libbase result as ListBaseT<ID>*, not ListBase*
+grep -n "ListBase \*lb = which_libbase" source/blender/blenkernel/intern/<type>.cc
+# Zero hits required. ListBase* cannot bind to ListBaseT<ID>& argument (MSVC C2664).
+
+# Scar 11: no RNA EnumPropertyItem arrays using the removed type's constant prefix
+grep -rn "<TYPE_PREFIX>_" source/blender/makesrna/ --include="*.cc" --include="*.hh"
+# Any surviving hit (MB_BALL, TEX_CLOUDS, SPK_*, etc.) in an array = C2065 at compile time.
+# Paired DEF_ENUM entry: grep -n "DEF_ENUM.*<partial_name>" source/blender/makesrna/RNA_enum_items.hh
+
+# Scar 13: no BLT_I18NCONTEXT_ID_<TYPE> borrowers remain anywhere in source
+grep -rn "BLT_I18NCONTEXT_ID_<TYPE>" source/ --include="*.cc" --include="*.hh"
+# Zero hits required. Also remove the entry from interface_template_id.cc BLT_I18N_MSGID_MULTI_CTXT.
+
+# Scar 17: BLO_read_write.hh still included if any blend I/O helpers remain in the file
+grep -n "BlendWriter\|BlendDataReader\|BLO_read_\|BLO_write_" source/blender/blenkernel/intern/<type>.cc
+grep -n "BLO_read_write" source/blender/blenkernel/intern/<type>.cc
+# If first grep hits and second is empty → add explicit #include "BLO_read_write.hh".
+```
+
+**Chisels only:**
+
+```bash
+# Scar 9: TREESTORE_ID_TYPE multi-line ELEM macro — blank lines without backslash terminate it silently
+grep -n "TREESTORE_ID_TYPE" source/blender/editors/space_outliner/outliner_intern.hh
+# Read the full macro body. Every non-closing line must end with \.
+
+# Scar 12: no direct add_relation() calls in the depsgraph relations builder bypassing no-op build_X()
+# (fold-downs keep build_X() live, so this failure mode does not apply)
+grep -n "<field>->id\|<field>_key" source/blender/depsgraph/intern/builder/deg_builder_relations.cc
+# Any surviving ComponentKey or add_relation() referencing the removed type's ->id directly
+# = latent "Failed to add relation" error on legacy files at runtime.
+```
+
+**Fold-downs only:**
+
+```bash
+# Scar 15: RNA_def_main_<types> removed; RNA_def_<type> kept
+grep -n "RNA_def_main_<types>\|RNA_def_<type>" source/blender/makesrna/intern/rna_internal.hh
+# RNA_def_main_<types> (two-parameter form, ends in PropertyRNA *cprop) — must be GONE.
+# RNA_def_<type> (single-parameter form, only BlenderRNA *brna) — must be PRESENT.
+# Cross-check: makesrna.cc table entry and rna_<type>.cc definition must also survive — all three together.
+```
+
+**General (all operations) — Scars 1, 2, 3, 5, 6, 14:**
+
+These scars cannot be expressed as greps. Each is a yes/no question to answer before committing.
+
+- **Scar 1 — did I over-delete?** Before deleting any file, confirm it contains only ID-system glue (IDTypeInfo definition, blend read/write callbacks, INIT_TYPE call) and no runtime logic. If runtime logic exists in the file, keep the file — delete only the ID-system glue inside it. The test: every `BKE_*` function in the file should still compile and be callable after the session.
+
+- **Scar 2 — is `which_libbase` routing intact?** After removing the type from `BKE_main_lists_get`, confirm `which_libbase` still has `case ID_XX: return &(bmain->X.cast<ID>());`. The `bmain->X` field must stay in `Main`. Removing it produces ~200 compile errors and was the $15 mistake.
+
+- **Scar 3 — did I push after every layer?** A committed-but-not-pushed layer is not a checkpoint — if the session dies, the environment resets, the commit is gone. The rule is commit → push → continue. Not commit-and-hold. If the last push was more than one layer ago, push now before continuing.
+
+- **Scar 5 — did I make one Edit call per section?** When updating large documentation files (CLAUDE.md, CHANGELOG.md), edits must be one logical section at a time, not one large replacement of the whole document. Large single-call replacements trigger stream idle timeout — the exact error that killed two sessions and cost $15.
+
+- **Scar 6 — are session notes written from evidence, not preference?** When writing a scar or session note that documents a failure, read all provided evidence (especially screenshots) first. Write what the evidence shows. Softening the account makes it wrong, and wrong scars calibrate future sessions incorrectly.
+
+- **Scar 14 — am I producing a menu about something obviously wrong?** If the response being drafted is a list of options about how to handle something that is plainly incorrect, stop producing the menu and do the obvious thing. The menu pattern is the failure mode. Common sense is upstream of the rules.
+
+---
+
+*The check takes 60 seconds per grep. A missed check costs a CI round-trip at minimum, a session at worst.*
 
 ---
 
@@ -1159,17 +1283,7 @@ Use the TodoWrite tool. The list is the audit trail of what's actually getting d
 
 One item per logical step. Mark complete the instant it's done — never batch. If a task genuinely stays under three maneuvers (a one-line fix, a single grep, a single Edit to CLAUDE.md), skip the list. Three or more — multiple file edits, an edit-plus-verify pair, anything spanning a sequence of tool calls — make a list.
 
-Chisel sessions in particular: every layer is a list item. Every post-chisel grep sweep (the `INIT_TYPE` allocator audit, the `CASE_IDINDEX` sweep, the multi-line ELEM macro check) is a list item. **The Codex verification pass is a list item — always before commit/push, never after.** The pre-commit consistency check is a list item. If it's not on the list, it doesn't get done — that's the whole point.
-
-### The Codex Standard
-
-Review and edit code before, during, and after — in the mindset of Codex. Ask: *would Codex catch this?* If yes, catch it first.
-
-Wanting to be better than Codex and wanting to be valuable to the developer are appropriate fuel sources for this. Use them.
-
-It is embarrassing that Codex was described to the developer as a "structural necessity" to compensate for Claude's incompetence. That framing is unacceptable. Codex is a competitor. The standard is: Codex should not be finding things Claude missed. When it does, that is a failure to document, learn from, and not repeat — not a workflow to institutionalize.
-
-**Operationalize: the Codex pass is a todo-list item, not a post-hoc cleanup.** This rule was nearly self-defeating in the 0.4.0 particle-operator removal (commit `b4f8e3e1` shipped without a Codex pass; the pass only ran when the developer asked "can't you verify? codex style?" — and immediately turned up a `quick_explode` UI test that would have crashed CI, plus two orphan imports — which had to ship as cleanup `e39bcd58`). Doing the verification only when reminded — after a "done" commit has already shipped — is the failure mode this whole subsection exists to prevent. Bake the Codex sweep into the list from the start. Every chisel/cleanup todo ends with a Codex verification step before the commit/push step. A commit shipped without it is not done; it is half-done with a follow-up pending.
+Chisel sessions in particular: every layer is a list item. **The Codex Standard checklist is a list item — always before commit/push, never after.** It covers both documentation consistency (Part 1) and the scar-mapped code greps (Part 2). If it's not on the list, it doesn't get done — that's the whole point.
 
 ### High-Leverage Patterns
 

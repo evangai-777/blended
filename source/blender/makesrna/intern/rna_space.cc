@@ -3939,12 +3939,12 @@ static IDFilterEnumPropertyItem rna_enum_space_file_id_filter_categories[] = {
      ICON_GROUP,
      "Objects & Collections",
      "Show objects and collections"},
-    {FILTER_ID_AR | FILTER_ID_LT | FILTER_ID_ME |
+    {FILTER_ID_AR | FILTER_ID_ME |
          FILTER_ID_CV | FILTER_ID_PT | FILTER_ID_VO,
      "category_geometry",
      ICON_GEOMETRY_NODES,
      "Geometry",
-     "Show meshes, curves, lattice and armatures data"},
+     "Show meshes, curves, and armatures data"},
     {FILTER_ID_MA | FILTER_ID_NT,
      "category_shading",
      ICON_MATERIAL_DATA,
@@ -3960,8 +3960,7 @@ static IDFilterEnumPropertyItem rna_enum_space_file_id_filter_categories[] = {
      ICON_WORLD_DATA,
      "Environment",
      "Show worlds, lights and cameras"},
-    {FILTER_ID_BR | FILTER_ID_PAL |
-         FILTER_ID_TXT | FILTER_ID_VF,
+    {FILTER_ID_BR | FILTER_ID_TXT | FILTER_ID_VF,
      "category_misc",
      ICON_GREASEPENCIL,
      "Miscellaneous",

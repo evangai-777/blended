@@ -146,12 +146,10 @@ void BKE_main_clear(Main &bmain)
         CASE_ID_INDEX(INDEX_ID_CV);
         CASE_ID_INDEX(INDEX_ID_PT);
         CASE_ID_INDEX(INDEX_ID_VO);
-        CASE_ID_INDEX(INDEX_ID_LT);
         CASE_ID_INDEX(INDEX_ID_LA);
         CASE_ID_INDEX(INDEX_ID_CA);
         CASE_ID_INDEX(INDEX_ID_OB);
         CASE_ID_INDEX(INDEX_ID_GR);
-        CASE_ID_INDEX(INDEX_ID_PAL);
         CASE_ID_INDEX(INDEX_ID_BR);
         CASE_ID_INDEX(INDEX_ID_SCE);
         case INDEX_ID_NULL: {
@@ -1057,9 +1055,6 @@ MainListsArray BKE_main_lists_get(Main &bmain)
 
   lb[INDEX_ID_KE] = &(bmain.shapekeys.cast<ID>());
 
-  /* Referenced by gpencil, so needs to be before that to avoid crashes. */
-  lb[INDEX_ID_PAL] = &(bmain.palettes.cast<ID>());
-
   lb[INDEX_ID_GP] = &(bmain.grease_pencils.cast<ID>());
 
   lb[INDEX_ID_NT] = &(bmain.nodetrees.cast<ID>());
@@ -1077,14 +1072,12 @@ MainListsArray BKE_main_lists_get(Main &bmain)
   lb[INDEX_ID_PT] = &(bmain.pointclouds.cast<ID>());
   lb[INDEX_ID_VO] = &(bmain.volumes.cast<ID>());
 
-  lb[INDEX_ID_LT] = &(bmain.lattices.cast<ID>());
   lb[INDEX_ID_LA] = &(bmain.lights.cast<ID>());
   lb[INDEX_ID_CA] = &(bmain.cameras.cast<ID>());
 
   lb[INDEX_ID_TXT] = &(bmain.texts.cast<ID>());
   lb[INDEX_ID_SO] = &(bmain.sounds.cast<ID>());
   lb[INDEX_ID_GR] = &(bmain.collections.cast<ID>());
-  lb[INDEX_ID_PAL] = &(bmain.palettes.cast<ID>());
   lb[INDEX_ID_BR] = &(bmain.brushes.cast<ID>());
 
   lb[INDEX_ID_WO] = &(bmain.worlds.cast<ID>());
@@ -1093,6 +1086,13 @@ MainListsArray BKE_main_lists_get(Main &bmain)
 
   lb[INDEX_ID_SCE] = &(bmain.scenes.cast<ID>());
   lb[INDEX_ID_MSK] = &(bmain.masks.cast<ID>());
+
+  /* Intentionally excluded — Blended 0.5.0 Bucket 3 fold-downs (Scar 2):
+   * bmain.lattices and bmain.palettes are kept as non-indexed runtime listbases
+   * so that which_libbase() routing and blenloader versioning paths remain intact.
+   * They are NOT registered ID types (INIT_TYPE removed) and are NOT freed by
+   * BKE_main_free — this is the known Category C deferred memory leak, accepted
+   * until a post-read drain pass is added in a future version. */
 
   return lb;
 }

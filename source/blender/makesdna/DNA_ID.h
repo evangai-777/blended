@@ -1162,14 +1162,12 @@ enum IDRecalcFlag {
 #define FILTER_ID_IM (1ULL << 7)
 #define FILTER_ID_LA (1ULL << 8)
 
-#define FILTER_ID_LT (1ULL << 10)
 #define FILTER_ID_MA (1ULL << 11)
 #define FILTER_ID_MC (1ULL << 13)
 #define FILTER_ID_ME (1ULL << 14)
 #define FILTER_ID_MSK (1ULL << 15)
 #define FILTER_ID_NT (1ULL << 16)
 #define FILTER_ID_OB (1ULL << 17)
-#define FILTER_ID_PAL (1ULL << 18)
 #define FILTER_ID_SCE (1ULL << 20)
 #define FILTER_ID_SO (1ULL << 22)
 
@@ -1188,8 +1186,8 @@ enum IDRecalcFlag {
 #define FILTER_ID_ALL \
   (FILTER_ID_AC | FILTER_ID_AR | FILTER_ID_BR | FILTER_ID_CA | \
    FILTER_ID_GR | FILTER_ID_IM | FILTER_ID_LA | \
-   FILTER_ID_LT | FILTER_ID_MA | FILTER_ID_MC | FILTER_ID_ME | FILTER_ID_MSK | \
-   FILTER_ID_NT | FILTER_ID_OB | FILTER_ID_PAL | FILTER_ID_SCE | \
+   FILTER_ID_MA | FILTER_ID_MC | FILTER_ID_ME | FILTER_ID_MSK | \
+   FILTER_ID_NT | FILTER_ID_OB | FILTER_ID_SCE | \
    FILTER_ID_SO | FILTER_ID_TXT | FILTER_ID_VF | FILTER_ID_WO | \
    FILTER_ID_CV | FILTER_ID_PT | FILTER_ID_VO | \
    FILTER_ID_SIM | FILTER_ID_KE | FILTER_ID_LI | FILTER_ID_GP | \
@@ -1264,7 +1262,6 @@ enum eID_Index {
   INDEX_ID_CV,
   INDEX_ID_PT,
   INDEX_ID_VO,
-  INDEX_ID_LT,
   INDEX_ID_LA,
   INDEX_ID_CA,
   INDEX_ID_GP,
@@ -1275,7 +1272,6 @@ enum eID_Index {
 
   /* Preset-like, not-really-data types, can use many other ID types but should never be used by
    * any actual data type (besides Scene, due to tool settings). */
-  INDEX_ID_PAL,
   INDEX_ID_BR,
 
   /* Scene, after preset-like ID types because of tool settings. */

@@ -170,7 +170,7 @@ IDTypeInfo IDType_ID_KE = {
     .id_code = Key::id_type,
     .id_filter = FILTER_ID_KE,
     /* Warning! key->from, could be more types in future? */
-    .dependencies_id_types = FILTER_ID_ME | FILTER_ID_LT,
+    .dependencies_id_types = FILTER_ID_ME,
     .main_listbase_index = INDEX_ID_KE,
     .struct_size = sizeof(Key),
     .name = "Key",

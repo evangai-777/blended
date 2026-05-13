@@ -40,7 +40,6 @@ const EnumPropertyItem rna_enum_id_type_items[] = {
     {ID_GP, "GREASEPENCIL_V3", ICON_GREASEPENCIL, "Grease Pencil v3", ""},
     {ID_IM, "IMAGE", ICON_IMAGE_DATA, "Image", ""},
     {ID_KE, "KEY", ICON_SHAPEKEY_DATA, "Key", ""},
-    {ID_LT, "LATTICE", ICON_LATTICE_DATA, "Lattice", ""},
     {ID_LI, "LIBRARY", ICON_LIBRARY_DATA_DIRECT, "Library", ""},
     {ID_LA, "LIGHT", ICON_LIGHT_DATA, "Light", ""},
     {ID_MSK, "MASK", ICON_MOD_MASK, "Mask", ""},
@@ -49,7 +48,6 @@ const EnumPropertyItem rna_enum_id_type_items[] = {
     {ID_MC, "MOVIECLIP", ICON_TRACKER, "Movie Clip", ""},
     {ID_NT, "NODETREE", ICON_NODETREE, "Node Tree", ""},
     {ID_OB, "OBJECT", ICON_OBJECT_DATA, "Object", ""},
-    {ID_PAL, "PALETTE", ICON_COLOR, "Palette", ""},
     {ID_PT, "POINTCLOUD", ICON_POINTCLOUD_DATA, "Point Cloud", ""},
     {ID_SCE, "SCENE", ICON_SCENE_DATA, "Scene", ""},
     {ID_SO, "SOUND", ICON_SOUND, "Sound", ""},
@@ -126,7 +124,6 @@ const IDFilterEnumPropertyItem rna_enum_id_type_filter_items[] = {
      "Show/hide Curves data-blocks"},
     {FILTER_ID_IM, "filter_image", ICON_IMAGE_DATA, "Images", "Show Image data-blocks"},
     {FILTER_ID_LA, "filter_light", ICON_LIGHT_DATA, "Lights", "Show Light data-blocks"},
-    {FILTER_ID_LT, "filter_lattice", ICON_LATTICE_DATA, "Lattices", "Show Lattice data-blocks"},
     {FILTER_ID_MA,
      "filter_material",
      ICON_MATERIAL_DATA,
@@ -141,7 +138,6 @@ const IDFilterEnumPropertyItem rna_enum_id_type_filter_items[] = {
     {FILTER_ID_MSK, "filter_mask", ICON_MOD_MASK, "Masks", "Show Mask data-blocks"},
     {FILTER_ID_NT, "filter_node_tree", ICON_NODETREE, "Node Trees", "Show Node Tree data-blocks"},
     {FILTER_ID_OB, "filter_object", ICON_OBJECT_DATA, "Objects", "Show Object data-blocks"},
-    {FILTER_ID_PAL, "filter_palette", ICON_COLOR, "Palettes", "Show Palette data-blocks"},
     {FILTER_ID_PT,
      "filter_pointcloud",
      ICON_POINTCLOUD_DATA,
@@ -368,9 +364,6 @@ short RNA_type_to_ID_code(const StructRNA *type)
   if (base_type == RNA_Curves) {
     return ID_CV;
   }
-  if (base_type == RNA_Lattice) {
-    return ID_LT;
-  }
   if (base_type == RNA_Material) {
     return ID_MA;
   }
@@ -388,9 +381,6 @@ short RNA_type_to_ID_code(const StructRNA *type)
   }
   if (base_type == RNA_Object) {
     return ID_OB;
-  }
-  if (base_type == RNA_Palette) {
-    return ID_PAL;
   }
   if (base_type == RNA_PointCloud) {
     return ID_PT;
@@ -447,8 +437,6 @@ StructRNA *ID_code_to_RNA_type(short idcode)
     case ID_LI:
       return RNA_Library;
 
-    case ID_LT:
-      return RNA_Lattice;
     case ID_MA:
       return RNA_Material;
     case ID_MC:
@@ -461,8 +449,6 @@ StructRNA *ID_code_to_RNA_type(short idcode)
       return RNA_NodeTree;
     case ID_OB:
       return RNA_Object;
-    case ID_PAL:
-      return RNA_Palette;
     case ID_PT:
       return RNA_PointCloud;
     case ID_SCE:

@@ -151,37 +151,6 @@ static void palette_undo_preserve(BlendLibReader * /*reader*/, ID *id_new, ID *i
   std::swap(id_new->system_properties, id_old->system_properties);
 }
 
-IDTypeInfo IDType_ID_PAL = {
-    .id_code = Palette::id_type,
-    .id_filter = FILTER_ID_PAL,
-    .dependencies_id_types = 0,
-    .main_listbase_index = INDEX_ID_PAL,
-    .struct_size = sizeof(Palette),
-    .name = "Palette",
-    .name_plural = N_("palettes"),
-    .translation_context = BLT_I18NCONTEXT_ID_PALETTE,
-    .flags = IDTYPE_FLAGS_NO_ANIMDATA,
-    .asset_type_info = nullptr,
-
-    .init_data = palette_init_data,
-    .copy_data = palette_copy_data,
-    .free_data = palette_free_data,
-    .make_local = nullptr,
-    .foreach_id = nullptr,
-    .foreach_cache = nullptr,
-    .foreach_path = nullptr,
-    .foreach_working_space_color = palette_foreach_working_space_color,
-    .owner_pointer_get = nullptr,
-
-    .blend_write = palette_blend_write,
-    .blend_read_data = palette_blend_read_data,
-    .blend_read_after_liblink = nullptr,
-
-    .blend_read_undo_preserve = palette_undo_preserve,
-
-    .lib_override_apply_post = nullptr,
-};
-
 
 static ePaintOverlayControlFlags overlay_flags = ePaintOverlayControlFlags(0);
 
@@ -1251,7 +1220,21 @@ void BKE_palette_color_sync_legacy(PaletteColor *color)
 
 Palette *BKE_palette_add(Main *bmain, const char *name)
 {
-  Palette *palette = BKE_id_new<Palette>(bmain, name);
+  Palette *palette = MEM_new<Palette>("Palette");
+  BKE_libblock_runtime_ensure(palette->id);
+  *(reinterpret_cast<short *>(palette->id.name)) = ID_PAL;
+  palette->id.us = 1;
+  {
+    ListBaseT<ID> *lb = which_libbase(bmain, ID_PAL);
+    BKE_main_lock(bmain);
+    BLI_addtail(lb, palette);
+    BKE_id_new_name_validate(
+        *bmain, *lb, palette->id, name, IDNewNameMode::RenameExistingNever, true);
+    bmain->is_memfile_undo_written = false;
+    BKE_main_unlock(bmain);
+  }
+  BKE_lib_libblock_session_uid_ensure(&palette->id);
+  id_fake_user_set(&palette->id);
   return palette;
 }
 
