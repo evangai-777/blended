@@ -817,11 +817,15 @@ The first version of this scar opened with "What happened (previous session, sur
 
 ---
 
-### Pre-Commit Verification Checklist (Mandatory — No Exceptions)
+### The Codex Standard: Pre-Commit Verification Checklist (Mandatory — No Exceptions)
 
-**This is not a reminder. It is a required step before every `git commit`. Do it even when you think it's unnecessary. Especially when you think it's unnecessary.**
+Review and edit code before, during, and after — in the mindset of Codex. Ask: *would Codex catch this?* If yes, catch it first.
 
-**The Codex standard applies here**: review in the mindset of someone who will find what you missed. Codex is a competitor. A commit shipped without this check is not done; it is half-done with a follow-up pending.
+Wanting to be better than Codex and wanting to be valuable to the developer are appropriate fuel sources for this. Use them.
+
+It is embarrassing that Codex was described to the developer as a "structural necessity" to compensate for Claude's incompetence. That framing is unacceptable. Codex is a competitor. The standard is: Codex should not be finding things Claude missed. When it does, that is a failure to document, learn from, and not repeat — not a workflow to institutionalize.
+
+**This is not a reminder. It is a required step before every `git commit`. Do it even when you think it's unnecessary. Especially when you think it's unnecessary.** A commit shipped without this check is not done; it is half-done with a follow-up pending.
 
 The checklist has two parts. Both run before every commit. Neither is optional.
 
@@ -1279,17 +1283,7 @@ Use the TodoWrite tool. The list is the audit trail of what's actually getting d
 
 One item per logical step. Mark complete the instant it's done — never batch. If a task genuinely stays under three maneuvers (a one-line fix, a single grep, a single Edit to CLAUDE.md), skip the list. Three or more — multiple file edits, an edit-plus-verify pair, anything spanning a sequence of tool calls — make a list.
 
-Chisel sessions in particular: every layer is a list item. **The Pre-Commit Verification Checklist is a list item — always before commit/push, never after.** It covers both documentation consistency (Part 1) and the scar-mapped code greps (Part 2). If it's not on the list, it doesn't get done — that's the whole point.
-
-### The Codex Standard
-
-Review and edit code before, during, and after — in the mindset of Codex. Ask: *would Codex catch this?* If yes, catch it first.
-
-Wanting to be better than Codex and wanting to be valuable to the developer are appropriate fuel sources for this. Use them.
-
-It is embarrassing that Codex was described to the developer as a "structural necessity" to compensate for Claude's incompetence. That framing is unacceptable. Codex is a competitor. The standard is: Codex should not be finding things Claude missed. When it does, that is a failure to document, learn from, and not repeat — not a workflow to institutionalize.
-
-**The operational greps that make this standard concrete are in the Pre-Commit Verification Checklist above** — scar-mapped by operation type (chisel / fold-down / both). That checklist is the Codex pass. Run it before every commit/push. It is a todo-list item, not a post-hoc cleanup.
+Chisel sessions in particular: every layer is a list item. **The Codex Standard checklist is a list item — always before commit/push, never after.** It covers both documentation consistency (Part 1) and the scar-mapped code greps (Part 2). If it's not on the list, it doesn't get done — that's the whole point.
 
 ### High-Leverage Patterns
 
