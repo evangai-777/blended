@@ -1156,7 +1156,6 @@ enum IDRecalcFlag {
 /* To filter ID types (filter_id). 64 bit to fit all types. */
 #define FILTER_ID_AC (1ULL << 0)
 #define FILTER_ID_AR (1ULL << 1)
-#define FILTER_ID_BR (1ULL << 2)
 #define FILTER_ID_CA (1ULL << 3)
 #define FILTER_ID_GR (1ULL << 6)
 #define FILTER_ID_IM (1ULL << 7)
@@ -1165,14 +1164,12 @@ enum IDRecalcFlag {
 #define FILTER_ID_MA (1ULL << 11)
 #define FILTER_ID_MC (1ULL << 13)
 #define FILTER_ID_ME (1ULL << 14)
-#define FILTER_ID_MSK (1ULL << 15)
 #define FILTER_ID_NT (1ULL << 16)
 #define FILTER_ID_OB (1ULL << 17)
 #define FILTER_ID_SCE (1ULL << 20)
 #define FILTER_ID_SO (1ULL << 22)
 
 #define FILTER_ID_TXT (1ULL << 24)
-#define FILTER_ID_VF (1ULL << 25)
 #define FILTER_ID_WO (1ULL << 26)
 #define FILTER_ID_CV (1ULL << 32)
 #define FILTER_ID_PT (1ULL << 33)
@@ -1184,11 +1181,11 @@ enum IDRecalcFlag {
 #define FILTER_ID_IP (1ULL << 41)
 
 #define FILTER_ID_ALL \
-  (FILTER_ID_AC | FILTER_ID_AR | FILTER_ID_BR | FILTER_ID_CA | \
+  (FILTER_ID_AC | FILTER_ID_AR | FILTER_ID_CA | \
    FILTER_ID_GR | FILTER_ID_IM | FILTER_ID_LA | \
-   FILTER_ID_MA | FILTER_ID_MC | FILTER_ID_ME | FILTER_ID_MSK | \
+   FILTER_ID_MA | FILTER_ID_MC | FILTER_ID_ME | \
    FILTER_ID_NT | FILTER_ID_OB | FILTER_ID_SCE | \
-   FILTER_ID_SO | FILTER_ID_TXT | FILTER_ID_VF | FILTER_ID_WO | \
+   FILTER_ID_SO | FILTER_ID_TXT | FILTER_ID_WO | \
    FILTER_ID_CV | FILTER_ID_PT | FILTER_ID_VO | \
    FILTER_ID_SIM | FILTER_ID_KE | FILTER_ID_LI | FILTER_ID_GP | \
    FILTER_ID_IP)
@@ -1238,13 +1235,11 @@ enum eID_Index {
 
   /* File-wrapper types, those usually 'embed' external files in Blender, with no dependencies to
    * other ID types. */
-  INDEX_ID_VF,
   INDEX_ID_TXT,
   INDEX_ID_SO,
 
   /* Image/movie types, can be used by shading ID types, but also directly by Objects, Scenes, etc.
    */
-  INDEX_ID_MSK,
   INDEX_ID_IM,
   INDEX_ID_MC,
 
@@ -1269,10 +1264,6 @@ enum eID_Index {
   /* Collection and object types. */
   INDEX_ID_OB,
   INDEX_ID_GR,
-
-  /* Preset-like, not-really-data types, can use many other ID types but should never be used by
-   * any actual data type (besides Scene, due to tool settings). */
-  INDEX_ID_BR,
 
   /* Scene, after preset-like ID types because of tool settings. */
   INDEX_ID_SCE,

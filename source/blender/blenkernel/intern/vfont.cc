@@ -164,36 +164,9 @@ static void vfont_blend_read_data(BlendDataReader *reader, ID *id)
   BKE_packedfile_blend_read(reader, &vf->packedfile, vf->filepath);
 }
 
-IDTypeInfo IDType_ID_VF = {
-    .id_code = VFont::id_type,
-    .id_filter = FILTER_ID_VF,
-    .dependencies_id_types = 0,
-    .main_listbase_index = INDEX_ID_VF,
-    .struct_size = sizeof(VFont),
-    .name = "Font",
-    .name_plural = N_("fonts"),
-    .translation_context = BLT_I18NCONTEXT_ID_VFONT,
-    .flags = IDTYPE_FLAGS_NO_ANIMDATA | IDTYPE_FLAGS_APPEND_IS_REUSABLE,
-    .asset_type_info = nullptr,
-
-    .init_data = vfont_init_data,
-    .copy_data = vfont_copy_data,
-    .free_data = vfont_free_data,
-    .make_local = nullptr,
-    .foreach_id = nullptr,
-    .foreach_cache = nullptr,
-    .foreach_path = vfont_foreach_path,
-    .foreach_working_space_color = nullptr,
-    .owner_pointer_get = nullptr,
-
-    .blend_write = vfont_blend_write,
-    .blend_read_data = vfont_blend_read_data,
-    .blend_read_after_liblink = nullptr,
-
-    .blend_read_undo_preserve = nullptr,
-
-    .lib_override_apply_post = nullptr,
-};
+/* IDTypeInfo IDType_ID_VF removed — VFont deregistered in Blended 0.5.0 (fold-down).
+ * Runtime code (BKE_vfont_load, SOCK_FONT, build_vfont, packedFile) kept via Scar 2.
+ * blend I/O callbacks kept as static functions for 0.9.x format work (Scar 17). */
 
 /** \} */
 
@@ -325,9 +298,23 @@ VFont *BKE_vfont_load(Main *bmain, const char *filepath)
 
     vfd = BKE_vfontdata_from_freetypefont(pf);
     if (vfd) {
-      /* If there's a font name, use it for the ID name. */
-      vfont = static_cast<VFont *>(
-          BKE_libblock_alloc(bmain, ID_VF, vfd->name[0] ? vfd->name : filename, 0));
+      /* If there's a font name, use it for the ID name.
+       * BKE_libblock_alloc removed (INIT_TYPE gone) — use manual Scar 10 pattern. */
+      vfont = MEM_new<VFont>("VFont");
+      BKE_libblock_runtime_ensure(vfont->id);
+      *reinterpret_cast<short *>(vfont->id.name) = ID_VF;
+      vfont->id.us = 1;
+      {
+        ListBaseT<ID> *lb = which_libbase(bmain, ID_VF);
+        BKE_main_lock(bmain);
+        BLI_addtail(lb, vfont);
+        const char *name = vfd->name[0] ? vfd->name : filename;
+        BKE_id_new_name_validate(
+            *bmain, *lb, vfont->id, name, IDNewNameMode::RenameExistingNever, true);
+        bmain->is_memfile_undo_written = false;
+        BKE_main_unlock(bmain);
+      }
+      BKE_lib_libblock_session_uid_ensure(&vfont->id);
       vfont->data = vfd;
       STRNCPY(vfont->filepath, filepath);
 

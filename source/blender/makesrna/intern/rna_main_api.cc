@@ -430,47 +430,6 @@ static Image *rna_Main_images_load(Main *bmain,
   return ima;
 }
 
-static VFont *rna_Main_fonts_load(Main *bmain,
-                                  ReportList *reports,
-                                  const char *filepath,
-                                  bool check_existing)
-{
-  VFont *font;
-  errno = 0;
-
-  if (check_existing) {
-    font = BKE_vfont_load_exists(bmain, filepath);
-  }
-  else {
-    font = BKE_vfont_load(bmain, filepath);
-  }
-
-  if (!font) {
-    BKE_reportf(reports,
-                RPT_ERROR,
-                "Cannot read '%s': %s",
-                filepath,
-                errno ? strerror(errno) : RPT_("unsupported font format"));
-  }
-
-  WM_main_add_notifier(NC_ID | NA_ADDED, nullptr);
-
-  return font;
-}
-
-static Brush *rna_Main_brushes_new(Main *bmain, const char *name, int mode)
-{
-  char safe_name[MAX_ID_NAME - 2];
-  rna_idname_validate(name, safe_name);
-
-  Brush *brush = BKE_brush_add(bmain, safe_name, eObjectMode(mode));
-  id_us_min(&brush->id);
-
-  WM_main_add_notifier(NC_ID | NA_ADDED, nullptr);
-
-  return brush;
-}
-
 static void rna_Main_brush_gpencil_data(Main * /*bmain*/, PointerRNA *id_ptr)
 {
   ID *id = static_cast<ID *>(id_ptr->data);
@@ -702,8 +661,6 @@ RNA_MAIN_ID_TAG_FUNCS_DEF(meshes, meshes, ID_ME)
 RNA_MAIN_ID_TAG_FUNCS_DEF(lights, lights, ID_LA)
 RNA_MAIN_ID_TAG_FUNCS_DEF(libraries, libraries, ID_LI)
 RNA_MAIN_ID_TAG_FUNCS_DEF(images, images, ID_IM)
-RNA_MAIN_ID_TAG_FUNCS_DEF(fonts, fonts, ID_VF)
-RNA_MAIN_ID_TAG_FUNCS_DEF(brushes, brushes, ID_BR)
 RNA_MAIN_ID_TAG_FUNCS_DEF(worlds, worlds, ID_WO)
 RNA_MAIN_ID_TAG_FUNCS_DEF(collections, collections, ID_GR)
 // RNA_MAIN_ID_TAG_FUNCS_DEF(shape_keys, key, ID_KE)
@@ -713,7 +670,6 @@ RNA_MAIN_ID_TAG_FUNCS_DEF(armatures, armatures, ID_AR)
 RNA_MAIN_ID_TAG_FUNCS_DEF(actions, actions, ID_AC)
 RNA_MAIN_ID_TAG_FUNCS_DEF(grease_pencils, grease_pencils, ID_GP)
 RNA_MAIN_ID_TAG_FUNCS_DEF(movieclips, movieclips, ID_MC)
-RNA_MAIN_ID_TAG_FUNCS_DEF(masks, masks, ID_MSK)
 
 RNA_MAIN_ID_TAG_FUNCS_DEF(hair_curves, hair_curves, ID_CV)
 RNA_MAIN_ID_TAG_FUNCS_DEF(pointclouds, pointclouds, ID_PT)
@@ -1218,100 +1174,6 @@ void RNA_def_main_images(BlenderRNA *brna, PropertyRNA *cprop)
   RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
 }
 
-void RNA_def_main_fonts(BlenderRNA *brna, PropertyRNA *cprop)
-{
-  StructRNA *srna;
-  FunctionRNA *func;
-  PropertyRNA *parm;
-
-  RNA_def_property_srna(cprop, "BlendDataFonts");
-  srna = RNA_def_struct(brna, "BlendDataFonts", nullptr);
-  RNA_def_struct_sdna(srna, "Main");
-  RNA_def_struct_ui_text(srna, "Main Fonts", "Collection of fonts");
-
-  func = RNA_def_function(srna, "load", "rna_Main_fonts_load");
-  RNA_def_function_flag(func, FUNC_USE_REPORTS);
-  RNA_def_function_ui_description(func, "Load a new font into the main database");
-  parm = RNA_def_string_file_path(
-      func, "filepath", "File Path", 0, "", "path of the font to load");
-  RNA_def_parameter_flags(parm, PROP_PATH_SUPPORTS_BLEND_RELATIVE, PARM_REQUIRED);
-  RNA_def_boolean(func,
-                  "check_existing",
-                  false,
-                  "",
-                  "Using existing data-block if this file is already loaded");
-  /* return type */
-  parm = RNA_def_pointer(func, "vfont", "VectorFont", "", "New font data-block");
-  RNA_def_function_return(func, parm);
-
-  func = RNA_def_function(srna, "remove", "rna_Main_ID_remove");
-  RNA_def_function_flag(func, FUNC_USE_REPORTS);
-  RNA_def_function_ui_description(func, "Remove a font from the current blendfile");
-  parm = RNA_def_pointer(func, "vfont", "VectorFont", "", "Font to remove");
-  RNA_def_parameter_flags(parm, PROP_NEVER_NULL, PARM_REQUIRED | PARM_RNAPTR);
-  RNA_def_parameter_clear_flags(parm, PROP_THICK_WRAP, ParameterFlag(0));
-  RNA_def_boolean(
-      func, "do_unlink", true, "", "Unlink all usages of this font before deleting it");
-  RNA_def_boolean(
-      func, "do_id_user", true, "", "Decrement user counter of all data-blocks used by this font");
-  RNA_def_boolean(
-      func, "do_ui_user", true, "", "Make sure interface does not reference this font");
-
-  func = RNA_def_function(srna, "tag", "rna_Main_fonts_tag");
-  parm = RNA_def_boolean(func, "value", false, "Value", "");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-}
-void RNA_def_main_brushes(BlenderRNA *brna, PropertyRNA *cprop)
-{
-  StructRNA *srna;
-  FunctionRNA *func;
-  PropertyRNA *parm;
-
-  RNA_def_property_srna(cprop, "BlendDataBrushes");
-  srna = RNA_def_struct(brna, "BlendDataBrushes", nullptr);
-  RNA_def_struct_sdna(srna, "Main");
-  RNA_def_struct_ui_text(srna, "Main Brushes", "Collection of brushes");
-
-  func = RNA_def_function(srna, "new", "rna_Main_brushes_new");
-  RNA_def_function_ui_description(func, "Add a new brush to the main database");
-  parm = RNA_def_string(func, "name", "Brush", 0, "", "New name for the data-block");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-  parm = RNA_def_enum(func,
-                      "mode",
-                      rna_enum_object_mode_items,
-                      OB_MODE_TEXTURE_PAINT,
-                      "",
-                      "Paint Mode for the new brush");
-  /* return type */
-  parm = RNA_def_pointer(func, "brush", "Brush", "", "New brush data-block");
-  RNA_def_function_return(func, parm);
-
-  func = RNA_def_function(srna, "remove", "rna_Main_ID_remove");
-  RNA_def_function_flag(func, FUNC_USE_REPORTS);
-  RNA_def_function_ui_description(func, "Remove a brush from the current blendfile");
-  parm = RNA_def_pointer(func, "brush", "Brush", "", "Brush to remove");
-  RNA_def_parameter_flags(parm, PROP_NEVER_NULL, PARM_REQUIRED | PARM_RNAPTR);
-  RNA_def_parameter_clear_flags(parm, PROP_THICK_WRAP, ParameterFlag(0));
-  RNA_def_boolean(
-      func, "do_unlink", true, "", "Unlink all usages of this brush before deleting it");
-  RNA_def_boolean(func,
-                  "do_id_user",
-                  true,
-                  "",
-                  "Decrement user counter of all data-blocks used by this brush");
-  RNA_def_boolean(
-      func, "do_ui_user", true, "", "Make sure interface does not reference this brush");
-
-  func = RNA_def_function(srna, "tag", "rna_Main_brushes_tag");
-  parm = RNA_def_boolean(func, "value", false, "Value", "");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-
-  func = RNA_def_function(srna, "create_gpencil_data", "rna_Main_brush_gpencil_data");
-  RNA_def_function_ui_description(func, "Add Grease Pencil brush settings");
-  parm = RNA_def_pointer(func, "brush", "Brush", "", "Brush");
-  RNA_def_parameter_flags(parm, PROP_NEVER_NULL, PARM_REQUIRED | PARM_RNAPTR);
-}
-
 void RNA_def_main_worlds(BlenderRNA *brna, PropertyRNA *cprop)
 {
   StructRNA *srna;
@@ -1667,46 +1529,6 @@ void RNA_def_main_movieclips(BlenderRNA *brna, PropertyRNA *cprop)
   /* return type */
   parm = RNA_def_pointer(func, "clip", "MovieClip", "", "New movie clip data-block");
   RNA_def_function_return(func, parm);
-}
-
-void RNA_def_main_masks(BlenderRNA *brna, PropertyRNA *cprop)
-{
-  StructRNA *srna;
-  FunctionRNA *func;
-  PropertyRNA *parm;
-
-  RNA_def_property_srna(cprop, "BlendDataMasks");
-  srna = RNA_def_struct(brna, "BlendDataMasks", nullptr);
-  RNA_def_struct_sdna(srna, "Main");
-  RNA_def_struct_ui_text(srna, "Main Masks", "Collection of masks");
-
-  func = RNA_def_function(srna, "tag", "rna_Main_masks_tag");
-  parm = RNA_def_boolean(func, "value", false, "Value", "");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-
-  /* new func */
-  func = RNA_def_function(srna, "new", "rna_Main_mask_new");
-  RNA_def_function_ui_description(func, "Add a new mask with a given name to the main database");
-  parm = RNA_def_string(
-      func, "name", nullptr, MAX_ID_NAME - 2, "Mask", "Name of new mask data-block");
-  RNA_def_parameter_flags(parm, PropertyFlag(0), PARM_REQUIRED);
-  /* return type */
-  parm = RNA_def_pointer(func, "mask", "Mask", "", "New mask data-block");
-  RNA_def_function_return(func, parm);
-
-  /* remove func */
-  func = RNA_def_function(srna, "remove", "rna_Main_ID_remove");
-  RNA_def_function_flag(func, FUNC_USE_REPORTS);
-  RNA_def_function_ui_description(func, "Remove a mask from the current blendfile");
-  parm = RNA_def_pointer(func, "mask", "Mask", "", "Mask to remove");
-  RNA_def_parameter_flags(parm, PROP_NEVER_NULL, PARM_REQUIRED | PARM_RNAPTR);
-  RNA_def_parameter_clear_flags(parm, PROP_THICK_WRAP, ParameterFlag(0));
-  RNA_def_boolean(
-      func, "do_unlink", true, "", "Unlink all usages of this mask before deleting it");
-  RNA_def_boolean(
-      func, "do_id_user", true, "", "Decrement user counter of all data-blocks used by this mask");
-  RNA_def_boolean(
-      func, "do_ui_user", true, "", "Make sure interface does not reference this mask");
 }
 
 void RNA_def_main_hair_curves(BlenderRNA *brna, PropertyRNA *cprop)

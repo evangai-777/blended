@@ -3029,10 +3029,10 @@ class WM_OT_batch_rename(Operator):
             elif data_type == 'BRUSH':
                 data = (
                     (
-                        # Outliner.
+                        # Outliner (only path — bpy.data.brushes removed in Blended 0.5.0).
                         cls._selected_ids_from_outliner_by_type(context, bpy.types.Brush)
                         if ((space_type == 'OUTLINER') and only_selected) else
-                        [id for id in bpy.data.brushes if id.is_editable]
+                        []
                     ),
                     "name",
                     iface_("Brush(es)"),

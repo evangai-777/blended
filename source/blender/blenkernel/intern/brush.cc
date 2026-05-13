@@ -543,36 +543,11 @@ static AssetTypeInfo AssetType_BR = {
     /*on_mark_asset_fn*/ brush_asset_metadata_ensure,
 };
 
-IDTypeInfo IDType_ID_BR = {
-    .id_code = Brush::id_type,
-    .id_filter = FILTER_ID_BR,
-    .dependencies_id_types = (FILTER_ID_IM | FILTER_ID_MA),
-    .main_listbase_index = INDEX_ID_BR,
-    .struct_size = sizeof(Brush),
-    .name = "Brush",
-    .name_plural = N_("brushes"),
-    .translation_context = BLT_I18NCONTEXT_ID_BRUSH,
-    .flags = IDTYPE_FLAGS_NO_ANIMDATA | IDTYPE_FLAGS_NO_MEMFILE_UNDO,
-    .asset_type_info = &AssetType_BR,
-
-    .init_data = brush_init_data,
-    .copy_data = brush_copy_data,
-    .free_data = brush_free_data,
-    .make_local = brush_make_local,
-    .foreach_id = brush_foreach_id,
-    .foreach_cache = nullptr,
-    .foreach_path = nullptr,
-    .foreach_working_space_color = brush_foreach_working_space_color,
-    .owner_pointer_get = nullptr,
-
-    .blend_write = brush_blend_write,
-    .blend_read_data = brush_blend_read_data,
-    .blend_read_after_liblink = brush_blend_read_after_liblink,
-
-    .blend_read_undo_preserve = nullptr,
-
-    .lib_override_apply_post = nullptr,
-};
+/* IDTypeInfo IDType_ID_BR removed — Brush deregistered in Blended 0.5.0 (fold-down).
+ * All runtime code (brush_init_data, brush_copy_data, brush_free_data, brush_make_local,
+ * brush_foreach_id, brush_foreach_working_space_color, brush_blend_write,
+ * brush_blend_read_data, brush_blend_read_after_liblink) kept for runtime use.
+ * bmain->brushes listbase and which_libbase routing kept (Scar 2). */
 
 static RNG *brush_rng;
 
@@ -648,7 +623,21 @@ static void brush_defaults(Brush *brush)
 
 Brush *BKE_brush_add(Main *bmain, const char *name, const eObjectMode ob_mode)
 {
-  Brush *brush = BKE_id_new<Brush>(bmain, name);
+  Brush *brush = MEM_new<Brush>("Brush");
+  BKE_libblock_runtime_ensure(brush->id);
+  *reinterpret_cast<short *>(brush->id.name) = ID_BR;
+  brush->id.us = 1;
+  {
+    ListBaseT<ID> *lb = which_libbase(bmain, ID_BR);
+    BKE_main_lock(bmain);
+    BLI_addtail(lb, brush);
+    BKE_id_new_name_validate(
+        *bmain, *lb, brush->id, name, IDNewNameMode::RenameExistingNever, true);
+    bmain->is_memfile_undo_written = false;
+    BKE_main_unlock(bmain);
+  }
+  BKE_lib_libblock_session_uid_ensure(&brush->id);
+  brush_init_data(&brush->id);
 
   brush->ob_mode = ob_mode;
 

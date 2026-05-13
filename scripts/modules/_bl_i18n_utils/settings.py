@@ -443,12 +443,10 @@ WARN_MSGID_NOT_CAPITALIZED_ALLOWED = {
     "y = (Ax + B)",
     # ID plural names, defined in IDTypeInfo.
     "armatures",
-    "brushes",
     "cache_files",
     "cameras",
     "collections",
     "curves",
-    "fonts",
     "grease_pencils",
     "hair_curves",
     "ipos",

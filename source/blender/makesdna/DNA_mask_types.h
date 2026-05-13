@@ -122,11 +122,6 @@ struct Mask_Runtime {
 };
 
 struct Mask {
-#ifdef __cplusplus
-  /** See #ID_Type comment for why this is here. */
-  static constexpr ID_Type id_type = ID_MSK;
-#endif
-
   ID id;
   struct AnimData *adt = nullptr;
   /** Mask layers. */

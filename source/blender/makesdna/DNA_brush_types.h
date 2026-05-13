@@ -176,8 +176,6 @@ struct BrushCurvesSculptSettings {
 struct Brush {
 #ifdef __cplusplus
   DNA_DEFINE_CXX_METHODS(Brush)
-  /** See #ID_Type comment for why this is here. */
-  static constexpr ID_Type id_type = ID_BR;
 #endif
 
   ID id;

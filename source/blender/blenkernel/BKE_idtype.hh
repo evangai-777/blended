@@ -309,17 +309,14 @@ extern IDTypeInfo IDType_ID_LA;
 extern IDTypeInfo IDType_ID_CA;
 extern IDTypeInfo IDType_ID_KE;
 extern IDTypeInfo IDType_ID_WO;
-extern IDTypeInfo IDType_ID_VF;
 extern IDTypeInfo IDType_ID_TXT;
 extern IDTypeInfo IDType_ID_SO;
 extern IDTypeInfo IDType_ID_GR;
 extern IDTypeInfo IDType_ID_AR;
 extern IDTypeInfo IDType_ID_AC;
 extern IDTypeInfo IDType_ID_NT;
-extern IDTypeInfo IDType_ID_BR;
 
 extern IDTypeInfo IDType_ID_MC;
-extern IDTypeInfo IDType_ID_MSK;
 
 extern IDTypeInfo IDType_ID_CV;
 extern IDTypeInfo IDType_ID_PT;

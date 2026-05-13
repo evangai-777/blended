@@ -184,36 +184,9 @@ static void mask_blend_read_data(BlendDataReader *reader, ID *id)
   mask_runtime_reset(mask);
 }
 
-IDTypeInfo IDType_ID_MSK = {
-    .id_code = Mask::id_type,
-    .id_filter = FILTER_ID_MSK,
-    .dependencies_id_types = FILTER_ID_MC, /* WARNING! mask->parent.id, not typed. */
-    .main_listbase_index = INDEX_ID_MSK,
-    .struct_size = sizeof(Mask),
-    .name = "Mask",
-    .name_plural = N_("masks"),
-    .translation_context = BLT_I18NCONTEXT_ID_MASK,
-    .flags = IDTYPE_FLAGS_APPEND_IS_REUSABLE,
-    .asset_type_info = nullptr,
-
-    .init_data = nullptr,
-    .copy_data = mask_copy_data,
-    .free_data = mask_free_data,
-    .make_local = nullptr,
-    .foreach_id = mask_foreach_id,
-    .foreach_cache = nullptr,
-    .foreach_path = nullptr,
-    .foreach_working_space_color = nullptr,
-    .owner_pointer_get = nullptr,
-
-    .blend_write = mask_blend_write,
-    .blend_read_data = mask_blend_read_data,
-    .blend_read_after_liblink = nullptr,
-
-    .blend_read_undo_preserve = nullptr,
-
-    .lib_override_apply_post = nullptr,
-};
+/* IDTypeInfo IDType_ID_MSK removed — Blended 0.5.0 Bucket 3 fold-down.
+ * Mask is no longer a registered ID type; bmain->masks is kept as a non-indexed
+ * Scar 2 listbase for runtime tool code and blenloader versioning. */
 
 struct MaskClipboard {
   ListBaseT<MaskSpline> splines;
@@ -983,7 +956,22 @@ void BKE_mask_point_select_set_handle(MaskSplinePoint *point,
 /* only mask block itself */
 static Mask *mask_alloc(Main *bmain, const char *name)
 {
-  Mask *mask = static_cast<Mask *>(BKE_libblock_alloc(bmain, ID_MSK, name, 0));
+  /* Scar 10: INIT_TYPE removed — BKE_libblock_alloc would crash (no IDTypeInfo registered).
+   * Allocate manually and insert into the Scar 2 non-indexed listbase. */
+  Mask *mask = MEM_new<Mask>("Mask");
+  BKE_libblock_runtime_ensure(mask->id);
+  *reinterpret_cast<short *>(mask->id.name) = ID_MSK;
+  mask->id.us = 1;
+  {
+    ListBaseT<ID> *lb = which_libbase(bmain, ID_MSK);
+    BKE_main_lock(bmain);
+    BLI_addtail(lb, mask);
+    BKE_id_new_name_validate(
+        *bmain, *lb, mask->id, name, IDNewNameMode::RenameExistingNever, true);
+    bmain->is_memfile_undo_written = false;
+    BKE_main_unlock(bmain);
+  }
+  BKE_lib_libblock_session_uid_ensure(&mask->id);
 
   id_fake_user_set(&mask->id);
 

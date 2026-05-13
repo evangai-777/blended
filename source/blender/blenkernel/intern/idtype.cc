@@ -146,17 +146,14 @@ static void id_type_init()
   INIT_TYPE(ID_CA);
   INIT_TYPE(ID_KE);
   INIT_TYPE(ID_WO);
-  INIT_TYPE(ID_VF);
   INIT_TYPE(ID_TXT);
   INIT_TYPE(ID_SO);
   INIT_TYPE(ID_GR);
   INIT_TYPE(ID_AR);
   INIT_TYPE(ID_AC);
   INIT_TYPE(ID_NT);
-  INIT_TYPE(ID_BR);
 
   INIT_TYPE(ID_MC);
-  INIT_TYPE(ID_MSK);
 
   INIT_TYPE(ID_CV);
   INIT_TYPE(ID_PT);
@@ -320,7 +317,6 @@ int BKE_idtype_idcode_to_index(const short idcode)
   switch (ID_Type(idcode)) {
     CASE_IDINDEX(AC);
     CASE_IDINDEX(AR);
-    CASE_IDINDEX(BR);
     CASE_IDINDEX(CA);
 
     CASE_IDINDEX(GP);
@@ -334,14 +330,12 @@ int BKE_idtype_idcode_to_index(const short idcode)
     CASE_IDINDEX(MA);
     CASE_IDINDEX(MC);
     CASE_IDINDEX(ME);
-    CASE_IDINDEX(MSK);
     CASE_IDINDEX(NT);
     CASE_IDINDEX(OB);
     CASE_IDINDEX(PT);
     CASE_IDINDEX(SCE);
     CASE_IDINDEX(SO);
     CASE_IDINDEX(TXT);
-    CASE_IDINDEX(VF);
     CASE_IDINDEX(VO);
     CASE_IDINDEX(WO);
   }
@@ -365,7 +359,6 @@ int BKE_idtype_idfilter_to_index(const uint64_t id_filter)
   switch (id_filter) {
     CASE_IDINDEX(AC);
     CASE_IDINDEX(AR);
-    CASE_IDINDEX(BR);
     CASE_IDINDEX(CA);
 
     CASE_IDINDEX(GP);
@@ -379,14 +372,12 @@ int BKE_idtype_idfilter_to_index(const uint64_t id_filter)
     CASE_IDINDEX(MA);
     CASE_IDINDEX(MC);
     CASE_IDINDEX(ME);
-    CASE_IDINDEX(MSK);
     CASE_IDINDEX(NT);
     CASE_IDINDEX(OB);
     CASE_IDINDEX(PT);
     CASE_IDINDEX(SCE);
     CASE_IDINDEX(SO);
     CASE_IDINDEX(TXT);
-    CASE_IDINDEX(VF);
     CASE_IDINDEX(VO);
     CASE_IDINDEX(WO);
   }
