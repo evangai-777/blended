@@ -2387,11 +2387,10 @@ static void sequencer_report_duplicates(wmOperator *op, ListBaseT<Strip> *duplic
     sep = ", ";
   }
   if (num_masks) {
-    report += fmt::format("{}{} {}",
-                          sep,
-                          num_masks,
-                          (num_masks > 1) ? RPT_(BKE_idtype_idcode_to_name_plural(ID_MSK)) :
-                                            RPT_(BKE_idtype_idcode_to_name(ID_MSK)));
+    /* "Mask"/"Masks" hardcoded: ID_MSK is deregistered (fold-down), BKE_idtype_idcode_to_name
+     * returns nullptr for unregistered types. */
+    report += fmt::format(
+        "{}{} {}", sep, num_masks, (num_masks > 1) ? RPT_("Masks") : RPT_("Mask"));
     sep = ", ";
   }
 
