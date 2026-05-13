@@ -152,7 +152,6 @@ RNA_MAIN_LISTBASE_FUNCS_DEF(armatures)
 RNA_MAIN_LISTBASE_FUNCS_DEF(brushes)
 RNA_MAIN_LISTBASE_FUNCS_DEF(cameras)
 RNA_MAIN_LISTBASE_FUNCS_DEF(collections)
-RNA_MAIN_LISTBASE_FUNCS_DEF(fonts)
 
 RNA_MAIN_LISTBASE_FUNCS_DEF(grease_pencils)
 RNA_MAIN_LISTBASE_FUNCS_DEF(hair_curves)
@@ -373,12 +372,6 @@ void RNA_def_main(BlenderRNA *brna)
        "Images",
        "Image data-blocks",
        RNA_def_main_images},
-      {"fonts",
-       "VectorFont",
-       "rna_Main_fonts_begin",
-       "Vector Fonts",
-       "Vector font data-blocks",
-       RNA_def_main_fonts},
       {"brushes",
        "Brush",
        "rna_Main_brushes_begin",

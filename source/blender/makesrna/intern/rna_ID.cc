@@ -35,7 +35,6 @@ const EnumPropertyItem rna_enum_id_type_items[] = {
     {ID_CA, "CAMERA", ICON_CAMERA_DATA, "Camera", ""},
     {ID_GR, "COLLECTION", ICON_OUTLINER_COLLECTION, "Collection", ""},
     {ID_CV, "CURVES", ICON_CURVES_DATA, "Curves", ""},
-    {ID_VF, "FONT", ICON_FONT_DATA, "Font", ""},
 
     {ID_GP, "GREASEPENCIL_V3", ICON_GREASEPENCIL, "Grease Pencil v3", ""},
     {ID_IM, "IMAGE", ICON_IMAGE_DATA, "Image", ""},
@@ -144,7 +143,6 @@ const IDFilterEnumPropertyItem rna_enum_id_type_filter_items[] = {
     {FILTER_ID_SCE, "filter_scene", ICON_SCENE_DATA, "Scenes", "Show Scene data-blocks"},
     {FILTER_ID_SO, "filter_sound", ICON_SOUND, "Sounds", "Show Sound data-blocks"},
     {FILTER_ID_TXT, "filter_text", ICON_TEXT, "Texts", "Show Text data-blocks"},
-    {FILTER_ID_VF, "filter_font", ICON_FONT_DATA, "Fonts", "Show Font data-blocks"},
     {FILTER_ID_VO, "filter_volume", ICON_VOLUME_DATA, "Volumes", "Show/hide Volume data-blocks"},
     {FILTER_ID_WO, "filter_world", ICON_WORLD_DATA, "Worlds", "Show World data-blocks"},
     {0, nullptr, 0, nullptr, nullptr},
