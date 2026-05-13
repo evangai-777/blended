@@ -1461,6 +1461,27 @@ grep -n "BLO_read_write" source/blender/blenkernel/intern/<type>.cc
 
 ---
 
+### Scar 18: Confident Wrong Assessment of Trivial Constructibility
+
+**What happened:** The ID_LP fold-down session note stated explicitly: *"LightProbe has no DNA_DEFINE_CXX_METHODS, no user-defined constructor, trivially constructible."* Based on that assessment, `MEM_new_zeroed<LightProbe>` was used in the Scar 10 allocator. CI failed at step 6612/8093: `static_assert failed: 'For non-trivial types, MEM_new must be used.'` A single grep of `DNA_lightprobe_types.h` shows `adt = nullptr`, `type = 0`, `falloff = 0.2f`, `clipsta = 0.8f` and more in-class initializers throughout. The struct is non-trivial by definition.
+
+**Why this is a distinct scar from Scar 10:** Scar 10's decision tree is correct — it says "any in-class initializer → `MEM_new`." The failure here is not ignorance of the rule. It is writing down a confident wrong assessment without running the one grep that would have proven it wrong. The session had the right rule and misapplied it because it didn't check.
+
+**The rule:** Never assess a DNA struct as "trivially constructible" from memory or inference. Always grep the struct header before choosing the allocator:
+```bash
+grep -n "= nullptr\|= {}\|= 0\b\|= false\|= true\|= [0-9]" source/blender/makesdna/DNA_<type>_types.h | head -5
+# Any hit = non-trivial = MEM_new<T>, not MEM_new_zeroed<T>
+# Also check for DNA_DEFINE_CXX_METHODS:
+grep -n "DNA_DEFINE_CXX_METHODS" source/blender/makesdna/DNA_<type>_types.h
+```
+If either grep returns hits, the type is non-trivial. Use `MEM_new<T>`. The static_assert in `MEM_guardedalloc.h` enforces this at compile time — it is not a suggestion.
+
+**The meta-failure:** The session note was written as a permanent record and was wrong. Future sessions calibrate off these notes. A confident wrong note about trivial constructibility will cause the same wrong allocator choice every time the type is touched. Writing "I believe X" without verifying X and then documenting the belief as fact is how wrong knowledge propagates across sessions.
+
+**For the remaining Bucket 3 fold-downs** — before writing the Scar 10 allocator for any type, run the grep above on that type's DNA header. Do not assess from memory.
+
+---
+
 ### Count Before You Claim
 
 If you say "three issues" there must be three issues. If you list a numbered set and then immediately dismiss one entry as "not a problem," you miscounted — that item was an observation, not an issue, and should never have been numbered. Do not announce N things and deliver N-1.
