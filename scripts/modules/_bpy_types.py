@@ -141,7 +141,7 @@ class Library(_types.ID):
             "lights", "materials",
             "meshes", "node_groups", "objects", "scenes",
             "sounds", "textures", "texts",
-            "fonts", "worlds",
+            "worlds",
         )
 
         return tuple(

@@ -448,7 +448,6 @@ WARN_MSGID_NOT_CAPITALIZED_ALLOWED = {
     "cameras",
     "collections",
     "curves",
-    "fonts",
     "grease_pencils",
     "hair_curves",
     "ipos",
