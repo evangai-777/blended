@@ -138,7 +138,7 @@ enum ID_Type {
   ID_CA = MAKE_ID2('C', 'A'),        /* Camera */
   ID_KE = MAKE_ID2('K', 'E'),        /* Key (shape key) */
   ID_WO = MAKE_ID2('W', 'O'),        /* World */
-  ID_VF = MAKE_ID2('V', 'F'),        /* VFont (Vector Font) */
+  /* ID_VF removed — see deprecated #define below. */
   ID_TXT = MAKE_ID2('T', 'X'),       /* Text */
   ID_SO = MAKE_ID2('S', 'O'),        /* Sound */
   ID_GR = MAKE_ID2('G', 'R'),        /* Collection */
@@ -176,6 +176,7 @@ enum ID_Type {
 #define ID_PAL MAKE_ID2('P', 'L')       /* Palette — deregistered in Blended 0.5.0; runtime-only via Scar 2 */
 #define ID_LT MAKE_ID2('L', 'T')        /* Lattice — deregistered in Blended 0.5.0; runtime-only via Scar 2 */
 #define ID_MSK MAKE_ID2('M', 'S')       /* Mask — deregistered in Blended 0.5.0; runtime-only via Scar 2 */
+#define ID_VF MAKE_ID2('V', 'F')        /* VFont — deregistered in Blended 0.5.0; runtime-only via Scar 2 */
 
 /* NOTE: Fake IDs, needed for `g.sipo->blocktype` or outliner. */
 #define ID_SEQ MAKE_ID2('S', 'Q')

@@ -19,11 +19,6 @@ struct PackedFile;
 struct VFontData;
 
 struct VFont {
-#ifdef __cplusplus
-  /** See #ID_Type comment for why this is here. */
-  static constexpr ID_Type id_type = ID_VF;
-#endif
-
   ID id;
 
   char filepath[/*FILE_MAX*/ 1024] = "";

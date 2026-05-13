@@ -1171,7 +1171,6 @@ enum IDRecalcFlag {
 #define FILTER_ID_SO (1ULL << 22)
 
 #define FILTER_ID_TXT (1ULL << 24)
-#define FILTER_ID_VF (1ULL << 25)
 #define FILTER_ID_WO (1ULL << 26)
 #define FILTER_ID_CV (1ULL << 32)
 #define FILTER_ID_PT (1ULL << 33)
@@ -1187,7 +1186,7 @@ enum IDRecalcFlag {
    FILTER_ID_GR | FILTER_ID_IM | FILTER_ID_LA | \
    FILTER_ID_MA | FILTER_ID_MC | FILTER_ID_ME | \
    FILTER_ID_NT | FILTER_ID_OB | FILTER_ID_SCE | \
-   FILTER_ID_SO | FILTER_ID_TXT | FILTER_ID_VF | FILTER_ID_WO | \
+   FILTER_ID_SO | FILTER_ID_TXT | FILTER_ID_WO | \
    FILTER_ID_CV | FILTER_ID_PT | FILTER_ID_VO | \
    FILTER_ID_SIM | FILTER_ID_KE | FILTER_ID_LI | FILTER_ID_GP | \
    FILTER_ID_IP)
@@ -1237,7 +1236,6 @@ enum eID_Index {
 
   /* File-wrapper types, those usually 'embed' external files in Blender, with no dependencies to
    * other ID types. */
-  INDEX_ID_VF,
   INDEX_ID_TXT,
   INDEX_ID_SO,
 
