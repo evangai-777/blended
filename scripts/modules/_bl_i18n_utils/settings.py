@@ -465,7 +465,6 @@ WARN_MSGID_NOT_CAPITALIZED_ALLOWED = {
     "node_groups",
     "objects",
     "paint_curves",
-    "palettes",
     "particles",
     "pointclouds",
     "screens",
