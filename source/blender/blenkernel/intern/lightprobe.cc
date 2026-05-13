@@ -53,7 +53,7 @@ void BKE_lightprobe_type_set(LightProbe *probe, const short lightprobe_type)
 
 LightProbe *BKE_lightprobe_add(Main *bmain, const char *name)
 {
-  LightProbe *probe = MEM_new_zeroed<LightProbe>("LightProbe");
+  LightProbe *probe = MEM_new<LightProbe>("LightProbe");
   BKE_libblock_runtime_ensure(probe->id);
   *(reinterpret_cast<short *>(probe->id.name)) = ID_LP;
   probe->id.us = 1;
