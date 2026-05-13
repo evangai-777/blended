@@ -452,7 +452,6 @@ WARN_MSGID_NOT_CAPITALIZED_ALLOWED = {
     "grease_pencils",
     "hair_curves",
     "ipos",
-    "lattices",
     "libraries",
     "lights",
     "linestyles",

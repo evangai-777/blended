@@ -114,8 +114,7 @@ class DopesheetFilterPopoverBase:
             flow.prop(dopesheet, "show_meshes", text="Meshes")
         if bpy.data.curves:
             flow.prop(dopesheet, "show_curves", text="Curves")
-        if bpy.data.lattices:
-            flow.prop(dopesheet, "show_lattices", text="Lattices")
+        flow.prop(dopesheet, "show_lattices", text="Lattices")
         if hasattr(bpy.data, "hair_curves") and bpy.data.hair_curves:
             flow.prop(dopesheet, "show_hair_curves", text="Hair Curves")
         if hasattr(bpy.data, "pointclouds") and bpy.data.pointclouds:
