@@ -100,6 +100,18 @@ Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEG
 
 ### ID_PC — PaintCurve ✓ complete
 
+**Pre-chisel blast radius audit (21 literal / ~35 true hits):**
+
+makesdna (3 files): `DNA_ID_enums.h:158` (enum → deprecated #define); `DNA_brush_types.h:192` (Brush::paint_curve field) + `:482–500` (PaintCurvePoint/PaintCurve struct definitions); `DNA_ID.h:655,695` (shared macro checks); `DNA_undo_system_types.h` (UNDO_REF_ID_TYPE).
+
+blenkernel (5 files): `BKE_idtype.hh:331`; `idtype.cc:168` (INIT_TYPE + CASE_IDINDEX ×2); `main.cc:1046` (CASE_ID_INDEX + lb[] — no Scar 2); `BKE_main.hh:394` (paintcurves field); `paint.cc:185–247` (IDTypeInfo + copy/free/blend-write/read callbacks); `brush.cc:229,550` (FOREACHID + FILTER_ID_PC in deps); `brush_test.cc:64,95` (test fixtures rewritten); `BKE_paint.hh:149,262`; `BKE_undo_system.hh:50`.
+
+editors (10 files): DELETED: `paint_curve.cc`, `paint_curve_undo.cc`, `transform_convert_paintcurve.cc`; `paint_cursor.cc:877–896`; `paint_stroke.cc:1276–1293`; `interface_icons.cc:2085`; `interface_template_id.cc:901`; `render_opengl.cc:643`; `outliner_draw.cc:2583`; `outliner_intern.hh:173`; `outliner_tools.cc:162`; `tree_element_id.cc:89`.
+
+depsgraph (2 files): `deg_builder_relations.cc:610`; `deg_builder_nodes.cc:663`.
+
+makesrna (4 files): `rna_ID.cc:57,448,538`; `rna_main_api.cc:866`; `rna_brush.cc` (paint_curve RNA prop); `rna_sculpt_paint.cc` (PaintCurve RNA defs, 7 sites).
+
 | Layer | Files touched | Status |
 |-------|--------------|--------|
 | `makesdna` | `DNA_ID_enums.h`, `DNA_brush_types.h` (id_type constexpr, PaintCurvePoint/PaintCurve structs, Brush::paint_curve field), `DNA_ID.h` (shared macro checks) | ✓ |
@@ -109,6 +121,26 @@ Chisel order: **ID_PC ✓** → **ID_SPK ✓** → **ID_PA ✓** → **ID_GD_LEG
 | `depsgraph` | `deg_builder_relations.cc`, `deg_builder_nodes.cc` | ✓ |
 
 ### ID_SPK — Speaker ✓ complete
+
+**Pre-chisel blast radius audit (23 literal / ~45 true hits):**
+
+makesdna (5 files): `DNA_ID_enums.h` (enum → deprecated #define); `DNA_ID.h` (FILTER_ID_SPK, INDEX_ID_SPK, FILTER_ID_ALL); `DNA_object_types.h` (OB_SPEAKER enum + macros); `DNA_userdef_types.h` (dupflag default); DELETED: `DNA_speaker_types.h` (entire struct).
+
+blenkernel (10+ files): `idtype.cc` (INIT_TYPE + CASE_IDINDEX ×2); `main.cc` (CASE_ID_INDEX + lb[] — no Scar 2); `object.cc`; `sound.cc` (speaker loop + speaker_handles removed); `nla.cc` (BKE_nla_add_soundstrip removed); `anim_data_bmain_utils.cc`; `anim_sys.cc`; `geometry_set_instances.cc`; DELETED: `speaker.cc`, `BKE_speaker.hh`; headers: `BKE_idtype.hh`, `BKE_main.hh`, `BKE_nla.hh`, `BKE_scene_runtime.hh`.
+
+makesrna (9 files): `rna_ID.cc`; `rna_main_api.cc`; `rna_main.cc`; `rna_object.cc`; `rna_userdef.cc`; `rna_action.cc`; `rna_space.cc`; `rna_space_api.cc`; `rna_internal.hh`; DELETED: `rna_speaker.cc`.
+
+editors (26+ files): `interface_icons.cc`; `interface_template_id.cc`; `render_opengl.cc`; `outliner_draw.cc`; `outliner_select.cc`; `outliner_intern.hh`; `outliner_tools.cc`; `tree_element_id.cc`; `space_view3d.cc`; `buttons_context.cc`; `object_add.cc` (OBJECT_OT_speaker_add deleted); `object_intern.hh`; `object_ops.cc`; `object_relations.cc`; `nla_edit.cc` (NLA_OT_soundclip_add deleted); `nla_intern.hh`; `nla_ops.cc`; `nla_draw.cc`; `nla_tracks.cc`; `nla_buttons.cc`; `anim_filter.cc`; `anim_channels_defines.cc` (ACF_DSSPK + 3 callbacks + table entry); `anim_channels_edit.cc` (ANIMTYPE_DSSPK ×9 fallthroughs); `anim_deps.cc`; `transform_convert_action.cc`; `BLT_translation.hh` (BLT_I18NCONTEXT_ID_SPEAKER); `ED_anim_api.hh` (ANIMTYPE_DSSPK enum).
+
+draw (5 files): `overlay_instance.hh/.cc`; `overlay_private.hh`; `overlay_bounds.hh`; DELETED: `overlay_speaker.hh`.
+
+depsgraph (8 files): `deg_builder_nodes.cc/.h`; `deg_builder_nodes_scene.cc`; `deg_builder_relations.cc/.h`; `deg_builder_relations_scene.cc`; `deg_node_operation.hh/.cc` (SPEAKER_EVAL opcode removed).
+
+python (10 files): `bl_ui/__init__.py`; `space_dopesheet.py`; `space_outliner.py`; `space_userpref.py`; `space_view3d.py`; `bl_operators/wm.py`; `_bpy_types.py`; `_bl_i18n_utils/settings.py`; `_rna_manual_reference.py`; DELETED: `properties_data_speaker.py`.
+
+blenloader (1 file): `versioning_520.cc` (502.23 pass — OB_SPEAKER → OB_EMPTY).
+
+io (2 files): `usd_hierarchy_iterator.cc`; `abc_hierarchy_iterator.cc`.
 
 | Layer | Files touched | Status |
 |-------|--------------|--------|
