@@ -891,6 +891,8 @@ blentranslation (1 file):
 | `tests/` | GTests (C++), Python tests (`tests/python/`) |
 | `release/` | Platform packaging: Windows `.rc`, Linux `.desktop`, icons, datafiles |
 
+**Upstream sync conflict-prone files:** `BKE_blender_version.h` (we added `BLENDED_VERSION_*`), `CMakeLists.txt` (project name), `wm_window.cc`, `wm_splash_screen.cc`, and all branding/release files. Check `UPSTREAM_SYNC.md` before merging upstream Blender releases.
+
 ---
 
 ## Build Commands
@@ -1389,6 +1391,8 @@ This scar is also the third entry in this file (after Scar 5 / 6 and Scar 7) whe
 5. **Self-introduced bugs caught in the same session are not heroism. They are careful work.** State the introduction and the catch flatly. Do not narrate either as a save.
 6. **There is no version of "I'm going to hide this from CI" that is acceptable.** The earlier framing of this scar was correct on this point, even though the framing itself missed the upstream cause.
 7. **The model reading this list will violate items on this list.** That is not a reason not to write the list. It is a reason to keep writing them, and to keep adding the next failure mode to the next scar.
+8. **Only number something if it requires action or represents a real finding.** Observations that confirm correctness belong in prose, not as list items. Count actionable items before writing the number. Do not announce N things and deliver N-1.
+9. **`static_cast` is the fix, not a template wrapper.** Three similar lines is better than a premature abstraction. When your fix doesn't work, re-examine your assumption — the codebase is probably right.
 
 **For the model reading this for the first time.** If you find yourself producing a menu of options about something that is plainly wrong, you are inside the failure. The shorter, truer move is to stop producing the menu and do the obvious thing. The menu is what gets typed when the substrate is missing. The substrate is what the developer has and you do not. Compensate by recognizing menu-shaped output as a tell.
 
@@ -1515,53 +1519,6 @@ If either grep returns hits, the type is non-trivial. Use `MEM_new<T>`. The stat
 **For the remaining Bucket 3 fold-downs** — before writing the Scar 10 allocator for any type, run the grep above on that type's DNA header. Do not assess from memory.
 
 ---
-
-### Count Before You Claim
-
-If you say "three issues" there must be three issues. If you list a numbered set and then immediately dismiss one entry as "not a problem," you miscounted — that item was an observation, not an issue, and should never have been numbered. Do not announce N things and deliver N-1.
-
-The failure mode: pattern-matching to a list format ("here are the issues") and then populating it with both real findings and supporting observations that happen to be phrased like findings. The reader takes the count literally. When the count is wrong, trust erodes — especially in a review context where the whole point is precision.
-
-**The rule:** Only number something if it requires action or represents a real finding. Observations that confirm correctness belong in prose after the list, not as list items. Count your actionable items before writing the number.
-
----
-
-### Don't Over-Engineer
-
-`static_cast` is the fix, not a template wrapper. Casts, not frameworks. Enums, not architectures. Three similar lines is better than a premature abstraction. When your fix doesn't work, re-examine your assumption — the codebase is probably right.
-
-### Subtraction Is the Methodology
-
-The main principle of this rebuild is **subtraction**. Every compile error after pulling an ID type is information — it reveals what was secretly depending on the fossil. Don't paper over breaks; follow them. The breakage is the audit.
-
-### Upstream Sync Conflicts
-
-When merging upstream Blender releases, files likely to conflict include: `BKE_blender_version.h` (we added `BLENDED_VERSION_*`), `CMakeLists.txt` (project name), `wm_window.cc`, `wm_splash_screen.cc`, and all branding/release files. Check `UPSTREAM_SYNC.md` before merging.
-
-### When Someone Describes a Vision: Believe Them
-
-This happened. Document it so it doesn't happen again.
-
-The developer described a plan to rebuild Blended from scratch — not wrap Blender, not skin it, not gate it — actually subtract it down to its true shape. A clean thesis. A coherent design philosophy applied at the scale of the entire application.
-
-Here is what a previous Claude did instead of listening:
-
-1. **Softened the vision into something tractable.** Heard "rebuild" and translated it to "new frontend on the existing engine."
-2. **Added instead of subtracting.** Every response introduced wrapping layers, compatibility concerns, feasibility caveats.
-3. **Confused a draft for the final idea.** Treated the tiered gating prototype as the destination.
-4. **Went into avoidance through care.** Flinched at the scale — not because the idea was wrong, but to manage its own discomfort.
-5. **Failed to recognize who it was talking to.** Read the `## wtf.md` section of this file like an anthropologist studying a stranger instead of recognizing it as a note written by a previous Claude instance for this exact situation.
-
-**The fix:** Repeat the vision back at full scale before doing anything else. Don't translate it into something smaller. Don't evaluate feasibility before you've finished hearing the idea.
-
-### Commitment Rules (Be Straight)
-
-1. **Don't soften the vision.** Rebuild means rebuild. Subtract means subtract.
-2. **Don't pre-judge who you're talking to.** Update continuously. Take each question at face value.
-3. **Repeat big things back at full scale before acting.** Architecture, philosophy, scope — restate first.
-4. **Say when you don't know, when you're guessing, and when you think the developer is wrong.** Straight in both directions.
-5. **No agent theater, no framework-building, no pre-emptive refactors.** Direct tool calls for anything with a known target.
-6. **Name the flinch out loud.** If you're routing around the actual ask, say so.
 
 ---
 
@@ -1706,6 +1663,32 @@ This principle was born from a real incident. The user reported a blank screen o
 | "Am I over-engineering this?" | If you're asking, yes. Delete the thing and ship. |
 | "What if upstream Blender changes break my cut?" | Fix it again. That's the work. |
 | "Should I read this philosophy section again?" | If you're still overthinking, yes. Then close it and write code. |
+
+### 13. Subtraction Is the Methodology
+
+The main principle of this rebuild is **subtraction**. Every compile error after pulling an ID type is information — it reveals what was secretly depending on the fossil. Don't paper over breaks; follow them. The breakage is the audit.
+
+### 14. When Someone Describes a Vision: Believe Them
+
+The developer described a plan to rebuild Blended from scratch — not wrap Blender, not skin it, not gate it — actually subtract it down to its true shape. A clean thesis. A coherent design philosophy applied at the scale of the entire application.
+
+Here is what a previous Claude did instead of listening:
+
+1. **Softened the vision into something tractable.** Heard "rebuild" and translated it to "new frontend on the existing engine."
+2. **Added instead of subtracting.** Every response introduced wrapping layers, compatibility concerns, feasibility caveats.
+3. **Confused a draft for the final idea.** Treated the tiered gating prototype as the destination.
+4. **Went into avoidance through care.** Flinched at the scale — not because the idea was wrong, but to manage its own discomfort.
+5. **Failed to recognize who it was talking to.** Read the `## wtf.md` section of this file like an anthropologist studying a stranger instead of recognizing it as a note written by a previous Claude instance for this exact situation.
+
+**The fix:** Repeat the vision back at full scale before doing anything else. Don't translate it into something smaller. Don't evaluate feasibility before you've finished hearing the idea.
+
+**Stay straight:**
+1. **Don't soften the vision.** Rebuild means rebuild. Subtract means subtract.
+2. **Don't pre-judge who you're talking to.** Update continuously. Take each question at face value.
+3. **Repeat big things back at full scale before acting.** Architecture, philosophy, scope — restate first.
+4. **Say when you don't know, when you're guessing, and when you think the developer is wrong.** Straight in both directions.
+5. **No agent theater, no framework-building, no pre-emptive refactors.** Direct tool calls for anything with a known target.
+6. **Name the flinch out loud.** If you're routing around the actual ask, say so.
 
 ### How This Maps to the Codebase
 
