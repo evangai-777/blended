@@ -36,7 +36,13 @@ def create_object_data(obj_type, name):
     if obj_type == 'ARMATURE':
         return bpy.data.armatures.new(name)
     if obj_type == 'LATTICE':
-        return bpy.data.lattices.new(name)
+        # bpy.data.lattices removed in Blended 0.5.0 (ID_LT fold-down). No Rigify rig type
+        # currently reaches this branch. If one is added, create via bpy.ops.object.add(
+        # type='LATTICE') and extract active_object.data instead.
+        raise RuntimeError(
+            "bpy.data.lattices is not available in Blended (ID_LT deregistered in 0.5.0); "
+            "see scripts/addons_core/rigify/utils/objects.py for migration path"
+        )
     raise ValueError(f"Invalid object type {obj_type}")
 
 

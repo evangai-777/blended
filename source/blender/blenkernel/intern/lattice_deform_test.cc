@@ -3,6 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-or-later */
 #include "testing/testing.h"
 
+/* Blended 0.5.0 note: IDType_ID_LT and IDType_ID_LT.init_data/free_data calls below are
+ * structurally unreachable (DO_PERF_TESTS is 0 and never enabled in CI). Left unfixed
+ * intentionally — the extern IDTypeInfo IDType_ID_LT was removed from BKE_idtype.hh as
+ * part of the ID_LT fold-down; enabling DO_PERF_TESTS would require rewriting these tests
+ * to call BKE_lattice_add / lattice_free_data directly. */
 #define DO_PERF_TESTS 0
 
 #if DO_PERF_TESTS
