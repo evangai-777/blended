@@ -21,7 +21,7 @@ void SphereProbeModule::init()
   if (!instance_.is_viewport()) {
     /* TODO(jbakker): should we check on the subtype as well? Now it also populates even when
      * there are other light probes in the scene. */
-    update_probes_next_sample_ = DEG_id_type_any_exists(instance_.depsgraph, ID_LP);
+    update_probes_next_sample_ = true; /* ID_LP deregistered; conservatively always update */
   }
   update_probes_this_sample_ = update_probes_next_sample_;
 

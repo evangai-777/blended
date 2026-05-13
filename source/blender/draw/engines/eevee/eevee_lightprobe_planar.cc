@@ -51,7 +51,7 @@ void PlanarProbeModule::init()
   else {
     /* TODO(jbakker): should we check on the subtype as well? Now it also populates even when
      * there are other light probes in the scene. */
-    update_probes_ = DEG_id_type_any_exists(inst_.depsgraph, ID_LP);
+    update_probes_ = true; /* ID_LP deregistered; conservatively always update */
   }
 
   do_display_draw_ = false;
