@@ -11,7 +11,7 @@ Blended
 
 Blended is a fork of [Blender](https://www.blender.org) being rebuilt from the foundation up around one stated identity: **free 2D and 3D software tools, with an explicit focus on the craft of animation.**
 
-Currently at 0.5.0-dev — `ID_LP` fold-down CI-complete (Windows x64, build 74). `ID_PAL` and `ID_LT` fold-downs complete (pending CI). Base: 0.4.0 CI-complete (build 70). Bucket 3 fold-downs in progress, closing the datablock audit at ~19 ID types.
+Currently at 0.5.0-dev — `ID_LP` fold-down CI-complete (Windows x64, build 74). `ID_PAL`, `ID_LT`, and `ID_MSK` fold-downs complete (pending CI). Base: 0.4.0 CI-complete (build 70). Bucket 3 fold-downs in progress, closing the datablock audit at ~19 ID types.
 
 What Blended Is
 ---------------
@@ -31,7 +31,7 @@ What's Different
 - **Pre-5.0 rig compatibility** — `blended_rig_compat.py` restores `action.fcurves` for pre-Blender-5.0 Rigify rigs.
 - **Update notifications** — Background GitHub Releases check at startup with top-bar notification when an update is available.
 - **CI** — Windows x64 portable builds via GitHub Actions. Branch pushes: lite compile check. Tags: full release artifact.
-- **Datablock audit** — Target: 39 → ~19 ID types. Removed through 0.4.0: `ID_WS`, `ID_SCR`, `ID_WM`, `ID_PC`, `ID_SPK`, `ID_PA`, `ID_GD_LEGACY`, `ID_LS`, `ID_MB`, `ID_TE`, `ID_CU_LEGACY`, `ID_CF`. 0.5.0 Bucket 3 fold-downs: `ID_LP` ✓, `ID_PAL` ✓, `ID_LT` ✓ — remaining: `ID_MSK`, `ID_VF`, `ID_BR`.
+- **Datablock audit** — Target: 39 → ~19 ID types. Removed through 0.4.0: `ID_WS`, `ID_SCR`, `ID_WM`, `ID_PC`, `ID_SPK`, `ID_PA`, `ID_GD_LEGACY`, `ID_LS`, `ID_MB`, `ID_TE`, `ID_CU_LEGACY`, `ID_CF`. 0.5.0 Bucket 3 fold-downs: `ID_LP` ✓, `ID_PAL` ✓, `ID_LT` ✓, `ID_MSK` ✓ — remaining: `ID_VF`, `ID_BR`.
 
 On the Horizon
 --------------

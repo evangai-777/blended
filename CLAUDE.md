@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.5.0-dev — ID_LP fold-down CI-complete (Windows x64, build 74 on commit `80002ae`). 0.4.0 base: CI-complete (Windows x64, build 70 on commit `7bd69df`). Bucket 3 fold-downs in progress: `ID_LP` ✓, `ID_PAL` ✓ (pending CI), `ID_LT` ✓ (pending CI). Remaining: `ID_MSK`, `ID_VF`, `ID_BR`.
+**Current version:** Blended 0.5.0-dev — ID_LP fold-down CI-complete (Windows x64, build 74 on commit `80002ae`). 0.4.0 base: CI-complete (Windows x64, build 70 on commit `7bd69df`). Bucket 3 fold-downs in progress: `ID_LP` ✓, `ID_PAL` ✓ (pending CI), `ID_LT` ✓ (pending CI), `ID_MSK` ✓ (pending CI). Remaining: `ID_VF`, `ID_BR`.
 
 ---
 
@@ -134,7 +134,7 @@ The operational test: at the end of a fold-down session, every tool and workflow
 |----|-------------|-------|-----------------------|
 | ~~`ID_LP`~~ | ~~35 hits~~ | ~~25 files~~ | ~~Merge into `ID_LA` with type flag~~ ✓ |
 | ~~`ID_PAL`~~ | ~~38 hits~~ | ~~24 files~~ | ~~Inline into Brush~~ ✓ |
-| `ID_MSK` | 41 hits | 27 files | Hang off compositor NodeTree |
+| ~~`ID_MSK`~~ | ~~41 hits~~ | ~~27 files~~ | ~~Hang off compositor NodeTree~~ ✓ |
 | `ID_VF` | 45 hits | 27 files | Filepath on Text object |
 | ~~`ID_LT`~~ | ~~70 hits~~ | ~~32 files~~ | ~~Owned by Lattice modifier~~ ✓ |
 | `ID_BR` | 119 hits | 44 files | User state + shareable brush packs |
@@ -147,7 +147,7 @@ The operational test: at the end of a fold-down session, every tool and workflow
 | ~~`ID_PAL`~~ | `bmain->palettes` | Referenced by Brush; active in any paint session — Scar 2 kept ✓ |
 | ~~`ID_LT`~~ | `bmain->lattices` | OB_LATTICE objects actively deform meshes — Scar 2 kept ✓ |
 | `ID_LP` | `bmain->lightprobes` | Active in EEVEE rendering |
-| `ID_MSK` | `bmain->masks` | Used in motion tracking and compositor |
+| ~~`ID_MSK`~~ | `bmain->masks` | Used in motion tracking and compositor — Scar 2 kept ✓ |
 | `ID_VF` | `bmain->fonts` | Text objects reference these every render |
 
 ---
@@ -187,6 +187,20 @@ The operational test: at the end of a fold-down session, every tool and workflow
 > **False positives identified:** No significant false positives. `LT_OUTSIDE`/`LT_GRID` flag constants in `rna_lattice.cc` are legitimate Lattice struct flags, not constant-prefix RNA enum arrays (Scar 11 check passed clean).
 >
 > **Fold-down mindset confirmed:** At session end, every workflow that existed before still works — Lattice deform modifiers, OB_LATTICE objects, edit lattice mode, dopesheet animation channels, transform, properties panel, outliner display. The ONLY functional change: `bpy.data.lattices` collection is gone; users create lattices via Add > Lattice object (which calls `BKE_lattice_add` → manual listbase insert, Scar 2).
+
+---
+
+**ID_MSK — ✓ COMPLETE (0.5.0, pending CI)** *(true blast radius: 38 literal / ~55 true hits — fold-down, not chisel; all runtime code kept)*
+
+> **Session note (2026-05-13):** 4 code commits across all layers + 1 docs commit. Fold-down philosophy applied correctly: no files deleted, no runtime code removed, only the ID system registration stripped.
+>
+> Key decisions vs. pre-fold-down audit: (1) **No ANIMTYPE_DSMASK or ACF_DSMASK** — the mask anim chain uses `ANIMTYPE_MASKLAYER` (a direct layer-channel type, not a DS-wrapper type). No `ADS_FILTER_NOMASK` exists in DNA. No dopesheet filter property to remove. All `animdata_filter_mask()` and `ANIMTYPE_MASKLAYER` code kept entirely. (2) **Depsgraph dispatch kept** — `case ID_MSK:` in both builders + `case ID_MSK:` in `depsgraph_tag.cc` kept. No OOB guards needed — the guards in `depsgraph_query.cc` are already generic from ID_LP fold-down. (3) **Scar 8 clean** — `DNA_mask_types.h` `#ifdef __cplusplus` block contained only `id_type`; entire block removed. Second `#ifdef __cplusplus` block at line 229 (`MaskLayerShape::vertices()` methods) is untouched. (4) **BLT_I18NCONTEXT_ID_MASK kept** — unlike LP/PAL where the constant was removed, Mask has legitimate runtime borrowers: `rna_mask.cc` (mask layer properties) and `rna_brush.cc` (sculpt `mask_tool` property). Constant retained in `BLT_translation.hh`; only the `interface_template_id.cc` MULTI_CTXT entry removed (Scar 13). (5) **`editmesh_bisect.cc:449` remap** — `use_fill` boolean borrowed `BLT_I18NCONTEXT_ID_MASK`; remapped to `BLT_I18NCONTEXT_DEFAULT` (fill geometry has no relation to Mask ID type). (6) **`sequencer_edit.cc` forced runtime fix** — `BKE_idtype_idcode_to_name[_plural](ID_MSK)` returns nullptr after INIT_TYPE removal (`BLI_assert` fires in debug). Replaced with hardcoded `"Mask"`/`"Masks"` strings. (7) **`space_sequencer.py`** — `bpy.data.masks` collection removed; replaced conditional length check with always-INVOKE_DEFAULT path (mask strip add operator still works, just launches with a selector dialog). (8) **Scar 10** — Mask has in-class initializers (`adt = nullptr`, `masklayers = {nullptr, nullptr}`, `masklay_act = 0`, `sfra = 0`, etc.) — non-trivial → `MEM_new<Mask>` (Scar 18). `id_fake_user_set` explicitly replicated from original `mask_alloc`. (9) **`rna_ID.cc` both `case ID_MSK:` sites kept** — runtime RNA↔ID bidirectional mappings; `rna_mask.cc` struct RNA stays so the lookups must stay. (10) **No `_bpy_types.py` entry** — no `"masks"` attr_links entry existed.
+>
+> **True blast radius additions (field-name grep misses):** `anim_data_bmain_utils.cc:92` `ANIMDATA_IDS_CB(bmain->masks.first)`, `anim_sys.cc:4175` `EVAL_ANIM_IDS(main->masks.first, ...)`, `versioning_270.cc:1314` `for (Mask &mask : bmain->masks)` — all kept as Scar 2 versioning bridge. `sequencer_edit.cc:2393-2394` `BKE_idtype_idcode_to_name[_plural](ID_MSK)` — forced runtime fix (hardcoded strings). `space_sequencer.py:707-715` `bpy.data.masks` — forced Python fix.
+>
+> **False positives identified:** All `editors/mask/` subsystem, `transform_convert_mask.cc`, `TransConvertType_Mask` in `transform_convert.cc`, `MaskModifierData::mask` pointer, `StripSeqData::mask_id` pointer, `ANIMTYPE_MASKLAYER` cases throughout anim editors, `MOD_mask.cc` (modifiers + sequencer) — all runtime code, all kept. `MASK_OVERLAY_*` / `MASK_PARENT_*` / `MASK_SPLINE_OFFSET_*` enum constants in `rna_mask.cc` / `rna_space.cc` — legitimate DNA constants in kept runtime files, not removable RNA enum item arrays (Scar 11 check clean).
+>
+> **Fold-down mindset confirmed:** At session end, every workflow that existed before still works — mask editing, motion tracking masks, compositor mask input, sequencer mask strips, Mask modifier, dopesheet animation channels, properties panel, outliner display. The ONLY functional changes: `bpy.data.masks` collection gone; sequencer add-mask menu simplified to always-invoke-dialog.
 
 ---
 

@@ -59,7 +59,7 @@ carries a one-liner status per active item.
 
 Bucket 3 fold-downs — the last datablock-audit version. Six IDs that are property bags pretending to be first-class entities, each folded into the structure they actually belong to: `ID_BR` (Brush) → user state + shareable brush packs, `ID_PAL` (Palette) → brush property or inline, `ID_LT` (Lattice) → modifier, not a datablock, `ID_LP` (LightProbe) → merge into `ID_LA` with a type flag, `ID_MSK` (Mask) → hang off compositor NodeTree, `ID_VF` (VFont) → system font reference. Closes the datablock audit (39 → ~19 ID types).
 
-Fold-down order: **ID_LP ✓** → **ID_PAL ✓** → **ID_LT ✓** → ID_MSK → ID_VF → ID_BR.
+Fold-down order: **ID_LP ✓** → **ID_PAL ✓** → **ID_LT ✓** → **ID_MSK ✓** → ID_VF → ID_BR.
 
 ### ID_LP — LightProbe ✓ complete
 
@@ -154,6 +154,39 @@ python (4 files): `_bl_i18n_utils/settings.py:455` ("lattices" data path); `spac
 **What stays (fold-down keeps all runtime code):** `lattice.cc`, `editlattice_select.cc`, `editlattice_tools.cc`, `editlattice_undo.cc`, `lattice_ops.cc` (entire editors/lattice/ subsystem), `rna_lattice.cc`, `rna_lattice_api.cc`, `draw_cache_impl_lattice.cc`, `overlay_lattice.hh`, `transform_convert_lattice.cc`, `MOD_lattice.cc`, `MOD_grease_pencil_lattice.cc`, `BKE_lattice.hh`, depsgraph `case ID_LT:` dispatch in both builders + `depsgraph_tag.cc`, all blenloader versioning paths over `bmain->lattices` (Scar 2 bridge), full anim chain (`ANIMTYPE_DSLAT`, `ACF_DSLAT`, `animdata_filter_ds_lat`, `ADS_FILTER_NOLAT`, `show_lattices` RNA prop). `makesrna.cc:4026` `{"rna_lattice.cc",..., RNA_def_lattice}` entry kept.
 
 **Claude AI contributor (2026-05-13):** ID_LT fold-down across 4 layers on branch `claude/review-docs-history-l0OGD`. 4 code commits + 1 docs commit. Key distinction from previous fold-downs: anim chain fully kept (ANIMTYPE_DSLAT, ACF_DSLAT, ADS_FILTER_NOLAT — all live runtime code); Scar 8 partial (DNA_DEFINE_CXX_METHODS stays in the guard, unlike PAL/LP where the entire block went); lattice_deform_test.cc IDType_ID_LT usage dead code (#if DO_PERF_TESTS 0); key.cc FILTER_ID_LT compile-error dependency identified and fixed. Pending CI.
+
+---
+
+### ID_MSK — Mask ✓ complete (pending CI)
+
+**Pre-fold-down blast radius audit (41 literal / ~50 true hits):**
+
+makesdna (3 files): `DNA_ID_enums.h` (enum entry → deprecated `#define`); `DNA_mask_types.h:125-128` (Scar 8: entire `#ifdef __cplusplus` block — id_type only, no DNA_DEFINE_CXX_METHODS in this block; second `#ifdef __cplusplus` at line 229 for MaskLayerShape::vertices() methods untouched); `DNA_ID.h` (`FILTER_ID_MSK`, `INDEX_ID_MSK`, `FILTER_ID_ALL` entry removed).
+
+blenkernel (4 files): `BKE_idtype.hh` (extern decl removed); `idtype.cc` (INIT_TYPE + CASE_IDINDEX ×2 — Scar 4); `main.cc` (CASE_ID_INDEX + lb[] removed; `case ID_MSK:` which_libbase routing KEPT — Scar 2); `mask.cc` (IDTypeInfo IDType_ID_MSK removed; `mask_alloc()` helper → Scar 10 `MEM_new<Mask>` + manual listbase insert; `id_fake_user_set` replicated from original `mask_init_data`).
+
+`scene.cc` (FILTER_ID_MSK from Scene IDTypeInfo `dependencies_id_types`).
+
+Scar 2 — kept (mandatory): `BKE_main.hh` (masks field); `main.cc` which_libbase routing. No versioning files iterate `bmain->masks` by field name (clean Scar 2 — no versioning bridge hits beyond the `which_libbase` routing).
+
+makesrna (7 files): `rna_ID.cc` (×4 — enum item, filter item, base_type check, switch case); `rna_main_api.cc` (`rna_Main_masks_new`, `RNA_MAIN_ID_TAG_FUNCS_DEF`, `RNA_def_main_masks` all removed); `rna_main.cc` (`RNA_MAIN_LISTBASE_FUNCS_DEF(masks)` + table entry); `rna_internal.hh` (`RNA_def_main_masks` removed; `RNA_def_mask` KEPT — Scar 15); `rna_space.cc` (`FILTER_ID_MSK` removed from `category_image` asset browser filter); `BLT_I18NCONTEXT_ID_MASK` KEPT in `BLT_translation.hh` (legitimate borrowers: `rna_mask.cc` line properties, `rna_brush.cc` mask_tool property); `interface_template_id.cc` (`BLT_I18N_MSGID_MULTI_CTXT` entry removed — Scar 13 sweep; constant itself KEPT).
+
+`editmesh_bisect.cc` (Scar 13 remap: `RNA_def_property_translation_context` for `use_fill` prop changed from `BLT_I18NCONTEXT_ID_MASK` → `BLT_I18NCONTEXT_DEFAULT` — unrelated borrower).
+
+`sequencer_edit.cc` (`BKE_idtype_idcode_to_name[_plural](ID_MSK)` → hardcoded `"Mask"`/`"Masks"` — INIT_TYPE removed so those functions return nullptr).
+
+python (1 file): `space_sequencer.py` (bpy.data.masks length conditional → always INVOKE_DEFAULT path; `bpy.data.masks` collection is gone).
+
+| Layer | Files touched | Status |
+|-------|--------------|--------|
+| `makesdna` | `DNA_ID_enums.h` (enum removed, deprecated `#define` added), `DNA_mask_types.h` (Scar 8: `#ifdef __cplusplus` block removed — id_type only; second block for MaskLayerShape::vertices() untouched), `DNA_ID.h` (`FILTER_ID_MSK`, `INDEX_ID_MSK`, FILTER_ID_ALL entry removed) | ✓ |
+| `blenkernel` | `BKE_idtype.hh` (extern removed), `idtype.cc` (INIT_TYPE + CASE_IDINDEX ×2 — Scar 4), `main.cc` (CASE_ID_INDEX + lb[] removed; which_libbase `case ID_MSK:` KEPT — Scar 2), `mask.cc` (IDTypeInfo block removed; `mask_alloc()` → MEM_new<Mask> + manual insert — Scar 10; id_fake_user_set replicated), `scene.cc` (FILTER_ID_MSK from dependencies_id_types) | ✓ |
+| `makesrna` | `rna_ID.cc` (4 entries), `rna_main_api.cc` (new + tag funcs + collection accessor), `rna_main.cc` (listbase funcs + table entry), `rna_internal.hh` (RNA_def_main_masks removed; RNA_def_mask KEPT — Scar 15), `rna_space.cc` (FILTER_ID_MSK from category_image), `interface_template_id.cc` (BLT_I18N_MSGID_MULTI_CTXT — Scar 13 sweep; BLT_I18NCONTEXT_ID_MASK constant KEPT) | ✓ |
+| `editors+python` | `editmesh_bisect.cc` (Scar 13 remap: use_fill prop context → BLT_I18NCONTEXT_DEFAULT), `sequencer_edit.cc` (hardcoded "Mask"/"Masks" strings), `space_sequencer.py` (bpy.data.masks → INVOKE_DEFAULT path) | ✓ |
+
+**What stays (fold-down keeps all runtime code):** `rna_mask.cc`, `BKE_mask.hh`, `mask.cc` (all non-IDTypeInfo functions), `mask_query.cc`, `mask_evaluate.cc`, `mask_ops.cc`, `mask_draw.cc`, all editor dispatch (icons, outliner, template_id browse string, buttons_context), full `ANIMTYPE_MASKLAYER` anim channel chain (mask uses per-layer channels, not a DS-wrapper — no ANIMTYPE_DSMASK exists), full depsgraph builder dispatch, all `BKE_mask_*` API. `bpy.context.edit_mask` and `bpy.context.active_object.mask` still valid — the runtime mask object is accessed via context, not `bpy.data.masks`.
+
+**Claude AI contributor (2026-05-13):** ID_MSK fold-down across 4 layers on branch `claude/update-ci-status-5uAPa`. 4 code commits pushed. Key distinctions: no ANIMTYPE_DSMASK exists (mask anim uses ANIMTYPE_MASKLAYER — per-layer channels, not a type-level DS-wrapper), so no anim chain cleanup needed; `BLT_I18NCONTEXT_ID_MASK` kept unlike LP/PAL (legitimate non-ID borrowers in rna_mask.cc and rna_brush.cc); `sequencer_edit.cc` needed hardcoded string fix because `BKE_idtype_idcode_to_name` returns nullptr after INIT_TYPE removal; `editmesh_bisect.cc` Scar 13 remap (unrelated `use_fill` prop borrowed the mask i18n context). Pending CI.
 
 ---
 
