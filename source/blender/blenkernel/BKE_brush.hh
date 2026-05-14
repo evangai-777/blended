@@ -44,6 +44,7 @@ void BKE_brush_system_exit();
  * another is assumed to be used by the caller.
  */
 Brush *BKE_brush_add(Main *bmain, const char *name, eObjectMode ob_mode);
+Brush *BKE_brush_new_nomain(const char *name, eObjectMode ob_mode);
 /**
  * Delete a Brush.
  */

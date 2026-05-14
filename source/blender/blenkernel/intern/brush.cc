@@ -659,6 +659,26 @@ Brush *BKE_brush_add(Main *bmain, const char *name, const eObjectMode ob_mode)
   return brush;
 }
 
+Brush *BKE_brush_new_nomain(const char *name, const eObjectMode ob_mode)
+{
+  Brush *brush = MEM_new<Brush>("Brush");
+  BKE_libblock_runtime_ensure(brush->id);
+  *reinterpret_cast<short *>(brush->id.name) = ID_BR;
+  BLI_strncpy(brush->id.name + 2, name, sizeof(brush->id.name) - 2);
+  BKE_lib_libblock_session_uid_ensure(&brush->id);
+  brush_init_data(&brush->id);
+  brush->ob_mode = ob_mode;
+  if (ELEM(ob_mode,
+           OB_MODE_PAINT_GREASE_PENCIL,
+           OB_MODE_SCULPT_GREASE_PENCIL,
+           OB_MODE_WEIGHT_GREASE_PENCIL,
+           OB_MODE_VERTEX_GREASE_PENCIL))
+  {
+    BKE_brush_init_gpencil_settings(brush);
+  }
+  return brush;
+}
+
 void BKE_brush_init_gpencil_settings(Brush *brush)
 {
   if (brush->gpencil_settings == nullptr) {

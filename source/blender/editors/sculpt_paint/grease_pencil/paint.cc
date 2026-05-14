@@ -144,12 +144,8 @@ static void morph_points_to_curve(Span<float2> src, Span<float2> target, Mutable
 /** Creates a temporary brush with the fill guide settings. */
 static Brush *create_fill_guide_brush()
 {
-  Brush *fill_guides_brush = BKE_id_new_nomain<Brush>("Draw Fill Guides");
-  fill_guides_brush->ob_mode = OB_MODE_PAINT_GREASE_PENCIL;
-
-  if (fill_guides_brush->gpencil_settings == nullptr) {
-    BKE_brush_init_gpencil_settings(fill_guides_brush);
-  }
+  Brush *fill_guides_brush = BKE_brush_new_nomain("Draw Fill Guides",
+                                                   OB_MODE_PAINT_GREASE_PENCIL);
   BrushGpencilSettings *settings = fill_guides_brush->gpencil_settings;
 
   BKE_curvemapping_init(settings->curve_sensitivity);
