@@ -22,6 +22,7 @@
 #include "BLI_math_base.hh"
 #include "BLI_math_color.h"
 #include "BLI_rand.h"
+#include "BLI_string.h"
 
 #include "BLT_translation.hh"
 
