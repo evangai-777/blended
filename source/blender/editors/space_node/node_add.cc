@@ -1096,7 +1096,8 @@ static wmOperatorStatus node_add_mask_exec(bContext *C, wmOperator *op)
   Main *bmain = CTX_data_main(C);
   SpaceNode &snode = *CTX_wm_space_node(C);
 
-  ID *mask = WM_operator_properties_id_lookup_from_name_or_session_uid(bmain, op->ptr, ID_MSK);
+  ID *mask = WM_operator_properties_id_lookup_from_name_or_session_uid(
+      bmain, op->ptr, static_cast<ID_Type>(ID_MSK));
   if (!mask) {
     return OPERATOR_CANCELLED;
   }
