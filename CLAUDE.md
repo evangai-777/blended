@@ -965,10 +965,13 @@ grep -rn "FILTER_ID_LP\|FILTER_ID_PAL\|FILTER_ID_LT\|FILTER_ID_MSK\|FILTER_ID_VF
 # Scar 19: fold-down ID type values in any ID_Type-typed position (return OR argument)
 # 'return' form:
 grep -rn "return ID_LP\b\|return ID_PAL\b\|return ID_LT\b\|return ID_MSK\b\|return ID_VF\b\|return ID_BR\b" source/ --include="*.cc" --include="*.c"
-# Argument form (missed by the return grep — caught six ID_BR sites in paint/sculpt):
+# Argument form (missed by the return grep — caught ID_BR in paint/sculpt, ID_MSK in node_add):
 grep -rn ",\s*ID_BR\b\|,\s*ID_VF\b\|,\s*ID_MSK\b\|,\s*ID_LT\b\|,\s*ID_PAL\b\|,\s*ID_LP\b" source/ --include="*.cc" --include="*.c"
-# For each hit: check the callee's parameter type. ID_Type → static_cast<ID_Type>(ID_XX).
-# short/int → no cast needed. Functions returning 'short' (RNA_type_to_ID_code) are fine.
+# IMPORTANT: grep cannot distinguish ID_Type from short/int params — check each callee manually.
+# ID_Type callees (cast required): asset_edit_id_from_weak_reference,
+#   WM_operator_properties_id_lookup_from_name_or_session_uid.
+# short/int callees (no cast): BKE_libblock_find_name, WM_drag_is_ID_type,
+#   RNA_type_to_ID_code, which_libbase, do_versions_rename_id.
 ```
 
 **General (all operations) — Scars 1, 2, 3, 5, 6, 14:**
@@ -1093,9 +1096,11 @@ If either grep returns hits, the type is non-trivial. Use `MEM_new<T>`. The stat
 
 **Failure mode A — `FILTER_ID_*` missing from `DNA_ID.h`:** The fold-down removes `FILTER_ID_MSK` (and the others) from `DNA_ID.h`. Runtime code that uses `FILTER_ID_MSK` as an early-out guard in `contains_mappings_for_any()` calls — `space_image.cc:1214`, `space_clip.cc:1186` — produces C2065 at compile time. These sites are runtime remap functions that legitimately need the filter bit: `mask_info.mask` is still remapped at runtime, so skipping remap when no Mask IDs are in the remap set is a valid optimization that must remain. **Fix:** restore `#define FILTER_ID_MSK (1ULL << 15)` in `DNA_ID.h`, intentionally absent from `FILTER_ID_ALL` (Mask is not project data).
 
-**Failure mode B — fold-down ID value passed where `ID_Type` is expected:** When a fold-down type value appears in any position — `return`, function argument, initializer — where the target type is `ID_Type` (or `std::optional<ID_Type>`), MSVC C2440/C2664 fires. The fold-down type is now a plain `int` constant, not an enum member. Found in two shapes: (1) `socket_type_to_id_type` in `node_group_operator.cc` returning `ID_VF`/`ID_MSK` — caught by a `return ID_XX` grep. (2) Six calls to `asset_edit_id_from_weak_reference(*bmain, ID_BR, ...)` across `brush_asset_ops.cc`, `paint.cc`, and `grease_pencil/erase.cc` — **missed by the `return` grep entirely** because the value appears as a function argument. **Fix:** `static_cast<ID_Type>(ID_XX)` at every such site. The bit value is a valid `short`; the cast is safe. Functions typed `short` (e.g. `RNA_type_to_ID_code`, `BKE_libblock_find_name`) are not affected — int-to-short implicit conversion is fine. **The detection grep must cover both shapes** — see updated checklist below.
+**Failure mode B — fold-down ID value passed where `ID_Type` is expected:** When a fold-down type value appears in any position — `return`, function argument, initializer — where the target type is `ID_Type` (or `std::optional<ID_Type>`), MSVC C2440/C2664 fires. The fold-down type is now a plain `int` constant, not an enum member. Found in three shapes: (1) `socket_type_to_id_type` in `node_group_operator.cc` returning `ID_VF`/`ID_MSK` — caught by a `return ID_XX` grep. (2) Six calls to `asset_edit_id_from_weak_reference(*bmain, ID_BR, ...)` across `brush_asset_ops.cc`, `paint.cc`, and `grease_pencil/erase.cc` — missed by the `return` grep. (3) `WM_operator_properties_id_lookup_from_name_or_session_uid(bmain, op->ptr, ID_MSK)` in `node_add.cc:1099` — also missed by the `return` grep. **Fix:** `static_cast<ID_Type>(ID_XX)` at every such site. The bit value is a valid `short`; the cast is safe. Functions typed `short` or `int` (e.g. `RNA_type_to_ID_code`, `BKE_libblock_find_name`, `WM_drag_is_ID_type`) are not affected — implicit conversion is fine. **The detection grep must cover both shapes, but the argument-position grep requires manual callee verification** — see checklist below.
 
-**Why both are invisible to blast radius grep:** Failure mode A uses the `FILTER_ID_MSK` constant name, not the `ID_MSK` token — a field-name grep-miss variant. Failure mode B surfaces only where a callee's parameter type is `ID_Type`; a token grep finds the constant but cannot know whether the call site's target type is a strict enum or a looser `short`/`int`.
+**Why both are invisible to blast radius grep:** Failure mode A uses the `FILTER_ID_MSK` constant name, not the `ID_MSK` token — a field-name grep-miss variant. Failure mode B surfaces only where a callee's parameter type is `ID_Type`; the argument-position grep finds the constant but cannot determine whether the matched call site's parameter is `ID_Type` vs `short`/`int` — that requires opening the callee's declaration. Every hit from the argument grep must be verified manually.
+
+**Known functions that take `ID_Type` (require cast):** `asset_edit_id_from_weak_reference`, `WM_operator_properties_id_lookup_from_name_or_session_uid`, `socket_type_to_id_type` (return). **Known functions that take `short`/`int` (no cast needed):** `BKE_libblock_find_name`, `WM_drag_is_ID_type`, `RNA_type_to_ID_code`, `which_libbase`, `do_versions_rename_id`. Add to this list as new cases surface.
 
 **Also caught in the same build:** `SOCK_TEXTURE` was not present in the `socket_type_to_id_type` switch, producing W4062 (unhandled enumerator). `ID_TE` was chiseled in 0.4.0 — `SOCK_TEXTURE` has no corresponding ID type and belongs in the `std::nullopt` group. **Fix:** add `case SOCK_TEXTURE:` to the nullopt group.
 
@@ -1109,8 +1114,13 @@ grep -rn "return ID_LP\b\|return ID_PAL\b\|return ID_LT\b\|return ID_MSK\b\|retu
 # Argument form catches call sites passing the value to an ID_Type parameter —
 # 'return' grep misses these entirely. Grep for the constant next to a comma or closing paren:
 grep -rn ",\s*ID_BR\b\|,\s*ID_VF\b\|,\s*ID_MSK\b\|,\s*ID_LT\b\|,\s*ID_PAL\b\|,\s*ID_LP\b" source/ --include="*.cc" --include="*.c"
-# For each hit, check whether the called function's matching parameter is typed ID_Type.
-# If yes: static_cast<ID_Type>(ID_XX). If short/int: no cast needed.
+# IMPORTANT: the grep cannot distinguish ID_Type parameters from short/int ones.
+# Every hit requires opening the callee's declaration to check the parameter type.
+# ID_Type → static_cast<ID_Type>(ID_XX). short/int → no cast needed.
+# Known ID_Type callees: asset_edit_id_from_weak_reference,
+#   WM_operator_properties_id_lookup_from_name_or_session_uid.
+# Known short/int callees: BKE_libblock_find_name, WM_drag_is_ID_type,
+#   RNA_type_to_ID_code, which_libbase, do_versions_rename_id.
 ```
 
 ---
