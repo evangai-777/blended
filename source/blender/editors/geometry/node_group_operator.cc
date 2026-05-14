@@ -761,6 +761,7 @@ static std::optional<ID_Type> socket_type_to_id_type(const eNodeSocketDatatype s
     case SOCK_MATRIX:
     case SOCK_BUNDLE:
     case SOCK_CLOSURE:
+    case SOCK_TEXTURE: /* ID_TE chiseled in Blended 0.4.0 */
       return std::nullopt;
     case SOCK_OBJECT:
       return ID_OB;
@@ -771,13 +772,13 @@ static std::optional<ID_Type> socket_type_to_id_type(const eNodeSocketDatatype s
     case SOCK_MATERIAL:
       return ID_MA;
     case SOCK_FONT:
-      return ID_VF;
+      return static_cast<ID_Type>(ID_VF);
     case SOCK_SCENE:
       return ID_SCE;
     case SOCK_TEXT_ID:
       return ID_TXT;
     case SOCK_MASK:
-      return ID_MSK;
+      return static_cast<ID_Type>(ID_MSK);
     case SOCK_SOUND:
       return ID_SO;
   }

@@ -1164,6 +1164,8 @@ enum IDRecalcFlag {
 #define FILTER_ID_MA (1ULL << 11)
 #define FILTER_ID_MC (1ULL << 13)
 #define FILTER_ID_ME (1ULL << 14)
+/* Kept: Mask is fold-down (not project data) but space_image/space_clip remap still needs it. */
+#define FILTER_ID_MSK (1ULL << 15)
 #define FILTER_ID_NT (1ULL << 16)
 #define FILTER_ID_OB (1ULL << 17)
 #define FILTER_ID_SCE (1ULL << 20)
