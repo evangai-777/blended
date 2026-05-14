@@ -955,6 +955,18 @@ grep -n "RNA_def_main_<types>\|RNA_def_<type>" source/blender/makesrna/intern/rn
 # RNA_def_main_<types> (two-parameter form, ends in PropertyRNA *cprop) — must be GONE.
 # RNA_def_<type> (single-parameter form, only BlenderRNA *brna) — must be PRESENT.
 # Cross-check: makesrna.cc table entry and rna_<type>.cc definition must also survive — all three together.
+
+# Scar 19: FILTER_ID_* survival for fold-down runtime filter code
+grep -rn "FILTER_ID_LP\|FILTER_ID_PAL\|FILTER_ID_LT\|FILTER_ID_MSK\|FILTER_ID_VF\|FILTER_ID_BR" source/ --include="*.cc" --include="*.c" --include="*.h" --include="*.hh"
+# Any hit = the define was removed but runtime code still uses it.
+# Fix: restore #define FILTER_ID_XX (1ULL << N) in DNA_ID.h, absent from FILTER_ID_ALL.
+# The bit value N must match the original — check git log on DNA_ID.h for the removed line.
+
+# Scar 19: fold-down ID type values used in ID_Type-typed return sites
+grep -rn "return ID_LP\b\|return ID_PAL\b\|return ID_LT\b\|return ID_MSK\b\|return ID_VF\b\|return ID_BR\b" source/ --include="*.cc" --include="*.c"
+# Any hit in a function returning ID_Type or std::optional<ID_Type> = C2440 on MSVC.
+# Fix: static_cast<ID_Type>(ID_XX) — the #define value is a valid short, the cast is safe.
+# Functions returning 'short' (e.g. RNA_type_to_ID_code) are fine — no cast needed.
 ```
 
 **General (all operations) — Scars 1, 2, 3, 5, 6, 14:**
@@ -1072,6 +1084,26 @@ If either grep returns hits, the type is non-trivial. Use `MEM_new<T>`. The stat
 **For the remaining Bucket 3 fold-downs** — before writing the Scar 10 allocator for any type, run the grep above on that type's DNA header. Do not assess from memory.
 
 ---
+
+### Scar 19: Fold-Down Types Demoted from ID_Type Enum — Two Failure Modes
+
+**What happened:** All six Bucket 3 fold-down types (`ID_LP`, `ID_PAL`, `ID_LT`, `ID_MSK`, `ID_VF`, `ID_BR`) were removed from the `ID_Type` enum in `DNA_ID_enums.h` and demoted to plain `#define` integer constants (`MAKE_ID2(...)`) in the deprecated block. This is correct — they are no longer registered ID types. But two distinct runtime failure modes surface from this demotion, both invisible to the blast radius grep.
+
+**Failure mode A — `FILTER_ID_*` missing from `DNA_ID.h`:** The fold-down removes `FILTER_ID_MSK` (and the others) from `DNA_ID.h`. Runtime code that uses `FILTER_ID_MSK` as an early-out guard in `contains_mappings_for_any()` calls — `space_image.cc:1214`, `space_clip.cc:1186` — produces C2065 at compile time. These sites are runtime remap functions that legitimately need the filter bit: `mask_info.mask` is still remapped at runtime, so skipping remap when no Mask IDs are in the remap set is a valid optimization that must remain. **Fix:** restore `#define FILTER_ID_MSK (1ULL << 15)` in `DNA_ID.h`, intentionally absent from `FILTER_ID_ALL` (Mask is not project data).
+
+**Failure mode B — `return ID_XX` in `std::optional<ID_Type>`-typed functions:** When a function returns `std::optional<ID_Type>` (or `ID_Type` directly) and one of its `return` statements returns a fold-down type value, MSVC C2440 fires: "cannot convert from int to std::optional<blender::ID_Type>." The fold-down type is now a plain `int` constant, not an enum member. `socket_type_to_id_type` in `node_group_operator.cc` had this for `SOCK_FONT → ID_VF` and `SOCK_MASK → ID_MSK`. **Fix:** `static_cast<ID_Type>(ID_VF)` / `static_cast<ID_Type>(ID_MSK)`. The bit value is a valid `short`; the cast is safe. Functions typed `short` (e.g. `RNA_type_to_ID_code` in `rna_ID.cc`) are not affected — int-to-short implicit conversion is fine.
+
+**Why both are invisible to blast radius grep:** Failure mode A uses the `FILTER_ID_MSK` constant name, not the `ID_MSK` token — a field-name grep-miss variant. Failure mode B uses the ID constant name in a return statement, which does appear in grep, but was not identified as a type-mismatch risk because the function return type is not visible from a simple token search.
+
+**Also caught in the same build:** `SOCK_TEXTURE` was not present in the `socket_type_to_id_type` switch, producing W4062 (unhandled enumerator). `ID_TE` was chiseled in 0.4.0 — `SOCK_TEXTURE` has no corresponding ID type and belongs in the `std::nullopt` group. **Fix:** add `case SOCK_TEXTURE:` to the nullopt group.
+
+**Mandatory post-fold-down greps (added to Codex checklist above):**
+```bash
+# Failure mode A: FILTER_ID_* survival
+grep -rn "FILTER_ID_LP\|FILTER_ID_PAL\|FILTER_ID_LT\|FILTER_ID_MSK\|FILTER_ID_VF\|FILTER_ID_BR" source/ --include="*.cc" --include="*.c" --include="*.h" --include="*.hh"
+# Failure mode B: fold-down ID values in ID_Type-typed return sites
+grep -rn "return ID_LP\b\|return ID_PAL\b\|return ID_LT\b\|return ID_MSK\b\|return ID_VF\b\|return ID_BR\b" source/ --include="*.cc" --include="*.c"
+```
 
 ---
 
