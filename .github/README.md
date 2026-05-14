@@ -11,7 +11,7 @@ Blended
 
 Blended is a fork of [Blender](https://www.blender.org) being rebuilt from the foundation up around one stated identity: **free 2D and 3D software tools, with an explicit focus on the craft of animation.**
 
-Currently at 0.5.0-dev — `ID_LP` fold-down CI-complete (Windows x64, build 74). All Bucket 3 fold-downs complete (pending CI): `ID_PAL`, `ID_LT`, `ID_MSK`, `ID_VF`, `ID_BR` ✓. Base: 0.4.0 CI-complete (build 70). Datablock audit closed: 39 → ~19 ID types.
+Currently at 0.6.0-dev — 0.5.0 CI-complete (Windows x64, build 81). All Bucket 3 fold-downs CI-complete: `ID_LP` ✓, `ID_PAL` ✓, `ID_LT` ✓, `ID_MSK` ✓, `ID_VF` ✓, `ID_BR` ✓. Datablock audit closed: 39 → ~19 ID types. Next: 0.6.x depsgraph audit.
 
 What Blended Is
 ---------------

@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.5.0-dev — ID_LP fold-down CI-complete (Windows x64, build 74 on commit `80002ae`). 0.4.0 base: CI-complete (Windows x64, build 70 on commit `7bd69df`). Bucket 3 fold-downs complete: `ID_LP` ✓, `ID_PAL` ✓ (pending CI), `ID_LT` ✓ (pending CI), `ID_MSK` ✓ (pending CI), `ID_VF` ✓ (pending CI), `ID_BR` ✓ (pending CI). Datablock audit closed: 39 → ~19 ID types.
+**Current version:** Blended 0.6.0-dev — 0.5.0 CI-complete (Windows x64, build 81 on commit `d6ee8478`). 0.5.0: all Bucket 3 fold-downs CI-complete (`ID_LP` ✓, `ID_PAL` ✓, `ID_LT` ✓, `ID_MSK` ✓, `ID_VF` ✓, `ID_BR` ✓). Datablock audit closed: 39 → ~19 ID types. Next: 0.6.x depsgraph audit.
 
 ---
 

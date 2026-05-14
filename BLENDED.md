@@ -1,6 +1,6 @@
 # BLENDED — Identity & Design Agreements
 
-**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.5.0-dev — ID_LP fold-down CI-complete (Windows x64, build 74, commit `80002ae`). Base: 0.4.0 CI-complete (Windows x64, build 70, commit `7bd69df`). Bucket 3 fold-downs complete: `ID_LP` ✓, `ID_PAL` ✓ (pending CI), `ID_LT` ✓ (pending CI), `ID_MSK` ✓ (pending CI), `ID_VF` ✓ (pending CI), `ID_BR` ✓ (pending CI). Datablock audit closed: 39 → ~19 ID types.
+**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.6.0-dev — 0.5.0 CI-complete (Windows x64, build 81, commit `d6ee8478`). All Bucket 3 fold-downs CI-complete: `ID_LP` ✓, `ID_PAL` ✓, `ID_LT` ✓, `ID_MSK` ✓, `ID_VF` ✓, `ID_BR` ✓. Datablock audit closed: 39 → ~19 ID types. Next: 0.6.x depsgraph audit.
 **Purpose:** So any future session, contributor, or Claude instance can pick up without re-litigating what's already been decided. Read this first before proposing changes to scope, identity, or architecture.
 
 ---

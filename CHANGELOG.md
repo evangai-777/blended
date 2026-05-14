@@ -55,7 +55,15 @@ carries a one-liner status per active item.
 
 ---
 
-## Unreleased — 0.5.0
+## Unreleased — 0.6.0
+
+Depsgraph audit — 0.6.x foundation layer. Scope TBD.
+
+---
+
+## 0.5.0 — 2026-05-14
+
+**CI-complete: Windows x64, build 81, commit `d6ee8478`.**
 
 Bucket 3 fold-downs — the last datablock-audit version. Six IDs that are property bags pretending to be first-class entities, each folded into the structure they actually belong to: `ID_BR` (Brush) → user state + shareable brush packs, `ID_PAL` (Palette) → brush property or inline, `ID_LT` (Lattice) → modifier, not a datablock, `ID_LP` (LightProbe) → merge into `ID_LA` with a type flag, `ID_MSK` (Mask) → hang off compositor NodeTree, `ID_VF` (VFont) → system font reference. Closes the datablock audit (39 → ~19 ID types).
 
@@ -239,7 +247,11 @@ True blast radius: 119 literal / ~135 true hits — fold-down, not chisel; all r
 
 **What stays (fold-down keeps all runtime code):** `brush.cc` (all non-IDTypeInfo functions: `BKE_brush_add`, `BKE_brush_copy`, `BKE_brush_free`, `BKE_brush_size_get/set`, all paint/sculpt brush functions), `BKE_brush.hh`, all `rna_brush.cc` RNA definitions, full depsgraph brush dispatch, all paint mode brush panel UI, all sculpt mode brush functionality, all `BKE_paintmode_*` / `BKE_paint_*` brush accessors. `bpy.context.tool_settings.*.brush` still valid — brushes accessed via tool settings, not `bpy.data.brushes`.
 
-**Claude AI contributor (2026-05-13):** ID_BR fold-down across 4 layers on branch `claude/update-ci-status-5uAPa`. 4 code commits pushed. Final Bucket 3 fold-down; datablock audit closed at 39 → ~19 ID types. Key distinction: Brush is the highest blast radius type in Bucket 3 (119 literal hits); every paint and sculpt mode touches bmain->brushes every frame. All runtime paint/sculpt code confirmed kept. BLT_I18NCONTEXT_ID_BRUSH retained (20+ borrowers). Two compile-error sites (scene.cc, ED_asset_type.hh) caught during audit and fixed in makesrna layer. Pending CI.
+**Claude AI contributor (2026-05-13):** ID_BR fold-down across 4 layers on branch `claude/update-ci-status-5uAPa`. 4 code commits pushed. Final Bucket 3 fold-down; datablock audit closed at 39 → ~19 ID types. Key distinction: Brush is the highest blast radius type in Bucket 3 (119 literal hits); every paint and sculpt mode touches bmain->brushes every frame. All runtime paint/sculpt code confirmed kept. BLT_I18NCONTEXT_ID_BRUSH retained (20+ borrowers). Two compile-error sites (scene.cc, ED_asset_type.hh) caught during audit and fixed in makesrna layer.
+
+**0.5.0 CI fixes (2026-05-14):** Six post-fold-down CI failures resolved across five PRs (#175–#179) on branch `ci-consideration`. All failures traced to Bucket 3 fold-down types demoted from `ID_Type` enum to plain `#define` int constants — MSVC rejects implicit int→enum conversions. Failures: (1) `FILTER_ID_MSK` undefined in space_image.cc/space_clip.cc remap guards (Scar 19 Mode A: restored `#define FILTER_ID_MSK` in DNA_ID.h, absent from `FILTER_ID_ALL`). (2) `socket_type_to_id_type()` returning `ID_VF`/`ID_MSK` — C2440; added `SOCK_TEXTURE` nullopt case + `static_cast<ID_Type>` on returns (Scar 19 Mode B). (3) Six `asset_edit_id_from_weak_reference(bmain, ID_BR, ...)` calls in brush_asset_ops.cc, paint.cc, erase.cc — C2664; `static_cast<ID_Type>(ID_BR)`. (4) `BKE_id_new_nomain<Brush>` in grease_pencil/paint.cc — C2039 (`Brush::id_type` removed by fold-down); added `BKE_brush_new_nomain()` to brush.cc/BKE_brush.hh using Scar 10 manual allocation. (5) `WM_operator_properties_id_lookup_from_name_or_session_uid(bmain, op->ptr, ID_MSK)` in node_add.cc — C2664; `static_cast<ID_Type>(ID_MSK)`. (6) `BLI_strncpy` undefined in brush.cc — C3861; missing `#include "BLI_string.h"` (surfaced only in full release build, not lite build). **Scar 19 documented** with both failure modes, detection greps, and known `ID_Type` vs `short/int` callee lists. CI green: Windows x64, build 81, commit `d6ee8478`.
+
+**Version bump (2026-05-14):** `BLENDED_VERSION_MINOR` updated from 5 to 6 in `BKE_blender_version.h`. 0.5.0 datablock audit layer CI-complete; 0.6.x depsgraph audit dev cycle begins. Packaged artifacts now correctly labelled `Blended-0.6.0-windows-x64`.
 
 ---
 
