@@ -553,7 +553,7 @@ static bool paint_brush_update_from_asset_reference(Main *bmain, Paint *paint)
   }
 
   Brush *brush = reinterpret_cast<Brush *>(
-      bke::asset_edit_id_from_weak_reference(*bmain, ID_BR, *paint->brush_asset_reference));
+      bke::asset_edit_id_from_weak_reference(*bmain, static_cast<ID_Type>(ID_BR), *paint->brush_asset_reference));
   BLI_assert(brush == nullptr || bke::asset_edit_id_is_editable(brush->id));
 
   /* Ensure we have a brush with appropriate mode to assign.
@@ -607,7 +607,7 @@ bool BKE_paint_brush_set(Main *bmain,
   }
 
   Brush *brush = reinterpret_cast<Brush *>(
-      bke::asset_edit_id_from_weak_reference(*bmain, ID_BR, brush_asset_reference));
+      bke::asset_edit_id_from_weak_reference(*bmain, static_cast<ID_Type>(ID_BR), brush_asset_reference));
   BLI_assert(brush == nullptr || !ID_IS_LINKED(brush) ||
              bke::asset_edit_id_is_editable(brush->id));
 
@@ -722,7 +722,7 @@ Brush *BKE_paint_brush_from_essentials(Main *bmain, const PaintMode paint_mode, 
   }
 
   return reinterpret_cast<Brush *>(
-      bke::asset_edit_id_from_weak_reference(*bmain, ID_BR, *weak_ref));
+      bke::asset_edit_id_from_weak_reference(*bmain, static_cast<ID_Type>(ID_BR), *weak_ref));
 }
 
 static void paint_brush_set_essentials_reference(Paint *paint, const char *name)
