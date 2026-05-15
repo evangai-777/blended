@@ -63,14 +63,65 @@ The 0.5.0 datablock audit stripped the ID registration machinery for 12 removed 
 
 0.6.x closes that seam. This is not new removals — the removals are done. It is the intentional folding-in of what 0.5.0 already decided, propagated through the depsgraph and viewport subsystems. Once the internals match the declared data model, the evaluation layer is honest, and 0.7.x additive work (launcher, product identity) can be built on a clean foundation.
 
-**Targets:**
-- Depsgraph builders (`deg_builder_nodes.cc`, `deg_builder_relations.cc`) — case dispatch for removed/folded types
-- Depsgraph query layer (`depsgraph_query.cc`) — OOB guards that were scaffolding, not permanent fixes
-- Draw/overlay layer — viewport dispatch for types that no longer exist as first-class project data
-- Editor dispatch — remaining Scar 19 enum-demotion side effects across makesrna, editors, python
-- EEVEE integration points — `→ true` workarounds introduced during ID_LP fold-down
-
 **Scope note:** Not a redesign of the depsgraph architecture. The depsgraph is the core animation engine (BLENDED.md §2 — non-negotiable). The audit makes it honest for the ~19-type world, not rebuilt.
+
+---
+
+**Pre-implementation blast radius audit (grepped 2026-05-15). ~95 total hits across depsgraph, draw, and editor layers.**
+
+Depsgraph layer — 34 hits across 5 files:
+
+| File | Hits | Classification |
+|------|------|----------------|
+| `deg_builder_nodes.cc` | 10 | 8× fold-down case dispatch (ID_LP, ID_MSK, ID_CU_LEGACY, ID_LT, ID_GD_LEGACY, ID_VF, ID_BR+PAL+assert); 2× ID_TE OOB scaffold comments |
+| `deg_builder_relations.cc` | 16 | 12× fold-down case dispatch; 3× ID_TE OOB scaffold comments; 1× geometry comment |
+| `depsgraph_query.cc` | 2 | OOB guards in `DEG_id_type_any_exists` + `DEG_id_type_updated` — `if (id_type_index < 0) return false` |
+| `depsgraph_tag.cc` | 5 | 4× fold-down dispatch (ID_CU_LEGACY, ID_LT, ID_LP, ID_GD_LEGACY, ID_PAL, ID_MSK); 1× OOB guard |
+| `depsgraph.cc` | 1 | OOB guard on `id_type_exist` write |
+
+Draw/EEVEE layer — 4 hits across 4 files:
+
+| File | Line | Hit | Classification |
+|------|------|-----|----------------|
+| `eevee_lightprobe_planar.cc` | 54 | `→ true` (was `DEG_id_type_any_exists(depsgraph, ID_LP)`) | (c) → true workaround |
+| `eevee_lightprobe_sphere.cc` | 24 | `→ true` (was `DEG_id_type_any_exists(depsgraph, ID_LP)`) | (c) → true workaround |
+| `overlay_bounds.hh` | 180 | `case ID_CU_LEGACY:` texspace | (a) fold-down dispatch — live |
+| `draw_resource.hh` | 149 | `case ID_CU_LEGACY:` orco data | (a) fold-down dispatch — live |
+
+Editors layer — ~57 hits across 14 files (all fold-down case dispatch unless noted):
+
+| File(s) | Hits | Notes |
+|---------|------|-------|
+| `interface_template_id.cc` | 9 | Browse dialogs for ID_CU_LEGACY, ID_LT, ID_BR, ID_MSK, ID_PAL, ID_LP, ID_VF — live UI |
+| `interface_icons.cc` | 8 | Icon dispatch + 1× `GS != ID_SCR_LEGACY` check (e) |
+| `outliner_draw/intern/tools/tree_element_id.cc` | ~30 | All fold-down dispatch; 1× ID_SCR_LEGACY comment (e) |
+| `render_opengl.cc` | 7 | Whitelist/blacklist for fold-down types — live |
+| `interface.cc` | 1 | `GS == ID_SCR_LEGACY` (e) — verify vs vestigial |
+| `interface_templates.cc` | 1 | `GS != ID_SCR_LEGACY` (e) — verify vs vestigial |
+| `space_image.cc:1214`, `space_clip.cc:1186` | 2 | `FILTER_ID_MSK` (d) — intentionally kept, Scar 19 |
+| `render_preview.cc:1289` | 1 | `#if 0` block `id_type == ID_TE` (e) — dead code, remove |
+
+Classification totals:
+
+| Class | Count | Action |
+|-------|-------|--------|
+| (a) Fold-down dispatch — runtime, intentional | ~71 | **Stays.** Live runtime code per fold-down protocol. Same rule as blenkernel. |
+| (b) OOB scaffolding guards | 5 | **Confirm as permanent.** Unregistered types correctly return false/no-op. Update comments from "scaffolding" to permanent design. |
+| (c) → true workarounds | 2 | **Evaluate or document.** EEVEE probe callers: replace with direct check, or confirm as permanent conservative-update strategy. |
+| (d) Scar 19 FILTER_ID refs | 2 | **Stays.** `FILTER_ID_MSK` in space_image/space_clip intentionally kept per Scar 19. |
+| (e) Lingering chiseled-type refs | 5 | **Small cleanup.** `ID_SCR_LEGACY` in 3 editor files (verify correct use vs vestigial); `ID_TE` `#if 0` dead code in render_preview.cc (remove). |
+
+**Key finding:** The fold-down dispatch in the depsgraph builders (`case ID_LP:` → `build_lightprobe()`, `case ID_MSK:` → `build_mask()`, `case ID_LT:`, `case ID_VF:`, etc.) is **live runtime code** — EEVEE probes render, compositor masks work, text objects display, lattice deformers deform. These are the Scar 2 equivalent for the depsgraph layer: kept because the functionality is alive, not because the removal is incomplete. 0.6.x does not touch them.
+
+The actual 0.6.x seam closure is the (b), (c), (e) items: ~10 lines of dead code, 5 guard comments to re-document as permanent, and 2 EEVEE workarounds to resolve or lock in.
+
+**0.6.x action items (from audit):**
+1. `depsgraph_query.cc` — confirm OOB guards as permanent architecture; update comments from "scaffolding" to "Blended permanent: unregistered types return false here."
+2. `depsgraph.cc`, `depsgraph_tag.cc` — same OOB guard documentation pass.
+3. `eevee_lightprobe_planar.cc:54`, `eevee_lightprobe_sphere.cc:24` — evaluate `→ true` workaround: replace with direct probe-exists check, or document as permanent conservative-update.
+4. `render_preview.cc:1289` — remove `#if 0` ID_TE dead code block.
+5. `interface.cc:1543`, `interface_icons.cc:1220`, `interface_templates.cc:85` — verify ID_SCR_LEGACY uses are correct allocation-path references, not vestigial.
+6. `deg_builder_nodes.cc:642-643`, `deg_builder_relations.cc:583-584` — document ID_BR/ID_PAL BLI_assert dispatch as intentional: brushes/palettes must not build depsgraph nodes.
 
 ---
 

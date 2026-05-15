@@ -94,7 +94,7 @@ BLI_listbase_clear(&bmain->linestyles);
 |---------|-------|--------|
 | 0.4.x | Datablock audit — 9 fossil removals (Bucket 5+6) | ✓ CI-complete (build 70) |
 | 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) | ✓ CI-complete (build 81, commit `d6ee8478`) |
-| 0.6.x | Evaluation model — propagate 0.5.0 data model through depsgraph/viewport; close seam between declared ~19-type world and internal dispatch | In progress |
+| 0.6.x | Evaluation model — close seam between declared ~19-type world and depsgraph/draw/editor dispatch; ~95 hits audited: ~71 live fold-down dispatch (stays), 5 OOB guards (confirm permanent), 2 EEVEE →true workarounds (resolve), 5 dead-code refs (remove) | In progress |
 | 0.7.x | App lenses — launcher as canonical workspace system + full product identity | Pending |
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary | Pending |
 | 0.9.x | `.blend` import — seamless read with dropped-data manifest output | Pending |
