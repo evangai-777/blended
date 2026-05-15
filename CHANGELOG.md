@@ -1,5 +1,7 @@
 # Blended Changelog
 
+**Developer/Publisher:** CHJ 3 Productions LLC (Indiana).
+
 Versioning policy: each minor version (0.x.0) corresponds to a completed
 foundation layer from the build order in BLENDED.md §4. Patch releases
 (0.x.y) are stable points within a layer — CI fixes, doc updates, build

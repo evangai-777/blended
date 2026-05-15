@@ -60,6 +60,8 @@ cmake --build build --target install
 Contributors
 ------------
 
+Blended is developed and published by **CHJ 3 Productions LLC** (Indiana).
+
 Developed with [Claude](https://anthropic.com) (Anthropic) as implementation partner across the full rebuild — version identity, CI pipeline, rig compatibility, update checker, and all datablock audit work. Per-release detail in [`CHANGELOG.md`](../CHANGELOG.md).
 
 Upstream Blender Resources

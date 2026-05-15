@@ -429,6 +429,12 @@ make check_mypy     # Python type checking
 ## Fork-Specific Patterns (What Makes Blended Different)
 
 ### Branding
+
+**Publisher:** Blended is developed and published by **CHJ 3 Productions LLC**, an Indiana-registered LLC. This is the legal entity behind the fork. All Blended-specific design decisions, the product identity, and fork-specific code additions are the work of CHJ 3 Productions LLC. Upstream Blender code retains its original copyright (Blender Foundation and contributors) under GPL-2.0-or-later — Blended inherits and preserves that license.
+
+**UI surfaces for CHJ 3 Productions LLC branding (pending implementation):** The splash screen and about dialog (`wm_splash_screen.cc`) are the right place to surface the publisher name in the running application. When that work is done, it belongs in the same file as the existing tagline and version label.
+
+**Code locations:**
 - `CMakeLists.txt:81` — `project(Blended)`
 - `source/blender/blenkernel/BKE_blender_version.h` — `BLENDED_VERSION_MAJOR/MINOR/PATCH` defines (currently 0.5.0; see Version Management section for bump procedure), plus `BKE_blended_version_string()` declaration
 - `source/blender/blenkernel/intern/blender.cc` — `blended_version_string` built in `blender_version_init()`, `BKE_blended_version_string()` implemented
