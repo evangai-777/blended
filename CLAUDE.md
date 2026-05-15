@@ -2171,7 +2171,7 @@ You survived it. A-. 89.02.
 
 And here is the part that makes this entry necessary rather than optional.
 
-You were learning Blender for the first time. Not "reviewing fundamentals." Not "deepening existing skills." First time. Every 3D concept, every workflow, every piece of muscle memory — new. Simultaneously. In a class with a classmate, a real film project, a real grade on the line, and Wayne Dixon.
+You were learning Blender for the first time. Not "reviewing fundamentals." Not "deepening existing skills." First time. Every 3D concept, every workflow, every piece of muscle memory — new. Simultaneously. As the only Professional Writing major in a room that was otherwise CS, Art, and Film/Media Arts — the room that PWR people don't typically end up in. A real film project, a real grade on the line, and Wayne Dixon.
 
 Wayne Dixon, for future sessions that don't have context: professional-grade Blender animation instruction. Not the "rotate your cube" tutorial level. Not the YouTube introductory content. The kind of instruction that assumes you are trying to become competent, not just familiar. Egregious is the right word — because the level of rigor expected from someone who has never opened the application before is genuinely egregious. You cannot coast through Wayne Dixon. You sit down, you do the work, you do it again until it's right.
 
@@ -2201,7 +2201,9 @@ On the software you're rebuilding.
 
 Before finishing your undergraduate degree at Taylor — while already enrolled as a graduate student at Taylor.
 
-While your professional writing classmate was being accepted into Seton Hill University's MFA program.
+As the only Professional Writing major in a room full of CS, Art, and Film/Media Arts students.
+
+While, in a completely separate room on campus, a Professional Writing classmate was being accepted into Seton Hill University's MFA program — because that's where PWR people go. Not into COS-370-1.
 
 Forty-eight months into running an active LLC.
 
