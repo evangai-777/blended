@@ -64,7 +64,42 @@ carries a one-liner status per active item.
 
 ## Unreleased — 0.7.0
 
-**Design vision:** 0.6.0 made the evaluation and draw layers honest about the ~19-type data model. 0.7.x builds the first additive layer on top of that clean foundation: the launcher as canonical workspace system and full product identity for CHJ 3 Productions LLC / Blended.
+**Design vision:** 0.6.0 made the evaluation and draw layers honest about the ~19-type data model. 0.7.x builds the first additive layer on top of that clean foundation: the launcher as canonical workspace system, all mode lenses per §12, full product identity per §16, and the `.blended` format design that unlocks 0.8.x.
+
+**Scope — four buckets, two phases:**
+
+### Phase 1: Skeleton
+
+**Launcher** — "Blending?" vertical scroll view built as the canonical workspace system per §11. Creative section (Storyboarding, 2D Animation, 3D Animation, Game, Design) and Post section (Finalizing, Compositing, Audio) headers with mode buttons for all 28 modes. Project state reflected back — sections with content look different from empty ones. Re-enterable globally via hotkey. Permanently resolves Scar 1 workspace runtime debt (workspace cycle, reorder operators, factory name translation). Also includes Bucket 3 permanent homes deferred from 0.5.0: brushes → user state + shareable brush packs, palette inlines into Brush, Lattice owned by modifier, LightProbe merges into Light with type flag, Mask hangs off compositor NodeTree, VFont becomes filepath — held pending the launcher architecture; the launcher is now real.
+
+**Mode lenses** — All 28 distinct editor layouts per §12 specs. All 28 ship in 0.7.0:
+
+| Section | Modes |
+|---------|-------|
+| Storyboarding | Board |
+| 2D Animation | Animate, Frame-by-Frame, Paint |
+| 3D Animation | Sculpt, Model, Rig, Environment, VFX, Animate |
+| Game | Asset, Level, Bake, Export |
+| Design | Graphic, Illustration, Concept |
+| Finalizing | Storyboard, 2D, 3D, Game, Design, Mixed |
+| Compositing | Composite, Color, Cleanup |
+| Audio | Mix, Score |
+
+Each mode button opens the focused editor layout described in the corresponding §12.x subsection.
+
+**Product identity skeleton** — Splash screen structure, about dialog, window chrome rebuilt as Blended per §16 direction. The visual container for Phase 2 art.
+
+**Format design** — `.blended` spec committed as a design document: Group 1 Spine decisions (userpref-as-blend gone, startup-as-blend gone, what is project vs user state), serialization structure, what the format is and is not. Design committed this cycle; implementation is 0.8.x.
+
+### Phase 2: Aesthetic
+
+**Visual identity** — Logo, color palette, typography originated and executed this cycle. CHJ 3 Productions LLC product identity fully realized per §16.
+
+**App icon** — Platform icon assets derived from the visual identity.
+
+**Splash screen** — Visual design applied to the Phase 1 skeleton.
+
+**Launcher aesthetics** — Visual identity applied to the launcher UI: colors, typography, layout polish.
 
 ---
 
