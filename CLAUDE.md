@@ -98,7 +98,7 @@ BLI_listbase_clear(&bmain->linestyles);
 | 0.7.x | App lenses — launcher as canonical workspace system + full product identity | Pending |
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary | Pending |
 | 0.9.x | `.blend` import — seamless read with dropped-data manifest output | Pending |
-| 1.0.0 | Foundation complete; basic pipeline navigation working; GitHub Pages launch — landing page, marketing, tech demo on the fork | Pending |
+| 1.0.0 | Foundation complete; basic pipeline navigation working. Two concurrent workstreams: (1) 1.0.0-dev runtime audit — developer runs the build, works through Known Runtime Artifacts + deferred debt checklists, reports findings to Claude for triage and fix; (2) GitHub Pages launch — landing, marketing, tech demo. Release tag when both clear. | Pending |
 
 ---
 
