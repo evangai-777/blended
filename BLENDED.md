@@ -1,7 +1,7 @@
 # BLENDED — Identity & Design Agreements
 
 **Developer/Publisher:** CHJ 3 Productions LLC (Indiana).
-**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82, commit `8f7dda22`). Depsgraph/draw/editor seam closure complete: OOB guards permanent, EEVEE always-update strategy locked in, dead code removed. First full foundation layer in one implementation commit. Next: 0.7.x launcher + product identity.
+**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82, commit `8f7dda22`). Depsgraph/draw/editor seam closure complete: OOB guards permanent, EEVEE always-update strategy locked in, dead code removed. First full foundation layer in one implementation commit. 0.7.x in progress: launcher as canonical workspace system (§11), all 28 mode lenses (§12), full product identity (§16), `.blended` format design.
 **Purpose:** So any future session, contributor, or Claude instance can pick up without re-litigating what's already been decided. Read this first before proposing changes to scope, identity, or architecture.
 
 ---

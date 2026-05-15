@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82 on commit `8f7dda22`). 0.6.0: depsgraph/draw/editor seam closure — OOB guards permanent, EEVEE always-update strategy locked in, dead code removed. First full foundation layer completed in a single implementation commit. Next: 0.7.x launcher + product identity.
+**Current version:** Blended 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82 on commit `8f7dda22`). 0.6.0: depsgraph/draw/editor seam closure — OOB guards permanent, EEVEE always-update strategy locked in, dead code removed. First full foundation layer completed in a single implementation commit. Next: 0.7.x — launcher as canonical workspace system (§11), all 28 mode lenses across all 8 pipeline sections (§12), full product identity (§16), `.blended` format design.
 
 ---
 
@@ -95,7 +95,7 @@ BLI_listbase_clear(&bmain->linestyles);
 | 0.4.x | Datablock audit — 9 fossil removals (Bucket 5+6) | ✓ CI-complete (build 70) |
 | 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) | ✓ CI-complete (build 81, commit `d6ee8478`) |
 | 0.6.x | Evaluation model — close seam between declared ~19-type world and depsgraph/draw/editor dispatch; ~95 hits audited: ~71 live fold-down dispatch (stays), 5 OOB guards (confirm permanent), 2 EEVEE →true workarounds (resolve), 5 dead-code refs (remove) | ✓ CI-complete (build 82, commit `8f7dda22`) |
-| 0.7.x | App lenses — launcher as canonical workspace system + full product identity | In progress |
+| 0.7.x | App lenses — launcher (§11), all 28 mode lenses (§12), full product identity (§16), `.blended` format design. Two phases: skeleton first, aesthetic second. | In progress |
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary | Pending |
 | 0.9.x | `.blend` import — seamless read with dropped-data manifest output | Pending |
 | 1.0.0 | Foundation complete; basic pipeline navigation working. Two concurrent workstreams: (1) 1.0.0-dev runtime audit — developer runs the build, works through Known Runtime Artifacts + deferred debt checklists, reports findings to Claude for triage and fix; (2) GitHub Pages launch — landing, marketing, tech demo. Release tag when both clear. | Pending |
