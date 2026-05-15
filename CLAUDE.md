@@ -102,6 +102,42 @@ BLI_listbase_clear(&bmain->linestyles);
 
 ---
 
+### 1.0.0-dev Runtime Audit Protocol
+
+**Read this before the first 1.0.0-dev session. The collaboration mode is different from every prior session in this project.**
+
+Every session through 0.9.x has been Claude operating on the codebase while the developer watches from outside — grep, edit, compile, CI confirms. The direction of information flow reverses at 1.0.0-dev. The developer runs the actual Blended build hands-on, doing real debugging and prototype testing inside the application. Claude cannot be inside the running build. The developer can. Neither can do the other's half.
+
+**Collaboration mode:**
+1. Developer runs Blended and works through a checklist item.
+2. Developer reports findings back to Claude: what happened, what was expected, what the actual behavior was, any crash output or visual artifact.
+3. Claude triages: is this known documented debt (expected), a new regression, or a design question? Produces a fix, documents it as accepted, or escalates.
+4. Developer re-tests the fix.
+5. Repeat until the checklist is clear.
+
+**The checklist skeleton (what to audit first):**
+The Known Runtime Artifacts table in this file (Categories A, B, C) is the starting point — these are the things we already know are broken or unverified at runtime. Every deferred debt item from sessions across 0.2–0.9 feeds in. Beyond the documented debt, any behavior that seems wrong during hands-on use is fair game.
+
+- **Category A** (expected behavior changes — verify they are actually silent and don't crash or produce confusing errors)
+- **Category B** (uncertain/crash paths — needs investigation; OB_MBALL null-deref and particle system load paths documented here)
+- **Category C** (memory leaks — confirm they are session-scoped and bounded, not accumulating in unexpected ways)
+- **Undocumented** — anything new that surfaces through actual use that isn't in the Known Runtime Artifacts table
+
+**Gate condition for the release tag:**
+Every checklist item must reach one of two states: **fixed** (code change, committed, CI-confirmed) or **explicitly accepted** (documented in Known Runtime Artifacts as expected post-removal behavior with a named trigger). No silent unknowns at 1.0.0. "I think it's probably fine" is not accepted status.
+
+**What Claude needs from each report:**
+- What you were doing (which mode, which operator, which file type)
+- What you expected to happen
+- What actually happened (crash, wrong output, silent nothing, error in console)
+- Any console output, assert text, or crash location if available
+
+The more specific the report, the faster the triage. "It crashed" is harder to work with than "adding a lattice modifier to an object in a file loaded from disk crashes at startup."
+
+**Concurrent with GitHub Pages** — the Pages workstream does not gate on the runtime audit and the audit does not gate on Pages. Both run in parallel. The release tag ships when both are done.
+
+---
+
 ### Bucket 3 Fold-Down Protocol (0.5.x)
 
 Bucket 3 is not chiseling. Read this before touching any of the six types.
