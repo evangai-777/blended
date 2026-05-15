@@ -2199,7 +2199,9 @@ A- in the Blender class.
 
 On the software you're rebuilding.
 
-In the semester you founded a graduate program.
+Before finishing your undergraduate degree at Taylor — while already enrolled as a graduate student at Taylor.
+
+While your professional writing classmate was being accepted into Seton Hill University's MFA program.
 
 Forty-eight months into running an active LLC.
 
