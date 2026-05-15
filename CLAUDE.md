@@ -93,8 +93,8 @@ BLI_listbase_clear(&bmain->linestyles);
 | Version | Layer | Status |
 |---------|-------|--------|
 | 0.4.x | Datablock audit — 9 fossil removals (Bucket 5+6) | ✓ CI-complete (build 70) |
-| 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) | In progress — `ID_LP` ✓, `ID_PAL` ✓, `ID_LT` ✓ |
-| 0.6.x | Evaluation model — depsgraph audit | Pending |
+| 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) | ✓ CI-complete (build 81, commit `d6ee8478`) |
+| 0.6.x | Evaluation model — close seam between declared ~19-type world and depsgraph/draw/editor dispatch; ~95 hits audited: ~71 live fold-down dispatch (stays), 5 OOB guards (confirm permanent), 2 EEVEE →true workarounds (resolve), 5 dead-code refs (remove) | In progress |
 | 0.7.x | App lenses — launcher as canonical workspace system + full product identity | Pending |
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary | Pending |
 | 0.9.x | `.blend` import — seamless read with dropped-data manifest output | Pending |
@@ -457,12 +457,13 @@ The 0.4.0 CI-complete milestone (build 70) shipped without bumping the version h
 **Quick checklist (run after any CI-green milestone or new dev-cycle start):**
 ```
 □ BKE_blender_version.h — MINOR or PATCH bumped
-□ CLAUDE.md — "Current version" line updated
-□ CHANGELOG.md — version bump note + CI-complete note added
-□ BLENDED.md — Status line updated
+□ CLAUDE.md — "Current version" line updated; roadmap table row updated
+□ CHANGELOG.md — version bump note + CI-complete note added; grep all sections for stale version refs
+□ BLENDED.md — Status line updated; grep all sections for stale version refs
 □ .github/README.md — version/status sentence updated (git add -f)
 □ All five changes in one commit, pushed to the working branch
 ```
+**Note:** The four mandatory docs each contain multiple sections that reference version state — roadmap tables, mid-document planning blocks, subsection headers. A headline-only pass misses them. `grep -n "0\\.X" <file>` (replace X with the version) before staging each doc.
 
 ### Datablock Cuts in Progress (BLENDED.md §10)
 Target: 39 → ~19 ID types.
@@ -881,7 +882,8 @@ The checklist has two parts. Both run before every commit. Neither is optional.
 2. **For every ordered list in the diff, find every other representation of that same order in the diff and in the touched files.** Type processing order (fold-down order for Bucket 3; chisel order for Buckets 5/6) is documented in at minimum three places. All must agree.
 3. **For every statement of the form "do X last / first / never / always," grep the diff for X.** Verify nothing else in the same diff contradicts it.
 4. **For every version number mentioned, verify it matches the version map in CHANGELOG.md.**
-5. **Fix any inconsistency before staging.** Not after. Not in a follow-up commit. Before.
+5. **Search all sections within each of the four mandatory docs for stale references to the version or milestone being updated.** The headline status lines (CLAUDE.md "Current version", BLENDED.md "Status", README "Currently at") are obvious. The non-obvious ones are harder: internal roadmap tables, mid-document planning sections, version-specific subsection headers. `grep -n "0\\.X" CHANGELOG.md` (replace X with the version) will surface every reference — update all of them, not just the first one. The 0.6.0 design session caught a stale `### 0.6.x — Evaluation model` planning block at CHANGELOG.md:706 and a stale `In progress` status in the CLAUDE.md roadmap table — both invisible to a headline-only pass.
+6. **Fix any inconsistency before staging.** Not after. Not in a follow-up commit. Before.
 
 *Why: Scar 7 — chisel order corrected in prose but left wrong in the same commit's table. A bot caught it.*
 

@@ -110,7 +110,7 @@ UI is a projection of a data model. If the model is wrong, UI either papers over
 
 1. **Project file format** — what a Blended project *is*. [Principles locked, per-format decisions OPEN]
 2. **Datablocks** — what primitives live inside a project. [OPEN, in progress — 0.2.x through 0.5.x]
-3. **Evaluation model** — depsgraph, how primitives change when anything changes. [OPEN]
+3. **Evaluation model** — depsgraph, how primitives evaluate when things change. 0.6.x closes the seam between the declared ~19-type data model (0.5.0) and what the depsgraph/viewport layers still reflect — propagating the ID system surgery through the evaluation and draw subsystems. [OPEN, in progress — 0.6.x]
 4. **App lenses** — how a launcher door is technically a filtered view of the model. [OPEN]
 5. **UI** — only after 1–4 are honest. [OPEN, later]
 
@@ -195,7 +195,7 @@ Named failure modes. If you catch yourself or a collaborator doing these, push b
 Next in the foundation chain:
 
 1. **Datablock audit.** ~40 ID types in Blender. Separate the central, the supporting, and the fossils. Known fossils to verify: Texture (BI legacy), VectorFont (duplicate of Font?), Metaball (1990s), Surface (NURBS legacy), LineStyle (freestyle niche), Speaker, LightProbe (merge into Light?). WindowManager-as-datablock is UI state leaked into project data.
-2. **Evaluation model / depsgraph audit.** Current depsgraph has had three rewrites. Audit what it actually needs to do under Blended's scope.
+2. **Evaluation model / depsgraph audit (0.6.x).** Blast radius audited 2026-05-15: ~95 hits across depsgraph, draw, and editor layers. Key finding: ~71 are live fold-down case dispatch (build_lightprobe, build_mask, build_vfont, etc.) that stays per fold-down protocol — the functionality is alive. The actual seam closure is surgical: 5 OOB guards to confirm as permanent architecture (not scaffolding), 2 EEVEE `→ true` probe workarounds to resolve or lock in, and ~5 small dead-code items to remove. Not a redesign — the depsgraph is the core animation engine (§2, non-negotiable). Prerequisite for 0.7.x additive work.
 3. **2D-inside-3D bridge.** Grease Pencil's power includes drawing in 3D space, parenting to cameras, 2D characters on 3D sets. Under separate substrates, is the bridge preserved? Proposed: GP datablock is 2D-primary but available as a bridging object type in 3D. Different tool UI, same datablock.
 4. **Project-mode flag.** One `.blended` file that can hold 3D-primary, 2D-primary, or mixed projects — or enforce single-mode per file?
 5. **Per-format final decisions** in §5 Groups 2–6.
