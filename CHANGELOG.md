@@ -23,7 +23,7 @@ carries a one-liner status per active item.
 | 0.7.x | App lenses — launcher as canonical workspace system + full product identity |
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary |
 | 0.9.x | `.blend` import — seamless read with dropped-data manifest output |
-| 1.0.0 | Foundation complete; basic pipeline navigation working |
+| 1.0.0 | Foundation complete; basic pipeline navigation working; GitHub Pages launch |
 
 ---
 
@@ -837,6 +837,13 @@ walk up, pick a section from the launcher, do real creative work, and save a
 Not "feature-complete." Scope is wide; 1.0 is the point where the shape of the
 rebuild is true. Post-1.0 work fills in pipeline sections, adds modes, and
 follows the community where Blended's scope takes it.
+
+**GitHub Pages launch.** Resurrect GitHub Pages on the fork as the public face
+of Blended: landing page, marketing copy, and a tech demo page showing the
+rebuild in action — what was removed, what remains, what the data model looks
+like now. The fork's own repo as the distribution point; CI artifacts already
+live on GitHub Releases, so Pages is the last missing piece of a coherent public
+identity. Target: live at 1.0.0 tag.
 
 ---
 
