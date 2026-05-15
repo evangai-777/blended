@@ -6,6 +6,11 @@ foundation layer from the build order in BLENDED.md §4. Patch releases
 repairs. 1.0.0 ships when all six foundation layers are honest and basic
 pipeline navigation works.
 
+From 1.0.0 onward, standard semantic versioning: **1.0.1+** for patch releases
+(bug fixes, CI repairs, doc updates); **1.1.0+** for minor version bumps (new
+features, pipeline sections, modes); **2.0.0+** for major version bumps
+(breaking changes, architectural shifts).
+
 In-flight work lives in the *Unreleased* section below. Design rationale
 lives in BLENDED.md. Session instructions live in CLAUDE.md. The README
 carries a one-liner status per active item.

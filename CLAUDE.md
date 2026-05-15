@@ -470,6 +470,9 @@ Bump `BLENDED_VERSION_MINOR` on the **first commit of a new dev cycle**, not whe
 **When to bump PATCH:**
 Bump `BLENDED_VERSION_PATCH` for CI fixes, doc updates, and build repairs within an existing layer that don't add new foundation work. A patch release is a stable point within a cycle — e.g., the ID_LP CI-fix PRs within 0.5.x would be 0.5.1 if they warranted a tagged release.
 
+**Post-1.0.0 — standard semantic versioning from here:**
+Once the 1.0.0 release tag ships, the foundation-layer versioning scheme retires. From 1.0.0 onward: `BLENDED_VERSION_PATCH` bumps for bug fixes, CI repairs, and doc updates (1.0.1, 1.0.2, …); `BLENDED_VERSION_MINOR` bumps for new features, pipeline sections, and modes (1.1.0, 1.2.0, …); `BLENDED_VERSION_MAJOR` bumps for breaking changes or major architectural shifts (2.0.0, …). The four-mandatory-docs update procedure and the quick checklist still apply to every version bump — only the bump rules change.
+
 **Version lag — what happened with 0.3.0 → 0.4.0:**
 The 0.4.0 CI-complete milestone (build 70) shipped without bumping the version header from 0.3.0. The product ran as "0.3.0" for the entire 0.5.x dev cycle until manually caught. The fix: treat the version bump as a required checklist item when a layer goes CI-green, not as something to do later.
 
