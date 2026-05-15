@@ -57,7 +57,20 @@ carries a one-liner status per active item.
 
 ## Unreleased — 0.6.0
 
-Depsgraph audit — 0.6.x foundation layer. Scope TBD.
+**Design vision:** 0.5.0 declared the ~19-type data model. 0.6.x makes the evaluation and draw layers honest about it.
+
+The 0.5.0 datablock audit stripped the ID registration machinery for 12 removed and 6 folded-down types, but the consequences of that surgery haven't fully propagated. The depsgraph builders, viewport draw layer, and editor dispatch still carry the old 39-type topology: case statements for types that are no longer first-class, OOB guards added as temporary scaffolding during fold-downs, `→ true` workarounds (e.g. EEVEE probe callers after ID_LP), and missed Scar 19 enum-demotion side effects. The skeleton of the old world is still visible under the skin of the new one.
+
+0.6.x closes that seam. This is not new removals — the removals are done. It is the intentional folding-in of what 0.5.0 already decided, propagated through the depsgraph and viewport subsystems. Once the internals match the declared data model, the evaluation layer is honest, and 0.7.x additive work (launcher, product identity) can be built on a clean foundation.
+
+**Targets:**
+- Depsgraph builders (`deg_builder_nodes.cc`, `deg_builder_relations.cc`) — case dispatch for removed/folded types
+- Depsgraph query layer (`depsgraph_query.cc`) — OOB guards that were scaffolding, not permanent fixes
+- Draw/overlay layer — viewport dispatch for types that no longer exist as first-class project data
+- Editor dispatch — remaining Scar 19 enum-demotion side effects across makesrna, editors, python
+- EEVEE integration points — `→ true` workarounds introduced during ID_LP fold-down
+
+**Scope note:** Not a redesign of the depsgraph architecture. The depsgraph is the core animation engine (BLENDED.md §2 — non-negotiable). The audit makes it honest for the ~19-type world, not rebuilt.
 
 ---
 
@@ -692,15 +705,14 @@ into Scene properties?), `ID_KE` (survey real projects before collapsing into ge
 
 ### 0.6.x — Evaluation model
 
-Depsgraph audit under Blended's scope. Current depsgraph has had three rewrites
-and carries assumptions from all three eras. Questions:
-
-- What evaluation paths actually exist in Blended's scope?
-- Which depsgraph node types survive the datablock cuts above?
-- What's kept because it's right vs kept because removing it is hard?
-
-The ID type cuts in 0.2–0.5 will have already removed dead branches from the
-depsgraph. This milestone cleans up what remains.
+The 0.5.0 datablock audit declared the ~19-type data model. 0.6.x makes the
+evaluation and draw layers honest about it. The depsgraph builders, viewport
+draw layer, and editor dispatch still carry the old 39-type topology — case
+statements for removed/folded types, OOB scaffolding guards, `→ true` workarounds,
+and Scar 19 enum-demotion side effects. 0.6.x closes that seam: not new removals,
+but the intentional folding-in of what 0.5.0 already decided, propagated through
+the depsgraph and viewport subsystems. Once complete, the evaluation layer is
+honest, and 0.7.x additive work (launcher, product identity) begins.
 
 ---
 
