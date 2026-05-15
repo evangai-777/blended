@@ -868,7 +868,8 @@ void DEG_graph_id_type_tag(Depsgraph *depsgraph, short id_type)
     DEG_graph_id_type_tag(depsgraph, ID_SCE);
   }
   const int id_type_index = BKE_idtype_idcode_to_index(id_type);
-  /* Guard against removed ID types (e.g. ID_CU_LEGACY) whose CASE_IDINDEX was removed. */
+  /* Blended permanent: fold-down and chiseled types return -1 here. No id_type_updated
+   * slot exists for them — silently skip tagging, which is correct. */
   if (id_type_index < 0) {
     return;
   }

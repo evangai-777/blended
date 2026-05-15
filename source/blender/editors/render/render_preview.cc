@@ -1284,15 +1284,6 @@ static void shader_preview_render(ShaderPreview *sp, ID *id, int split, int firs
   /* unassign the pointers, reset vars */
   preview_prepare_scene(sp->bmain, sp->scene, nullptr, GS(id->name), sp);
 
-  /* XXX bad exception, end-exec is not being called in render, because it uses local main. */
-#if 0
-  if (idtype == ID_TE) {
-    Tex *tex = (Tex *)id;
-    if (tex->use_nodes && tex->nodetree) {
-      ntreeEndExecTree(tex->nodetree);
-    }
-  }
-#endif
 }
 
 /* runs inside thread for material and icons */

@@ -51,7 +51,10 @@ void PlanarProbeModule::init()
   else {
     /* TODO(jbakker): should we check on the subtype as well? Now it also populates even when
      * there are other light probes in the scene. */
-    update_probes_ = true; /* ID_LP deregistered; conservatively always update */
+    /* Blended permanent: ID_LP is not registered, so DEG_id_type_any_exists(ID_LP) always
+     * returns false. Conservative always-update is the correct render-path strategy — probe
+     * data may exist in the scene even though the depsgraph cannot confirm it. */
+    update_probes_ = true;
   }
 
   do_display_draw_ = false;

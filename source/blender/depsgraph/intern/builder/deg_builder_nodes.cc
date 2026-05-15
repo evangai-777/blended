@@ -641,6 +641,10 @@ void DepsgraphNodeBuilder::build_id(ID *id, const bool force_be_visible)
     case ID_LI:
     case ID_BR:
     case ID_PAL:
+      /* Blended permanent: ID_BR and ID_PAL are fold-down types — not first-class project
+       * data, but still alive at runtime (Scar 2 listbases). They never need COW evaluation
+       * (no per-frame geometry or shader state), so build_generic_id covers their animdata
+       * and ID properties. This dispatch is intentional, not a migration artifact. */
       BLI_assert(!deg_eval_copy_is_needed(id_type));
       build_generic_id(id);
       break;

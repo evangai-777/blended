@@ -1,10 +1,17 @@
 # Blended Changelog
 
+**Developer/Publisher:** CHJ 3 Productions LLC (Indiana).
+
 Versioning policy: each minor version (0.x.0) corresponds to a completed
 foundation layer from the build order in BLENDED.md §4. Patch releases
 (0.x.y) are stable points within a layer — CI fixes, doc updates, build
 repairs. 1.0.0 ships when all six foundation layers are honest and basic
 pipeline navigation works.
+
+From 1.0.0 onward, standard semantic versioning: **1.0.1+** for patch releases
+(bug fixes, CI repairs, doc updates); **1.1.0+** for minor version bumps (new
+features, pipeline sections, modes); **2.0.0+** for major version bumps
+(breaking changes, architectural shifts).
 
 In-flight work lives in the *Unreleased* section below. Design rationale
 lives in BLENDED.md. Session instructions live in CLAUDE.md. The README
@@ -23,7 +30,7 @@ carries a one-liner status per active item.
 | 0.7.x | App lenses — launcher as canonical workspace system + full product identity |
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary |
 | 0.9.x | `.blend` import — seamless read with dropped-data manifest output |
-| 1.0.0 | Foundation complete; basic pipeline navigation working |
+| 1.0.0 | Foundation complete; basic pipeline navigation working; GitHub Pages launch |
 
 ---
 
@@ -116,12 +123,24 @@ Classification totals:
 The actual 0.6.x seam closure is the (b), (c), (e) items: ~10 lines of dead code, 5 guard comments to re-document as permanent, and 2 EEVEE workarounds to resolve or lock in.
 
 **0.6.x action items (from audit):**
-1. `depsgraph_query.cc` — confirm OOB guards as permanent architecture; update comments from "scaffolding" to "Blended permanent: unregistered types return false here."
-2. `depsgraph.cc`, `depsgraph_tag.cc` — same OOB guard documentation pass.
-3. `eevee_lightprobe_planar.cc:54`, `eevee_lightprobe_sphere.cc:24` — evaluate `→ true` workaround: replace with direct probe-exists check, or document as permanent conservative-update.
-4. `render_preview.cc:1289` — remove `#if 0` ID_TE dead code block.
-5. `interface.cc:1543`, `interface_icons.cc:1220`, `interface_templates.cc:85` — verify ID_SCR_LEGACY uses are correct allocation-path references, not vestigial.
-6. `deg_builder_nodes.cc:642-643`, `deg_builder_relations.cc:583-584` — document ID_BR/ID_PAL BLI_assert dispatch as intentional: brushes/palettes must not build depsgraph nodes.
+1. `depsgraph_query.cc` — confirm OOB guards as permanent architecture; update comments from "scaffolding" to "Blended permanent: unregistered types return false here." ✓
+2. `depsgraph.cc`, `depsgraph_tag.cc` — same OOB guard documentation pass. ✓
+3. `eevee_lightprobe_planar.cc:54`, `eevee_lightprobe_sphere.cc:24` — evaluate `→ true` workaround: replace with direct probe-exists check, or document as permanent conservative-update. ✓ **Documented as permanent conservative-update.** DEG_id_type_any_exists(ID_LP) will always return false since ID_LP is unregistered; probe data may still exist in the scene, so always-update for the render path is the correct strategy, not a workaround.
+4. `render_preview.cc:1289` — remove `#if 0` ID_TE dead code block. ✓
+5. `interface.cc:1543`, `interface_icons.cc:1220`, `interface_templates.cc:85` — verify ID_SCR_LEGACY uses are correct allocation-path references, not vestigial. ✓ **All three confirmed live.** `interface.cc:1543` dispatches RNA property context for screen-owned areas; `interface_icons.cc:1220` prevents async icon preview jobs for screens (off-screen crash); `interface_templates.cc:85` controls preview size for screen vs. non-screen IDs. No code change needed.
+6. `deg_builder_nodes.cc:642-643`, `deg_builder_relations.cc:583-584` — document ID_BR/ID_PAL BLI_assert dispatch as intentional: brushes/palettes must not build depsgraph nodes. ✓
+
+**Session note (2026-05-15):** 8 files touched across depsgraph, draw, and editors. All (b) and (c) audit items resolved. The seam closure is complete: every temporary comment or workaround introduced during the 0.5.x fold-downs has been either removed (dead code) or relabeled as permanent Blended architecture. The depsgraph, draw, and editor layers are now internally consistent with the declared ~19-type data model. No logic changed — this is a documentation and dead-code pass only.
+
+**Files changed:**
+- `depsgraph_query.cc` — "Blended permanent" comments added to `DEG_id_type_updated` and `DEG_id_type_any_exists` OOB guards
+- `depsgraph.cc` — `add_id_node` OOB guard comment updated from "Guard against removed" to permanent-architecture phrasing
+- `depsgraph_tag.cc` — `DEG_graph_id_type_tag` OOB guard comment updated
+- `deg_builder_nodes.cc` — ID_BR/ID_PAL dispatch block documented as intentional fold-down behavior
+- `deg_builder_relations.cc` — same
+- `eevee_lightprobe_planar.cc` — conservative always-update documented as permanent render-path strategy
+- `eevee_lightprobe_sphere.cc` — same
+- `render_preview.cc` — removed 9-line `#if 0` ID_TE dead code block (no-op since 0.4.0)
 
 ---
 
@@ -825,6 +844,46 @@ walk up, pick a section from the launcher, do real creative work, and save a
 Not "feature-complete." Scope is wide; 1.0 is the point where the shape of the
 rebuild is true. Post-1.0 work fills in pipeline sections, adds modes, and
 follows the community where Blended's scope takes it.
+
+**1.0.0-dev runs two concurrent workstreams to the release tag.**
+
+**Workstream A — Runtime audit and developer-driven triage loop.**
+Everything through 0.9.x has been code surgery from the outside in — grep,
+compile, fix, push, CI confirms. 1.0.0-dev flips the direction: the developer
+runs the actual Blended build hands-on, doing real debugging and prototype
+testing inside the application. This is the first time in the project where the
+developer is the test subject.
+
+The audit is checklist-driven. Starting skeletons come from existing
+documentation: the Known Runtime Artifacts table in CLAUDE.md (Category A
+expected behavior changes, Category B uncertain/crash paths, Category C memory
+leaks), all deferred debt items accumulated across 0.2–0.9, and the runtime
+consequences of every chisel and fold-down documented in session notes. These
+are the things we know are broken or unverified. The developer works through
+them systematically, plus anything new that surfaces through actual use.
+
+Collaboration mode: developer runs Blended, finds something, reports back to
+Claude with findings. Claude triages — is this known debt, a new regression, or
+expected post-removal behavior? — and either produces a fix, documents it as
+accepted, or escalates it to a design question. Developer re-tests. Loop repeats
+until the checklist is clear. This is qualitatively different from the prior
+sessions: the developer is reporter and verifier; Claude is analyst and fix
+applier. Neither can do the other's half.
+
+The 1.0.0 release tag is gated on the checklist, not on a build number. All
+triaged issues must be either fixed or explicitly accepted (documented as
+intended post-removal behavior or deferred with a named trigger). No silent
+unknowns at ship.
+
+**Workstream B — GitHub Pages launch.**
+Resurrect GitHub Pages on the fork as the public face of Blended: landing page,
+marketing copy, and a tech demo page showing the rebuild in action — what was
+removed, what remains, what the data model looks like now. The fork's own repo
+as the distribution point; CI artifacts already live on GitHub Releases, so
+Pages is the last missing piece of a coherent public identity.
+
+The two workstreams are genuinely concurrent — Pages work does not gate on the
+runtime audit and vice versa. The release tag ships when both are done.
 
 ---
 

@@ -111,6 +111,9 @@ float DEG_get_ctime(const Depsgraph *graph)
 bool DEG_id_type_updated(const Depsgraph *graph, short id_type)
 {
   const int id_type_index = BKE_idtype_idcode_to_index(id_type);
+  /* Blended permanent: fold-down and chiseled types (ID_LP, ID_BR, ID_CU_LEGACY, etc.) are
+   * unregistered — BKE_idtype_idcode_to_index returns -1. Unregistered types are never
+   * added to the depsgraph, so reporting "not updated" is correct, not a fallback. */
   if (id_type_index < 0) {
     return false;
   }
@@ -135,6 +138,8 @@ bool DEG_id_type_any_updated(const Depsgraph *graph)
 bool DEG_id_type_any_exists(const Depsgraph *depsgraph, short id_type)
 {
   const int id_type_index = BKE_idtype_idcode_to_index(id_type);
+  /* Blended permanent: fold-down and chiseled types return -1 here. Unregistered types
+   * have no IDNodes in the depsgraph, so "none exist" is the correct answer. */
   if (id_type_index < 0) {
     return false;
   }

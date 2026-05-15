@@ -36,7 +36,7 @@ What's Different
 On the Horizon
 --------------
 
-Six foundation layers — one minor version each, 1.0 when all six are honest. **0.6.x:** depsgraph and viewport audit — propagating the 0.5.0 data model decisions through the evaluation and draw layers. **0.7.x:** launcher and full product identity. Full roadmap in [`CHANGELOG.md`](../CHANGELOG.md).
+Six foundation layers — one minor version each, 1.0 when all six are honest. **0.6.x:** depsgraph and viewport audit — propagating the 0.5.0 data model decisions through the evaluation and draw layers. **0.7.x:** launcher and full product identity. **1.0.0:** foundation complete, two concurrent workstreams — runtime audit (developer runs the build, checklists, triage loop with Claude) and GitHub Pages launch (landing page, marketing, tech demo). Release tag when both clear. Full roadmap in [`CHANGELOG.md`](../CHANGELOG.md).
 
 Building from Source
 --------------------
@@ -59,6 +59,8 @@ cmake --build build --target install
 
 Contributors
 ------------
+
+Blended is developed and published by **CHJ 3 Productions LLC** (Indiana).
 
 Developed with [Claude](https://anthropic.com) (Anthropic) as implementation partner across the full rebuild — version identity, CI pipeline, rig compatibility, update checker, and all datablock audit work. Per-release detail in [`CHANGELOG.md`](../CHANGELOG.md).
 
