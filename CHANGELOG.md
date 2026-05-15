@@ -26,8 +26,8 @@ carries a one-liner status per active item.
 | 0.3.x | Datablock audit — UI-state removals: ID_SCR, ID_WM |
 | 0.4.x | Datablock audit — fossil removals (Buckets 5 + 6): 9 ID types |
 | 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) |
-| 0.6.x | Evaluation model — depsgraph audit |
-| 0.7.x | App lenses — launcher as canonical workspace system + full product identity |
+| 0.6.x | Evaluation model — depsgraph audit | ✓ CI-complete (build 82, commit `8f7dda22`) |
+| 0.7.x | App lenses — launcher as canonical workspace system + full product identity | In progress |
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary |
 | 0.9.x | `.blend` import — seamless read with dropped-data manifest output |
 | 1.0.0 | Foundation complete; basic pipeline navigation working; GitHub Pages launch |
@@ -62,15 +62,19 @@ carries a one-liner status per active item.
 
 ---
 
-## Unreleased — 0.6.0
+## Unreleased — 0.7.0
 
-**Design vision:** 0.5.0 declared the ~19-type data model. 0.6.x makes the evaluation and draw layers honest about it.
+**Design vision:** 0.6.0 made the evaluation and draw layers honest about the ~19-type data model. 0.7.x builds the first additive layer on top of that clean foundation: the launcher as canonical workspace system and full product identity for CHJ 3 Productions LLC / Blended.
 
-The 0.5.0 datablock audit stripped the ID registration machinery for 12 removed and 6 folded-down types, but the consequences of that surgery haven't fully propagated. The depsgraph builders, viewport draw layer, and editor dispatch still carry the old 39-type topology: case statements for types that are no longer first-class, OOB guards added as temporary scaffolding during fold-downs, `→ true` workarounds (e.g. EEVEE probe callers after ID_LP), and missed Scar 19 enum-demotion side effects. The skeleton of the old world is still visible under the skin of the new one.
+---
 
-0.6.x closes that seam. This is not new removals — the removals are done. It is the intentional folding-in of what 0.5.0 already decided, propagated through the depsgraph and viewport subsystems. Once the internals match the declared data model, the evaluation layer is honest, and 0.7.x additive work (launcher, product identity) can be built on a clean foundation.
+## 0.6.0 — 2026-05-15
 
-**Scope note:** Not a redesign of the depsgraph architecture. The depsgraph is the core animation engine (BLENDED.md §2 — non-negotiable). The audit makes it honest for the ~19-type world, not rebuilt.
+**CI-complete: Windows x64, build 82, commit `8f7dda22`.** First full foundation layer completed in a single implementation commit.
+
+**Version bump (2026-05-15):** `BLENDED_VERSION_MINOR` updated from 6 to 7 in `BKE_blender_version.h`. 0.6.0 depsgraph/draw/editor seam closure CI-complete; 0.7.x launcher dev cycle begins. Packaged artifacts now correctly labelled `Blended-0.7.0-windows-x64`.
+
+**Design vision (completed):** 0.5.0 declared the ~19-type data model. 0.6.0 made the evaluation and draw layers honest about it — not new removals, but propagating what 0.5.0 already decided through the depsgraph and viewport subsystems. The depsgraph builders, viewport draw layer, and editor dispatch carried the old 39-type topology: case statements for types no longer first-class, OOB guards added as temporary scaffolding during fold-downs, `→ true` workarounds (e.g. EEVEE probe callers after ID_LP). 0.6.0 closed that seam: every temporary comment or workaround relabeled as permanent Blended architecture or removed as dead code. The evaluation layer is now honest. 0.7.x additive work (launcher, product identity) begins from a clean foundation.
 
 ---
 

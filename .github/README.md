@@ -11,7 +11,7 @@ Blended
 
 Blended is a fork of [Blender](https://www.blender.org) being rebuilt from the foundation up around one stated identity: **free 2D and 3D software tools, with an explicit focus on the craft of animation.**
 
-Currently at 0.6.0-dev — 0.5.0 CI-complete (Windows x64, build 81). All Bucket 3 fold-downs CI-complete: `ID_LP` ✓, `ID_PAL` ✓, `ID_LT` ✓, `ID_MSK` ✓, `ID_VF` ✓, `ID_BR` ✓. Datablock audit closed: 39 → ~19 ID types. Next: 0.6.x depsgraph audit.
+Currently at 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82). Depsgraph/draw/editor seam closure complete: OOB guards permanent, EEVEE always-update strategy locked in, dead code removed. First full foundation layer in one implementation commit. Next: 0.7.x launcher + product identity.
 
 What Blended Is
 ---------------
@@ -36,7 +36,7 @@ What's Different
 On the Horizon
 --------------
 
-Six foundation layers — one minor version each, 1.0 when all six are honest. **0.6.x:** depsgraph and viewport audit — propagating the 0.5.0 data model decisions through the evaluation and draw layers. **0.7.x:** launcher and full product identity. **1.0.0:** foundation complete, two concurrent workstreams — runtime audit (developer runs the build, checklists, triage loop with Claude) and GitHub Pages launch (landing page, marketing, tech demo). Release tag when both clear. Full roadmap in [`CHANGELOG.md`](../CHANGELOG.md).
+Six foundation layers — one minor version each, 1.0 when all six are honest. **0.6.x:** ✓ CI-complete (build 82) — depsgraph/draw/editor seam closure. **0.7.x:** launcher as canonical workspace system + full product identity (in progress). **1.0.0:** foundation complete, two concurrent workstreams — runtime audit (developer runs the build, checklists, triage loop with Claude) and GitHub Pages launch (landing page, marketing, tech demo). Release tag when both clear. Full roadmap in [`CHANGELOG.md`](../CHANGELOG.md).
 
 Building from Source
 --------------------
