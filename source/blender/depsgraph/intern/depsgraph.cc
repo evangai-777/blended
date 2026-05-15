@@ -119,8 +119,9 @@ IDNode *Depsgraph::add_id_node(ID *id, ID *id_cow_hint)
     id_hash.add_new(id, id_node);
     id_nodes.append(id_node);
 
-    /* Guard against removed ID types (e.g. ID_CU_LEGACY) whose CASE_IDINDEX
-     * was removed by the Blended chisel — BKE_idtype_idcode_to_index returns -1. */
+    /* Blended permanent: fold-down and chiseled types (ID_CU_LEGACY, ID_LP, ID_BR, etc.)
+     * return -1 from BKE_idtype_idcode_to_index. Their IDNodes are never added to the
+     * indexed id_type_exist array — correct, since they are not first-class project data. */
     const int id_type_index = BKE_idtype_idcode_to_index(GS(id->name));
     if (id_type_index >= 0) {
       id_type_exist[id_type_index] = 1;

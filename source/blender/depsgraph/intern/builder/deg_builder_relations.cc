@@ -582,6 +582,9 @@ void DepsgraphRelationBuilder::build_id(ID *id)
     case ID_LI:
     case ID_BR:
     case ID_PAL:
+      /* Blended permanent: ID_BR and ID_PAL are fold-down types — not first-class project
+       * data, but still alive at runtime (Scar 2 listbases). No COW eval needed; relations
+       * for their animdata and ID properties are handled by build_generic_id. Intentional. */
       BLI_assert(!deg_eval_copy_is_needed(id_type));
       build_generic_id(id);
       break;

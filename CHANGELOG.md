@@ -116,12 +116,24 @@ Classification totals:
 The actual 0.6.x seam closure is the (b), (c), (e) items: ~10 lines of dead code, 5 guard comments to re-document as permanent, and 2 EEVEE workarounds to resolve or lock in.
 
 **0.6.x action items (from audit):**
-1. `depsgraph_query.cc` — confirm OOB guards as permanent architecture; update comments from "scaffolding" to "Blended permanent: unregistered types return false here."
-2. `depsgraph.cc`, `depsgraph_tag.cc` — same OOB guard documentation pass.
-3. `eevee_lightprobe_planar.cc:54`, `eevee_lightprobe_sphere.cc:24` — evaluate `→ true` workaround: replace with direct probe-exists check, or document as permanent conservative-update.
-4. `render_preview.cc:1289` — remove `#if 0` ID_TE dead code block.
-5. `interface.cc:1543`, `interface_icons.cc:1220`, `interface_templates.cc:85` — verify ID_SCR_LEGACY uses are correct allocation-path references, not vestigial.
-6. `deg_builder_nodes.cc:642-643`, `deg_builder_relations.cc:583-584` — document ID_BR/ID_PAL BLI_assert dispatch as intentional: brushes/palettes must not build depsgraph nodes.
+1. `depsgraph_query.cc` — confirm OOB guards as permanent architecture; update comments from "scaffolding" to "Blended permanent: unregistered types return false here." ✓
+2. `depsgraph.cc`, `depsgraph_tag.cc` — same OOB guard documentation pass. ✓
+3. `eevee_lightprobe_planar.cc:54`, `eevee_lightprobe_sphere.cc:24` — evaluate `→ true` workaround: replace with direct probe-exists check, or document as permanent conservative-update. ✓ **Documented as permanent conservative-update.** DEG_id_type_any_exists(ID_LP) will always return false since ID_LP is unregistered; probe data may still exist in the scene, so always-update for the render path is the correct strategy, not a workaround.
+4. `render_preview.cc:1289` — remove `#if 0` ID_TE dead code block. ✓
+5. `interface.cc:1543`, `interface_icons.cc:1220`, `interface_templates.cc:85` — verify ID_SCR_LEGACY uses are correct allocation-path references, not vestigial. ✓ **All three confirmed live.** `interface.cc:1543` dispatches RNA property context for screen-owned areas; `interface_icons.cc:1220` prevents async icon preview jobs for screens (off-screen crash); `interface_templates.cc:85` controls preview size for screen vs. non-screen IDs. No code change needed.
+6. `deg_builder_nodes.cc:642-643`, `deg_builder_relations.cc:583-584` — document ID_BR/ID_PAL BLI_assert dispatch as intentional: brushes/palettes must not build depsgraph nodes. ✓
+
+**Session note (2026-05-15):** 8 files touched across depsgraph, draw, and editors. All (b) and (c) audit items resolved. The seam closure is complete: every temporary comment or workaround introduced during the 0.5.x fold-downs has been either removed (dead code) or relabeled as permanent Blended architecture. The depsgraph, draw, and editor layers are now internally consistent with the declared ~19-type data model. No logic changed — this is a documentation and dead-code pass only.
+
+**Files changed:**
+- `depsgraph_query.cc` — "Blended permanent" comments added to `DEG_id_type_updated` and `DEG_id_type_any_exists` OOB guards
+- `depsgraph.cc` — `add_id_node` OOB guard comment updated from "Guard against removed" to permanent-architecture phrasing
+- `depsgraph_tag.cc` — `DEG_graph_id_type_tag` OOB guard comment updated
+- `deg_builder_nodes.cc` — ID_BR/ID_PAL dispatch block documented as intentional fold-down behavior
+- `deg_builder_relations.cc` — same
+- `eevee_lightprobe_planar.cc` — conservative always-update documented as permanent render-path strategy
+- `eevee_lightprobe_sphere.cc` — same
+- `render_preview.cc` — removed 9-line `#if 0` ID_TE dead code block (no-op since 0.4.0)
 
 ---
 
