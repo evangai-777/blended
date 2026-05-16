@@ -397,10 +397,71 @@ Cross-cutting animation engine settings (framerate, renderer, output, color mana
 - **Game is its own Creative section**, not a mode under 3D Animation — game asset creation has genuinely different quality metrics (polycount, UV efficiency, engine-export formats, LODs) that don't belong under "3D Animation."
 - **Design is its own Creative section**, covering graphic design, illustration, and concept art workflows. These are C-scope (embraced per §3) — Blended is "2D and 3D software tools," plural. The guardrail is against feature-parity pathology (no "we must match every Illustrator feature"), not against the scope itself. Modes stay industry-expandable and pipeline-adjacent when they can be (concept art feeds animation, UI art feeds Game, etc.).
 
+### Launcher aesthetic [LOCKED in principle, Phase 2 visual refinement OPEN]
+
+**Design lineage — a hybrid.** The Blended launcher takes its visual language from two sources: the Adobe Creative Cloud home screen pattern (dark card-based surfaces, left sidebar primary actions, thumbnail file cards, clean typographic hierarchy) and Blender's existing splash screen logic (New File / Recent Files as the two primary concerns of startup). The Adobe influence is aesthetic and structural; the Blender influence is content and purpose. The §11 vertical pipeline scroll is Blended's own invention — neither Adobe nor Blender has an equivalent. The three sources are composed, not averaged.
+
+**Surface hierarchy — three levels, all dark.** Confirmed from the Adobe Spectrum dark theme (Spectrum 2) and carried directly into the Blended launcher as the skeleton baseline:
+
+| Level | Role | Color (skeleton; Phase 2 may shift ±5pts) |
+|-------|------|------------------------------------------|
+| Base | Launcher background, fills | `#1D1D1D` |
+| Layer 1 | Sidebar surface, section panel areas | `#252525` |
+| Layer 2 | Mode button cards, recent file cards, hover states | `#2C2C2C` |
+| Layer 2+ | Card active/pressed | `#323232` |
+
+Phase 2 visual identity may warm these slightly (less cool-gray, toward the Blended product palette), but the three-level hierarchy is permanent.
+
+**Left sidebar — fixed, ~220px wide.** Primary actions live here, above the fold, always visible. Structure top-to-bottom:
+
+1. **Wordmark** — "Blended" in the Phase 2 typeface; skeleton uses the system sans-serif stack at 18px SemiBold.
+2. **[New Project]** — primary CTA. The first interactive element. Adobe's pattern: "Create New" / "New file" is always first, always unambiguous. Full-width button, accent color (Phase 2), 8px corner radius.
+3. **[Open…]** — secondary. Launches the file browser for existing `.blended` files. Same row or immediately below New Project depending on available height.
+4. **Recent files section** — below the action buttons. Adobe-style thumbnail cards, horizontal scroll. Each card: ~160×120px thumbnail area, filename in 11px below, `.blended` badge. Empty state: "No recent projects — start one above." This is the Blender splash screen's Recent Files column, promoted to a persistent sidebar position and given the Adobe card treatment.
+5. **Project settings gear** — bottom of sidebar. Opens the cross-cutting project-level config (framerate, renderer, output — see §11 Project-level settings).
+6. **Version + publisher** — very bottom, 11px secondary text. `Blended 0.7.0 · CHJ 3 Productions LLC`.
+
+**Pipeline scroll — main content area, right of sidebar.** The §11 vertical scroll lives here. Structure:
+
+- **"Blending?"** — prompt at top. 28px SemiBold. Sets the register.
+- **`╌╌ CREATIVE ╌╌`** and **`╌╌ POST ╌╌`** — section group separators. 11px, all-caps, letter-spaced 0.1em, secondary text color `#666666`. These are typographic dividers, not heavy UI chrome.
+- **Section headings** (Storyboarding, 2D Animation, etc.) — 16px SemiBold, primary text color `#E0E0E0`.
+- **Mode buttons** — styled as cards, not plain text buttons. Each button is a rounded rectangle (`#2C2C2C` background, 8px corner radius, 16px vertical / 12px horizontal internal padding). Label: 14px Regular. Hover: background lifts to `#323232`, no border animation needed. Active/pressed: accent color highlight (Phase 2). Cards in a horizontal row per section, wrapping if needed. 8px gap between cards within a row, 24px gap between sections.
+
+**Typography stack — Phase 1 skeleton.** No embedded fonts. System sans-serif cascade matching Adobe Spectrum's public fallback:
+
+```
+"Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Trebuchet MS", sans-serif
+```
+
+Phase 2 replaces this with the Blended brand typeface once originated. The size/weight scale is already locked:
+
+| Role | Size | Weight |
+|------|------|--------|
+| "Blending?" prompt | 28px | SemiBold (600) |
+| Section headings | 16px | SemiBold (600) |
+| Mode button labels | 14px | Regular (400) |
+| Section group separators | 11px | Regular (400), uppercase |
+| Recent file names, metadata | 11px | Regular (400) |
+| Sidebar wordmark | 18px | SemiBold (600) |
+
+**Spacing — 8px base unit.** Matching Spectrum's `--spectrum-spacing-100 = 8px`:
+
+- Outer launcher padding (sidebar): 24px
+- Mode button internal padding: 16px vertical, 12px horizontal
+- Mode button row gap: 8px
+- Section-to-section gap: 24px
+- Recent file card gap: 8px
+- Sidebar bottom attribution margin: 16px
+
+**Animation — light, purposeful.** Mode button hover transition: 130ms ease-out (matching Spectrum `--spectrum-animation-duration-100`). No bounce, no slide. Vertical scroll: native browser/UI scroll, no custom animation.
+
+**What the Adobe pattern provides; what Blended keeps from Blender.** Adobe contributes: dark surface hierarchy, card-based file thumbnails, sidebar-primary-action ordering, typographic restraint. Blender contributes: the New File / Recent Files as the two startup concerns, the simplicity of a single scrollable view rather than a tabbed multi-panel structure. Blended's own contribution: the §11 pipeline scroll as the organizing metaphor, which neither Adobe nor Blender has.
+
 ### Still open
 
 - **Finalizing vs Compositing scope line.** Finalizing = assembly + delivery preparation (timeline-assembly, QC, export-ready cuts). Compositing = per-frame polish (color grading, effects layers, node-based image work). Current call: clean separation; the distinction is clear enough to keep them as separate sections.
-- **Creative / Post visual separators.** Actual UI dividers vs implicit spacing — pixel detail for later.
+- **Creative / Post visual separators — now answered above.** Typographic dividers (`╌╌ CREATIVE ╌╌` / `╌╌ POST ╌╌`) in 11px all-caps, not heavy UI chrome.
 - **Design mode expansion.** Initial modes (`Graphic`, `Illustration`, `Concept`) are starters; community- and industry-expandable. Typography / Layout / Print etc. can be added as separate modes when the use case is real, without changing the heading.
 
 ---
