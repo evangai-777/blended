@@ -119,6 +119,13 @@ VFont *BKE_vfont_builtin_ensure();
 void BKE_curve_vfont_ensure(Curve *cu);
 
 /**
+ * Drain the Scar 2 bmain->fonts listbase: clear vfont pointers on all curves,
+ * then free every VFont. Fonts are re-created lazily from filepath on first use.
+ * Call once after file load so bmain->fonts does not leak between sessions.
+ */
+void BKE_vfont_drain_from_bmain(Main *bmain);
+
+/**
  * High-level pack function.
  *
  * Packs font data from its filepath.

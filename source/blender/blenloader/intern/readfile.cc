@@ -98,6 +98,7 @@
 #include "BKE_scene.hh"
 #include "BKE_screen.hh"
 #include "BKE_undo_system.hh"
+#include "BKE_vfont.hh"
 #include "BKE_workspace.hh"
 
 #include "DRW_engine.hh"
@@ -3958,6 +3959,11 @@ static void after_liblink_merged_bmain_process(Main *bmain, BlendFileReadReport 
   /* We have to rebuild that runtime information *after* all data-blocks have been properly linked.
    */
   BKE_main_collections_parent_relations_rebuild(bmain);
+
+  /* Drain the Scar 2 bmain->fonts listbase. After this, font data is loaded lazily from
+   * cu->font_filepath on first BKE_vfont_to_curve* call (via BKE_curve_vfont_ensure).
+   * This prevents bmain->fonts from accumulating VFont blocks across repeated file loads. */
+  BKE_vfont_drain_from_bmain(bmain);
 }
 
 /** \} */
