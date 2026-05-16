@@ -135,6 +135,11 @@ Palette *BKE_palette_add(Main *bmain, const char *name);
 PaletteColor *BKE_palette_color_add(Palette *palette);
 bool BKE_palette_is_empty(const Palette *palette);
 /**
+ * Drain the Scar 2 bmain->palettes listbase: free every Palette block.
+ * Palette data is now embedded in Brush::palette; call once after file load.
+ */
+void BKE_palette_drain_from_bmain(Main *bmain);
+/**
  * Remove color from palette. Must be certain color is inside the palette!
  */
 void BKE_palette_color_remove(Palette *palette, PaletteColor *color);

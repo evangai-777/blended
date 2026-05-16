@@ -97,6 +97,7 @@
 #include "BKE_report.hh"
 #include "BKE_scene.hh"
 #include "BKE_screen.hh"
+#include "BKE_paint.hh"
 #include "BKE_undo_system.hh"
 #include "BKE_vfont.hh"
 #include "BKE_workspace.hh"
@@ -3964,6 +3965,11 @@ static void after_liblink_merged_bmain_process(Main *bmain, BlendFileReadReport 
    * cu->font_filepath on first BKE_vfont_to_curve* call (via BKE_curve_vfont_ensure).
    * This prevents bmain->fonts from accumulating VFont blocks across repeated file loads. */
   BKE_vfont_drain_from_bmain(bmain);
+
+  /* Drain the Scar 2 bmain->palettes listbase. Palette data now lives embedded in
+   * Brush::palette; any standalone Palette blocks from legacy .blend files are discarded.
+   * This resolves the Category C memory leak for repeated file loads. */
+  BKE_palette_drain_from_bmain(bmain);
 }
 
 /** \} */

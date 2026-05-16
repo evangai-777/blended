@@ -541,6 +541,47 @@ void blo_do_versions_520(FileData * /*fd*/, Library * /*lib*/, Main *bmain)
     }
   }
 
+  if (!MAIN_VERSION_FILE_ATLEAST(bmain, 502, 25)) {
+    /* Bucket 3 Palette permanent home (Blended 0.7.0): palette data is now embedded in
+     * Brush::palette. Clear the deprecated Paint::palette pointer so it does not point
+     * into the just-drained bmain->palettes listbase after file load. */
+    LISTBASE_FOREACH (Scene *, scene, &bmain->scenes) {
+      ToolSettings *ts = scene->toolsettings;
+      if (ts) {
+        auto clear_palette = [](Paint *paint) {
+          if (paint) {
+            paint->palette = nullptr;
+          }
+        };
+        clear_palette(&ts->imapaint.paint);
+        if (ts->sculpt) {
+          clear_palette(&ts->sculpt->paint);
+        }
+        if (ts->vpaint) {
+          clear_palette(&ts->vpaint->paint);
+        }
+        if (ts->wpaint) {
+          clear_palette(&ts->wpaint->paint);
+        }
+        if (ts->gp_paint) {
+          clear_palette(&ts->gp_paint->paint);
+        }
+        if (ts->gp_vertexpaint) {
+          clear_palette(&ts->gp_vertexpaint->paint);
+        }
+        if (ts->gp_sculptpaint) {
+          clear_palette(&ts->gp_sculptpaint->paint);
+        }
+        if (ts->gp_weightpaint) {
+          clear_palette(&ts->gp_weightpaint->paint);
+        }
+        if (ts->curves_sculpt) {
+          clear_palette(&ts->curves_sculpt->paint);
+        }
+      }
+    }
+  }
+
   /**
    * Always bump subversion in BKE_blender_version.h when adding versioning
    * code here, and wrap it inside a MAIN_VERSION_FILE_ATLEAST check.

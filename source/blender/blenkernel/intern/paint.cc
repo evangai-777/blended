@@ -1258,6 +1258,16 @@ bool BKE_palette_is_empty(const Palette *palette)
   return BLI_listbase_is_empty(&palette->colors);
 }
 
+void BKE_palette_drain_from_bmain(Main *bmain)
+{
+  LISTBASE_FOREACH_MUTABLE(Palette *, palette, &bmain->palettes) {
+    BLI_remlink(&bmain->palettes, palette);
+    BLI_freelistN(&palette->colors);
+    BKE_libblock_free_data(&palette->id, false);
+    MEM_delete(palette);
+  }
+}
+
 bool BKE_paint_select_face_test(const Object *ob)
 {
   return ((ob != nullptr) && (ob->type == OB_MESH) && (ob->data != nullptr) &&
