@@ -140,6 +140,8 @@ static void brush_copy_data(Main * /*bmain*/,
     brush_dst->mesh_automasking_settings->cavity_curve_op = nullptr;
   }
 
+  BLI_duplicatelist(&brush_dst->palette.colors, &brush_src->palette.colors);
+
   /* enable fake user by default */
   id_fake_user_set(&brush_dst->id);
 }
@@ -180,6 +182,8 @@ static void brush_free_data(ID *id)
     BKE_curvemapping_free(brush->mesh_automasking_settings->cavity_curve);
     MEM_delete(brush->mesh_automasking_settings);
   }
+
+  BLI_freelistN(&brush->palette.colors);
 
   MEM_SAFE_DELETE(brush->gradient);
 
@@ -255,6 +259,8 @@ static void brush_blend_write(BlendWriter *writer, ID *id, const void *id_addres
 
   writer->write_id_struct(id_address, brush);
   BKE_id_blend_write(writer, &brush->id);
+
+  writer->write_struct_list(&brush->palette.colors);
 
   if (brush->curve_distance_falloff) {
     BKE_curvemapping_blend_write(writer, brush->curve_distance_falloff);
@@ -475,6 +481,8 @@ static void brush_blend_read_data(BlendDataReader *reader, ID *id)
 
   BLO_read_struct(reader, PreviewImage, &brush->preview);
   BKE_previewimg_blend_read(reader, brush->preview);
+
+  BLO_read_struct_list(reader, PaletteColor, &brush->palette.colors);
 
   brush->has_unsaved_changes = false;
 }
