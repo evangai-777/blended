@@ -1172,16 +1172,24 @@ std::optional<int> BKE_paint_get_brush_type_from_paintmode(const Brush *brush,
 
 Palette *BKE_paint_palette(Paint *paint)
 {
-  return paint ? paint->palette : nullptr;
+  if (!paint) {
+    return nullptr;
+  }
+  /* Palette is embedded in the active brush (0.7.0). Fall back to the deprecated
+   * paint->palette pointer only when no active brush is set (e.g. legacy file load). */
+  Brush *brush = BKE_paint_brush(paint);
+  if (brush) {
+    return &brush->palette;
+  }
+  return paint->palette;
 }
 
 void BKE_paint_palette_set(Paint *paint, Palette *palette)
 {
-  if (paint) {
-    id_us_min(id_cast<ID *>(paint->palette));
-    paint->palette = palette;
-    id_us_plus(id_cast<ID *>(paint->palette));
-  }
+  /* No-op: palette is now embedded in the active brush, not owned by Paint.
+   * Callers that previously set paint->palette should switch to accessing
+   * BKE_paint_palette() which returns &brush->palette. */
+  UNUSED_VARS(paint, palette);
 }
 
 
