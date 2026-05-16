@@ -346,6 +346,10 @@ void BKE_curve_init(Curve *cu, const short curve_type)
     cu->fill_rule = CU_FILL_RULE_NONZERO;
     cu->vfont = cu->vfontb = cu->vfonti = cu->vfontbi = BKE_vfont_builtin_ensure();
     cu->vfont->id.us += 4;
+    STRNCPY(cu->font_filepath, FO_BUILTIN_NAME);
+    STRNCPY(cu->font_bold_filepath, FO_BUILTIN_NAME);
+    STRNCPY(cu->font_italic_filepath, FO_BUILTIN_NAME);
+    STRNCPY(cu->font_bold_italic_filepath, FO_BUILTIN_NAME);
 
     const char *str = DATA_("Text");
     size_t len_bytes;

@@ -860,6 +860,7 @@ static void txt_add_object(bContext *C,
   cu = id_cast<Curve *>(obedit->data);
   cu->vfont = BKE_vfont_builtin_ensure();
   id_us_plus(&cu->vfont->id);
+  STRNCPY(cu->font_filepath, FO_BUILTIN_NAME);
 
   for (tmp = firstline, a = 0; nbytes < MAXTEXT && a < totline; tmp = tmp->next, a++) {
     size_t nchars_line, nbytes_line;
