@@ -167,6 +167,27 @@ struct BrushCurvesSculptSettings {
   struct CurveMapping *curve_parameter_falloff = nullptr;
 };
 
+struct PaletteColor {
+  struct PaletteColor *next = nullptr, *prev = nullptr;
+  /* Two values, one to store color, other to store values for sculpt/weight. */
+  float color[3] = {};
+  float value = 0;
+
+  /* For forward compatibility. */
+  DNA_DEPRECATED float rgb[3] = {};
+  float _pad = {};
+};
+
+struct Palette {
+  ID id;
+
+  /** Pointer to individual colors. */
+  ListBaseT<PaletteColor> colors = {nullptr, nullptr};
+
+  int active_color = 0;
+  char _pad[4] = {};
+};
+
 /** Max number of propagation steps for automasking settings. */
 #define AUTOMASKING_BOUNDARY_EDGES_MAX_PROPAGATION_STEPS 20
 /**
@@ -448,27 +469,9 @@ struct Brush {
 
   DNA_DEPRECATED struct CurveMapping *automasking_cavity_curve = nullptr;
   struct MeshAutomaskingSettings *mesh_automasking_settings = nullptr;
-};
 
-struct PaletteColor {
-  struct PaletteColor *next = nullptr, *prev = nullptr;
-  /* Two values, one to store color, other to store values for sculpt/weight. */
-  float color[3] = {};
-  float value = 0;
-
-  /* For forward compatibility. */
-  DNA_DEPRECATED float rgb[3] = {};
-  float _pad = {};
-};
-
-struct Palette {
-  ID id;
-
-  /** Pointer to individual colors. */
-  ListBaseT<PaletteColor> colors = {nullptr, nullptr};
-
-  int active_color = 0;
-  char _pad[4] = {};
+  /** Embedded palette — permanent home for Scar 2 bmain->palettes data (0.7.0). */
+  Palette palette = {};
 };
 
 
