@@ -252,7 +252,7 @@ Property bags pretending to be first-class entities:
 
 | ID | Name | Fold into |
 |---|---|---|
-| `ID_BR` | Brush | User state + shareable brush packs | ✓ 0.5.0 |
+| `ID_BR` | Brush | Project-optional: stays in project file, flagged as non-portable user customization (1.x: user state + shareable packs) | ✓ 0.5.0 |
 | `ID_PAL` | Palette | Brush property or inline | ✓ 0.5.0 |
 | `ID_LT` | Lattice | Modifier, not a datablock | ✓ 0.5.0 |
 | `ID_LP` | LightProbe | Merge into `ID_LA` with a type flag | ✓ 0.5.0 |
@@ -306,7 +306,6 @@ Removal complete — 0.4.x. Per-layer file detail in [`CHANGELOG.md`](CHANGELOG.
 
 - **`ID_WO` (World).** Keep as reusable environment asset, or fold into Scene properties? Weak vote: keep.
 - **`ID_LI` (Library).** Cross-project asset reuse under "everything in `.blended`" needs design. Options: (a) library = directory of `.blended` files with a proper asset primitive inside; (b) true external linking.
-- **Brush user state.** Design where brushes live once they're not project data (user prefs + shareable brush packs).
 - **`ID_KE` ShapeKey ID-ness.** Survey real projects before collapsing into geometry.
 
 ### Tally
