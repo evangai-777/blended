@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include "DNA_light_types.h"
 #include "DNA_lightprobe_types.h"
 
 #include "overlay_base.hh"
@@ -81,10 +82,10 @@ class LightProbes : Overlay {
     }
 
     const Object *ob = ob_ref.object;
-    const LightProbe &prb = DRW_object_get_data_for_drawing<LightProbe>(*ob_ref.object);
-    const bool show_clipping = (prb.flag & LIGHTPROBE_FLAG_SHOW_CLIP_DIST) != 0;
-    const bool show_parallax = (prb.flag & LIGHTPROBE_FLAG_SHOW_PARALLAX) != 0;
-    const bool show_influence = (prb.flag & LIGHTPROBE_FLAG_SHOW_INFLUENCE) != 0;
+    const Light &la = DRW_object_get_data_for_drawing<Light>(*ob_ref.object);
+    const bool show_clipping = (la.probe_flag & LIGHTPROBE_FLAG_SHOW_CLIP_DIST) != 0;
+    const bool show_parallax = (la.probe_flag & LIGHTPROBE_FLAG_SHOW_PARALLAX) != 0;
+    const bool show_influence = (la.probe_flag & LIGHTPROBE_FLAG_SHOW_INFLUENCE) != 0;
     const bool show_data = (ob_ref.object->base_flag & BASE_SELECTED) || res.is_selection();
 
     const select::ID select_id = res.select_id(ob_ref);
@@ -95,43 +96,45 @@ class LightProbes : Overlay {
     float &clip_end = matrix[3].w;
     float &draw_size = matrix[3].w;
 
-    switch (prb.type) {
-      case LIGHTPROBE_TYPE_SPHERE:
-        clip_start = show_clipping ? prb.clipsta : -1.0;
-        clip_end = show_clipping ? prb.clipend : -1.0;
+    switch (la.type) {
+      case LA_PROBE_SPHERE:
+        clip_start = show_clipping ? la.probe_clipsta : -1.0;
+        clip_end = show_clipping ? la.probe_clipend : -1.0;
         call_buffers_.probe_cube_buf.append(data, select_id);
 
         call_buffers_.ground_line_buf.append(float4(matrix.location(), 0.0f), select_id);
 
         if (show_influence) {
-          LightProbeInstanceBuf &attenuation = (prb.attenuation_type == LIGHTPROBE_SHAPE_BOX) ?
-                                                   call_buffers_.cube_buf :
-                                                   call_buffers_.sphere_buf;
-          const float f = 1.0f - prb.falloff;
-          ExtraInstanceData data(ob->object_to_world(), color, prb.distinf);
+          LightProbeInstanceBuf &attenuation =
+              (la.probe_attenuation_type == LIGHTPROBE_SHAPE_BOX) ? call_buffers_.cube_buf :
+                                                                     call_buffers_.sphere_buf;
+          const float f = 1.0f - la.probe_falloff;
+          ExtraInstanceData data(ob->object_to_world(), color, la.probe_distinf);
           attenuation.append(data, select_id);
-          data.object_to_world[3].w = prb.distinf * f;
+          data.object_to_world[3].w = la.probe_distinf * f;
           attenuation.append(data, select_id);
         }
 
         if (show_parallax) {
-          LightProbeInstanceBuf &parallax = (prb.parallax_type == LIGHTPROBE_SHAPE_BOX) ?
-                                                call_buffers_.cube_buf :
-                                                call_buffers_.sphere_buf;
-          const float dist = ((prb.flag & LIGHTPROBE_FLAG_CUSTOM_PARALLAX) != 0) ? prb.distpar :
-                                                                                   prb.distinf;
+          LightProbeInstanceBuf &parallax =
+              (la.probe_parallax_type == LIGHTPROBE_SHAPE_BOX) ? call_buffers_.cube_buf :
+                                                                  call_buffers_.sphere_buf;
+          const float dist = ((la.probe_flag & LIGHTPROBE_FLAG_CUSTOM_PARALLAX) != 0) ?
+                                 la.probe_distpar :
+                                 la.probe_distinf;
           parallax.append(ExtraInstanceData(ob->object_to_world(), color, dist), select_id);
         }
         break;
-      case LIGHTPROBE_TYPE_VOLUME: {
+      case LA_PROBE_VOLUME: {
         clip_start = show_clipping ? 0.0f : -1.0f;
-        clip_end = show_clipping ? prb.clipend : -1.0f;
+        clip_end = show_clipping ? la.probe_clipend : -1.0f;
         call_buffers_.probe_grid_buf.append(data, select_id);
         {
           /* Display surfel density as a cube. */
           float3 axes_len = math::to_scale(ob->object_to_world());
           float max_axis_len = math::reduce_max(axes_len);
-          float3 local_surfel_size = (0.5f / prb.grid_surfel_density) * (max_axis_len / axes_len);
+          float3 local_surfel_size = (0.5f / la.probe_grid_surfel_density) *
+                                     (max_axis_len / axes_len);
 
           float4x4 surfel_density_mat = math::from_loc_rot_scale<float4x4>(
               float3(-1.0f + local_surfel_size),
@@ -149,30 +152,30 @@ class LightProbes : Overlay {
 
         /* Data dots */
         if (show_data) {
-          matrix[0].w = prb.grid_resolution_x;
-          matrix[1].w = prb.grid_resolution_y;
-          matrix[2].w = prb.grid_resolution_z;
+          matrix[0].w = la.probe_grid_resolution_x;
+          matrix[1].w = la.probe_grid_resolution_y;
+          matrix[2].w = la.probe_grid_resolution_z;
           /* Put theme id in matrix. */
           matrix[3].w = res.object_wire_theme_id(ob_ref, state) == TH_ACTIVE ? 1.0f : 2.0f;
 
-          const uint cell_count = prb.grid_resolution_x * prb.grid_resolution_y *
-                                  prb.grid_resolution_z;
+          const uint cell_count = la.probe_grid_resolution_x * la.probe_grid_resolution_y *
+                                  la.probe_grid_resolution_z;
           ps_dots_.push_constant("grid_model_matrix", matrix);
           ps_dots_.draw_procedural(GPU_PRIM_POINTS, 1, cell_count, 0, {0}, select_id.get());
         }
         break;
       }
-      case LIGHTPROBE_TYPE_PLANE:
+      case LA_PROBE_PLANAR:
         call_buffers_.probe_planar_buf.append(data, select_id);
 
-        if (res.is_selection() && (prb.flag & LIGHTPROBE_FLAG_SHOW_DATA)) {
+        if (res.is_selection() && (la.probe_flag & LIGHTPROBE_FLAG_SHOW_DATA)) {
           call_buffers_.quad_solid_buf.append(data, select_id);
         }
 
         if (show_influence) {
-          matrix.z_axis() = math::normalize(matrix.z_axis()) * prb.distinf;
+          matrix.z_axis() = math::normalize(matrix.z_axis()) * la.probe_distinf;
           call_buffers_.cube_buf.append(data, select_id);
-          matrix.z_axis() *= 1.0f - prb.falloff;
+          matrix.z_axis() *= 1.0f - la.probe_falloff;
           call_buffers_.cube_buf.append(data, select_id);
         }
 
@@ -182,6 +185,8 @@ class LightProbes : Overlay {
         matrix.view<3, 3>() = math::normalize(float3x3(ob->object_to_world().view<3, 3>()));
         draw_size = ob->empty_drawsize;
         call_buffers_.single_arrow_buf.append(data, select_id);
+        break;
+      default:
         break;
     }
   }

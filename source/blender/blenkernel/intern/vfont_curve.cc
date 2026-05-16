@@ -33,6 +33,7 @@
 
 #include "BKE_anim_path.h"
 #include "BKE_curve.hh"
+#include "BKE_global.hh"
 #include "BKE_object_types.hh"
 #include "BKE_vfont.hh"
 #include "BKE_vfontdata.hh"
@@ -2028,19 +2029,35 @@ int BKE_vfont_cursor_to_text_index(Object *ob, const float2 &cursor_location)
 #undef FONT_TO_CURVE_SCALE_ITERATIONS
 #undef FONT_TO_CURVE_SCALE_THRESHOLD
 
+void BKE_curve_vfont_ensure(Curve *cu)
+{
+  if (cu->vfont == nullptr && cu->font_filepath[0] != '\0') {
+    cu->vfont = BKE_vfont_load_exists(G_MAIN, cu->font_filepath);
+  }
+  if (cu->vfontb == nullptr && cu->font_bold_filepath[0] != '\0') {
+    cu->vfontb = BKE_vfont_load_exists(G_MAIN, cu->font_bold_filepath);
+  }
+  if (cu->vfonti == nullptr && cu->font_italic_filepath[0] != '\0') {
+    cu->vfonti = BKE_vfont_load_exists(G_MAIN, cu->font_italic_filepath);
+  }
+  if (cu->vfontbi == nullptr && cu->font_bold_italic_filepath[0] != '\0') {
+    cu->vfontbi = BKE_vfont_load_exists(G_MAIN, cu->font_bold_italic_filepath);
+  }
+}
+
 bool BKE_vfont_to_curve_nubase(Object *ob, const eEditFontMode mode, ListBaseT<Nurb> *r_nubase)
 {
   BLI_assert(ob->type == OB_FONT);
-  const Curve &cu = *id_cast<const Curve *>(ob->data);
-  return BKE_vfont_to_curve_ex(
-      ob, cu, mode, r_nubase, nullptr, nullptr, nullptr, nullptr, nullptr);
+  Curve *cu = id_cast<Curve *>(ob->data);
+  BKE_curve_vfont_ensure(cu);
+  return BKE_vfont_to_curve_ex(ob, *cu, mode, r_nubase, nullptr, nullptr, nullptr, nullptr, nullptr);
 }
 
 bool BKE_vfont_to_curve(Object *ob, const eEditFontMode mode)
 {
-  Curve &cu = *id_cast<Curve *>(ob->data);
-  return BKE_vfont_to_curve_ex(
-      ob, cu, mode, &cu.nurb, nullptr, nullptr, nullptr, nullptr, nullptr);
+  Curve *cu = id_cast<Curve *>(ob->data);
+  BKE_curve_vfont_ensure(cu);
+  return BKE_vfont_to_curve_ex(ob, *cu, mode, &cu->nurb, nullptr, nullptr, nullptr, nullptr, nullptr);
 }
 
 /** \} */

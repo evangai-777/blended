@@ -20,6 +20,7 @@
 
 #include "DEG_depsgraph_query.hh"
 
+#include "DNA_light_types.h"
 #include "DNA_lightprobe_types.h"
 #include "DNA_modifier_types.h"
 
@@ -411,9 +412,16 @@ void Instance::object_sync(ObjectRef &ob_ref, Manager & /*manager*/)
 
   if (object_is_visible) {
     switch (ob->type) {
-      case OB_LAMP:
-        lights.sync_light(ob_ref);
+      case OB_LAMP: {
+        const Light *la = static_cast<const Light *>(ob_ref.object->data);
+        if (ELEM(la->type, LA_PROBE_SPHERE, LA_PROBE_PLANAR, LA_PROBE_VOLUME)) {
+          light_probes.sync_probe(ob_ref);
+        }
+        else {
+          lights.sync_light(ob_ref);
+        }
         break;
+      }
       case OB_MESH:
         if (!sync.sync_sculpt(ob_ref)) {
           sync.sync_mesh(ob_ref);
@@ -429,7 +437,7 @@ void Instance::object_sync(ObjectRef &ob_ref, Manager & /*manager*/)
         sync.sync_curves(ob_ref);
         break;
       case OB_LIGHTPROBE:
-        light_probes.sync_probe(ob_ref);
+        /* Legacy: after versioning all OB_LIGHTPROBE become OB_LAMP. */
         break;
       default:
         break;

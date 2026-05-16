@@ -13,6 +13,8 @@
 #include "DNA_ID.h"
 #include "DNA_brush_types.h"
 #include "DNA_curve_types.h"
+#include "DNA_light_types.h"
+#include "DNA_lightprobe_types.h"
 #include "DNA_vfont_types.h"
 #include "DNA_modifier_types.h"
 #include "DNA_node_tree_interface_types.h"
@@ -31,6 +33,8 @@
 #include "BKE_curves.hh"
 #include "BKE_idprop.hh"
 #include "BKE_lib_id.hh"
+#include "BKE_light.h"
+#include "BKE_lightprobe.h"
 #include "BKE_main.hh"
 #include "BKE_mesh_legacy_convert.hh"
 #include "BKE_node.hh"
@@ -538,6 +542,99 @@ void blo_do_versions_520(FileData * /*fd*/, Library * /*lib*/, Main *bmain)
           STRNCPY(cu->font_bold_italic_filepath, cu->vfontbi->filepath);
         }
       }
+    }
+  }
+
+  if (!MAIN_VERSION_FILE_ATLEAST(bmain, 502, 25)) {
+    /* Bucket 3 Palette permanent home (Blended 0.7.0): palette data is now embedded in
+     * Brush::palette. Clear the deprecated Paint::palette pointer so it does not point
+     * into the just-drained bmain->palettes listbase after file load. */
+    LISTBASE_FOREACH (Scene *, scene, &bmain->scenes) {
+      ToolSettings *ts = scene->toolsettings;
+      if (ts) {
+        auto clear_palette = [](Paint *paint) {
+          if (paint) {
+            paint->palette = nullptr;
+          }
+        };
+        clear_palette(&ts->imapaint.paint);
+        if (ts->sculpt) {
+          clear_palette(&ts->sculpt->paint);
+        }
+        if (ts->vpaint) {
+          clear_palette(&ts->vpaint->paint);
+        }
+        if (ts->wpaint) {
+          clear_palette(&ts->wpaint->paint);
+        }
+        if (ts->gp_paint) {
+          clear_palette(&ts->gp_paint->paint);
+        }
+        if (ts->gp_vertexpaint) {
+          clear_palette(&ts->gp_vertexpaint->paint);
+        }
+        if (ts->gp_sculptpaint) {
+          clear_palette(&ts->gp_sculptpaint->paint);
+        }
+        if (ts->gp_weightpaint) {
+          clear_palette(&ts->gp_weightpaint->paint);
+        }
+        if (ts->curves_sculpt) {
+          clear_palette(&ts->curves_sculpt->paint);
+        }
+      }
+    }
+  }
+
+  if (!MAIN_VERSION_FILE_ATLEAST(bmain, 502, 26)) {
+    /* Bucket 3 LightProbe permanent home (Blended 0.7.0): OB_LIGHTPROBE objects become
+     * OB_LAMP objects with an LA_PROBE_* light type. Copy all probe fields from the legacy
+     * LightProbe data-block into a new Light, then retarget ob->data. */
+    LISTBASE_FOREACH (Object *, ob, &bmain->objects) {
+      if (ob->type != OB_LIGHTPROBE) {
+        continue;
+      }
+      const LightProbe *probe = static_cast<const LightProbe *>(ob->data);
+      Light *la = BKE_light_add(bmain, ob->id.name + 2);
+      BKE_lightprobe_type_apply_to_light(la, probe ? probe->type : LIGHTPROBE_TYPE_SPHERE);
+      if (probe) {
+        la->probe_flag = probe->flag;
+        la->probe_attenuation_type = probe->attenuation_type;
+        la->probe_parallax_type = probe->parallax_type;
+        la->probe_grid_flag = probe->grid_flag;
+        la->probe_distinf = probe->distinf;
+        la->probe_distpar = probe->distpar;
+        la->probe_falloff = probe->falloff;
+        la->probe_clipsta = probe->clipsta;
+        la->probe_clipend = probe->clipend;
+        la->probe_vis_bias = probe->vis_bias;
+        la->probe_vis_bleedbias = probe->vis_bleedbias;
+        la->probe_vis_blur = probe->vis_blur;
+        la->probe_intensity = probe->intensity;
+        la->probe_grid_resolution_x = probe->grid_resolution_x;
+        la->probe_grid_resolution_y = probe->grid_resolution_y;
+        la->probe_grid_resolution_z = probe->grid_resolution_z;
+        la->probe_grid_bake_samples = probe->grid_bake_samples;
+        la->probe_grid_surface_bias = probe->grid_surface_bias;
+        la->probe_grid_escape_bias = probe->grid_escape_bias;
+        la->probe_grid_normal_bias = probe->grid_normal_bias;
+        la->probe_grid_view_bias = probe->grid_view_bias;
+        la->probe_grid_facing_bias = probe->grid_facing_bias;
+        la->probe_grid_validity_threshold = probe->grid_validity_threshold;
+        la->probe_grid_dilation_threshold = probe->grid_dilation_threshold;
+        la->probe_grid_dilation_radius = probe->grid_dilation_radius;
+        la->probe_grid_clamp_direct = probe->grid_clamp_direct;
+        la->probe_grid_clamp_indirect = probe->grid_clamp_indirect;
+        la->probe_grid_surfel_density = probe->grid_surfel_density;
+        la->probe_visibility_grp = probe->visibility_grp;
+        la->probe_data_display_size = probe->data_display_size;
+      }
+      if (ob->data) {
+        id_us_min(static_cast<ID *>(ob->data));
+      }
+      ob->type = OB_LAMP;
+      ob->data = la;
+      id_us_plus(&la->id);
     }
   }
 

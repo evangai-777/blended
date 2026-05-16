@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82 on commit `8f7dda22`). Phase 1 skeleton in progress: launcher + 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome audit), format design ✓ (startup-as-blend + userpref-as-blend removed, BLENDED.md §5 Group 1 LOCKED), VFont Bucket 3 layers 1-2 ✓ (DNA filepath fields + versioning pass 502.24). Remaining Phase 1: VFont layers 3+, Palette → Brush, LightProbe → Light, Mask → NodeTree, Lattice → modifier, Brush → project-optional.
+**Current version:** Blended 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82 on commit `8f7dda22`). Phase 1 skeleton in progress: launcher + 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome audit), format design ✓ (startup-as-blend + userpref-as-blend removed, BLENDED.md §5 Group 1 LOCKED), VFont Bucket 3 all layers ✓ (DNA filepath fields + versioning pass 502.24 + RNA sync callback + BKE_curve_vfont_ensure + drain), Palette → Brush all layers ✓ (DNA embed PaletteColor/Palette in Brush + Paint::palette deprecated, brush.cc copy/free/I/O, paint.cc API, editors updated, versioning pass 502.25 + drain), LightProbe → Light all layers ✓ (eLightType LA_PROBE_SPHERE/PLANAR/VOLUME + ~30 probe_* fields in Light DNA, versioning pass 502.26, drain `bmain->lightprobes`, commit `a336e0b2`). Remaining Phase 1: Mask → NodeTree, Lattice → modifier, Brush → project-optional.
 
 ---
 
@@ -149,9 +149,9 @@ BLI_listbase_clear(&bmain->linestyles);
 | Audio | Mix, Score |
 
 **Bucket 3 permanent homes (VFont → Palette → LightProbe → Mask → Lattice → Brush)**
-- [~] VFont → filepath on OB_FONT; drain `bmain->fonts` (layers 1-2 done: DNA fields + versioning pass 502.24; layers 3+ pending)
-- [ ] Palette → inline into `Brush` struct; drain `bmain->palettes`
-- [ ] LightProbe → `eLightType` expansion + field migration + versioning pass; drain `bmain->lightprobes`
+- [x] VFont → filepath on OB_FONT; drain `bmain->fonts` (all layers: DNA fields, versioning pass 502.24, RNA sync callback, BKE_curve_vfont_ensure, post-read drain)
+- [x] Palette → inline into `Brush` struct; drain `bmain->palettes` (all layers: DNA embed + Brush I/O, paint.cc API, editors, versioning pass 502.25 + drain)
+- [x] LightProbe → `eLightType` expansion + field migration + versioning pass; drain `bmain->lightprobes`
 - [ ] Mask → embed in compositor `NodeTree`; drain `bmain->masks`
 - [ ] Lattice → embed in `LatticeModifierData`; drain `bmain->lattices`
 - [ ] Brush → project-optional annotation; drain `bmain->brushes` when not needed
@@ -253,7 +253,7 @@ The operational test: at the end of a fold-down session, every tool and workflow
 | ~~`ID_BR`~~ | `bmain->brushes` | Every paint/sculpt mode reads this every frame — Scar 2 kept ✓ |
 | ~~`ID_PAL`~~ | `bmain->palettes` | Referenced by Brush; active in any paint session — Scar 2 kept ✓ |
 | ~~`ID_LT`~~ | `bmain->lattices` | OB_LATTICE objects actively deform meshes — Scar 2 kept ✓ |
-| `ID_LP` | `bmain->lightprobes` | Active in EEVEE rendering |
+| ~~`ID_LP`~~ | `bmain->lightprobes` | Active in EEVEE rendering — Scar 2 kept ✓ |
 | ~~`ID_MSK`~~ | `bmain->masks` | Used in motion tracking and compositor — Scar 2 kept ✓ |
 | ~~`ID_VF`~~ | `bmain->fonts` | Text objects reference these every render — Scar 2 kept ✓ |
 

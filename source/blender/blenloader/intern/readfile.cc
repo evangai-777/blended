@@ -97,7 +97,10 @@
 #include "BKE_report.hh"
 #include "BKE_scene.hh"
 #include "BKE_screen.hh"
+#include "BKE_lightprobe.h"
+#include "BKE_paint.hh"
 #include "BKE_undo_system.hh"
+#include "BKE_vfont.hh"
 #include "BKE_workspace.hh"
 
 #include "DRW_engine.hh"
@@ -3958,6 +3961,21 @@ static void after_liblink_merged_bmain_process(Main *bmain, BlendFileReadReport 
   /* We have to rebuild that runtime information *after* all data-blocks have been properly linked.
    */
   BKE_main_collections_parent_relations_rebuild(bmain);
+
+  /* Drain the Scar 2 bmain->fonts listbase. After this, font data is loaded lazily from
+   * cu->font_filepath on first BKE_vfont_to_curve* call (via BKE_curve_vfont_ensure).
+   * This prevents bmain->fonts from accumulating VFont blocks across repeated file loads. */
+  BKE_vfont_drain_from_bmain(bmain);
+
+  /* Drain the Scar 2 bmain->palettes listbase. Palette data now lives embedded in
+   * Brush::palette; any standalone Palette blocks from legacy .blend files are discarded.
+   * This resolves the Category C memory leak for repeated file loads. */
+  BKE_palette_drain_from_bmain(bmain);
+
+  /* Drain the Scar 2 bmain->lightprobes listbase. LightProbe data now lives in Light objects
+   * with LA_PROBE_* type; the versioning pass (502.26) converts all OB_LIGHTPROBE objects to
+   * OB_LAMP before this drain runs. */
+  BKE_lightprobe_drain_from_bmain(bmain);
 }
 
 /** \} */

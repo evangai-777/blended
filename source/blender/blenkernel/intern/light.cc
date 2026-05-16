@@ -122,6 +122,10 @@ static void light_foreach_id(ID *id, LibraryForeachIDData *data)
     BKE_LIB_FOREACHID_PROCESS_FUNCTION_CALL(
         data, BKE_library_foreach_ID_embedded(data, (ID **)&lamp->nodetree));
   }
+
+  if (ELEM(lamp->type, LA_PROBE_SPHERE, LA_PROBE_PLANAR, LA_PROBE_VOLUME)) {
+    BKE_LIB_FOREACHID_PROCESS_IDSUPER(data, lamp->probe_visibility_grp, IDWALK_CB_NOP);
+  }
 }
 
 static void light_foreach_working_space_color(ID *id, const IDTypeForeachColorFunctionCallback &fn)

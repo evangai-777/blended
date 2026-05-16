@@ -227,28 +227,15 @@ static void eyedropper_add_material(bContext *C, const float3 color, const Mater
 /* Create a new palette color and palette if needed. */
 static void eyedropper_add_palette_color(bContext *C, const float3 color)
 {
-  Main *bmain = CTX_data_main(C);
   Scene *scene = CTX_data_scene(C);
   ToolSettings *ts = scene->toolsettings;
-  GpPaint *gp_paint = ts->gp_paint;
-  GpVertexPaint *gp_vertexpaint = ts->gp_vertexpaint;
-  Paint *paint = &gp_paint->paint;
-  Paint *vertexpaint = &gp_vertexpaint->paint;
-
-  /* Check for Palette in Draw and Vertex Paint Mode. */
-  if (paint->palette == nullptr) {
-    Palette *palette = BKE_palette_add(bmain, "Grease Pencil");
-    id_us_min(&palette->id);
-
-    BKE_paint_palette_set(paint, palette);
-
-    if (vertexpaint->palette == nullptr) {
-      BKE_paint_palette_set(vertexpaint, palette);
-    }
-  }
+  Paint *paint = &ts->gp_paint->paint;
 
   /* Check if the color exist already. */
-  Palette *palette = paint->palette;
+  Palette *palette = BKE_paint_palette(paint);
+  if (!palette) {
+    return;
+  }
 
   for (const auto [i, palcolor] : palette->colors.enumerate()) {
     if (compare_v3v3(palcolor.color, color, 0.01f)) {

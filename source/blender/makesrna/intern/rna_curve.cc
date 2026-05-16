@@ -182,6 +182,7 @@ static const EnumPropertyItem curve2d_fill_mode_items[] = {
 #  include <fmt/format.h>
 
 #  include "DNA_object_types.h"
+#  include "DNA_vfont_types.h"
 
 #  include "BLI_listbase.h"
 #  include "BLI_math_vector.h"
@@ -658,6 +659,16 @@ static void rna_Nurb_update_cyclic_v(Main *bmain, Scene *scene, PointerRNA *ptr)
 
   BKE_nurb_knot_calc_v(nu);
 
+  rna_Curve_update_data(bmain, scene, ptr);
+}
+
+static void rna_Curve_font_update(Main *bmain, Scene *scene, PointerRNA *ptr)
+{
+  Curve *cu = reinterpret_cast<Curve *>(ptr->owner_id);
+  STRNCPY(cu->font_filepath, cu->vfont ? cu->vfont->filepath : FO_BUILTIN_NAME);
+  STRNCPY(cu->font_bold_filepath, cu->vfontb ? cu->vfontb->filepath : "");
+  STRNCPY(cu->font_italic_filepath, cu->vfonti ? cu->vfonti->filepath : "");
+  STRNCPY(cu->font_bold_italic_filepath, cu->vfontbi ? cu->vfontbi->filepath : "");
   rna_Curve_update_data(bmain, scene, ptr);
 }
 
@@ -1321,28 +1332,28 @@ static void rna_def_font(BlenderRNA * /*brna*/, StructRNA *srna)
   RNA_def_property_ui_text(prop, "Font", "");
   RNA_def_property_flag(prop, PROP_EDITABLE);
   RNA_def_property_override_flag(prop, PROPOVERRIDE_OVERRIDABLE_LIBRARY);
-  RNA_def_property_update(prop, 0, "rna_Curve_update_data");
+  RNA_def_property_update(prop, 0, "rna_Curve_font_update");
 
   prop = RNA_def_property(srna, "font_bold", PROP_POINTER, PROP_NONE);
   RNA_def_property_pointer_sdna(prop, nullptr, "vfontb");
   RNA_def_property_ui_text(prop, "Font Bold", "");
   RNA_def_property_flag(prop, PROP_EDITABLE);
   RNA_def_property_override_flag(prop, PROPOVERRIDE_OVERRIDABLE_LIBRARY);
-  RNA_def_property_update(prop, 0, "rna_Curve_update_data");
+  RNA_def_property_update(prop, 0, "rna_Curve_font_update");
 
   prop = RNA_def_property(srna, "font_italic", PROP_POINTER, PROP_NONE);
   RNA_def_property_pointer_sdna(prop, nullptr, "vfonti");
   RNA_def_property_ui_text(prop, "Font Italic", "");
   RNA_def_property_flag(prop, PROP_EDITABLE);
   RNA_def_property_override_flag(prop, PROPOVERRIDE_OVERRIDABLE_LIBRARY);
-  RNA_def_property_update(prop, 0, "rna_Curve_update_data");
+  RNA_def_property_update(prop, 0, "rna_Curve_font_update");
 
   prop = RNA_def_property(srna, "font_bold_italic", PROP_POINTER, PROP_NONE);
   RNA_def_property_pointer_sdna(prop, nullptr, "vfontbi");
   RNA_def_property_ui_text(prop, "Font Bold Italic", "");
   RNA_def_property_flag(prop, PROP_EDITABLE);
   RNA_def_property_override_flag(prop, PROPOVERRIDE_OVERRIDABLE_LIBRARY);
-  RNA_def_property_update(prop, 0, "rna_Curve_update_data");
+  RNA_def_property_update(prop, 0, "rna_Curve_font_update");
 
   prop = RNA_def_property(srna, "edit_format", PROP_POINTER, PROP_NONE);
   RNA_def_property_pointer_sdna(prop, nullptr, "curinfo");

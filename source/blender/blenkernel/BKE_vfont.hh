@@ -111,6 +111,21 @@ void BKE_vfont_builtin_register(const void *mem, int size);
 VFont *BKE_vfont_builtin_ensure();
 
 /**
+ * Ensure all vfont pointers on a text curve are populated.
+ * If any pointer is null but the corresponding font_filepath field is non-empty,
+ * the font is loaded from the filepath into G_MAIN and the pointer is set.
+ * This is the filepath-based runtime load path for after bmain->fonts is drained.
+ */
+void BKE_curve_vfont_ensure(Curve *cu);
+
+/**
+ * Drain the Scar 2 bmain->fonts listbase: clear vfont pointers on all curves,
+ * then free every VFont. Fonts are re-created lazily from filepath on first use.
+ * Call once after file load so bmain->fonts does not leak between sessions.
+ */
+void BKE_vfont_drain_from_bmain(Main *bmain);
+
+/**
  * High-level pack function.
  *
  * Packs font data from its filepath.

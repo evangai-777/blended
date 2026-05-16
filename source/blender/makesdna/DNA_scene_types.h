@@ -1218,7 +1218,7 @@ struct Paint {
 
   ToolSystemBrushBindings tool_brush_bindings;
 
-  struct Palette *palette = nullptr;
+  DNA_DEPRECATED struct Palette *palette = nullptr;
   /** Cavity curve. */
   struct CurveMapping *cavity_curve = nullptr;
 

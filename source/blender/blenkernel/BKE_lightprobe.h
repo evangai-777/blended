@@ -13,6 +13,7 @@
 
 namespace blender {
 
+struct Light;
 struct LightProbe;
 struct Main;
 struct BlendWriter;
@@ -23,6 +24,20 @@ struct Object;
 
 void BKE_lightprobe_type_set(struct LightProbe *probe, short lightprobe_type);
 struct LightProbe *BKE_lightprobe_add(struct Main *bmain, const char *name);
+
+/**
+ * Apply lightprobe-type-specific defaults to the probe fields on \a la.
+ * Sets #Light::type to the corresponding LA_PROBE_* value and initialises
+ * clip/influence/falloff defaults the same way #BKE_lightprobe_type_set does.
+ */
+void BKE_lightprobe_type_apply_to_light(struct Light *la, int probe_type);
+
+/**
+ * Drain the Scar 2 bmain->lightprobes listbase after versioning has migrated
+ * all OB_LIGHTPROBE objects to OB_LAMP with LA_PROBE_* type.
+ * Call once from the post-load hook in readfile.cc.
+ */
+void BKE_lightprobe_drain_from_bmain(struct Main *bmain);
 
 void BKE_lightprobe_cache_blend_write(struct BlendWriter *writer,
                                       struct LightProbeObjectCache *cache);
