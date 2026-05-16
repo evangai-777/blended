@@ -11,7 +11,7 @@ Blended
 
 Blended is a fork of [Blender](https://www.blender.org) being rebuilt from the foundation up around one stated identity: **free 2D and 3D software tools, with an explicit focus on the craft of animation.**
 
-Currently at 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82). Phase 1 skeleton in progress: launcher ✓, all 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome), format design ✓ (startup/userpref-as-blend removed from startup path), VFont Bucket 3 all layers ✓ (DNA fields + versioning 502.24 + runtime ensure + drain), Palette → Brush all layers ✓ (embedded Palette in Brush + versioning 502.25 + drain). Remaining Phase 1: LightProbe/Mask/Lattice/Brush permanent homes.
+Currently at 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82). Phase 1 skeleton in progress: launcher ✓, all 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome), format design ✓ (startup/userpref-as-blend removed from startup path), VFont Bucket 3 all layers ✓ (DNA fields + versioning 502.24 + runtime ensure + drain), Palette → Brush all layers ✓ (embedded Palette in Brush + versioning 502.25 + drain), LightProbe → Light all layers ✓ (LA_PROBE_* in eLightType + probe_* fields in Light DNA + versioning 502.26 + drain). Remaining Phase 1: Mask/Lattice/Brush permanent homes.
 
 What Blended Is
 ---------------
