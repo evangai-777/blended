@@ -407,10 +407,18 @@ Cross-cutting animation engine settings (framerate, renderer, output, color mana
 |-------|------|------------------------------------------|
 | Base | Launcher background, fills | `#1D1D1D` |
 | Layer 1 | Sidebar surface, section panel areas | `#252525` |
-| Layer 2 | Mode button cards, recent file cards, hover states | `#2C2C2C` |
-| Layer 2+ | Card active/pressed | `#323232` |
+| Layer 2 | Mode button cards, recent file cards (default/resting) | `#2C2C2C` |
 
 Phase 2 visual identity may warm these slightly (less cool-gray, toward the Blended product palette), but the three-level hierarchy is permanent.
+
+**Interaction states — separate from surface levels.** The surface hierarchy above describes resting surfaces. Interaction states are a distinct spec:
+
+| State | Background | Notes |
+|-------|-----------|-------|
+| Default | `#2C2C2C` (Layer 2) | Resting card color |
+| Hover | `#323232` | Slight lift — same gray family, ~6pts lighter |
+| Active/pressed | Accent color (Phase 2) | Defined when brand palette originates |
+| Focused | Accent color outline, 2px, `#2C2C2C` fill | Keyboard navigation |
 
 **Left sidebar — fixed, ~220px wide.** Primary actions live here, above the fold, always visible. Structure top-to-bottom:
 
