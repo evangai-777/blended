@@ -97,6 +97,7 @@
 #include "BKE_report.hh"
 #include "BKE_scene.hh"
 #include "BKE_screen.hh"
+#include "BKE_lightprobe.h"
 #include "BKE_paint.hh"
 #include "BKE_undo_system.hh"
 #include "BKE_vfont.hh"
@@ -3970,6 +3971,11 @@ static void after_liblink_merged_bmain_process(Main *bmain, BlendFileReadReport 
    * Brush::palette; any standalone Palette blocks from legacy .blend files are discarded.
    * This resolves the Category C memory leak for repeated file loads. */
   BKE_palette_drain_from_bmain(bmain);
+
+  /* Drain the Scar 2 bmain->lightprobes listbase. LightProbe data now lives in Light objects
+   * with LA_PROBE_* type; the versioning pass (502.26) converts all OB_LIGHTPROBE objects to
+   * OB_LAMP before this drain runs. */
+  BKE_lightprobe_drain_from_bmain(bmain);
 }
 
 /** \} */

@@ -12,6 +12,7 @@
 
 #include "DNA_ID.h"
 #include "DNA_defs.h"
+#include "DNA_lightprobe_types.h"
 
 namespace blender {
 
@@ -39,6 +40,10 @@ enum {
   LA_SPOT = 2,
   // LA_HEMI = 3, /* Deprecated. */
   LA_AREA = 4,
+  /** Light probe objects — permanent homes for Bucket 3 LightProbe fold-down (0.7.0). */
+  LA_PROBE_SPHERE = 5,
+  LA_PROBE_PLANAR = 6,
+  LA_PROBE_VOLUME = 7,
 };
 
 /** #Light::mode */
@@ -163,6 +168,54 @@ struct Light {
 
   /* Nodes */
   struct bNodeTree *nodetree = nullptr;
+
+  /* Light probe (type == LA_PROBE_SPHERE, LA_PROBE_PLANAR, or LA_PROBE_VOLUME).
+   * Fields migrated from LightProbe ID — permanent homes for Bucket 3 (0.7.0). */
+  /** LIGHTPROBE_FLAG_* bits (show influence/parallax/clip/data, invert group, etc.). */
+  char probe_flag = LIGHTPROBE_FLAG_SHOW_INFLUENCE;
+  /** LIGHTPROBE_SHAPE_ELIPSOID / LIGHTPROBE_SHAPE_BOX — sphere attenuation shape. */
+  char probe_attenuation_type = 0;
+  /** LIGHTPROBE_SHAPE_ELIPSOID / LIGHTPROBE_SHAPE_BOX — sphere parallax shape. */
+  char probe_parallax_type = 0;
+  /** LIGHTPROBE_GRID_CAPTURE_* flags for volume grid. */
+  char probe_grid_flag = LIGHTPROBE_GRID_CAPTURE_INDIRECT | LIGHTPROBE_GRID_CAPTURE_EMISSION;
+  /** Influence radius (sphere) or z-axis attenuation distance (planar). */
+  float probe_distinf = 2.5f;
+  /** Custom parallax sphere radius (sphere only). */
+  float probe_distpar = 2.5f;
+  /** Influence falloff weight (0=hard edge, 1=full fade). */
+  float probe_falloff = 0.2f;
+  /** Near clip plane for probe captures. */
+  float probe_clipsta = 0.8f;
+  /** Far clip plane for probe captures. */
+  float probe_clipend = 20.0f;
+  float probe_vis_bias = 1.0f, probe_vis_bleedbias = 0;
+  float probe_vis_blur = 0.2f;
+  /** Intensity multiplier applied to captured lighting. */
+  float probe_intensity = 1.0f;
+  /** Irradiance grid sample resolution (volume probe). */
+  int probe_grid_resolution_x = 4;
+  int probe_grid_resolution_y = 4;
+  int probe_grid_resolution_z = 4;
+  /** Number of hemisphere samples per grid cell during baking. */
+  int probe_grid_bake_samples = 2048;
+  float probe_grid_surface_bias = 0.05f;
+  float probe_grid_escape_bias = 0.1f;
+  float probe_grid_normal_bias = 0.3f;
+  float probe_grid_view_bias = 0.0f;
+  float probe_grid_facing_bias = 0.5f;
+  float probe_grid_validity_threshold = 0.40f;
+  float probe_grid_dilation_threshold = 0.5f;
+  float probe_grid_dilation_radius = 1.0f;
+  float probe_grid_clamp_direct = 0.0f;
+  float probe_grid_clamp_indirect = 10.0f;
+  /** Scene-surface surfel density for volume probe baking. */
+  int probe_grid_surfel_density = 20;
+  char _pad3[4] = {};
+  /** Visibility group: objects included/excluded from probe captures. */
+  struct Collection *probe_visibility_grp = nullptr;
+  float probe_data_display_size = 0.1f;
+  char _pad4[4] = {};
 
   /* Deprecated. */
   DNA_DEPRECATED float energy_deprecated = 10.0f;

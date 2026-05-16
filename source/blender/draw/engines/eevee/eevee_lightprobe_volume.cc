@@ -2,6 +2,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later */
 
+#include "DNA_light_types.h"
 #include "DNA_lightprobe_types.h"
 
 #include "BKE_global.hh"
@@ -755,15 +756,14 @@ void IrradianceBake::init(const Object &probe_object)
 {
   float max_axis_len = math::reduce_max(math::to_scale(probe_object.object_to_world()));
 
-  const blender::LightProbe &lightprobe = DRW_object_get_data_for_drawing<blender::LightProbe>(
-      probe_object);
-  surfel_density_ = lightprobe.grid_surfel_density / max_axis_len;
-  min_distance_to_surface_ = lightprobe.grid_surface_bias;
-  max_virtual_offset_ = lightprobe.grid_escape_bias;
-  clip_distance_ = lightprobe.clipend;
-  capture_world_ = (lightprobe.grid_flag & LIGHTPROBE_GRID_CAPTURE_WORLD);
-  capture_indirect_ = (lightprobe.grid_flag & LIGHTPROBE_GRID_CAPTURE_INDIRECT);
-  capture_emission_ = (lightprobe.grid_flag & LIGHTPROBE_GRID_CAPTURE_EMISSION);
+  const blender::Light &la = DRW_object_get_data_for_drawing<const blender::Light>(probe_object);
+  surfel_density_ = la.probe_grid_surfel_density / max_axis_len;
+  min_distance_to_surface_ = la.probe_grid_surface_bias;
+  max_virtual_offset_ = la.probe_grid_escape_bias;
+  clip_distance_ = la.probe_clipend;
+  capture_world_ = (la.probe_grid_flag & LIGHTPROBE_GRID_CAPTURE_WORLD);
+  capture_indirect_ = (la.probe_grid_flag & LIGHTPROBE_GRID_CAPTURE_INDIRECT);
+  capture_emission_ = (la.probe_grid_flag & LIGHTPROBE_GRID_CAPTURE_EMISSION);
 
   /* Initialize views data, since they're used by other modules. */
   surfel_raster_views_sync(float3(0.0f), float3(1.0f), float4x4::identity());
@@ -989,10 +989,9 @@ void IrradianceBake::surfels_create(const Object &probe_object)
    */
   using namespace blender::math;
 
-  const blender::LightProbe &lightprobe = DRW_object_get_data_for_drawing<blender::LightProbe>(
-      probe_object);
+  const blender::Light &la = DRW_object_get_data_for_drawing<const blender::Light>(probe_object);
 
-  int3 grid_resolution = int3(&lightprobe.grid_resolution_x);
+  int3 grid_resolution = int3(&la.probe_grid_resolution_x);
   float4x4 grid_local_to_world = invert(probe_object.world_to_object());
   float3 grid_scale = math::to_scale(probe_object.object_to_world());
 

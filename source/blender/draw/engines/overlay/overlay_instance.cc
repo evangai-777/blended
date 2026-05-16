@@ -6,6 +6,8 @@
  * \ingroup overlay
  */
 
+#include "DNA_light_types.h"
+
 #include "BKE_colorband.hh"
 #include "DEG_depsgraph_query.hh"
 
@@ -616,11 +618,18 @@ void Instance::object_sync(ObjectRef &ob_ref, Manager &manager)
           layer.lattices.object_sync(manager, ob_ref, resources, state);
         }
         break;
-      case OB_LAMP:
-        layer.lights.object_sync(manager, ob_ref, resources, state);
+      case OB_LAMP: {
+        const Light *la = static_cast<const Light *>(ob_ref.object->data);
+        if (ELEM(la->type, LA_PROBE_SPHERE, LA_PROBE_PLANAR, LA_PROBE_VOLUME)) {
+          layer.light_probes.object_sync(manager, ob_ref, resources, state);
+        }
+        else {
+          layer.lights.object_sync(manager, ob_ref, resources, state);
+        }
         break;
+      }
       case OB_LIGHTPROBE:
-        layer.light_probes.object_sync(manager, ob_ref, resources, state);
+        /* Legacy: after versioning all OB_LIGHTPROBE objects become OB_LAMP. Keep as no-op. */
         break;
       case OB_GREASE_PENCIL:
         layer.grease_pencil.object_sync(manager, ob_ref, resources, state);

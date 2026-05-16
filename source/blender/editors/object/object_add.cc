@@ -1029,13 +1029,13 @@ static wmOperatorStatus lightprobe_add_exec(bContext *C, wmOperator *op)
   int type = RNA_enum_get(op->ptr, "type");
   float radius = RNA_float_get(op->ptr, "radius");
 
+  /* Create as OB_LAMP: light probes are now permanent homes inside Light (0.7.0). */
   Object *ob = add_type(
-      C, OB_LIGHTPROBE, get_lightprobe_defname(type), loc, rot, false, local_view_bits);
+      C, OB_LAMP, get_lightprobe_defname(type), loc, rot, false, local_view_bits);
   copy_v3_fl(ob->scale, radius);
 
-  LightProbe *probe = id_cast<LightProbe *>(ob->data);
-
-  BKE_lightprobe_type_set(probe, type);
+  Light *la = id_cast<Light *>(ob->data);
+  BKE_lightprobe_type_apply_to_light(la, type);
 
   return OPERATOR_FINISHED;
 }

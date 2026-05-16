@@ -9,6 +9,7 @@
 #include <cstring>
 
 #include "DNA_collection_types.h"
+#include "DNA_light_types.h"
 #include "DNA_lightprobe_types.h"
 #include "DNA_object_types.h"
 
@@ -19,6 +20,7 @@
 
 #include "BLI_listbase.h"
 
+#include "BKE_idtype.hh"
 #include "BKE_lib_id.hh"
 #include "BKE_lightprobe.h"
 #include "BKE_main.hh"
@@ -67,6 +69,40 @@ LightProbe *BKE_lightprobe_add(Main *bmain, const char *name)
   }
   BKE_lib_libblock_session_uid_ensure(&probe->id);
   return probe;
+}
+
+void BKE_lightprobe_type_apply_to_light(Light *la, int probe_type)
+{
+  switch (probe_type) {
+    case LIGHTPROBE_TYPE_SPHERE:
+      la->type = LA_PROBE_SPHERE;
+      la->probe_attenuation_type = LIGHTPROBE_SHAPE_ELIPSOID;
+      break;
+    case LIGHTPROBE_TYPE_PLANE:
+      la->type = LA_PROBE_PLANAR;
+      la->probe_distinf = 0.1f;
+      la->probe_falloff = 0.5f;
+      la->probe_clipsta = 0.001f;
+      break;
+    case LIGHTPROBE_TYPE_VOLUME:
+      la->type = LA_PROBE_VOLUME;
+      la->probe_distinf = 0.3f;
+      la->probe_falloff = 1.0f;
+      la->probe_clipsta = 0.01f;
+      break;
+    default:
+      BLI_assert_msg(0, "Unknown LightProbe type.");
+      break;
+  }
+}
+
+void BKE_lightprobe_drain_from_bmain(Main *bmain)
+{
+  LISTBASE_FOREACH_MUTABLE(LightProbe *, probe, &bmain->lightprobes) {
+    BLI_remlink(&bmain->lightprobes, probe);
+    BKE_libblock_free_data(&probe->id, false);
+    MEM_delete(probe);
+  }
 }
 
 static void lightprobe_grid_cache_frame_blend_write(BlendWriter *writer,

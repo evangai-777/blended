@@ -10,6 +10,7 @@
  * and `PlanarProbeModule`.
  */
 
+#include "DNA_light_types.h"
 #include "DNA_lightprobe_types.h"
 
 #include "eevee_instance.hh"
@@ -75,34 +76,34 @@ void LightProbeModule::sync_volume(const ObjectRef &ob_ref)
   VolumeProbe &grid = volume_map_.lookup_or_add_default(ObjectKey(ob_ref));
   grid.used = true;
   if (inst_.get_recalc_flags(ob_ref) != 0 || grid.initialized == false) {
-    const blender::LightProbe &lightprobe =
-        DRW_object_get_data_for_drawing<const blender::LightProbe>(*ob_ref.object);
+    const blender::Light &la = DRW_object_get_data_for_drawing<const blender::Light>(
+        *ob_ref.object);
 
     grid.initialized = true;
     grid.updated = true;
-    grid.surfel_density = lightprobe.grid_surfel_density;
+    grid.surfel_density = la.probe_grid_surfel_density;
     grid.object_to_world = ob_ref.object_to_world();
     grid.cache = ob_ref.object->lightprobe_cache;
 
     grid.world_to_object = float4x4(
         math::normalize(math::transpose(float3x3(grid.object_to_world))));
 
-    grid.normal_bias = lightprobe.grid_normal_bias;
-    grid.view_bias = lightprobe.grid_view_bias;
-    grid.facing_bias = lightprobe.grid_facing_bias;
+    grid.normal_bias = la.probe_grid_normal_bias;
+    grid.view_bias = la.probe_grid_view_bias;
+    grid.facing_bias = la.probe_grid_facing_bias;
 
-    grid.validity_threshold = lightprobe.grid_validity_threshold;
-    grid.dilation_threshold = lightprobe.grid_dilation_threshold;
-    grid.dilation_radius = lightprobe.grid_dilation_radius;
-    grid.intensity = lightprobe.intensity;
+    grid.validity_threshold = la.probe_grid_validity_threshold;
+    grid.dilation_threshold = la.probe_grid_dilation_threshold;
+    grid.dilation_radius = la.probe_grid_dilation_radius;
+    grid.intensity = la.probe_intensity;
 
     const bool has_valid_cache = grid.cache && grid.cache->grid_static_cache;
-    grid.viewport_display = has_valid_cache && (lightprobe.flag & LIGHTPROBE_FLAG_SHOW_DATA);
+    grid.viewport_display = has_valid_cache && (la.probe_flag & LIGHTPROBE_FLAG_SHOW_DATA);
     if (grid.viewport_display) {
       int3 cache_size = grid.cache->grid_static_cache->size;
       float3 scale = math::transform_direction(ob_ref.object_to_world(),
                                                1.0f / float3(cache_size + 1));
-      grid.viewport_display_size = math::reduce_min(scale) * lightprobe.data_display_size;
+      grid.viewport_display_size = math::reduce_min(scale) * la.probe_data_display_size;
     }
 
     /* Force reupload. */
@@ -115,7 +116,7 @@ void LightProbeModule::sync_sphere(const ObjectRef &ob_ref)
   SphereProbe &cube = sphere_map_.lookup_or_add_default(ObjectKey(ob_ref));
   cube.used = true;
   if (inst_.get_recalc_flags(ob_ref) != 0 || cube.initialized == false) {
-    const blender::LightProbe &light_probe = DRW_object_get_data_for_drawing<blender::LightProbe>(
+    const blender::Light &la = DRW_object_get_data_for_drawing<const blender::Light>(
         *ob_ref.object);
 
     cube.initialized = true;
@@ -136,19 +137,19 @@ void LightProbeModule::sync_sphere(const ObjectRef &ob_ref)
       cube.use_for_render = false;
     }
 
-    bool use_custom_parallax = (light_probe.flag & LIGHTPROBE_FLAG_CUSTOM_PARALLAX) != 0;
-    float influence_distance = light_probe.distinf;
-    float influence_falloff = light_probe.falloff;
-    float parallax_distance = light_probe.distpar;
+    bool use_custom_parallax = (la.probe_flag & LIGHTPROBE_FLAG_CUSTOM_PARALLAX) != 0;
+    float influence_distance = la.probe_distinf;
+    float influence_falloff = la.probe_falloff;
+    float parallax_distance = la.probe_distpar;
     parallax_distance = use_custom_parallax ? max_ff(parallax_distance, influence_distance) :
                                               influence_distance;
 
     auto to_eevee_shape = [](int bl_shape_type) {
       return (bl_shape_type == LIGHTPROBE_SHAPE_BOX) ? SHAPE_CUBOID : SHAPE_ELIPSOID;
     };
-    cube.influence_shape = to_eevee_shape(light_probe.attenuation_type);
-    cube.parallax_shape = to_eevee_shape(use_custom_parallax ? light_probe.parallax_type :
-                                                               light_probe.attenuation_type);
+    cube.influence_shape = to_eevee_shape(la.probe_attenuation_type);
+    cube.parallax_shape = to_eevee_shape(use_custom_parallax ? la.probe_parallax_type :
+                                                               la.probe_attenuation_type);
 
     float4x4 object_to_world = math::scale(ob_ref.object_to_world(), float3(influence_distance));
     cube.location = object_to_world.location();
@@ -157,11 +158,11 @@ void LightProbeModule::sync_sphere(const ObjectRef &ob_ref)
     cube.influence_scale = 1.0 / max_ff(1e-8f, influence_falloff);
     cube.influence_bias = cube.influence_scale;
     cube.parallax_distance = parallax_distance / influence_distance;
-    cube.clipping_distances = float2(light_probe.clipsta, light_probe.clipend);
+    cube.clipping_distances = float2(la.probe_clipsta, la.probe_clipend);
 
     float3 scale = influence_distance * math::to_scale(ob_ref.object_to_world());
-    cube.viewport_display = light_probe.flag & LIGHTPROBE_FLAG_SHOW_DATA;
-    cube.viewport_display_size = light_probe.data_display_size * math::reduce_add(scale / 3.0f);
+    cube.viewport_display = la.probe_flag & LIGHTPROBE_FLAG_SHOW_DATA;
+    cube.viewport_display_size = la.probe_data_display_size * math::reduce_add(scale / 3.0f);
   }
 }
 
@@ -170,34 +171,36 @@ void LightProbeModule::sync_planar(const ObjectRef &ob_ref)
   PlanarProbe &plane = planar_map_.lookup_or_add_default(ObjectKey(ob_ref));
   plane.used = true;
   if (inst_.get_recalc_flags(ob_ref) != 0 || plane.initialized == false) {
-    const blender::LightProbe &light_probe = DRW_object_get_data_for_drawing<blender::LightProbe>(
+    const blender::Light &la = DRW_object_get_data_for_drawing<const blender::Light>(
         *ob_ref.object);
 
     plane.initialized = true;
     plane.updated = true;
     plane.plane_to_world = ob_ref.object_to_world();
     plane.plane_to_world.z_axis() = math::normalize(plane.plane_to_world.z_axis()) *
-                                    light_probe.distinf;
+                                    la.probe_distinf;
     plane.world_to_plane = math::invert(plane.plane_to_world);
-    plane.clipping_offset = light_probe.clipsta;
-    plane.viewport_display = (light_probe.flag & LIGHTPROBE_FLAG_SHOW_DATA) != 0;
+    plane.clipping_offset = la.probe_clipsta;
+    plane.viewport_display = (la.probe_flag & LIGHTPROBE_FLAG_SHOW_DATA) != 0;
   }
 }
 
 void LightProbeModule::sync_probe(const ObjectRef &ob_ref)
 {
-  const blender::LightProbe &lightprobe =
-      DRW_object_get_data_for_drawing<const blender::LightProbe>(*ob_ref.object);
-  switch (lightprobe.type) {
-    case LIGHTPROBE_TYPE_SPHERE:
+  const blender::Light &la = DRW_object_get_data_for_drawing<const blender::Light>(
+      *ob_ref.object);
+  switch (la.type) {
+    case LA_PROBE_SPHERE:
       sync_sphere(ob_ref);
       return;
-    case LIGHTPROBE_TYPE_PLANE:
+    case LA_PROBE_PLANAR:
       sync_planar(ob_ref);
       return;
-    case LIGHTPROBE_TYPE_VOLUME:
+    case LA_PROBE_VOLUME:
       sync_volume(ob_ref);
       return;
+    default:
+      break;
   }
   BLI_assert_unreachable();
 }
