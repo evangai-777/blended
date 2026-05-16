@@ -389,22 +389,59 @@ static void LAUNCHER_OT_activate_mode(wmOperatorType *ot)
   ot->flag = OPTYPE_INTERNAL;
 }
 
+/* --- LAUNCHER_OT_open --- */
+
+static wmOperatorStatus open_launcher_exec(bContext *C, wmOperator * /*op*/)
+{
+  ScrArea *area = CTX_wm_area(C);
+  if (!area || area->spacetype == SPACE_BLENDED_LAUNCHER) {
+    return OPERATOR_CANCELLED;
+  }
+  ED_area_newspace(C, area, SPACE_BLENDED_LAUNCHER, true);
+  return OPERATOR_FINISHED;
+}
+
+static void LAUNCHER_OT_open(wmOperatorType *ot)
+{
+  ot->name = "Open Launcher";
+  ot->idname = "LAUNCHER_OT_open";
+  ot->description = "Return to the Blended launcher (canonical workspace system)";
+  ot->exec = open_launcher_exec;
+  ot->flag = OPTYPE_INTERNAL;
+}
+
 void launcher_operatortypes()
 {
   WM_operatortype_append(LAUNCHER_OT_activate_mode);
+  WM_operatortype_append(LAUNCHER_OT_open);
 }
 
 void launcher_keymap(wmKeyConfig *keyconf)
 {
-  wmKeyMap *km = WM_keymap_ensure(
-      keyconf, "Blended Launcher", SPACE_BLENDED_LAUNCHER, RGN_TYPE_WINDOW);
+  /* Launcher-area keymap: left-click activates a mode button. */
+  {
+    wmKeyMap *km = WM_keymap_ensure(
+        keyconf, "Blended Launcher", SPACE_BLENDED_LAUNCHER, RGN_TYPE_WINDOW);
 
-  KeyMapItem_Params params{};
-  params.type = LEFTMOUSE;
-  params.value = KM_PRESS;
-  params.modifier = 0;
-  params.direction = KM_ANY;
-  WM_keymap_add_item(km, "LAUNCHER_OT_activate_mode", &params);
+    KeyMapItem_Params params{};
+    params.type = LEFTMOUSE;
+    params.value = KM_PRESS;
+    params.modifier = 0;
+    params.direction = KM_ANY;
+    WM_keymap_add_item(km, "LAUNCHER_OT_activate_mode", &params);
+  }
+
+  /* Global window keymap: Ctrl+Alt+Home opens the launcher from any area. */
+  {
+    wmKeyMap *km = WM_keymap_ensure(keyconf, "Window", SPACE_EMPTY, RGN_TYPE_WINDOW);
+
+    KeyMapItem_Params params{};
+    params.type = EVT_HOMEKEY;
+    params.value = KM_PRESS;
+    params.modifier = KM_CTRL | KM_ALT;
+    params.direction = KM_ANY;
+    WM_keymap_add_item(km, "LAUNCHER_OT_open", &params);
+  }
 }
 
 /** \} */
