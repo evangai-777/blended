@@ -72,12 +72,14 @@ struct LauncherPipeline {
 static const LauncherPipeline g_creative = {
     "╌╌  CREATIVE  ╌╌",
     {{
+         /* §12.1 — GP canvas lives in VIEW3D; timeline is a secondary area (Phase 2). */
          "Storyboarding",
-         {{"Board", SPACE_SEQ}, {nullptr, 0}},
+         {{"Board", SPACE_VIEW3D}, {nullptr, 0}},
      },
      {
+         /* §12.2 — All three modes use Grease Pencil, which operates in VIEW3D. */
          "2D Animation",
-         {{"Animate", SPACE_SEQ}, {"Frame-by-Frame", SPACE_SEQ}, {"Paint", SPACE_IMAGE}, {nullptr, 0}},
+         {{"Animate", SPACE_VIEW3D}, {"Frame-by-Frame", SPACE_VIEW3D}, {"Paint", SPACE_VIEW3D}, {nullptr, 0}},
      },
      {
          "3D Animation",
