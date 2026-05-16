@@ -135,7 +135,7 @@ Commit to "the `.blended` file *is* the project, period" and most of the format 
 
 Identified, principles locked, final per-format decisions still being headhunted:
 
-- **Group 1 — Spine (native).** Collapse to one `.blended`. Drop userpref-as-blend, startup-as-blend, filesystem backup rotations — those are state, not documents. [Principle LOCKED, per-item OPEN]
+- **Group 1 — Spine (native).** Collapse to one `.blended`. Drop userpref-as-blend ✓ 0.7.0, startup-as-blend ✓ 0.7.0 (both removed from startup path — state, not documents); filesystem backup rotations [OPEN]. [Principle LOCKED; userpref-as-blend + startup-as-blend LOCKED 0.7.0]
 - **Group 2 — 3D interchange.** Keep USD, glTF/GLB, FBX, OBJ, Alembic. Drop or demote PLY, STL, BVH, X3D/VRML, Collada, 3DS. [OPEN]
 - **Group 3 — Images.** Keep PNG, JPEG, EXR (multilayer), WebP, TIFF. Drop IRIS (SGI, 1990s), Targa, BMP, DDS, DPX/Cineon, JP2, HDR-radiance, PSD-read. [OPEN]
 - **Group 4 — Video/audio.** Defer to ffmpeg as a single I/O boundary. The sin is exposing the full combinatorial codec/container space as first-class UI. [OPEN]

@@ -1317,13 +1317,9 @@ void wm_homefile_read_ex(bContext *C,
   const std::optional<std::string> cfgdir = BKE_appdir_folder_id(BLENDER_USER_CONFIG, nullptr);
   if (!use_factory_settings) {
     if (cfgdir.has_value()) {
-      BLI_path_join(
-          filepath_startup, sizeof(filepath_startup), cfgdir->c_str(), BLENDER_STARTUP_FILE);
-      filepath_startup_is_factory = false;
-      if (use_userdef) {
-        BLI_path_join(
-            filepath_userdef, sizeof(filepath_startup), cfgdir->c_str(), BLENDER_USERPREF_FILE);
-      }
+      /* startup-as-blend and userpref-as-blend removed (Blended 0.7.0):
+       * the .blended file is the project; startup state and preferences are not blend documents.
+       * cfgdir is still used below for app-template paths. */
     }
     else {
       use_factory_settings = true;
