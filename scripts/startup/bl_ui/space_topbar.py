@@ -317,7 +317,6 @@ class TOPBAR_MT_file_defaults(Menu):
                 translate=False,
             )
 
-        layout.operator("wm.save_homefile")
         if app_template:
             display_name = bpy.path.display_name(iface_(app_template))
             props = layout.operator("wm.read_factory_settings", text="Load Factory Settings")
