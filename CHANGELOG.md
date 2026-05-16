@@ -70,7 +70,7 @@ carries a one-liner status per active item.
 
 ### Phase 1: Skeleton
 
-**Launcher** — "Blending?" vertical scroll view built as the canonical workspace system per §11. Creative section (Storyboarding, 2D Animation, 3D Animation, Game, Design) and Post section (Finalizing, Compositing, Audio) headers with mode buttons for all 28 modes. Project state reflected back — sections with content look different from empty ones. Re-enterable globally via hotkey. Permanently resolves Scar 1 workspace runtime debt (workspace cycle, reorder operators, factory name translation). Also includes Bucket 3 permanent homes deferred from 0.5.0: brushes → user state + shareable brush packs, palette inlines into Brush, Lattice owned by modifier, LightProbe merges into Light with type flag, Mask hangs off compositor NodeTree, VFont becomes filepath — held pending the launcher architecture; the launcher is now real.
+**Launcher** — "Blending?" vertical scroll view built as the canonical workspace system per §11. Creative section (Storyboarding, 2D Animation, 3D Animation, Game, Design) and Post section (Finalizing, Compositing, Audio) headers with mode buttons for all 28 modes. Project state reflected back — sections with content look different from empty ones. Re-enterable globally via hotkey. Permanently resolves Scar 1 workspace runtime debt (workspace cycle, reorder operators, factory name translation). Also includes Bucket 3 permanent homes deferred from 0.5.0: brushes → project-optional (stays in project file, flagged as non-portable user customization; full user-state migration is 1.x), palette inlines into Brush, Lattice owned by modifier, LightProbe merges into Light with type flag, Mask hangs off compositor NodeTree, VFont becomes filepath — all 6 as code changes this cycle; the launcher architecture is now settled.
 
 **Mode lenses** — All 28 distinct editor layouts per §12 specs. All 28 ship in 0.7.0:
 
@@ -89,7 +89,7 @@ Each mode button opens the focused editor layout described in the corresponding 
 
 **Product identity skeleton** — Splash screen structure, about dialog, window chrome rebuilt as Blended per §16 direction. The visual container for Phase 2 art.
 
-**Format design** — `.blended` spec committed as a design document: Group 1 Spine decisions (userpref-as-blend gone, startup-as-blend gone, what is project vs user state), serialization structure, what the format is and is not. Design committed this cycle; implementation is 0.8.x.
+**Format design** — `.blended` spec committed as a design document: Group 1 Spine decisions (userpref-as-blend gone, startup-as-blend gone, what is project vs user state), serialization structure, what the format is and is not. Written spec this cycle plus early code changes (userpref-as-blend and startup-as-blend behaviors removed from the startup path); full implementation is 0.8.x.
 
 ### Phase 2: Aesthetic
 
@@ -100,6 +100,82 @@ Each mode button opens the focused editor layout described in the corresponding 
 **Splash screen** — Visual design applied to the Phase 1 skeleton.
 
 **Launcher aesthetics** — Visual identity applied to the launcher UI: colors, typography, layout polish.
+
+### Implementation decisions (settled 2026-05-16)
+
+**Launcher:** New C++ editor space type — `SPACE_BLENDED_LAUNCHER`. New source directory `editors/space_blended_launcher/`, full draw callback, custom vertical scroll view, input handling.
+
+**Mode lens fidelity:** Full §12 spec on all 28 modes. No skeleton shortcuts.
+
+**Bucket 3 permanent homes:** All 6 as code changes in 0.7.0. Settled commit order: VFont → Palette → LightProbe → Mask → Lattice → Brush.
+- VFont → `char filepath[FILE_MAX]` on OB_FONT objects; drain `bmain->fonts`
+- Palette → embedded field inside `Brush` struct; drain `bmain->palettes`
+- LightProbe → expand `eLightType` enum + LP fields into `Light` DNA + versioning pass; drain `bmain->lightprobes`
+- Mask → embed inside compositor `NodeTree`; drain `bmain->masks`
+- Lattice → embed geometry in `LatticeModifierData`; drain `bmain->lattices`
+- Brush → **project-optional**: stays in project file, flagged as non-portable user customization. Full user-state migration is 1.x.
+
+**Format design:** Spec + early code. BLENDED.md §5 Group 1 Spine decisions written AND userpref-as-blend / startup-as-blend behaviors removed from startup path.
+
+**Product identity:** Starting from zero. Logo, color palette, typography, and app icon all originated in Phase 2.
+
+**Scar 1 debt:** Resolve during launcher build. Delete or replace broken workspace operators as they surface.
+
+### To-do checklist
+
+#### Phase 1 — Skeleton (ordered by dependency)
+
+**Launcher (gate item — implement first)**
+- [ ] `source/blender/editors/space_blended_launcher/` — new directory, `CMakeLists.txt` entry
+- [ ] `space_blended_launcher.cc` — `SpaceType` registration, `SPACE_BLENDED_LAUNCHER` enum value, draw callback
+- [ ] Vertical scroll renderer — "Blending?" heading, `╌╌ CREATIVE ╌╌` / `╌╌ POST ╌╌` separators, section headers, mode buttons
+- [ ] Input: mode button click → opens corresponding §12.x editor layout
+- [ ] Project state reflection — sections with data look different from empty
+- [ ] Global re-entry hotkey wired to a `LAUNCHER_OT_open` operator or equivalent
+- [ ] Scar 1: delete or replace broken workspace operators as they surface during build
+
+**28 mode lenses (full §12 spec; commit section by section)**
+
+| Section | Modes |
+|---------|-------|
+| Storyboarding | Board |
+| 2D Animation | Animate, Frame-by-Frame, Paint |
+| 3D Animation | Sculpt, Model, Rig, Environment, VFX, Animate |
+| Game | Asset, Level, Bake, Export |
+| Design | Graphic, Illustration, Concept |
+| Finalizing | Storyboard, 2D, 3D, Game, Design, Mixed |
+| Compositing | Composite, Color, Cleanup |
+| Audio | Mix, Score |
+
+**Bucket 3 permanent homes (commit order: VFont → Palette → LightProbe → Mask → Lattice → Brush)**
+- [ ] VFont → filepath on OB_FONT; drain `bmain->fonts`
+- [ ] Palette → inline into `Brush` struct; drain `bmain->palettes`
+- [ ] LightProbe → `eLightType` expansion + field migration + versioning pass; drain `bmain->lightprobes`
+- [ ] Mask → embed in compositor `NodeTree`; drain `bmain->masks`
+- [ ] Lattice → embed in `LatticeModifierData`; drain `bmain->lattices`
+- [ ] Brush → project-optional annotation; drain `bmain->brushes` when not needed
+
+**Product identity skeleton**
+- [ ] `wm_splash_screen.cc` — Blended identity; "Blender" only for GPL attribution
+- [ ] About dialog — CHJ 3 Productions LLC surfaced as publisher
+- [ ] Window chrome audit — all visible "Blender" strings corrected
+
+**Format design**
+- [ ] BLENDED.md §5 Group 1 Spine decisions written (userpref-as-blend gone, startup-as-blend gone, what is project vs user state, serialization structure)
+- [ ] Code: userpref-as-blend and startup-as-blend behaviors removed from Python/C++ startup path
+
+#### Phase 2 — Aesthetic (begins after Phase 1 CI-complete)
+- [ ] Logo, color palette, typography originated
+- [ ] App icon assets generated (all platform sizes)
+- [ ] Splash screen — visual identity applied to Phase 1 skeleton
+- [ ] Launcher — visual identity applied (colors, type, layout polish)
+
+#### Mandatory docs update at each CI-complete patch
+- [ ] `BKE_blender_version.h` — PATCH bumped if needed
+- [ ] CLAUDE.md — current version line updated with build number + commit
+- [ ] CHANGELOG.md — CI-complete note added
+- [ ] BLENDED.md — Status line updated
+- [ ] `.github/README.md` — status sentence updated (`git add -f`)
 
 ---
 

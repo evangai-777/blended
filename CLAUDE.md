@@ -100,6 +100,75 @@ BLI_listbase_clear(&bmain->linestyles);
 | 0.9.x | `.blend` import — seamless read with dropped-data manifest output | Pending |
 | 1.0.0 | Foundation complete; basic pipeline navigation working. Two concurrent workstreams: (1) 1.0.0-dev runtime audit — developer runs the build, works through Known Runtime Artifacts + deferred debt checklists, reports findings to Claude for triage and fix; (2) GitHub Pages launch — landing, marketing, tech demo. Release tag when both clear. | Pending |
 
+### 0.7.0 Implementation Decisions (settled 2026-05-16)
+
+**Launcher:** New C++ editor space type — `SPACE_BLENDED_LAUNCHER` in `editors/space_blended_launcher/`. Full draw callback, custom vertical scroll view, input handling. Maximum visual control for §11/§12 fidelity.
+
+**Mode lens fidelity:** Full §12 spec. All 28 modes precisely implement their §12.x screen layouts. No skeleton shortcuts.
+
+**Bucket 3 permanent homes:** All 6 as code changes in 0.7.0. Commit order: VFont → Palette → LightProbe → Mask → Lattice → Brush.
+- VFont → `char filepath[FILE_MAX]` on OB_FONT objects; drain `bmain->fonts`
+- Palette → embedded field inside `Brush` struct; drain `bmain->palettes`
+- LightProbe → expand `eLightType` enum + LP-specific fields migrated into `Light` DNA + versioning pass; drain `bmain->lightprobes`
+- Mask → embed inside compositor `NodeTree`; drain `bmain->masks`
+- Lattice → embed geometry in `LatticeModifierData`; drain `bmain->lattices`
+- Brush → **project-optional**: brushes stay in the project file, flagged as non-portable user customization. Full user-state + shareable-packs migration deferred to 1.x.
+
+**Format design:** BLENDED.md §5 Group 1 Spine decisions written AND early code changes (userpref-as-blend + startup-as-blend behaviors removed from startup path).
+
+**Product identity:** Starting from zero — logo, palette, typography, icon all originated in Phase 2.
+
+**Scar 1 debt:** Resolve during launcher build. Delete or replace broken workspace operators as they surface.
+
+### 0.7.0 To-Do Checklist
+
+#### Phase 1 — Skeleton (ordered by dependency)
+
+**Launcher (gate item)**
+- [ ] `source/blender/editors/space_blended_launcher/` — new directory, `CMakeLists.txt` entry
+- [ ] `space_blended_launcher.cc` — `SpaceType` registration, `SPACE_BLENDED_LAUNCHER` enum value, draw callback
+- [ ] Vertical scroll renderer — "Blending?" heading, `╌╌ CREATIVE ╌╌` / `╌╌ POST ╌╌` separators, section headers, mode buttons
+- [ ] Input: mode button click → opens corresponding §12.x editor layout
+- [ ] Project state reflection — sections with data look different from empty
+- [ ] Global re-entry hotkey
+- [ ] Scar 1: delete or replace broken workspace operators as they surface
+
+**28 mode lenses (full §12 spec; commit section by section)**
+
+| Section | Modes |
+|---------|-------|
+| Storyboarding | Board |
+| 2D Animation | Animate, Frame-by-Frame, Paint |
+| 3D Animation | Sculpt, Model, Rig, Environment, VFX, Animate |
+| Game | Asset, Level, Bake, Export |
+| Design | Graphic, Illustration, Concept |
+| Finalizing | Storyboard, 2D, 3D, Game, Design, Mixed |
+| Compositing | Composite, Color, Cleanup |
+| Audio | Mix, Score |
+
+**Bucket 3 permanent homes (VFont → Palette → LightProbe → Mask → Lattice → Brush)**
+- [ ] VFont → filepath on OB_FONT; drain `bmain->fonts`
+- [ ] Palette → inline into `Brush` struct; drain `bmain->palettes`
+- [ ] LightProbe → `eLightType` expansion + field migration + versioning pass; drain `bmain->lightprobes`
+- [ ] Mask → embed in compositor `NodeTree`; drain `bmain->masks`
+- [ ] Lattice → embed in `LatticeModifierData`; drain `bmain->lattices`
+- [ ] Brush → project-optional annotation; drain `bmain->brushes` when not needed
+
+**Product identity skeleton**
+- [ ] `wm_splash_screen.cc` — Blended identity; "Blender" only for GPL attribution
+- [ ] About dialog — CHJ 3 Productions LLC as publisher
+- [ ] Window chrome audit — remaining "Blender" strings corrected
+
+**Format design**
+- [ ] BLENDED.md §5 Group 1 Spine decisions written
+- [ ] Code: userpref-as-blend and startup-as-blend behaviors removed
+
+#### Phase 2 — Aesthetic (after Phase 1 CI-complete)
+- [ ] Logo, color palette, typography originated
+- [ ] App icon (all platform sizes)
+- [ ] Splash screen visual design applied
+- [ ] Launcher visual identity applied
+
 ---
 
 ### 1.0.0-dev Runtime Audit Protocol
@@ -156,7 +225,7 @@ The operational test: at the end of a fold-down session, every tool and workflow
 
 *0.5.0 (this version) — deregistration only:* Remove these six from the ID system. Close the datablock audit number (39 → ~19). The Scar 2 listbases keep everything working. The "where does this data truly live in the final product" question is explicitly not answered here — that is not a failure, it is correct.
 
-*0.7.x (two versions from now, after the 0.6.x depsgraph audit) — actual new homes:* Brushes become user state + shareable brush packs. Palette inlines into Brush. Lattice gets owned by its modifier. LightProbe merges into Light with a type flag. Mask hangs off compositor NodeTree. VFont becomes a filepath. None of this architecture exists in 0.5.0 and that is correct — it will be designed when the launcher is built. Do not attempt to implement it during the fold-down. If the code for brush-as-user-state doesn't exist yet, leave it absent. The Scar 2 listbase is the bridge.
+*0.7.x (current dev cycle) — actual new homes (all 6 as code changes, settled commit order: VFont → Palette → LightProbe → Mask → Lattice → Brush):* VFont → `char filepath[FILE_MAX]` on OB_FONT objects. Palette inlines into Brush struct. LightProbe merges into Light with a type flag (expand `eLightType` + migrate LP fields into Light DNA + versioning pass). Mask embeds in compositor NodeTree. Lattice embeds in LatticeModifierData. Brush → **project-optional** (stays in project file, flagged as non-portable user customization; full user-state + shareable-packs migration is 1.x). The Scar 2 listbases remain as bridges for blenloader versioning infrastructure until 0.9.x. Do not attempt to implement the 1.x brush-as-user-state architecture during the fold-down or during 0.7.x — project-optional annotation is the correct and complete 0.7.0 target.
 
 **The failure modes (named explicitly):**
 - Treating it like a Bucket 6 fossil removal — deleting files, removing struct definitions, gutting runtime code. Wrong. The functionality is alive.
