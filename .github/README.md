@@ -11,7 +11,7 @@ Blended
 
 Blended is a fork of [Blender](https://www.blender.org) being rebuilt from the foundation up around one stated identity: **free 2D and 3D software tools, with an explicit focus on the craft of animation.**
 
-Currently at 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82). Depsgraph/draw/editor seam closure complete: OOB guards permanent, EEVEE always-update strategy locked in, dead code removed. First full foundation layer in one implementation commit. Next: 0.7.x launcher + product identity.
+Currently at 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82). Phase 1 skeleton in progress: launcher ✓, all 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome), format design ✓ (startup/userpref-as-blend removed from startup path), VFont Bucket 3 layers 1-2 ✓ (DNA fields + versioning pass 502.24). Remaining Phase 1: VFont layers 3+, Palette/LightProbe/Mask/Lattice/Brush permanent homes.
 
 What Blended Is
 ---------------
@@ -62,7 +62,7 @@ Contributors
 
 Blended is developed and published by **CHJ 3 Productions LLC** (Indiana).
 
-Developed with [Claude](https://anthropic.com) (Anthropic) as implementation partner across the full rebuild — version identity, CI pipeline, rig compatibility, update checker, and all datablock audit work. Per-release detail in [`CHANGELOG.md`](../CHANGELOG.md).
+Developed with [Claude](https://anthropic.com) (Anthropic) as primary implementation partner across the full rebuild — version identity, CI pipeline, rig compatibility, update checker, and all datablock audit and 0.7.x Phase 1 skeleton work. [Codex](https://openai.com) (OpenAI) contributes automated code review on pull requests, catching regressions and missed sites throughout 0.4.x–0.7.x. Per-release detail in [`CHANGELOG.md`](../CHANGELOG.md).
 
 Upstream Blender Resources
 --------------------------

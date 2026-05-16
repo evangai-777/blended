@@ -304,6 +304,14 @@ struct Curve {
   struct VFont *vfonti = nullptr;
   struct VFont *vfontbi = nullptr;
 
+  /* Bucket 3 VFont permanent home (0.7.x): font file paths stored directly on the text object.
+   * These fields replace the vfont/vfontb/vfonti/vfontbi ID pointers above (migration in progress).
+   * Population: versioning pass populates from vfont->filepath; runtime uses these directly. */
+  char font_filepath[/*FILE_MAX*/ 1024] = "";
+  char font_bold_filepath[/*FILE_MAX*/ 1024] = "";
+  char font_italic_filepath[/*FILE_MAX*/ 1024] = "";
+  char font_bold_italic_filepath[/*FILE_MAX*/ 1024] = "";
+
   struct TextBox *tb = nullptr;
   int totbox = 0, actbox = 0;
 

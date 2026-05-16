@@ -3524,13 +3524,10 @@ class WM_MT_splash_about(Menu):
 
         col = split.column(align=True)
         col.emboss = 'PULLDOWN_MENU'
-        col.operator("wm.url_open_preset", text="Donate", icon='FUND').type = 'FUND'
         col.operator("wm.url_open_preset", text="What's New", icon='URL').type = 'RELEASE_NOTES'
         col.separator(factor=2.0)
         col.operator("wm.url_open_preset", text="Credits", icon='URL').type = 'CREDITS'
         col.operator("wm.url_open", text="License", icon='URL').url = "https://www.blender.org/about/license/"
-        col.operator("wm.url_open", text="Blender Store", icon='URL').url = "https://store.blender.org"
-        col.operator("wm.url_open_preset", text="Blender Website", icon='URL').type = 'BLENDER'
 
 
 class WM_MT_region_toggle_pie(Menu):

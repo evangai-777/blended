@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82 on commit `8f7dda22`). 0.6.0: depsgraph/draw/editor seam closure — OOB guards permanent, EEVEE always-update strategy locked in, dead code removed. First full foundation layer completed in a single implementation commit. Next: 0.7.x — launcher as canonical workspace system (§11), all 28 mode lenses across all 8 pipeline sections (§12), full product identity (§16), `.blended` format design.
+**Current version:** Blended 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82 on commit `8f7dda22`). Phase 1 skeleton in progress: launcher + 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome audit), format design ✓ (startup-as-blend + userpref-as-blend removed, BLENDED.md §5 Group 1 LOCKED), VFont Bucket 3 layers 1-2 ✓ (DNA filepath fields + versioning pass 502.24). Remaining Phase 1: VFont layers 3+, Palette → Brush, LightProbe → Light, Mask → NodeTree, Lattice → modifier, Brush → project-optional.
 
 ---
 
@@ -127,15 +127,15 @@ BLI_listbase_clear(&bmain->linestyles);
 #### Phase 1 — Skeleton (ordered by dependency)
 
 **Launcher (gate item)**
-- [ ] `source/blender/editors/space_blended_launcher/` — new directory, `CMakeLists.txt` entry
-- [ ] `space_blended_launcher.cc` — `SpaceType` registration, `SPACE_BLENDED_LAUNCHER` enum value, draw callback
-- [ ] Vertical scroll renderer — "Blending?" heading, `╌╌ CREATIVE ╌╌` / `╌╌ POST ╌╌` separators, section headers, mode buttons
-- [ ] Input: mode button click → opens corresponding §12.x editor layout
-- [ ] Project state reflection — sections with data look different from empty
-- [ ] Global re-entry hotkey
-- [ ] Scar 1: delete or replace broken workspace operators as they surface
+- [x] `source/blender/editors/space_blended_launcher/` — new directory, `CMakeLists.txt` entry
+- [x] `space_blended_launcher.cc` — `SpaceType` registration, `SPACE_BLENDED_LAUNCHER` enum value, draw callback
+- [x] Vertical scroll renderer — "Blending?" heading, `╌╌ CREATIVE ╌╌` / `╌╌ POST ╌╌` separators, section headers, mode buttons
+- [x] Input: mode button click → opens corresponding §12.x editor layout
+- [x] Project state reflection — sections with data look different from empty
+- [x] Global re-entry hotkey (Ctrl+Alt+Home)
+- [x] Scar 1: workspace reorder stubs fixed; broken cycle operator stubs replaced
 
-**28 mode lenses (full §12 spec; commit section by section)**
+**28 mode lenses (full §12 spec; commit section by section)** ✓ All 28 shipped
 
 | Section | Modes |
 |---------|-------|
@@ -149,7 +149,7 @@ BLI_listbase_clear(&bmain->linestyles);
 | Audio | Mix, Score |
 
 **Bucket 3 permanent homes (VFont → Palette → LightProbe → Mask → Lattice → Brush)**
-- [ ] VFont → filepath on OB_FONT; drain `bmain->fonts`
+- [~] VFont → filepath on OB_FONT; drain `bmain->fonts` (layers 1-2 done: DNA fields + versioning pass 502.24; layers 3+ pending)
 - [ ] Palette → inline into `Brush` struct; drain `bmain->palettes`
 - [ ] LightProbe → `eLightType` expansion + field migration + versioning pass; drain `bmain->lightprobes`
 - [ ] Mask → embed in compositor `NodeTree`; drain `bmain->masks`
@@ -157,13 +157,13 @@ BLI_listbase_clear(&bmain->linestyles);
 - [ ] Brush → project-optional annotation; drain `bmain->brushes` when not needed
 
 **Product identity skeleton**
-- [ ] `wm_splash_screen.cc` — Blended identity; "Blender" only for GPL attribution
-- [ ] About dialog — CHJ 3 Productions LLC as publisher
-- [ ] Window chrome audit — remaining "Blender" strings corrected
+- [x] `wm_splash_screen.cc` — Blended identity; "Blender" only for GPL attribution
+- [x] About dialog — CHJ 3 Productions LLC as publisher
+- [x] Window chrome audit — remaining "Blender" strings corrected
 
 **Format design**
-- [ ] BLENDED.md §5 Group 1 Spine decisions written
-- [ ] Code: userpref-as-blend and startup-as-blend behaviors removed
+- [x] BLENDED.md §5 Group 1 Spine decisions written
+- [x] Code: userpref-as-blend and startup-as-blend behaviors removed
 
 #### Phase 2 — Aesthetic (after Phase 1 CI-complete)
 - [ ] Logo, color palette, typography originated

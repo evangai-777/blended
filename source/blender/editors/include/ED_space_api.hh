@@ -43,6 +43,8 @@ void ED_spacetype_userpref();
 void ED_spacetype_clip();
 void ED_spacetype_statusbar();
 void ED_spacetype_topbar();
+/** Blended launcher — canonical workspace system (§11, BLENDED.md). */
+void ED_spacetype_blended_launcher();
 
 namespace ed::vse {
 void ED_spacetype_sequencer();

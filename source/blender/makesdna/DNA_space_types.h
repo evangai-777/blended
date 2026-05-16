@@ -1297,4 +1297,25 @@ struct SpreadsheetRowFilter {
 
 /** \} */
 
+/* -------------------------------------------------------------------- */
+/** \name Blended Launcher (§11)
+ * \{ */
+
+/** Canonical workspace system — the pipeline scroll launcher per BLENDED.md §11. */
+struct SpaceBlendedLauncher {
+  SpaceLink *next = nullptr, *prev = nullptr;
+  /** Storage of regions for inactive spaces. */
+  ListBaseT<ARegion> regionbase = {nullptr, nullptr};
+  char spacetype = 0;
+  char link_flag = 0;
+  char _pad0[6] = {};
+  /* End 'SpaceLink' header. */
+
+  /** Vertical scroll offset in pixels. Positive = scrolled down. */
+  float scroll_offset = 0.0f;
+  char _pad1[4] = {};
+};
+
+/** \} */
+
 }  // namespace blender

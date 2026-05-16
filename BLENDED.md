@@ -1,7 +1,7 @@
 # BLENDED — Identity & Design Agreements
 
 **Developer/Publisher:** CHJ 3 Productions LLC (Indiana).
-**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82, commit `8f7dda22`). Depsgraph/draw/editor seam closure complete: OOB guards permanent, EEVEE always-update strategy locked in, dead code removed. First full foundation layer in one implementation commit. 0.7.x in progress: launcher as canonical workspace system (§11), all 28 mode lenses (§12), full product identity (§16), `.blended` format design.
+**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82, commit `8f7dda22`). 0.7.x Phase 1 skeleton in progress: launcher ✓, 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome), format design ✓ (startup/userpref-as-blend removed, §5 Group 1 LOCKED), VFont Bucket 3 layers 1-2 ✓. Remaining Phase 1: VFont layers 3+, Palette→Brush, LightProbe→Light, Mask→NodeTree, Lattice→modifier, Brush→project-optional.
 **Purpose:** So any future session, contributor, or Claude instance can pick up without re-litigating what's already been decided. Read this first before proposing changes to scope, identity, or architecture.
 
 ---
@@ -135,7 +135,7 @@ Commit to "the `.blended` file *is* the project, period" and most of the format 
 
 Identified, principles locked, final per-format decisions still being headhunted:
 
-- **Group 1 — Spine (native).** Collapse to one `.blended`. Drop userpref-as-blend, startup-as-blend, filesystem backup rotations — those are state, not documents. [Principle LOCKED, per-item OPEN]
+- **Group 1 — Spine (native).** Collapse to one `.blended`. Drop userpref-as-blend ✓ 0.7.0, startup-as-blend ✓ 0.7.0 (both removed from startup path — state, not documents); filesystem backup rotations [OPEN]. [Principle LOCKED; userpref-as-blend + startup-as-blend LOCKED 0.7.0]
 - **Group 2 — 3D interchange.** Keep USD, glTF/GLB, FBX, OBJ, Alembic. Drop or demote PLY, STL, BVH, X3D/VRML, Collada, 3DS. [OPEN]
 - **Group 3 — Images.** Keep PNG, JPEG, EXR (multilayer), WebP, TIFF. Drop IRIS (SGI, 1990s), Targa, BMP, DDS, DPX/Cineon, JP2, HDR-radiance, PSD-read. [OPEN]
 - **Group 4 — Video/audio.** Defer to ffmpeg as a single I/O boundary. The sin is exposing the full combinatorial codec/container space as first-class UI. [OPEN]

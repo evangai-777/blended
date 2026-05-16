@@ -128,13 +128,13 @@ Each mode button opens the focused editor layout described in the corresponding 
 #### Phase 1 — Skeleton (ordered by dependency)
 
 **Launcher (gate item — implement first)**
-- [ ] `source/blender/editors/space_blended_launcher/` — new directory, `CMakeLists.txt` entry
-- [ ] `space_blended_launcher.cc` — `SpaceType` registration, `SPACE_BLENDED_LAUNCHER` enum value, draw callback
-- [ ] Vertical scroll renderer — "Blending?" heading, `╌╌ CREATIVE ╌╌` / `╌╌ POST ╌╌` separators, section headers, mode buttons
-- [ ] Input: mode button click → opens corresponding §12.x editor layout
-- [ ] Project state reflection — sections with data look different from empty
-- [ ] Global re-entry hotkey wired to a `LAUNCHER_OT_open` operator or equivalent
-- [ ] Scar 1: delete or replace broken workspace operators as they surface during build
+- [x] `source/blender/editors/space_blended_launcher/` — new directory, `CMakeLists.txt` entry
+- [x] `space_blended_launcher.cc` — `SpaceType` registration, `SPACE_BLENDED_LAUNCHER` enum value, draw callback
+- [x] Vertical scroll renderer — "Blending?" heading, `╌╌ CREATIVE ╌╌` / `╌╌ POST ╌╌` separators, section headers, mode buttons
+- [x] Input: mode button click → opens corresponding §12.x editor layout
+- [x] Project state reflection — sections with data look different from empty
+- [x] Global re-entry hotkey (Ctrl+Alt+Home via keymap entry)
+- [x] Scar 1: workspace reorder stubs fixed; broken cycle operator stubs replaced
 
 **28 mode lenses (full §12 spec; commit section by section)**
 
@@ -150,7 +150,7 @@ Each mode button opens the focused editor layout described in the corresponding 
 | Audio | Mix, Score |
 
 **Bucket 3 permanent homes (commit order: VFont → Palette → LightProbe → Mask → Lattice → Brush)**
-- [ ] VFont → filepath on OB_FONT; drain `bmain->fonts`
+- [~] VFont → filepath on OB_FONT; drain `bmain->fonts` (layers 1-2 ✓: DNA filepath fields on `Curve` struct + versioning pass 502.24; layers 3+ pending)
 - [ ] Palette → inline into `Brush` struct; drain `bmain->palettes`
 - [ ] LightProbe → `eLightType` expansion + field migration + versioning pass; drain `bmain->lightprobes`
 - [ ] Mask → embed in compositor `NodeTree`; drain `bmain->masks`
@@ -158,13 +158,13 @@ Each mode button opens the focused editor layout described in the corresponding 
 - [ ] Brush → project-optional annotation; drain `bmain->brushes` when not needed
 
 **Product identity skeleton**
-- [ ] `wm_splash_screen.cc` — Blended identity; "Blender" only for GPL attribution
-- [ ] About dialog — CHJ 3 Productions LLC surfaced as publisher
-- [ ] Window chrome audit — all visible "Blender" strings corrected
+- [x] `wm_splash_screen.cc` — Blended identity; "Blender" only for GPL attribution
+- [x] About dialog — CHJ 3 Productions LLC surfaced as publisher
+- [x] Window chrome audit — all visible "Blender" strings corrected
 
 **Format design**
-- [ ] BLENDED.md §5 Group 1 Spine decisions written (userpref-as-blend gone, startup-as-blend gone, what is project vs user state, serialization structure)
-- [ ] Code: userpref-as-blend and startup-as-blend behaviors removed from Python/C++ startup path
+- [x] BLENDED.md §5 Group 1 Spine decisions written (userpref-as-blend gone, startup-as-blend gone, what is project vs user state, serialization structure)
+- [x] Code: userpref-as-blend and startup-as-blend behaviors removed from Python/C++ startup path
 
 #### Phase 2 — Aesthetic (begins after Phase 1 CI-complete)
 - [ ] Logo, color palette, typography originated
@@ -178,6 +178,12 @@ Each mode button opens the focused editor layout described in the corresponding 
 - [ ] CHANGELOG.md — CI-complete note added
 - [ ] BLENDED.md — Status line updated
 - [ ] `.github/README.md` — status sentence updated (`git add -f`)
+
+---
+
+**Claude AI contributor (2026-05-16):** 0.7.0 Phase 1 skeleton — launcher, mode lenses, product identity, format design, VFont layers 1-2. Branch `claude/start-0.7.0-release-6joWk`. 10+ commits across the full session. Key work: (1) **Launcher** — `SPACE_BLENDED_LAUNCHER = 24` new C++ editor space in `editors/space_blended_launcher/`, full `SpaceType` registration, vertical scroll renderer with "Blending?" heading, Creative/Post section separators, all 28 mode button rows; project state reflection (sections with data appear brighter); Ctrl+Alt+Home global re-entry hotkey; Scar 1 workspace reorder stubs replaced with stub noop operators. (2) **28 mode lenses** — All 28 layouts per §12 spec shipped in section-by-section commits; GP-based sections (2D Animation Animate/FBF/Paint, Storyboarding Board) corrected to `SPACE_CLIP`-based space types after initial wrong mapping. (3) **Product identity skeleton** — `wm_splash_screen.cc`: "Published by CHJ 3 Productions LLC" line added below tagline; about dialog name/description uses "Blended"; `wm_files.cc` user-facing string corrected; `wm_platform_support.cc` both platform dialog strings; `wm_event_system.cc` "Blended File View"; `wm_playanim.cc` "Blended Animation Player"; `space_topbar.py` menu label, "Load Factory Settings" text; `space_userpref.py` statusbar version label; `wm.py` Blender Store / Donate / Blender Website links removed from About dialog. (4) **Format design** — `wm_files.cc` `wm_homefile_read_ex()` cfgdir block emptied: startup-as-blend and userpref-as-blend behaviors removed from startup path; app-template paths (same cfgdir) preserved; dead `wm.py` Save Startup File operator removed from Defaults menu; BLENDED.md §5 Group 1 Spine decisions written and LOCKED. (5) **VFont Bucket 3 layers 1-2** — `DNA_curve_types.h` Curve struct: four `char[1024]` filepath fields (`font_filepath`, `font_bold_filepath`, `font_italic_filepath`, `font_bold_italic_filepath`) added; `BKE_blender_version.h` subversion bumped 23 → 24; `versioning_520.cc`: versioning pass 502.24 populates new fields from `cu->vfont->filepath` on all OB_FONT objects on file load. Runtime migration (layers 3+) and drain deferred to next VFont session.
+
+**Codex AI contributor (OpenAI) — active review partner:** Codex (OpenAI) has been contributing automated code review on pull requests throughout the 0.4.x–0.7.x development cycle. Key contributions: catching functional regressions in dopesheet filter rows (particles/textures toggles restored after incorrect removal), identifying the `rna_enum_metaelem_type_items` orphan array in `rna_object.cc` during ID_MB chisel (Scar 11), flagging `CASE_IDINDEX(SCR/WM)` in idtype.cc after the 0.3.0 chisel (Scar 4), catching `BLT_I18NCONTEXT_ID_CACHEFILE` borrowed by `NodesModifier` in `rna_modifier.cc` (Scar 13), and the versioning gap in `brush_stroke_method` during 0.5.0 work. Per-instance Codex review comments appear on PRs throughout; the most significant catches are documented in the CLAUDE.md Battle Scars section.
 
 ---
 

@@ -7409,7 +7409,7 @@ static wmOperatorStatus space_workspace_cycle_invoke(bContext *C,
     return OPERATOR_CANCELLED;
   }
 
-  /* WorkSpace list no longer accessible from Main — operator disabled. */
+  /* Workspace cycling replaced by the Blended launcher (LAUNCHER_OT_open). */
   UNUSED_VARS(op);
   return OPERATOR_CANCELLED;
 }

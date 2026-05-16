@@ -479,6 +479,7 @@ static ui::Block *wm_block_about_create(bContext *C, ARegion *region, void * /*a
 
   uiItemL_ex(&col, IFACE_("Blended"), ICON_NONE, true, false);
   uiItemL_ex(&col, IFACE_("Blender, simplified."), ICON_NONE, false, false);
+  uiItemL_ex(&col, IFACE_("Published by CHJ 3 Productions LLC"), ICON_NONE, false, false);
 
   MenuType *mt = WM_menutype_find("WM_MT_splash_about", true);
   if (mt) {

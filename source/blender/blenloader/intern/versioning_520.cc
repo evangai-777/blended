@@ -13,6 +13,7 @@
 #include "DNA_ID.h"
 #include "DNA_brush_types.h"
 #include "DNA_curve_types.h"
+#include "DNA_vfont_types.h"
 #include "DNA_modifier_types.h"
 #include "DNA_node_tree_interface_types.h"
 #include "DNA_node_types.h"
@@ -514,6 +515,28 @@ void blo_do_versions_520(FileData * /*fd*/, Library * /*lib*/, Main *bmain)
       if (object.type == 12 /* OB_SPEAKER */) {
         object.type = OB_EMPTY;
         object.data = nullptr;
+      }
+    }
+  }
+  if (!MAIN_VERSION_FILE_ATLEAST(bmain, 502, 24)) {
+    /* Bucket 3 VFont permanent home (Blended 0.7.0): populate font filepath fields on Curve
+     * from the VFont ID pointer. Runtime code will be migrated to read filepath directly;
+     * the vfont/vfontb/vfonti/vfontbi pointers will be deprecated in a later layer. */
+    for (Object &object : bmain->objects) {
+      if (object.type == OB_FONT && object.data != nullptr) {
+        Curve *cu = static_cast<Curve *>(object.data);
+        if (cu->font_filepath[0] == '\0' && cu->vfont != nullptr) {
+          STRNCPY(cu->font_filepath, cu->vfont->filepath);
+        }
+        if (cu->font_bold_filepath[0] == '\0' && cu->vfontb != nullptr) {
+          STRNCPY(cu->font_bold_filepath, cu->vfontb->filepath);
+        }
+        if (cu->font_italic_filepath[0] == '\0' && cu->vfonti != nullptr) {
+          STRNCPY(cu->font_italic_filepath, cu->vfonti->filepath);
+        }
+        if (cu->font_bold_italic_filepath[0] == '\0' && cu->vfontbi != nullptr) {
+          STRNCPY(cu->font_bold_italic_filepath, cu->vfontbi->filepath);
+        }
       }
     }
   }
