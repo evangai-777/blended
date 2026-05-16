@@ -20,13 +20,16 @@
 #include "BLI_listbase.h"
 #include "BLI_rect.h"
 #include "BLI_string_utf8.h"
+#include "BLI_utildefines.h"
 
 #include "BLF_api.hh"
 
+#include "DNA_object_types.h"
 #include "DNA_space_types.h"
 #include "DNA_windowmanager_types.h"
 
 #include "BKE_context.hh"
+#include "BKE_main.hh"
 #include "BKE_screen.hh"
 
 #include "GPU_immediate.hh"
@@ -147,6 +150,8 @@ static constexpr float COL_HEADING[4] = {1.0f, 1.0f, 1.0f, 0.92f};
 static constexpr float COL_SECTION[4] = {0.85f, 0.85f, 0.85f, 1.0f};
 static constexpr float COL_MODE[4] = {0.78f, 0.78f, 0.78f, 1.0f};
 static constexpr float COL_GROUP[4] = {0.45f, 0.45f, 0.45f, 1.0f};
+/* Slightly brighter card for sections that have project data. */
+static constexpr float COL_CARD_ACTIVE[4] = {0x38 / 255.0f, 0x38 / 255.0f, 0x38 / 255.0f, 1.0f};
 
 /** \} */
 
@@ -183,6 +188,48 @@ struct ButtonCache {
 
 /* Per-draw cache. Single-threaded draw; rebuilt every frame. */
 static ButtonCache g_buttons;
+
+/** \} */
+
+/* -------------------------------------------------------------------- */
+/** \name Project state helpers
+ * \{ */
+
+static bool section_has_data(const Main *bmain, const char *section_label)
+{
+  if (!bmain) {
+    return false;
+  }
+  if (STREQ(section_label, "3D Animation") || STREQ(section_label, "Game")) {
+    LISTBASE_FOREACH (const Object *, ob, &bmain->objects) {
+      if (ELEM(ob->type, OB_MESH, OB_ARMATURE)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  if (STREQ(section_label, "2D Animation") || STREQ(section_label, "Storyboarding")) {
+    LISTBASE_FOREACH (const Object *, ob, &bmain->objects) {
+      if (ELEM(ob->type, OB_GPENCIL_LEGACY, OB_GREASE_PENCIL)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  if (STREQ(section_label, "Design")) {
+    return bmain->images.first != nullptr;
+  }
+  if (STREQ(section_label, "Compositing")) {
+    return bmain->nodetrees.first != nullptr;
+  }
+  if (STREQ(section_label, "Audio")) {
+    return bmain->sounds.first != nullptr;
+  }
+  if (STREQ(section_label, "Finalizing")) {
+    return bmain->objects.first != nullptr;
+  }
+  return false;
+}
 
 /** \} */
 
@@ -235,7 +282,7 @@ static float text_width(float size, const char *text)
 /** \name Pipeline scroll renderer
  * \{ */
 
-static void draw_pipeline_scroll(const ARegion *region, float scroll_offset)
+static void draw_pipeline_scroll(const ARegion *region, float scroll_offset, const Main *bmain)
 {
   const int win_w = region->winx;
   const int win_h = region->winy;
@@ -291,6 +338,7 @@ static void draw_pipeline_scroll(const ARegion *region, float scroll_offset)
 
       /* Mode buttons — left-to-right, wrapping */
       int bx = content_x;
+      const bool active = section_has_data(bmain, sec.label);
 
       for (int mi = 0; sec.modes[mi].label != nullptr; mi++) {
         const LauncherMode &mode = sec.modes[mi];
@@ -304,7 +352,7 @@ static void draw_pipeline_scroll(const ARegion *region, float scroll_offset)
 
         const rcti rect{bx, bx + btn_w, pen_y - BUTTON_H, pen_y};
         g_buttons.push(rect, mode.target_space);
-        draw_rect_filled(rect.xmin, rect.ymin, btn_w, BUTTON_H, COL_CARD);
+        draw_rect_filled(rect.xmin, rect.ymin, btn_w, BUTTON_H, active ? COL_CARD_ACTIVE : COL_CARD);
 
         /* Label centered vertically in button */
         const int text_y = rect.ymin + (BUTTON_H - MODE_FONT_SIZE) / 2;
@@ -322,6 +370,7 @@ void launcher_main_region_draw(const bContext *C, ARegion *region)
 {
   const SpaceBlendedLauncher *sl = static_cast<const SpaceBlendedLauncher *>(
       CTX_wm_space_data(C));
+  const Main *bmain = CTX_data_main(C);
 
   const float scroll = sl ? sl->scroll_offset : 0.0f;
 
@@ -331,7 +380,7 @@ void launcher_main_region_draw(const bContext *C, ARegion *region)
   /* Base background fill */
   draw_rect_filled(0, 0, region->winx, region->winy, COL_BASE);
 
-  draw_pipeline_scroll(region, scroll);
+  draw_pipeline_scroll(region, scroll, bmain);
 }
 
 /** \} */
