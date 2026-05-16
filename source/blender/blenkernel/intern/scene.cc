@@ -579,15 +579,6 @@ static void scene_foreach_paint(LibraryForeachIDData *data,
                                                     &paint_old->brush,
                                                     IDWALK_CB_NOP);
 
-  Palette *palette_tmp = nullptr;
-  Palette **palette_p = paint ? &paint->palette : &palette_tmp;
-  BKE_LIB_FOREACHID_UNDO_PRESERVE_PROCESS_IDSUPER_P(data,
-                                                    palette_p,
-                                                    do_undo_restore,
-                                                    SCENE_FOREACH_UNDO_RESTORE,
-                                                    reader,
-                                                    &paint_old->palette,
-                                                    IDWALK_CB_USER);
 }
 
 static void scene_foreach_toolsettings(LibraryForeachIDData *data,
