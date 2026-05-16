@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82 on commit `8f7dda22`). Phase 1 skeleton in progress: launcher + 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome audit), format design ✓ (startup-as-blend + userpref-as-blend removed, BLENDED.md §5 Group 1 LOCKED), VFont Bucket 3 layers 1-2 ✓ (DNA filepath fields + versioning pass 502.24). Remaining Phase 1: VFont layers 3+, Palette → Brush, LightProbe → Light, Mask → NodeTree, Lattice → modifier, Brush → project-optional.
+**Current version:** Blended 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82 on commit `8f7dda22`). Phase 1 skeleton in progress: launcher + 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome audit), format design ✓ (startup-as-blend + userpref-as-blend removed, BLENDED.md §5 Group 1 LOCKED), VFont Bucket 3 all layers ✓ (DNA filepath fields + versioning pass 502.24 + RNA sync callback + BKE_curve_vfont_ensure + drain), Palette → Brush all layers ✓ (DNA embed PaletteColor/Palette in Brush + Paint::palette deprecated, brush.cc copy/free/I/O, paint.cc API, editors updated, versioning pass 502.25 + drain). Remaining Phase 1: LightProbe → Light, Mask → NodeTree, Lattice → modifier, Brush → project-optional.
 
 ---
 
@@ -149,8 +149,8 @@ BLI_listbase_clear(&bmain->linestyles);
 | Audio | Mix, Score |
 
 **Bucket 3 permanent homes (VFont → Palette → LightProbe → Mask → Lattice → Brush)**
-- [~] VFont → filepath on OB_FONT; drain `bmain->fonts` (layers 1-2 done: DNA fields + versioning pass 502.24; layers 3+ pending)
-- [ ] Palette → inline into `Brush` struct; drain `bmain->palettes`
+- [x] VFont → filepath on OB_FONT; drain `bmain->fonts` (all layers: DNA fields, versioning pass 502.24, RNA sync callback, BKE_curve_vfont_ensure, post-read drain)
+- [x] Palette → inline into `Brush` struct; drain `bmain->palettes` (all layers: DNA embed + Brush I/O, paint.cc API, editors, versioning pass 502.25 + drain)
 - [ ] LightProbe → `eLightType` expansion + field migration + versioning pass; drain `bmain->lightprobes`
 - [ ] Mask → embed in compositor `NodeTree`; drain `bmain->masks`
 - [ ] Lattice → embed in `LatticeModifierData`; drain `bmain->lattices`
