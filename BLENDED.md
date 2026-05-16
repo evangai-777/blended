@@ -1,7 +1,7 @@
 # BLENDED — Identity & Design Agreements
 
 **Developer/Publisher:** CHJ 3 Productions LLC (Indiana).
-**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82, commit `8f7dda22`). Depsgraph/draw/editor seam closure complete: OOB guards permanent, EEVEE always-update strategy locked in, dead code removed. First full foundation layer in one implementation commit. 0.7.x in progress: launcher as canonical workspace system (§11), all 28 mode lenses (§12), full product identity (§16), `.blended` format design.
+**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82, commit `8f7dda22`). 0.7.x Phase 1 skeleton in progress: launcher ✓, 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome), format design ✓ (startup/userpref-as-blend removed, §5 Group 1 LOCKED), VFont Bucket 3 layers 1-2 ✓. Remaining Phase 1: VFont layers 3+, Palette→Brush, LightProbe→Light, Mask→NodeTree, Lattice→modifier, Brush→project-optional.
 **Purpose:** So any future session, contributor, or Claude instance can pick up without re-litigating what's already been decided. Read this first before proposing changes to scope, identity, or architecture.
 
 ---
