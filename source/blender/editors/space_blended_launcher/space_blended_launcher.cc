@@ -17,6 +17,9 @@
 
 #include "MEM_guardedalloc.h"
 
+#include <algorithm>
+#include <climits>
+
 #include "BLI_listbase.h"
 #include "BLI_rect.h"
 #include "BLI_string_utf8.h"
@@ -38,6 +41,9 @@
 
 #include "ED_screen.hh"
 #include "ED_space_api.hh"
+
+#include "RNA_access.hh"
+#include "RNA_define.hh"
 
 #include "WM_api.hh"
 #include "WM_keymap.hh"
@@ -188,9 +194,6 @@ struct ButtonCache {
   }
 };
 
-/* Per-draw cache. Single-threaded draw; rebuilt every frame. */
-static ButtonCache g_buttons;
-
 /** \} */
 
 /* -------------------------------------------------------------------- */
@@ -296,8 +299,6 @@ static void draw_pipeline_scroll(const ARegion *region, float scroll_offset, con
    * BLF baseline is at pen_y so we descend by font size before drawing text. */
   int pen_y = win_h - HEADING_TOP_PAD + int(scroll_offset);
 
-  g_buttons.clear();
-
   /* Heading */
   {
     const char *heading = "Blending?";
@@ -353,7 +354,6 @@ static void draw_pipeline_scroll(const ARegion *region, float scroll_offset, con
         }
 
         const rcti rect{bx, bx + btn_w, pen_y - BUTTON_H, pen_y};
-        g_buttons.push(rect, mode.target_space);
         draw_rect_filled(rect.xmin, rect.ymin, btn_w, BUTTON_H, active ? COL_CARD_ACTIVE : COL_CARD);
 
         /* Label centered vertically in button */
@@ -391,9 +391,47 @@ void launcher_main_region_draw(const bContext *C, ARegion *region)
 /** \name Hit testing
  * \{ */
 
-int launcher_mode_at_cursor(const ARegion * /*region*/, int cursor_x, int cursor_y)
+int launcher_mode_at_cursor(const ARegion *region, float scroll_offset, int cursor_x, int cursor_y)
 {
-  return g_buttons.hit(cursor_x, cursor_y);
+  /* Recompute button geometry on demand using the same layout algorithm as draw_pipeline_scroll.
+   * This avoids a persistent process-global cache that would be overwritten by any launcher
+   * instance that drew last. BLF font metrics are safe to query outside of draw callbacks. */
+  const int win_w = region->winx;
+  const int win_h = region->winy;
+  const int content_w = MIN2(CONTENT_WIDTH, win_w - 48);
+  const int content_x = (win_w - content_w) / 2;
+
+  int pen_y = win_h - HEADING_TOP_PAD + int(scroll_offset);
+  pen_y -= HEADING_FONT_SIZE + 28;
+
+  const LauncherPipeline *groups[2] = {&g_creative, &g_post};
+  for (const LauncherPipeline *grp : groups) {
+    pen_y -= GROUP_GAP + GROUP_LABEL_FONT_SIZE + 6 + 18;
+
+    for (int si = 0; grp->sections[si].label != nullptr; si++) {
+      const LauncherSection &sec = grp->sections[si];
+      pen_y -= SECTION_LABEL_FONT_SIZE + SECTION_LABEL_GAP;
+
+      int bx = content_x;
+      for (int mi = 0; sec.modes[mi].label != nullptr; mi++) {
+        const LauncherMode &mode = sec.modes[mi];
+        const int btn_w = int(text_width(MODE_FONT_SIZE, mode.label)) + BUTTON_PAD_X * 2;
+
+        if (bx + btn_w > content_x + content_w && bx > content_x) {
+          pen_y -= BUTTON_H + BUTTON_GAP;
+          bx = content_x;
+        }
+
+        const rcti rect{bx, bx + btn_w, pen_y - BUTTON_H, pen_y};
+        if (BLI_rcti_isect_pt(&rect, cursor_x, cursor_y)) {
+          return mode.target_space;
+        }
+        bx += btn_w + BUTTON_GAP;
+      }
+      pen_y -= BUTTON_H + SECTION_GAP;
+    }
+  }
+  return SPACE_EMPTY;
 }
 
 /** \} */
@@ -412,9 +450,12 @@ static wmOperatorStatus activate_mode_invoke(bContext *C,
     return OPERATOR_CANCELLED;
   }
 
+  const SpaceBlendedLauncher *sl = static_cast<const SpaceBlendedLauncher *>(
+      CTX_wm_space_data(C));
   const int cx = event->xy[0] - region->winrct.xmin;
   const int cy = event->xy[1] - region->winrct.ymin;
-  const int target = launcher_mode_at_cursor(region, cx, cy);
+  const float scroll = sl ? sl->scroll_offset : 0.0f;
+  const int target = launcher_mode_at_cursor(region, scroll, cx, cy);
 
   if (target == SPACE_EMPTY) {
     return OPERATOR_CANCELLED;
@@ -438,6 +479,53 @@ static void LAUNCHER_OT_activate_mode(wmOperatorType *ot)
   ot->invoke = activate_mode_invoke;
   ot->poll = activate_mode_poll;
   ot->flag = OPTYPE_INTERNAL;
+}
+
+/* --- LAUNCHER_OT_scroll --- */
+
+/** Maximum scroll in pixels before content bottom aligns with the window bottom.
+ *  Computed from static layout constants; does not account for button-row wrapping
+ *  (wrapping is rare given content_w >= ~400px on any usable window — TODO Phase 2). */
+static float launcher_max_scroll(const ARegion *region)
+{
+  /* Section count: 5 Creative + 3 Post = 8. Group count: 2. */
+  const int content_h = HEADING_TOP_PAD + HEADING_FONT_SIZE + 28 +
+                        2 * (GROUP_GAP + GROUP_LABEL_FONT_SIZE + 6 + 18) +
+                        8 * (SECTION_LABEL_FONT_SIZE + SECTION_LABEL_GAP + BUTTON_H + SECTION_GAP) +
+                        32;
+  return float(MAX2(0, content_h - region->winy));
+}
+
+static wmOperatorStatus scroll_exec(bContext *C, wmOperator *op)
+{
+  ARegion *region = CTX_wm_region(C);
+  ScrArea *area = CTX_wm_area(C);
+  if (!region || !area) {
+    return OPERATOR_CANCELLED;
+  }
+  SpaceBlendedLauncher *sl = static_cast<SpaceBlendedLauncher *>(area->spacedata.first);
+  if (!sl) {
+    return OPERATOR_CANCELLED;
+  }
+
+  const int delta = RNA_int_get(op->ptr, "delta");
+  sl->scroll_offset += float(delta) * 60.0f;
+  sl->scroll_offset = std::clamp(sl->scroll_offset, 0.0f, launcher_max_scroll(region));
+
+  ED_region_tag_redraw(region);
+  return OPERATOR_FINISHED;
+}
+
+static void LAUNCHER_OT_scroll(wmOperatorType *ot)
+{
+  ot->name = "Scroll Launcher";
+  ot->idname = "LAUNCHER_OT_scroll";
+  ot->description = "Scroll the launcher pipeline view";
+  ot->exec = scroll_exec;
+  ot->poll = activate_mode_poll;
+  ot->flag = OPTYPE_INTERNAL;
+
+  RNA_def_int(ot->srna, "delta", 0, INT_MIN, INT_MAX, "Delta", "Scroll steps (positive = down)", -100, 100);
 }
 
 /* --- LAUNCHER_OT_open --- */
@@ -464,6 +552,7 @@ static void LAUNCHER_OT_open(wmOperatorType *ot)
 void launcher_operatortypes()
 {
   WM_operatortype_append(LAUNCHER_OT_activate_mode);
+  WM_operatortype_append(LAUNCHER_OT_scroll);
   WM_operatortype_append(LAUNCHER_OT_open);
 }
 
@@ -480,6 +569,28 @@ void launcher_keymap(wmKeyConfig *keyconf)
     params.modifier = 0;
     params.direction = KM_ANY;
     WM_keymap_add_item(km, "LAUNCHER_OT_activate_mode", &params);
+
+    /* Scroll down: content moves up, revealing lower pipeline sections. */
+    {
+      KeyMapItem_Params wp{};
+      wp.type = WHEELDOWNMOUSE;
+      wp.value = KM_PRESS;
+      wp.modifier = 0;
+      wp.direction = KM_ANY;
+      wmKeyMapItem *kmi = WM_keymap_add_item(km, "LAUNCHER_OT_scroll", &wp);
+      RNA_int_set(kmi->ptr, "delta", 1);
+    }
+
+    /* Scroll up: content moves down, revealing the heading. */
+    {
+      KeyMapItem_Params wp{};
+      wp.type = WHEELUPMOUSE;
+      wp.value = KM_PRESS;
+      wp.modifier = 0;
+      wp.direction = KM_ANY;
+      wmKeyMapItem *kmi = WM_keymap_add_item(km, "LAUNCHER_OT_scroll", &wp);
+      RNA_int_set(kmi->ptr, "delta", -1);
+    }
   }
 
   /* Global window keymap: Ctrl+Alt+Home opens the launcher from any area. */
