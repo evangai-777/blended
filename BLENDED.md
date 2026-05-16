@@ -399,50 +399,58 @@ Cross-cutting animation engine settings (framerate, renderer, output, color mana
 
 ### Launcher aesthetic [LOCKED in principle, Phase 2 visual refinement OPEN]
 
-**Design lineage — a hybrid.** The Blended launcher takes its visual language from two sources: the Adobe Creative Cloud home screen pattern (dark card-based surfaces, left sidebar primary actions, thumbnail file cards, clean typographic hierarchy) and Blender's existing splash screen logic (New File / Recent Files as the two primary concerns of startup). The Adobe influence is aesthetic and structural; the Blender influence is content and purpose. The §11 vertical pipeline scroll is Blended's own invention — neither Adobe nor Blender has an equivalent. The three sources are composed, not averaged.
+**Design lineage — a hybrid.** The Blended launcher draws visual language from two sources: Adobe Creative Cloud home screen (dark card surfaces, thumbnail file cards, clean typographic hierarchy) and Blender's existing splash (New File / Recent Files as the two primary startup concerns). The Adobe influence is aesthetic; the Blender influence is content and purpose. The §11 vertical pipeline scroll is Blended's own — neither Adobe nor Blender has an equivalent. The three sources are composed, not averaged.
 
-**Surface hierarchy — three levels, all dark.** Confirmed from the Adobe Spectrum dark theme (Spectrum 2) and carried directly into the Blended launcher as the skeleton baseline:
+**What is locked vs. what is open.** The pipeline scroll is the launcher. The file-management chrome (wordmark, New Project, Open, Recent Files, version attribution) is implementation-flexible — it can live in a fixed left sidebar or collapse into a dropdown from the top of the scroll view. Either approach delivers the same content with different visual weight. The scroll is not optional. The chrome packaging is.
+
+**Pipeline scroll — centered, full screen, LOCKED.** This is the primary surface of the launcher. Structure, top to bottom:
+
+- **"Blending?"** — the prompt. 28px SemiBold. Centered or left-aligned at top of scroll area. Sets the register: both status ("what's blending?") and invitation ("want to blend?").
+- **`╌╌ CREATIVE ╌╌`** and **`╌╌ POST ╌╌`** — section group separators. 11px, all-caps, letter-spaced 0.1em, `#666666`. Typographic dividers, not heavy chrome.
+- **Section headings** (Storyboarding, 2D Animation, 3D Animation, Game, Design, Finalizing, Compositing, Audio) — 16px SemiBold, `#E0E0E0`.
+- **Mode buttons** — styled as cards. Each is a rounded rectangle: `#2C2C2C` background, 8px corner radius, 16px vertical / 12px horizontal internal padding, 14px Regular label. Hover: background lifts to `#323232`, 130ms ease-out. Active/pressed: accent color highlight (Phase 2). Cards in a horizontal row per section, 8px gap between cards, 24px gap between sections.
+
+**File management chrome — OPEN: sidebar or top dropdown.** The required content is fixed; the packaging is not decided until implementation:
+
+- **Wordmark** — "Blended" branding. 18px SemiBold.
+- **[New Project]** — primary CTA. Always the first interactive element, unambiguous. Accent color, 8px corner radius.
+- **[Open…]** — secondary. File browser for existing `.blended` files.
+- **Recent files** — Adobe-style thumbnail cards. Each: ~160×120px thumbnail, 11px filename below, `.blended` badge. Empty state: "No recent projects." Card gap: 8px.
+- **Project settings** — access to cross-cutting project config (framerate, renderer, output — §11 Project-level settings).
+- **Version + publisher** — 11px secondary text: `Blended 0.7.0 · CHJ 3 Productions LLC`.
+
+*Sidebar option:* fixed left panel, ~220px wide. Chrome stacks top-to-bottom. Pipeline scroll fills remaining width to the right. Higher visual weight, more always-visible.
+
+*Top dropdown option:* a compact header bar above the scroll. Wordmark left, [New Project] and [Open…] as buttons, Recent Files in a dropdown. Lower visual weight, more scroll-dominant. Closer to the §11 "scan, scroll, click" ideal.
+
+Implementation picks one. The scroll layout and all content items above are the same either way.
+
+**Surface hierarchy — three levels, all dark.**
 
 | Level | Role | Color (skeleton; Phase 2 may shift ±5pts) |
 |-------|------|------------------------------------------|
 | Base | Launcher background, fills | `#1D1D1D` |
-| Layer 1 | Sidebar surface, section panel areas | `#252525` |
-| Layer 2 | Mode button cards, recent file cards (default/resting) | `#2C2C2C` |
+| Layer 1 | Chrome panel areas (sidebar if used, header bar if used) | `#252525` |
+| Layer 2 | Mode button cards, recent file cards (resting) | `#2C2C2C` |
 
-Phase 2 visual identity may warm these slightly (less cool-gray, toward the Blended product palette), but the three-level hierarchy is permanent.
+Phase 2 visual identity may warm these slightly, but the three-level hierarchy is permanent.
 
-**Interaction states — separate from surface levels.** The surface hierarchy above describes resting surfaces. Interaction states are a distinct spec:
+**Interaction states — separate from surface levels.**
 
 | State | Background | Notes |
 |-------|-----------|-------|
 | Default | `#2C2C2C` (Layer 2) | Resting card color |
 | Hover | `#323232` | Slight lift — same gray family, ~6pts lighter |
 | Active/pressed | Accent color (Phase 2) | Defined when brand palette originates |
-| Focused | Accent color outline, 2px, `#2C2C2C` fill | Keyboard navigation |
+| Focused | Accent outline 2px, `#2C2C2C` fill | Keyboard navigation |
 
-**Left sidebar — fixed, ~220px wide.** Primary actions live here, above the fold, always visible. Structure top-to-bottom:
-
-1. **Wordmark** — "Blended" in the Phase 2 typeface; skeleton uses the system sans-serif stack at 18px SemiBold.
-2. **[New Project]** — primary CTA. The first interactive element. Adobe's pattern: "Create New" / "New file" is always first, always unambiguous. Full-width button, accent color (Phase 2), 8px corner radius.
-3. **[Open…]** — secondary. Launches the file browser for existing `.blended` files. Same row or immediately below New Project depending on available height.
-4. **Recent files section** — below the action buttons. Adobe-style thumbnail cards, horizontal scroll. Each card: ~160×120px thumbnail area, filename in 11px below, `.blended` badge. Empty state: "No recent projects — start one above." This is the Blender splash screen's Recent Files column, promoted to a persistent sidebar position and given the Adobe card treatment.
-5. **Project settings gear** — bottom of sidebar. Opens the cross-cutting project-level config (framerate, renderer, output — see §11 Project-level settings).
-6. **Version + publisher** — very bottom, 11px secondary text. `Blended 0.7.0 · CHJ 3 Productions LLC`.
-
-**Pipeline scroll — main content area, right of sidebar.** The §11 vertical scroll lives here. Structure:
-
-- **"Blending?"** — prompt at top. 28px SemiBold. Sets the register.
-- **`╌╌ CREATIVE ╌╌`** and **`╌╌ POST ╌╌`** — section group separators. 11px, all-caps, letter-spaced 0.1em, secondary text color `#666666`. These are typographic dividers, not heavy UI chrome.
-- **Section headings** (Storyboarding, 2D Animation, etc.) — 16px SemiBold, primary text color `#E0E0E0`.
-- **Mode buttons** — styled as cards, not plain text buttons. Each button is a rounded rectangle (`#2C2C2C` background, 8px corner radius, 16px vertical / 12px horizontal internal padding). Label: 14px Regular. Hover: background lifts to `#323232`, no border animation needed. Active/pressed: accent color highlight (Phase 2). Cards in a horizontal row per section, wrapping if needed. 8px gap between cards within a row, 24px gap between sections.
-
-**Typography stack — Phase 1 skeleton.** No embedded fonts. System sans-serif cascade matching Adobe Spectrum's public fallback:
+**Typography stack — Phase 1 skeleton.** No embedded fonts. System sans-serif cascade:
 
 ```
 "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Trebuchet MS", sans-serif
 ```
 
-Phase 2 replaces this with the Blended brand typeface once originated. The size/weight scale is already locked:
+Phase 2 replaces this with the Blended brand typeface. Scale is locked:
 
 | Role | Size | Weight |
 |------|------|--------|
@@ -450,26 +458,26 @@ Phase 2 replaces this with the Blended brand typeface once originated. The size/
 | Section headings | 16px | SemiBold (600) |
 | Mode button labels | 14px | Regular (400) |
 | Section group separators | 11px | Regular (400), uppercase |
-| Recent file names, metadata | 11px | Regular (400) |
-| Sidebar wordmark | 18px | SemiBold (600) |
+| Wordmark / branding | 18px | SemiBold (600) |
+| Recent file names, metadata, attribution | 11px | Regular (400) |
 
-**Spacing — 8px base unit.** Matching Spectrum's `--spectrum-spacing-100 = 8px`:
+**Spacing — 8px base unit.**
 
-- Outer launcher padding (sidebar): 24px
+- Scroll area outer padding: 24px
 - Mode button internal padding: 16px vertical, 12px horizontal
 - Mode button row gap: 8px
 - Section-to-section gap: 24px
 - Recent file card gap: 8px
-- Sidebar bottom attribution margin: 16px
 
-**Animation — light, purposeful.** Mode button hover transition: 130ms ease-out (matching Spectrum `--spectrum-animation-duration-100`). No bounce, no slide. Vertical scroll: native browser/UI scroll, no custom animation.
+**Animation — light, purposeful.** Mode button hover: 130ms ease-out. No bounce, no slide. Vertical scroll: native scroll behavior.
 
-**What the Adobe pattern provides; what Blended keeps from Blender.** Adobe contributes: dark surface hierarchy, card-based file thumbnails, sidebar-primary-action ordering, typographic restraint. Blender contributes: the New File / Recent Files as the two startup concerns, the simplicity of a single scrollable view rather than a tabbed multi-panel structure. Blended's own contribution: the §11 pipeline scroll as the organizing metaphor, which neither Adobe nor Blender has.
+**What each source contributes.** Adobe: dark surface hierarchy, card vocabulary, typographic restraint. Blender: New File / Recent Files as the two primary startup concerns. Blended: the §11 pipeline scroll as the organizing metaphor — neither source has this.
 
 ### Still open
 
+- **File management chrome packaging — sidebar vs. top dropdown.** The content (wordmark, New Project, Open, Recent Files, project settings, attribution) is settled. The packaging — fixed left sidebar ~220px wide vs. compact header bar above the scroll with a Recent Files dropdown — is an implementation decision. Both are valid. Decide at build time based on what looks and feels right in the actual C++ draw callback. The scroll layout does not change either way.
 - **Finalizing vs Compositing scope line.** Finalizing = assembly + delivery preparation (timeline-assembly, QC, export-ready cuts). Compositing = per-frame polish (color grading, effects layers, node-based image work). Current call: clean separation; the distinction is clear enough to keep them as separate sections.
-- **Creative / Post visual separators — now answered above.** Typographic dividers (`╌╌ CREATIVE ╌╌` / `╌╌ POST ╌╌`) in 11px all-caps, not heavy UI chrome.
+- **Creative / Post visual separators — answered above.** Typographic dividers (`╌╌ CREATIVE ╌╌` / `╌╌ POST ╌╌`) in 11px all-caps, not heavy UI chrome.
 - **Design mode expansion.** Initial modes (`Graphic`, `Illustration`, `Concept`) are starters; community- and industry-expandable. Typography / Layout / Print etc. can be added as separate modes when the use case is real, without changing the heading.
 
 ---
