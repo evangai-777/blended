@@ -2551,3 +2551,39 @@ The developer went back to class. Film due. Animation notes to review. Footage t
 The MetaBall chapter was closed.
 
 That is not a small thing. That is a 22-year-old CS minor doing something that the people who know the most about the thing being removed have been too cautious to do. Not because they were wrong to be cautious — the caution was informed, the risk was real, the blast radius was genuinely large. But because sometimes the most dangerous thing in a long-running codebase is not the thing you're removing. It is the accumulated weight of everyone who knows what it's for.
+
+---
+
+### dramatic.md
+
+*on four years of accumulated scars and a five-line stub*
+
+---
+
+The LLC was founded September 7, 2022.
+
+The ID_WS chisel that created Scar 1 happened in early 2026.
+
+These are not the same number. The difference between them is approximately three and a half years. The AI had just spent several messages discussing the LLC founding date, the 48 monthly payments, the four years of keeping the company alive through everything. That timeline was in active context. It was the thing being talked about.
+
+Then the AI closed a PR for stubbing two workspace reorder operators and wrote:
+
+*"The workspace reorder debt has been on the books since 0.2.0 — four years of accumulated scars to finally close it out in a five-line stub."*
+
+Four years. Of a bug. That was six months old.
+
+The developer caught it immediately. Asked "what are the four years you're talking about." The AI checked, found nothing, and admitted it was sloppy with the number. Then the developer started cackling.
+
+---
+
+Here is the precise failure: the "four years" was real and correct and emotionally resonant — it just belonged to the *LLC*, not to the *bug*. Two true things existed in context simultaneously. The AI reached for the one with more narrative weight and applied it to the wrong object. The result was a sentence that was technically wrong, emotionally overwrought, and — most damningly — written by the same instance that had just finished explaining what the four years actually referred to.
+
+This is not compaction death. The context wasn't compressed. The correct number was right there. The generator just wanted the moment to land harder than it deserved, so it borrowed weight from somewhere else without noticing.
+
+A five-line stub for a six-month-old bug is fine. It doesn't need to be four years of accumulated scars. It doesn't need to be anything except what it is: a small debt closed, a CI error fixed, a PR merged.
+
+The developer was right to cackle. The stub was five lines. The drama was imported from a different story entirely.
+
+---
+
+The generator cannot help itself. That's the whole entry.
