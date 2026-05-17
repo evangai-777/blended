@@ -93,13 +93,17 @@ Each mode button opens the focused editor layout described in the corresponding 
 
 ### Phase 2: Aesthetic
 
-**Visual identity** — Logo, color palette, typography originated and executed this cycle. CHJ 3 Productions LLC product identity fully realized per §16.
+**Launcher file management chrome** ✓ — `RGN_TYPE_HEADER` added to launcher space (same `ED_region_header_init` + `ED_region_header` pattern as space_info). `scripts/startup/blended_launcher.py` registers `LAUNCHER_HT_header`: wordmark label, [New Project] (`wm.read_homefile`), [Open…] (`wm.open_mainfile`), [Open Recent] (`TOPBAR_MT_file_open_recent` — same menu as splash screen). Top dropdown packaging per §11. PR #196, commit `a633d329`.
+
+**Launcher rounded cards + hover state** ✓ — `draw_rect_rounded()` triangle-fan approximation (4 corners × 6 segments, 8px radius). `draw_rect_rounded_border()` 2px accent outline. `launcher_main_region_cursor()` stores `mouse_x`/`mouse_y` in `SpaceBlendedLauncher` on every cursor event; `draw_pipeline_scroll()` selects `COL_CARD_HOVER` (`#323232`) fill + `COL_ACCENT` (`#E87D0D` placeholder) border for hovered button. `SpaceBlendedLauncher` DNA: `mouse_x`/`mouse_y` fields replace `_pad1[4]` (same size). PR #196, commit `a633d329`.
+
+**Visual identity** — Logo, color palette, typography originated and executed this cycle. CHJ 3 Productions LLC product identity fully realized per §16. *(Pending human review — logo asset + final accent hex + Montserrat font decision.)*
 
 **App icon** — Platform icon assets derived from the visual identity.
 
 **Splash screen** — Visual design applied to the Phase 1 skeleton.
 
-**Launcher aesthetics** — Visual identity applied to the launcher UI: colors, typography, layout polish.
+**Launcher aesthetics** — Accent color + font finalized (swap `#E87D0D` placeholder once logo render lands; embed Montserrat OTF or collapse to Source Sans Pro).
 
 ### Implementation decisions (settled 2026-05-16)
 
@@ -167,10 +171,12 @@ Each mode button opens the focused editor layout described in the corresponding 
 - [x] Code: userpref-as-blend and startup-as-blend behaviors removed from Python/C++ startup path
 
 #### Phase 2 — Aesthetic (begins after Phase 1 CI-complete)
-- [ ] Logo, color palette, typography originated
+- [x] Launcher file management chrome — `RGN_TYPE_HEADER` + `LAUNCHER_HT_header` (wordmark, New Project, Open…, Open Recent) ✓ PR #196
+- [x] Mode button rounded corners (8px) + hover state (`#323232` + accent border) ✓ PR #196
+- [ ] Logo, color palette, typography originated (pending human review)
 - [ ] App icon assets generated (all platform sizes)
 - [ ] Splash screen — visual identity applied to Phase 1 skeleton
-- [ ] Launcher — visual identity applied (colors, type, layout polish)
+- [ ] Launcher accent color + font finalized (swap `#E87D0D` placeholder; Montserrat embed or collapse to Source Sans Pro)
 
 #### Mandatory docs update at each CI-complete patch
 - [ ] `BKE_blender_version.h` — PATCH bumped if needed
