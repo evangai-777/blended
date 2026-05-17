@@ -2,6 +2,8 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later */
 
+#include "MEM_guardedalloc.h"
+
 #include "BLI_math_base.hh"
 #include "BLI_string_utf8.h"
 
