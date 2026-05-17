@@ -392,6 +392,10 @@ enum eBrushFlags2 {
   BRUSH_USE_COLOR_AS_DISPLACEMENT = (1 << 9),
   BRUSH_JITTER_COLOR = (1 << 10),
   BRUSH_PROJECT_USE_BIDIRECTIONAL = (1 << 11),
+  /** Brush is a project-local user customization that should be serialized in the .blended file.
+   * Brushes without this flag are transient defaults, regenerated on demand by paint mode init
+   * and not persisted across reloads. Set by versioning 502.30 on all pre-existing brushes. */
+  BRUSH_PROJECT_LOCAL = (1 << 12),
 };
 
 enum BrushMaskPressureFlags {
