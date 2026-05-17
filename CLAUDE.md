@@ -21,7 +21,7 @@ The old approach (tiered UI, smart defaults, Emscripten) was prototyping toward 
 4. App lenses — launcher as canonical workspace system
 5. UI — only after 1–4 are honest
 
-**`ID_WS` (WorkSpace) removal — compile-clean.** All layers merged (`makesdna`, `blenkernel`, `makesrna`, `editors`, `depsgraph`, `python`, `windowmanager`). `grep -rn "ID_WS" source/` returns zero hits. CI green at 0.2.0. Runtime debt (workspace cycle, reorder operators, factory name translation) documented in Scar 1 below.
+**`ID_WS` (WorkSpace) removal — compile-clean.** All layers merged (`makesdna`, `blenkernel`, `makesrna`, `editors`, `depsgraph`, `python`, `windowmanager`). `grep -rn "ID_WS" source/` returns zero hits. CI green at 0.2.0. Runtime debt (workspace cycle, reorder operators, factory name translation) documented in Scar 1 below. **Scar 1 reorder operators resolved (0.7.0 Phase 2 CI, commit `fd50eb93`):** `workspace_reorder_to_back_exec` and `workspace_reorder_to_front_exec` in `editors/screen/workspace_edit.cc` both called `BLI_listbase_rotate_last/first(&bmain->workspaces, ...)` — stubbed to `OPERATOR_CANCELLED` until the launcher replaces the workspace cycle entirely.
 
 **`ID_SCR` and `ID_WM` removal — CI-complete (Windows x64, build 49, commit `34a4d0da`).** All layers merged. The blast radius was enormous — see Scar 2 below. Key architectural outcome: `bmain->screens` and `bmain->wm` kept as non-indexed runtime listbases; `ID_SCR_LEGACY` / `ID_WM_LEGACY` defines route through `which_libbase` for allocation but are excluded from `BKE_main_lists_get`. Layer-by-layer status in [`CHANGELOG.md`](CHANGELOG.md).
 
