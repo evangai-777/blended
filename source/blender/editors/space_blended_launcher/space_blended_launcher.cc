@@ -505,8 +505,19 @@ void launcher_main_region_draw(const bContext *C, ARegion *region)
   const Main *bmain = CTX_data_main(C);
 
   const float scroll = sl ? sl->scroll_offset : 0.0f;
-  const int mx = sl ? sl->mouse_x : -1;
-  const int my = sl ? sl->mouse_y : -1;
+
+  /* Derive hover position from current event state so stale sl->mouse_x/y
+   * values don't highlight cards when the cursor is in another region. */
+  int mx = -1, my = -1;
+  const wmWindow *win = CTX_wm_window(C);
+  if (win && win->eventstate) {
+    const int cx = win->eventstate->xy[0] - region->winrct.xmin;
+    const int cy = win->eventstate->xy[1] - region->winrct.ymin;
+    if (cx >= 0 && cx < region->winx && cy >= 0 && cy < region->winy) {
+      mx = cx;
+      my = cy;
+    }
+  }
 
   wmOrtho2_region_pixelspace(region);
 
