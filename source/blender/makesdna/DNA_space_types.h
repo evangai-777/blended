@@ -1316,6 +1316,7 @@ struct SpaceBlendedLauncher {
   /** Last known mouse position in region-local pixels; used for hover highlighting. */
   int mouse_x = -1;
   int mouse_y = -1;
+  char _pad1[4] = {};
 };
 
 /** \} */
