@@ -61,15 +61,7 @@ void TreeElementModifier::expand(SpaceOutliner & /*space_outliner*/) const
 {
   if (md_.type == MODIFIER_TYPE) {
     ModifierData *md = md_.md;
-    if (md->type == eModifierType_Lattice) {
-      add_element(&legacy_te_.subtree,
-                  reinterpret_cast<ID *>((reinterpret_cast<LatticeModifierData *>(md))->object),
-                  nullptr,
-                  &legacy_te_,
-                  TSE_LINKED_OB,
-                  0);
-    }
-    else if (md->type == eModifierType_Curve) {
+    if (md->type == eModifierType_Curve) {
       add_element(&legacy_te_.subtree,
                   reinterpret_cast<ID *>((reinterpret_cast<CurveModifierData *>(md))->object),
                   nullptr,

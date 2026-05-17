@@ -290,10 +290,16 @@ void psys_sim_data_init(ParticleSimulationData *sim)
       if (md->type == eModifierType_Lattice) {
         if (md->mode & mode) {
           LatticeModifierData *lmd = reinterpret_cast<LatticeModifierData *>(md);
-          lattice = lmd->object;
           psys->lattice_strength = lmd->strength;
+          if (lmd->lattice) {
+            psys->lattice_deform_data = BKE_lattice_deform_data_create_inline(
+                lmd->lattice, lmd->object_to_lattice);
+          }
+          else if (lmd->object) {
+            /* Legacy: pre-502.29 file with lmd->object not yet migrated. */
+            lattice = lmd->object;
+          }
         }
-
         break;
       }
     }
