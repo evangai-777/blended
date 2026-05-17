@@ -17,6 +17,7 @@
 #include "DNA_curve_types.h"
 #include "DNA_light_types.h"
 #include "DNA_lightprobe_types.h"
+#include "DNA_lattice_types.h"
 #include "DNA_mask_types.h"
 #include "DNA_sequence_types.h"
 #include "DNA_vfont_types.h"
@@ -28,6 +29,7 @@
 #include "DNA_screen_types.h"
 
 #include "BLI_listbase_iterator.hh"
+#include "BLI_math_matrix.h"
 #include "BLI_string.h"
 #include "BLI_string_utils.hh"
 #include "BLI_sys_types.h"
@@ -39,6 +41,7 @@
 #include "BKE_lib_id.hh"
 #include "BKE_light.h"
 #include "BKE_lightprobe.h"
+#include "BKE_lattice.hh"
 #include "BKE_mask.hh"
 #include "BKE_main.hh"
 #include "BKE_mesh_legacy_convert.hh"
@@ -695,6 +698,56 @@ void blo_do_versions_520(FileData * /*fd*/, Library * /*lib*/, Main *bmain)
         }
         return true;
       });
+    }
+  }
+
+  if (!MAIN_VERSION_FILE_ATLEAST(bmain, 502, 29)) {
+    /* Bucket 3 Lattice permanent home (Blended 0.7.0): standard LatticeModifier used to
+     * reference an OB_LATTICE object via lmd->object. Migrate Lattice geometry into per-modifier
+     * embedded storage (lmd->lattice) and null lmd->object.
+     *
+     * object_to_lattice is set to identity — a Category A limitation: deformation may appear
+     * shifted for setups where the OB_LATTICE had a non-identity transform relative to the
+     * modified object. Users should adjust control points manually if needed.
+     *
+     * OB_LATTICE objects are converted to OB_EMPTY so their ob->data pointers are safely nulled
+     * before bmain->lattices is drained. GreasePencilLatticeModifier object references are nulled
+     * (Category A: GP lattice deformation silently drops for legacy GP lattice modifiers). */
+
+    /* Step 1: migrate each standard LatticeModifier lmd->object → lmd->lattice. */
+    for (Object &ob : bmain->objects) {
+      LISTBASE_FOREACH (ModifierData *, md, &ob.modifiers) {
+        if (md->type != eModifierType_Lattice) {
+          continue;
+        }
+        LatticeModifierData *lmd = reinterpret_cast<LatticeModifierData *>(md);
+        if (lmd->object && lmd->object->type == OB_LATTICE && !lmd->lattice) {
+          const Lattice *src_lt = reinterpret_cast<const Lattice *>(lmd->object->data);
+          lmd->lattice = src_lt ? BKE_lattice_copy_modifier(src_lt) :
+                                  BKE_lattice_new_modifier("Lattice");
+        }
+        if (!lmd->lattice) {
+          lmd->lattice = BKE_lattice_new_modifier("Lattice");
+        }
+        unit_m4(lmd->object_to_lattice);
+        lmd->object = nullptr;
+      }
+      /* Step 2: null GreasePencilLatticeModifier object refs so they don't dangle after
+       * OB_LATTICE → OB_EMPTY conversion (Category A: GP lattice deformation silently drops). */
+      LISTBASE_FOREACH (ModifierData *, md, &ob.modifiers) {
+        if (md->type == eModifierType_GreasePencilLattice) {
+          reinterpret_cast<GreasePencilLatticeModifierData *>(md)->object = nullptr;
+        }
+      }
+    }
+
+    /* Step 3: convert OB_LATTICE → OB_EMPTY so ob->data doesn't dangle after the drain. */
+    for (Object &ob : bmain->objects) {
+      if (ob.type == OB_LATTICE) {
+        ob.type = OB_EMPTY;
+        ob.data = nullptr;
+        ob.empty_drawtype = OB_PLAINAXES;
+      }
     }
   }
 
