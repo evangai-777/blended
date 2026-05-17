@@ -120,7 +120,7 @@ BLI_listbase_clear(&bmain->linestyles);
 
 **Launcher aesthetic:** Hybrid of Adobe Creative Cloud home screen and Blender splash. **The pipeline scroll is the launcher** — "Blending?" at top, §11 Creative/Post sections with mode button cards filling the screen. LOCKED. File management chrome (wordmark, [New Project], [Open…], recent file thumbnail cards ~160×120px, project settings, version attribution) is implementation-flexible: fixed left sidebar (~220px) OR compact top dropdown above the scroll. Content is the same either way; packaging is an implementation decision. Three-level dark surface hierarchy: base `#1D1D1D` → panel `#252525` → card `#2C2C2C` (resting). Interaction states separate: hover `#323232`, active/pressed = accent (Phase 2). Mode button cards: 8px radius, 16px/12px padding, 130ms ease-out hover. Type stack: `"Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif` → brand typeface Phase 2. 8px spacing base unit. Full spec in BLENDED.md §11 Launcher aesthetic.
 
-**Scar 1 debt:** Resolve during launcher build. Delete or replace broken workspace operators as they surface.
+**Scar 1 debt:** Resolve during launcher build. Delete or replace broken workspace operators as they surface. **Operator stub pattern (learned from Codex review on PR #199):** When stubbing a removed operator, return `OPERATOR_FINISHED` — not `OPERATOR_CANCELLED`. `OPERATOR_CANCELLED` aborts macro/chain execution, turning a benign no-op into a hard failure for any script or menu invoking the operator. Also remove the poll function so the operator is grayed out in the UI rather than appearing available. Pattern: `ot->exec = stub_exec; /* no ot->poll */` where `stub_exec` returns `OPERATOR_FINISHED`.
 
 ### 0.7.0 To-Do Checklist
 
