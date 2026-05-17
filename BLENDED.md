@@ -1,7 +1,7 @@
 # BLENDED — Identity & Design Agreements
 
 **Developer/Publisher:** CHJ 3 Productions LLC (Indiana).
-**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82, commit `8f7dda22`). 0.7.x Phase 1 skeleton in progress: launcher ✓, 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome), format design ✓ (startup/userpref-as-blend removed, §5 Group 1 LOCKED), VFont Bucket 3 all layers ✓ (DNA filepath fields + versioning pass 502.24 + RNA sync callback + BKE_curve_vfont_ensure + drain), Palette → Brush all layers ✓ (DNA embed + brush I/O + paint.cc API + editors + versioning pass 502.25 + drain), LightProbe → Light all layers ✓ (eLightType LA_PROBE_* + probe_* fields in Light DNA + versioning pass 502.26 + drain, commit `a336e0b2`). Remaining Phase 1: Mask→NodeTree, Lattice→modifier, Brush→project-optional.
+**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82, commit `8f7dda22`). 0.7.x Phase 1 skeleton in progress: launcher ✓, 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome), format design ✓ (startup/userpref-as-blend removed, §5 Group 1 LOCKED), VFont Bucket 3 all layers ✓ (DNA filepath fields + versioning pass 502.24 + RNA sync callback + BKE_curve_vfont_ensure + drain), Palette → Brush all layers ✓ (DNA embed + brush I/O + paint.cc API + editors + versioning pass 502.25 + drain), LightProbe → Light all layers ✓ (eLightType LA_PROBE_* + probe_* fields in Light DNA + versioning pass 502.26 + drain, commit `a336e0b2`), Mask → compositor NodeTree all layers ✓ (NodeCompositeMask storage + node blend callbacks + versioning pass 502.27 + drain, commit `9c8dbc3c`). Remaining Phase 1: Lattice→modifier, Brush→project-optional.
 **Purpose:** So any future session, contributor, or Claude instance can pick up without re-litigating what's already been decided. Read this first before proposing changes to scope, identity, or architecture.
 
 ---
@@ -256,7 +256,7 @@ Property bags pretending to be first-class entities:
 | `ID_PAL` | Palette | Brush property or inline | ✓ 0.5.0 |
 | `ID_LT` | Lattice | Modifier, not a datablock | ✓ 0.5.0 |
 | `ID_LP` | LightProbe | Merge into `ID_LA` with a type flag | ✓ 0.5.0 |
-| `ID_MSK` | Mask | Hang off compositor NodeTree | ✓ 0.5.0 |
+| `ID_MSK` | Mask | Hang off compositor NodeTree | ✓ 0.5.0 / ✓ 0.7.0 perm |
 | `ID_VF` | VFont | System font reference; FreeType handles the rest | ✓ 0.5.0 |
 
 ### Bucket 4 — UI state removals [LOCKED]
