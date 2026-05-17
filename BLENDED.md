@@ -1338,18 +1338,11 @@ Blended is a separate product, not a Blender skin. The GPL license that governs 
 
 ### Logo [LOCKED in concept, final render Phase 2]
 
-**Concept:** A flat-vector kitchen blender containing Blender's signature orbit-lines (the orange concentric arc marks that have been Blender's logo for decades) swirling inside the container — as if the Blender logo is being blended into Blended. The gag is self-documenting: Blender + blender = Blended.
+**Concept [LOCKED]:** A flat-vector kitchen blender (the appliance) with Blender's orbit-lines logo — which already has a tornado-like swirling form — placed inside the blender container, as if it's being blended like a smoothie. One logo, one concept: the tornado IS the Blender logo; the blender IS the appliance; together they read as "the Blender logo, being blended." Blender + blender = Blended. The gag is self-documenting.
 
-**Two viable design directions for Phase 2 to resolve:**
+The two qualities — tornado (the form of Blender's orbit-lines) and smoothie (the blender appliance containing it) — are not design variants. They are the two halves of the same image.
 
-| Direction | Description | Trade-offs |
-|-----------|------------|------------|
-| **Smoothie** | Flat-vector blender silhouette (the appliance). Blender's orbit-lines swirling inside the container — the Blender logo is the smoothie. The punchline rewards closer inspection. | Cleaner read at 16×16. Blender silhouette reads immediately; orbit-lines are the surprise inside. Recommended primary direction. |
-| **Tornado** | Blender's orbit-lines directly morph into the shape of a blender — the orbit-lines *are* the blender. Looks like a tornado that is also a blender. | More conceptually unified. Harder to execute cleanly at small sizes — orbit-lines must be legible as both themselves and the appliance shape simultaneously. |
-
-Smoothie is the primary direction; Tornado is the alternative if Smoothie doesn't land as well as expected. Phase 2 resolves by building both and picking the one that reads better simultaneously at 16×16 and 1024×1024.
-
-**Style [LOCKED]:** Flat vector. No gradients, no textures, no drop shadows. Primary color: Blender orange (`#E87D0D`) as the anchor — the orbit-lines are orange, the blender shape is orange-adjacent. Exact accent shade confirmed once the logo is finalized (see Accent color below).
+**Style [LOCKED]:** Flat vector. No gradients, no textures, no drop shadows. Primary color: Blender orange (`#E87D0D`) as the anchor — the orbit-lines are orange, the blender appliance shape is orange-adjacent. Exact accent shade confirmed once the logo is finalized (see Accent color below).
 
 **Scaling guidance:**
 
