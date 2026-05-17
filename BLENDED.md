@@ -450,7 +450,7 @@ Phase 2 visual identity may warm these slightly, but the three-level hierarchy i
 "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Trebuchet MS", sans-serif
 ```
 
-Phase 2 replaces this with the Blended brand typeface. Scale is locked:
+Phase 2 replaces this with the Blended brand typeface (§16): Montserrat for display/identity surfaces ("Blending?" prompt, wordmark), Source Sans Pro for all UI text. Scale is locked:
 
 | Role | Size | Weight |
 |------|------|--------|
@@ -1323,17 +1323,120 @@ Earlier pipeline drafts had Assets, Environments, VFX, and Animate as standalone
 
 ---
 
-## 16. Product Identity [OPEN]
+## 16. Product Identity [LOCKED in principle, Phase 2 implementation OPEN]
 
 Blended is a separate product, not a Blender skin. The GPL license that governs Blender grants full latitude to rebrand, redesign, and ship under a completely distinct identity — Blended exercises that latitude completely.
 
-This is genuinely uncharted territory. Every Blender fork to date has hedged: kept the name adjacent, kept the visual identity close, kept the splash screen shape familiar. None has committed to the full separate product path. Blended does.
-
-**Why 0.7.x is the right moment:** The launcher becoming real (§11) is when the product face becomes real. You can't separate brand identity from the moment a user first sees the product. The existing branding work — `BLENDED_VERSION_*` defines, "Blender, simplified." tagline, window titles, splash screen — is scaffolding toward a full identity, not the identity itself. 0.7.x is when the full visual design is done.
-
 **Direction [LOCKED]:** Full separate product identity. Blended looks like Blended, not like Blender. The word "Blender" appears only where GPL attribution requires it and in the import dialog ("Open .blend file").
 
-**Specifics [OPEN]:** Logo, color palette, app icon, typography, splash screen, window chrome — all to be designed in 0.7.x. The Bucket 3 architectural decisions (where brushes live as user state, etc.) will inform what the product's mental model communicates visually.
+**Design lineage [LOCKED]:** "Blender and Adobe got married and Blended is their child." The identity draws from:
+- **Blender's heritage** — the craft-forward energy, the creative community, the orange color language, the orbit-lines logo. These are the raw material being blended.
+- **Adobe's discipline** — typographic restraint, dark card surfaces, clean hierarchy. The form of the identity, not its warmth.
+- **Blended's own thesis** — a blender (the kitchen appliance) as the logo. Precise, self-referential, immediately legible. Blender is named after a blender; Blended is what comes out of the blender. The logo makes that literal.
+
+---
+
+### Logo [LOCKED in concept, final render Phase 2]
+
+**Concept:** A flat-vector kitchen blender containing Blender's signature orbit-lines (the orange concentric arc marks that have been Blender's logo for decades) swirling inside the container — as if the Blender logo is being blended into Blended. The gag is self-documenting: Blender + blender = Blended.
+
+**Two viable design directions for Phase 2 to resolve:**
+
+| Direction | Description | Trade-offs |
+|-----------|------------|------------|
+| **Smoothie** | Flat-vector blender silhouette (the appliance). Blender's orbit-lines swirling inside the container — the Blender logo is the smoothie. The punchline rewards closer inspection. | Cleaner read at 16×16. Blender silhouette reads immediately; orbit-lines are the surprise inside. Recommended primary direction. |
+| **Tornado** | Blender's orbit-lines directly morph into the shape of a blender — the orbit-lines *are* the blender. Looks like a tornado that is also a blender. | More conceptually unified. Harder to execute cleanly at small sizes — orbit-lines must be legible as both themselves and the appliance shape simultaneously. |
+
+Smoothie is the primary direction; Tornado is the alternative if Smoothie doesn't land as well as expected. Phase 2 resolves by building both and picking the one that reads better simultaneously at 16×16 and 1024×1024.
+
+**Style [LOCKED]:** Flat vector. No gradients, no textures, no drop shadows. Primary color: Blender orange (`#E87D0D`) as the anchor — the orbit-lines are orange, the blender shape is orange-adjacent. Exact accent shade confirmed once the logo is finalized (see Accent color below).
+
+**Scaling guidance:**
+
+| Size range | Rendering |
+|------------|-----------|
+| 512px–1024px | Full blender with orbit-lines detail inside |
+| 128–256px | Blender silhouette with orange swirl suggestion; reduced orbit-line detail |
+| 32–64px | Blender silhouette in orange; orbit-lines simplified to single arc or removed |
+| 16×16 | Blender silhouette only, orange fill, no interior detail |
+
+**Platform icon packaging (Phase 2):**
+- macOS: squircle mask, logo centered with appropriate padding
+- Windows: square canvas, logo with appropriate padding per Windows icon spec
+- Linux: PNG set at 16, 22, 24, 32, 48, 64, 128, 256px
+
+---
+
+### Accent color [LOCKED in derivation, exact value Phase 2]
+
+The accent color derives from the logo render. The dominant warm color in the final blender logo — anchored at/near Blender orange (`#E87D0D`) — becomes the accent for:
+- **[New Project] CTA button** (§11 chrome)
+- **Active/pressed mode button cards** (§11 interaction states)
+- **Focused element outlines** (§11 interaction states)
+- Any other accent surface in the UI
+
+This derivation rule is the constraint: the accent is not chosen independently — it is extracted from the logo. This guarantees the UI palette and the brand mark are the same color language, not separately tuned toward each other.
+
+---
+
+### Typeface [LOCKED]
+
+**Phase 2 font stack (replaces Phase 1 system-sans cascade in §11):**
+
+| Role | Font | Weight |
+|------|------|--------|
+| Display / identity surfaces | Montserrat | SemiBold (600) |
+| UI / interface text | Source Sans Pro | Regular (400) / SemiBold (600) |
+
+**Identity surfaces using Montserrat:** the "Blended" wordmark, the "Blending?" launcher prompt (28px SemiBold — size already locked in §11), section group separators if they use a distinct register. Everything else — mode button labels, section headings, file names, metadata, attribution — uses Source Sans Pro.
+
+**Aesthetic gate:** If Montserrat + Source Sans Pro reads as two competing personalities rather than one composed voice, collapse to Source Sans Pro throughout. This is an aesthetic judgment made during Phase 2 implementation. The split is preferred; the collapse is the safe fallback. Do not attempt to resolve this in the spec — resolve it with eyes on the actual render.
+
+**Embedding:** Both are OFL-licensed. Must be embedded in the release build (no remote font loading). Phase 1 skeleton uses the system-sans cascade already in §11; Phase 2 replaces it with the embedded fonts.
+
+---
+
+### Splash screen [LOCKED in structure, visual design Phase 2]
+
+Structure, top to bottom, on dark base (`#1D1D1D`):
+
+1. Blended logo — prominent, centered or left-anchored
+2. Wordmark — "Blended" in Montserrat SemiBold
+3. Tagline — `"Blender, simplified."` (already in `wm_splash_screen.cc`)
+4. Version — "Blended X.Y.Z" from `BKE_blended_version_string()`
+5. GPL attribution — "Based on Blender · blender.org" (required by GPL-2.0-or-later)
+6. Publisher — "© [Year] CHJ 3 Productions LLC"
+7. Links area — documentation, release notes, community (Phase 2)
+
+**Community art (long-term aspiration):** Following Blender's tradition, each major release splash features art created by a Blended community member — something made *in* Blended, showcasing the tool's capabilities. Begins when the community is large enough to source it. The structural spec above is the permanent frame; community art occupies a featured panel within it.
+
+---
+
+### Window chrome [PARTIALLY IMPLEMENTED]
+
+Currently implemented in `wm_window.cc`:
+- Title suffix: `"[filename] — Blended X.Y.Z"` via `BKE_blended_version_string()`
+- Fallback title: `"Blended"`
+
+Phase 2: wordmark in Montserrat applied to splash and about dialog. Title bar text is OS-controlled and stays as-is.
+
+---
+
+### Tagline [LOCKED]
+
+`"Blender, simplified."` — already committed in `wm_splash_screen.cc`. Do not change without re-reading §1 and re-examining the identity thesis.
+
+---
+
+### Publisher attribution [LOCKED]
+
+**CHJ 3 Productions LLC** is the developer and publisher. Appears in:
+- About dialog — `wm_splash_screen.cc` (already updated)
+- Splash screen — §16 structure above
+- Launcher version attribution: `"Blended X.Y.Z · CHJ 3 Productions LLC"` (§11)
+- Release packaging copyright notices
+
+Upstream Blender code retains its original copyright (Blender Foundation and contributors) under GPL-2.0-or-later. Blended inherits and preserves that license.
 
 ---
 
