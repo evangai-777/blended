@@ -49,6 +49,12 @@ Brush *BKE_brush_new_nomain(const char *name, eObjectMode ob_mode);
  * Delete a Brush.
  */
 bool BKE_brush_delete(Main *bmain, Brush *brush);
+/**
+ * Drain transient (non-project-local) brushes from the Scar 2 bmain->brushes listbase.
+ * Brushes with BRUSH_PROJECT_LOCAL set in flag2 are preserved. All others are freed.
+ * Called from the post-read pass in blenloader after versioning has run.
+ */
+void BKE_brush_drain_transient(Main *bmain);
 
 /**
  * Perform deep-copy of a Brush and its 'children' data-blocks.
