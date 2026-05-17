@@ -5,6 +5,7 @@
 #include "MEM_guardedalloc.h"
 
 #include "BLI_math_base.hh"
+#include "BLI_string.h"
 #include "BLI_string_utf8.h"
 
 #include "DNA_mask_types.h"
@@ -97,6 +98,12 @@ static void node_init(bNodeTree * /*ntree*/, bNode *node)
 {
   NodeCompositeMask *data = MEM_new<NodeCompositeMask>(__func__);
   data->mask = BKE_mask_new_nodetree("Mask");
+  /* Sync struct metadata to match the freshly created mask. */
+  data->sfra = data->mask->sfra;
+  data->efra = data->mask->efra;
+  data->flag = data->mask->flag;
+  data->masklay_act = data->mask->masklay_act;
+  STRNCPY(data->name, data->mask->id.name + 2);
   node->storage = data;
 }
 
@@ -121,8 +128,14 @@ static void node_blend_write(const bNodeTree & /*ntree*/,
                              const bNode &node,
                              BlendWriter &writer)
 {
-  const NodeCompositeMask *data = static_cast<const NodeCompositeMask *>(node.storage);
-  if (data) {
+  NodeCompositeMask *data = static_cast<NodeCompositeMask *>(node.storage);
+  if (data && data->mask) {
+    /* Sync runtime mask metadata into struct fields so SDNA serializes them correctly. */
+    data->sfra = data->mask->sfra;
+    data->efra = data->mask->efra;
+    data->flag = data->mask->flag;
+    data->masklay_act = data->mask->masklay_act;
+    STRNCPY(data->name, data->mask->id.name + 2);
     BKE_mask_write_layers(&writer, data->mask);
   }
 }
@@ -131,8 +144,17 @@ static void node_blend_read(bNodeTree & /*ntree*/, bNode &node, BlendDataReader 
 {
   NodeCompositeMask *data = static_cast<NodeCompositeMask *>(node.storage);
   if (data) {
-    data->mask = BKE_mask_new_nodetree("Mask");
+    data->mask = BKE_mask_new_nodetree(data->name[0] ? data->name : "Mask");
     BKE_mask_read_layers(&reader, data->mask);
+    /* Restore metadata from struct into mask. Use a sentinel: if efra==0 the struct fields
+     * are uninitialized (file saved at subversion 27 before these fields existed), so keep
+     * the mask defaults set by BKE_mask_new_nodetree instead. */
+    if (data->efra != 0) {
+      data->mask->sfra = data->sfra;
+      data->mask->efra = data->efra;
+      data->mask->flag = data->flag;
+      data->mask->masklay_act = data->masklay_act;
+    }
   }
 }
 

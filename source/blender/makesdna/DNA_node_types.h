@@ -2462,11 +2462,20 @@ struct NodeCMPCombSepColor {
 
 /** Storage for CMP_NODE_MASK — Blended 0.7.0 Mask permanent home.
  * The mask is node-owned: not in bmain->masks, not serialized as an ID block.
- * Blend write/read callbacks serialize the mask layers inline. */
+ * Blend write/read callbacks serialize the mask layers inline.
+ * Metadata fields (sfra/efra/flag/masklay_act/name) are plain struct members so SDNA
+ * handles their serialization automatically; the callback only handles layer heap data. */
 struct NodeCompositeMask {
   /* Runtime pointer to the node-owned Mask; rebuilt by blend_data_read_storage_content.
    * NOT serialized as an ID-block pointer — written inline via blend_write_storage_content. */
   struct Mask *mask = nullptr;
+  /* Mask metadata — synced to/from mask->sfra/efra/flag/masklay_act/id.name+2 on write/read. */
+  int sfra = 1;
+  int efra = 100;
+  int flag = 0;
+  int masklay_act = 0;
+  char name[66] = {};
+  char _pad[6] = {};
 };
 
 /** Defocus blur node. */

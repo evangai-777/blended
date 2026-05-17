@@ -1004,6 +1004,8 @@ Mask *BKE_mask_new_nodetree(const char *name)
 {
   Mask *mask = MEM_new<Mask>("Mask");
   /* Deliberately NOT inserted into bmain->masks — node owns this mask exclusively. */
+  /* Set the two-letter type prefix so compositor cache keys are globally unique. */
+  *reinterpret_cast<short *>(mask->id.name) = ID_MSK;
   STRNCPY_UTF8(mask->id.name + 2, (name && name[0]) ? name : "Mask");
   mask->sfra = 1;
   mask->efra = 100;

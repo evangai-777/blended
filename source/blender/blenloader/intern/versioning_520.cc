@@ -669,6 +669,12 @@ void blo_do_versions_520(FileData * /*fd*/, Library * /*lib*/, Main *bmain)
         const Mask *src_mask = reinterpret_cast<const Mask *>(node.id);
         NodeCompositeMask *data = MEM_new<NodeCompositeMask>(__func__);
         data->mask = BKE_mask_copy_nodetree(src_mask);
+        /* Populate metadata from the migrated mask so the struct is fully initialised. */
+        data->sfra = src_mask->sfra;
+        data->efra = src_mask->efra;
+        data->flag = src_mask->flag;
+        data->masklay_act = src_mask->masklay_act;
+        STRNCPY(data->name, src_mask->id.name + 2);
         node.storage = data;
         /* Release the ID reference; bmain->masks drain in readfile.cc will free it. */
         id_us_min(node.id);
