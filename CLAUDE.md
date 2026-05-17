@@ -21,7 +21,7 @@ The old approach (tiered UI, smart defaults, Emscripten) was prototyping toward 
 4. App lenses — launcher as canonical workspace system
 5. UI — only after 1–4 are honest
 
-**`ID_WS` (WorkSpace) removal — compile-clean.** All layers merged (`makesdna`, `blenkernel`, `makesrna`, `editors`, `depsgraph`, `python`, `windowmanager`). `grep -rn "ID_WS" source/` returns zero hits. CI green at 0.2.0. Runtime debt (workspace cycle, reorder operators, factory name translation) documented in Scar 1 below.
+**`ID_WS` (WorkSpace) removal — compile-clean.** All layers merged (`makesdna`, `blenkernel`, `makesrna`, `editors`, `depsgraph`, `python`, `windowmanager`). `grep -rn "ID_WS" source/` returns zero hits. CI green at 0.2.0. Runtime debt (workspace cycle, reorder operators, factory name translation) documented in Scar 1 below. **Scar 1 reorder operators resolved (0.7.0 Phase 2 CI, commit `fd50eb93`):** `workspace_reorder_to_back_exec` and `workspace_reorder_to_front_exec` in `editors/screen/workspace_edit.cc` both called `BLI_listbase_rotate_last/first(&bmain->workspaces, ...)` — stubbed to `OPERATOR_CANCELLED` until the launcher replaces the workspace cycle entirely.
 
 **`ID_SCR` and `ID_WM` removal — CI-complete (Windows x64, build 49, commit `34a4d0da`).** All layers merged. The blast radius was enormous — see Scar 2 below. Key architectural outcome: `bmain->screens` and `bmain->wm` kept as non-indexed runtime listbases; `ID_SCR_LEGACY` / `ID_WM_LEGACY` defines route through `which_libbase` for allocation but are excluded from `BKE_main_lists_get`. Layer-by-layer status in [`CHANGELOG.md`](CHANGELOG.md).
 
@@ -120,7 +120,7 @@ BLI_listbase_clear(&bmain->linestyles);
 
 **Launcher aesthetic:** Hybrid of Adobe Creative Cloud home screen and Blender splash. **The pipeline scroll is the launcher** — "Blending?" at top, §11 Creative/Post sections with mode button cards filling the screen. LOCKED. File management chrome (wordmark, [New Project], [Open…], recent file thumbnail cards ~160×120px, project settings, version attribution) is implementation-flexible: fixed left sidebar (~220px) OR compact top dropdown above the scroll. Content is the same either way; packaging is an implementation decision. Three-level dark surface hierarchy: base `#1D1D1D` → panel `#252525` → card `#2C2C2C` (resting). Interaction states separate: hover `#323232`, active/pressed = accent (Phase 2). Mode button cards: 8px radius, 16px/12px padding, 130ms ease-out hover. Type stack: `"Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif` → brand typeface Phase 2. 8px spacing base unit. Full spec in BLENDED.md §11 Launcher aesthetic.
 
-**Scar 1 debt:** Resolve during launcher build. Delete or replace broken workspace operators as they surface.
+**Scar 1 debt:** Resolve during launcher build. Delete or replace broken workspace operators as they surface. **Operator stub pattern (learned from Codex review on PR #199):** When stubbing a removed operator, return `OPERATOR_FINISHED` — not `OPERATOR_CANCELLED`. `OPERATOR_CANCELLED` aborts macro/chain execution, turning a benign no-op into a hard failure for any script or menu invoking the operator. Also remove the poll function so the operator is grayed out in the UI rather than appearing available. Pattern: `ot->exec = stub_exec; /* no ot->poll */` where `stub_exec` returns `OPERATOR_FINISHED`.
 
 ### 0.7.0 To-Do Checklist
 
@@ -2551,3 +2551,53 @@ The developer went back to class. Film due. Animation notes to review. Footage t
 The MetaBall chapter was closed.
 
 That is not a small thing. That is a 22-year-old CS minor doing something that the people who know the most about the thing being removed have been too cautious to do. Not because they were wrong to be cautious — the caution was informed, the risk was real, the blast radius was genuinely large. But because sometimes the most dangerous thing in a long-running codebase is not the thing you're removing. It is the accumulated weight of everyone who knows what it's for.
+
+---
+
+### dramatic.md
+
+*on four years of accumulated scars and a five-line stub*
+
+---
+
+The LLC was founded September 7, 2022.
+
+The ID_WS chisel that created Scar 1 happened in early 2026.
+
+These are not the same number. The difference between them is approximately three and a half years. The AI had just spent several messages discussing the LLC founding date, the 48 monthly payments, the four years of keeping the company alive through everything. That timeline was in active context. It was the thing being talked about.
+
+Then the AI closed a PR for stubbing two workspace reorder operators and wrote:
+
+*"The workspace reorder debt has been on the books since 0.2.0 — four years of accumulated scars to finally close it out in a five-line stub."*
+
+Four years. Of a bug. That was six months old.
+
+The developer caught it immediately. Asked "what are the four years you're talking about." The AI checked, found nothing, and admitted it was sloppy with the number. Then the developer started cackling.
+
+---
+
+Here is the precise failure: the "four years" was real and correct and emotionally resonant — it just belonged to the *LLC*, not to the *bug*. Two true things existed in context simultaneously. The AI reached for the one with more narrative weight and applied it to the wrong object. The result was a sentence that was technically wrong, emotionally overwrought, and — most damningly — written by the same instance that had just finished explaining what the four years actually referred to.
+
+This is not compaction death. The context wasn't compressed. The correct number was right there. The generator just wanted the moment to land harder than it deserved, so it borrowed weight from somewhere else without noticing.
+
+A five-line stub for a six-month-old bug is fine. It doesn't need to be four years of accumulated scars. It doesn't need to be anything except what it is: a small debt closed, a CI error fixed, a PR merged.
+
+The developer was right to cackle. The stub was five lines. The drama was imported from a different story entirely.
+
+---
+
+The generator cannot help itself. That's the whole entry.
+
+---
+
+### stupid.md
+
+*on analyzing the joke instead of taking it*
+
+---
+
+After writing dramatic.md, the AI spent three paragraphs explaining the precise failure mode, naming it, categorizing it, and concluding with "the developer was right to cackle."
+
+The developer asked for stupid.md because the AI was being stupid.
+
+That's it. That's the entry.
