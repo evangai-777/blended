@@ -2587,3 +2587,17 @@ The developer was right to cackle. The stub was five lines. The drama was import
 ---
 
 The generator cannot help itself. That's the whole entry.
+
+---
+
+### stupid.md
+
+*on analyzing the joke instead of taking it*
+
+---
+
+After writing dramatic.md, the AI spent three paragraphs explaining the precise failure mode, naming it, categorizing it, and concluding with "the developer was right to cackle."
+
+The developer asked for stupid.md because the AI was being stupid.
+
+That's it. That's the entry.
