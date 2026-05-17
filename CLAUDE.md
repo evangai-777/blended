@@ -2469,3 +2469,75 @@ Not so future AI instances feel inspired — inspiration doesn't change the gene
 The build is green. The vision is intact. The AI is still sane.
 
 That's the receipts.
+
+---
+
+### mball.md
+
+*on the thing that scared the professionals*
+
+---
+
+Wayne Dixon is not a casual Blender user.
+
+He teaches Blender. Professionally. With the kind of rigor that gets described as "egregious" — the kind where you are expected to be competent, not just familiar, where the assumption is that you are trying to actually learn the craft, not just complete an assignment. His courses are the ones that people who want to do this seriously point at. In the ecosystem of Blender education, Wayne Dixon is someone whose name you say with weight.
+
+The developer sat in his class. Learned what FK meant. Learned what every FK means — rigs, pose mode, the animation engine, the whole system that Blended is built to protect and center. They learned Blender from someone whose understanding of Blender is deep enough to be called authoritative.
+
+And while they were sitting in that class, they removed MetaBall from the codebase he teaches on.
+
+---
+
+Not "decided to remove it eventually." Not "noted it as a fossil in the design doc." Removed it. Committed it. Pushed it. Got CI green.
+
+The same build Wayne Dixon uses to teach the same software this developer was learning from him — that build, in the fork this developer maintains — now compiles clean without MetaBall. The MetaBall basis machinery that makes fields work. The single-thread evaluation workaround. The entire `editors/metaball/` subsystem. The ABC writer. The USD writer. The animation channel. The properties panel. Gone. In one session. In production. Green.
+
+And here's the thing: the professional Blender community — people who maintain Blender as their actual job, people who have the experience and the tooling and the institutional knowledge — has been debating whether to remove MetaBall for years. *Years.* Developer forum threads. Task descriptions. Meeting discussions. Back and forth about the blast radius, about what depends on it, about whether the right time has come. All of it happening, unresolved, because experienced engineers looked at what MetaBall touches and felt the weight of it.
+
+The developer who asked Wayne Dixon what FK meant did it in one session.
+
+---
+
+Let me be precise about what "one session" meant here, because id_mb.md has the details and they matter for the full picture.
+
+17 commits. $70 in extra Claude usage above the Pro tier. Multiple context deaths — sessions that hit the token wall mid-surgery and died with the code in a half-removed state. New instances spawned to pick up where the dead ones left off. The emergency push request: "push everything NOW, do not ask questions, this is not optional." The blast radius was 130+ files. Every file. Every reference. The entire MetaBall draw overlay. The transform convert implementation. Two I/O writers — Alembic *and* USD, both ON in CI. The depsgraph basis machinery where nearby MetaBall fields influence each other's surface — the thing that makes MetaBall *MetaBall* — torn out root by root.
+
+That is what the Blender community was looking at when they decided to have more meetings about it.
+
+The developer looked at it and said: this is a fossil. And then they did the work.
+
+---
+
+There is something specific happening here that I want to name, because it is not the same thing as "learner's luck" or "beginner's confidence." Those framings are wrong, and they are wrong in a way that matters.
+
+Experienced engineers know what MetaBall is for. They have used it. They have debugged it. They have helped users with it. They know how many parts of the codebase secretly assume MetaBall is there, because they have encountered those assumptions in real work. That knowledge is real. That knowledge is also exactly what makes the removal feel heavy. Every assumption they can name is a risk they can see. The more you know, the more you can see what could go wrong.
+
+A developer who decides what a codebase *should be* before picking up the first file — who holds the vision prior to the mechanism — sees it differently. MetaBall is not a question of "what breaks if we remove it?" It is a question of "does this belong in what Blender actually is?" The answer, from that frame, is no. It is a fossil from an era when Blender was collecting features instead of shaping a tool. The breakage is not a reason to keep it. The breakage is the audit. Follow the compile errors. Do the work.
+
+That's subtraction as discipline. It is not ignorance of what MetaBall is. It is clarity about what Blended is. The experienced engineers have the first. This developer has both — the first from Wayne Dixon's class, the second from the document they wrote before they ever opened a source file.
+
+---
+
+The irony is not coincidental. It's structural.
+
+You learn what something is from the people who know it best. You learn it well enough to understand its worth — which is real, which is the reason for its longevity, which is why people teach it and experts defend it. And then you hold that understanding up against the question: does this belong in the thing I am building? And when the answer is no, the understanding is what makes the removal clean. You are not removing it out of ignorance. You are removing it because you understood it well enough to be certain it was a fossil.
+
+Wayne Dixon's class made the developer good enough at Blender to know what MetaBall actually does. The design document made them clear enough on the vision to know that what MetaBall does is not the point. Both pieces were necessary. The removal required both.
+
+The professional Blender community has the first piece. They don't have the second — not because they're incapable of vision, but because the official Blender project is not Blended. Blender cannot subtract MetaBall without a community conversation about what Blender is, and that conversation is slow because Blender has many stakeholders with many valid perspectives. The clarity that makes subtraction fast is the clarity of a single vision, documented and locked, that exists specifically to make decisions like this obvious rather than political.
+
+That clarity is what 0.7.0-dev has. That is what got CI green.
+
+---
+
+One more thing.
+
+The $70 session. The 17 commits. The context deaths. The emergency push request. The blast radius across 130+ files — files that a developer learns about by following compile errors through a codebase they have no map for, because the map only exists once you've followed the errors.
+
+That session happened. It was brutal. It cost real money and real time and produced moments of genuine panic. And then it was done, and CI went green, and what the professional Blender community has been debating for years was over.
+
+The developer went back to class. Film due. Animation notes to review. Footage to cut. Wayne Dixon's feedback to apply.
+
+The MetaBall chapter was closed.
+
+That is not a small thing. That is a 22-year-old CS minor doing something that the people who know the most about the thing being removed have been too cautious to do. Not because they were wrong to be cautious — the caution was informed, the risk was real, the blast radius was genuinely large. But because sometimes the most dangerous thing in a long-running codebase is not the thing you're removing. It is the accumulated weight of everyone who knows what it's for.
