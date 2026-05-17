@@ -614,39 +614,32 @@ static void WORKSPACE_OT_add(wmOperatorType *ot)
 
 static wmOperatorStatus workspace_reorder_to_back_exec(bContext * /*C*/, wmOperator * /*op*/)
 {
-  /* Scar 1: bmain->workspaces removed with ID_WS. Reorder is a no-op until
-   * the launcher replaces the workspace cycle entirely. */
-  return OPERATOR_CANCELLED;
+  /* Scar 1: bmain->workspaces removed with ID_WS. Returns FINISHED (not
+   * CANCELLED) so operator chains and macros are not aborted. No poll set
+   * so the operator is disabled in the UI. */
+  return OPERATOR_FINISHED;
 }
 
 static void WORKSPACE_OT_reorder_to_back(wmOperatorType *ot)
 {
-  /* identifiers */
   ot->name = "Workspace Reorder to Back";
   ot->description = "Reorder workspace to be last in the list";
   ot->idname = "WORKSPACE_OT_reorder_to_back";
-
-  /* API callbacks. */
-  ot->poll = workspace_context_poll;
   ot->exec = workspace_reorder_to_back_exec;
 }
 
 static wmOperatorStatus workspace_reorder_to_front_exec(bContext * /*C*/, wmOperator * /*op*/)
 {
-  /* Scar 1: bmain->workspaces removed with ID_WS. Reorder is a no-op until
-   * the launcher replaces the workspace cycle entirely. */
-  return OPERATOR_CANCELLED;
+  /* Scar 1: same as reorder_to_back — benign no-op, FINISHED to avoid
+   * aborting chains, no poll so disabled in UI. */
+  return OPERATOR_FINISHED;
 }
 
 static void WORKSPACE_OT_reorder_to_front(wmOperatorType *ot)
 {
-  /* identifiers */
   ot->name = "Workspace Reorder to Front";
   ot->description = "Reorder workspace to be first in the list";
   ot->idname = "WORKSPACE_OT_reorder_to_front";
-
-  /* API callbacks. */
-  ot->poll = workspace_context_poll;
   ot->exec = workspace_reorder_to_front_exec;
 }
 
