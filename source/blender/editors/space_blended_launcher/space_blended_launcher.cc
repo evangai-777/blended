@@ -298,16 +298,16 @@ static bool section_has_data(const Main *bmain, const char *section_label)
     return false;
   }
   if (STREQ(section_label, "3D Animation") || STREQ(section_label, "Game")) {
-    LISTBASE_FOREACH (const Object *, ob, &bmain->objects) {
-      if (ELEM(ob->type, OB_MESH, OB_ARMATURE)) {
+    for (const Object &ob : bmain->objects) {
+      if (ELEM(ob.type, OB_MESH, OB_ARMATURE)) {
         return true;
       }
     }
     return false;
   }
   if (STREQ(section_label, "2D Animation") || STREQ(section_label, "Storyboarding")) {
-    LISTBASE_FOREACH (const Object *, ob, &bmain->objects) {
-      if (ELEM(ob->type, OB_GPENCIL_LEGACY, OB_GREASE_PENCIL)) {
+    for (const Object &ob : bmain->objects) {
+      if (ELEM(ob.type, OB_GPENCIL_LEGACY, OB_GREASE_PENCIL)) {
         return true;
       }
     }
@@ -364,7 +364,7 @@ static int compute_button_layout(const ARegion *region,
 {
   const int win_w = region->winx;
   const int win_h = region->winy;
-  const int content_w = MIN2(CONTENT_WIDTH, win_w - 48);
+  const int content_w = std::min(CONTENT_WIDTH, win_w - 48);
   const int content_x = (win_w - content_w) / 2;
 
   int pen_y = win_h - HEADING_TOP_PAD + int(scroll_offset);
@@ -411,7 +411,7 @@ static void draw_pipeline_scroll(const ARegion *region,
   const int win_w = region->winx;
   const int win_h = region->winy;
 
-  const int content_w = MIN2(CONTENT_WIDTH, win_w - 48);
+  const int content_w = std::min(CONTENT_WIDTH, win_w - 48);
   const int content_x = (win_w - content_w) / 2;
 
   int pen_y = win_h - HEADING_TOP_PAD + int(scroll_offset);
@@ -501,7 +501,7 @@ static void draw_pipeline_scroll(const ARegion *region,
 
 void launcher_main_region_draw(const bContext *C, ARegion *region)
 {
-  SpaceBlendedLauncher *sl = static_cast<SpaceBlendedLauncher *>(CTX_wm_space_data(C));
+  SpaceBlendedLauncher *sl = reinterpret_cast<SpaceBlendedLauncher *>(CTX_wm_space_data(C));
   const Main *bmain = CTX_data_main(C);
 
   const float scroll = sl ? sl->scroll_offset : 0.0f;
@@ -510,9 +510,9 @@ void launcher_main_region_draw(const bContext *C, ARegion *region)
    * values don't highlight cards when the cursor is in another region. */
   int mx = -1, my = -1;
   const wmWindow *win = CTX_wm_window(C);
-  if (win && win->eventstate) {
-    const int cx = win->eventstate->xy[0] - region->winrct.xmin;
-    const int cy = win->eventstate->xy[1] - region->winrct.ymin;
+  if (win && win->runtime && win->runtime->eventstate) {
+    const int cx = win->runtime->eventstate->xy[0] - region->winrct.xmin;
+    const int cy = win->runtime->eventstate->xy[1] - region->winrct.ymin;
     if (cx >= 0 && cx < region->winx && cy >= 0 && cy < region->winy) {
       mx = cx;
       my = cy;
@@ -561,7 +561,7 @@ static wmOperatorStatus activate_mode_invoke(bContext *C,
     return OPERATOR_CANCELLED;
   }
 
-  const SpaceBlendedLauncher *sl = static_cast<const SpaceBlendedLauncher *>(
+  const SpaceBlendedLauncher *sl = reinterpret_cast<const SpaceBlendedLauncher *>(
       CTX_wm_space_data(C));
   const int cx = event->xy[0] - region->winrct.xmin;
   const int cy = event->xy[1] - region->winrct.ymin;
@@ -601,7 +601,7 @@ static float launcher_max_scroll(const ARegion *region)
                         2 * (GROUP_GAP + GROUP_LABEL_FONT_SIZE + 6 + 18) +
                         8 * (SECTION_LABEL_FONT_SIZE + SECTION_LABEL_GAP + BUTTON_H + SECTION_GAP) +
                         32;
-  return float(MAX2(0, content_h - region->winy));
+  return float(std::max(0, content_h - region->winy));
 }
 
 static wmOperatorStatus scroll_exec(bContext *C, wmOperator *op)
@@ -611,7 +611,7 @@ static wmOperatorStatus scroll_exec(bContext *C, wmOperator *op)
   if (!region || !area) {
     return OPERATOR_CANCELLED;
   }
-  SpaceBlendedLauncher *sl = static_cast<SpaceBlendedLauncher *>(area->spacedata.first);
+  SpaceBlendedLauncher *sl = reinterpret_cast<SpaceBlendedLauncher *>(area->spacedata.first);
   if (!sl) {
     return OPERATOR_CANCELLED;
   }
@@ -811,13 +811,16 @@ static void launcher_main_region_listener(const wmRegionListenerParams *params)
 static void launcher_main_region_cursor(wmWindow *win, ScrArea *area, ARegion *region)
 {
   /* Called by the region's cursor callback each frame the mouse is inside. */
-  SpaceBlendedLauncher *sl = static_cast<SpaceBlendedLauncher *>(area->spacedata.first);
+  SpaceBlendedLauncher *sl = reinterpret_cast<SpaceBlendedLauncher *>(area->spacedata.first);
   if (!sl) {
     return;
   }
+  if (!win->runtime || !win->runtime->eventstate) {
+    return;
+  }
 
-  const int mx = win->eventstate->xy[0] - region->winrct.xmin;
-  const int my = win->eventstate->xy[1] - region->winrct.ymin;
+  const int mx = win->runtime->eventstate->xy[0] - region->winrct.xmin;
+  const int my = win->runtime->eventstate->xy[1] - region->winrct.ymin;
 
   if (sl->mouse_x != mx || sl->mouse_y != my) {
     sl->mouse_x = mx;
