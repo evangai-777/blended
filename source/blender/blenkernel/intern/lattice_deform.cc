@@ -472,4 +472,63 @@ void BKE_lattice_deform_coords_with_editmesh(const Object *ob_lattice,
 
 /** \} */
 
+/* -------------------------------------------------------------------- */
+/** \name Modifier-Embedded Lattice Deform
+ * \{ */
+
+LatticeDeformData *BKE_lattice_deform_data_create_inline(const Lattice *lt,
+                                                         const float object_to_lattice[4][4])
+{
+  /* Same algorithm as BKE_lattice_deform_data_create but takes a pre-computed ob→lattice
+   * transform and operates directly on an embedded (non-ID-system) Lattice struct.
+   * No displist lookup; always uses BPoint rest positions from lt->def. */
+  float *fp, imat[4][4];
+  float fu, fv, fw;
+  int u, v, w;
+  float *lattice_weights = nullptr;
+  BPoint *bp = lt->def;
+
+  const int32_t num_points = lt->pntsu * lt->pntsv * lt->pntsw;
+  float *fp_base = MEM_new_array_uninitialized<float>(3 * size_t(num_points) + 1, "latticedata");
+  fp = fp_base;
+
+  invert_m4_m4(imat, object_to_lattice);
+
+  /* Prefetch lattice deform group weights. */
+  int defgrp_index = -1;
+  const MDeformVert *dvert = lt->dvert;
+  if (lt->vgroup[0] && dvert) {
+    defgrp_index = BKE_id_defgroup_name_index(&lt->id, lt->vgroup);
+    if (defgrp_index != -1) {
+      lattice_weights = MEM_new_array_uninitialized<float>(size_t(num_points), "lattice_weights");
+      for (int index = 0; index < num_points; index++) {
+        lattice_weights[index] = BKE_defvert_find_weight(dvert + index, defgrp_index);
+      }
+    }
+  }
+
+  for (w = 0, fw = lt->fw; w < lt->pntsw; w++, fw += lt->dw) {
+    for (v = 0, fv = lt->fv; v < lt->pntsv; v++, fv += lt->dv) {
+      for (u = 0, fu = lt->fu; u < lt->pntsu; u++, fp += 3, fu += lt->du) {
+        fp[0] = bp->vec[0] - fu;
+        fp[1] = bp->vec[1] - fv;
+        fp[2] = bp->vec[2] - fw;
+        bp++;
+        mul_mat3_m4_v3(imat, fp);
+      }
+    }
+  }
+
+  LatticeDeformData *lattice_deform_data = MEM_new_uninitialized<LatticeDeformData>(
+      "Lattice Deform Data");
+  lattice_deform_data->latticedata = fp_base;
+  lattice_deform_data->lattice_weights = lattice_weights;
+  lattice_deform_data->lt = lt;
+  copy_m4_m4(lattice_deform_data->latmat, object_to_lattice);
+
+  return lattice_deform_data;
+}
+
+/** \} */
+
 }  // namespace blender

@@ -82,6 +82,11 @@ extern void (*BKE_lattice_batch_cache_free_cb)(Lattice *lt);
 
 LatticeDeformData *BKE_lattice_deform_data_create(const Object *oblatt,
                                                   const Object *ob) ATTR_WARN_UNUSED_RESULT;
+
+/** Variant for modifier-embedded lattices: takes the Lattice directly and a pre-computed
+ * object-to-lattice transform (stored in LatticeModifierData::object_to_lattice). */
+LatticeDeformData *BKE_lattice_deform_data_create_inline(
+    const Lattice *lt, const float object_to_lattice[4][4]) ATTR_WARN_UNUSED_RESULT;
 void BKE_lattice_deform_data_eval_co(LatticeDeformData *lattice_deform_data,
                                      float co[3],
                                      float weight);
