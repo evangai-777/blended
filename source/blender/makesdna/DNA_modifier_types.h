@@ -28,6 +28,7 @@ namespace bke {
 struct BVHTreeFromMesh;
 }
 
+struct Lattice;
 struct LineartModifierRuntime;
 struct Mesh;
 
@@ -286,14 +287,18 @@ enum LatticeModifierFlag {
 struct LatticeModifierData {
   ModifierData modifier;
 
+  /** Deprecated: OB_LATTICE object reference; null after versioning pass 502.29. */
   struct Object *object = nullptr;
+  /** Embedded lattice geometry owned by this modifier (permanent home from bmain->lattices). */
+  struct Lattice *lattice = nullptr;
+  /** Transforms a point from modified-object local space to lattice local space. */
+  float object_to_lattice[4][4];
   /** Optional vertex-group name. */
   char name[/*MAX_VGROUP_NAME*/ 64] = "";
   float strength = 1.0f;
   /** #LatticeModifierFlag. */
   short flag = 0;
   char _pad[2] = {};
-  void *_pad1 = nullptr;
 };
 
 /** #CurveModifierData.flag */

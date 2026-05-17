@@ -97,6 +97,7 @@
 #include "BKE_report.hh"
 #include "BKE_scene.hh"
 #include "BKE_screen.hh"
+#include "BKE_lattice.hh"
 #include "BKE_lightprobe.h"
 #include "BKE_mask.hh"
 #include "BKE_paint.hh"
@@ -3982,6 +3983,11 @@ static void after_liblink_merged_bmain_process(Main *bmain, BlendFileReadReport 
    * CMP_NODE_MASK compositor nodes; the versioning pass (502.27) migrates all mask data and
    * nullifies sequencer references before this drain runs. */
   BKE_mask_drain_from_bmain(bmain);
+
+  /* Drain the Scar 2 bmain->lattices listbase. Lattice geometry now lives embedded in
+   * LatticeModifierData::lattice; the versioning pass (502.29) deep-copies Lattice data from
+   * OB_LATTICE objects into each modifier before this drain runs. */
+  BKE_lattice_drain_from_bmain(bmain);
 }
 
 /** \} */

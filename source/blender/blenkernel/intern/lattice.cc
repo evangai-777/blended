@@ -699,4 +699,85 @@ void BKE_lattice_batch_cache_free(Lattice *lt)
   }
 }
 
+/* -------------------------------------------------------------------- */
+/** \name Modifier-Embedded Lattice Lifecycle
+ * \{ */
+
+Lattice *BKE_lattice_new_modifier(const char *name)
+{
+  Lattice *lt = MEM_new<Lattice>("LatticeModifier");
+  *(reinterpret_cast<short *>(lt->id.name)) = ID_LT;
+  BLI_strncpy_utf8(lt->id.name + 2, name ? name : "Lattice", sizeof(lt->id.name) - 2);
+  lattice_init_data(&lt->id);
+  return lt;
+}
+
+Lattice *BKE_lattice_copy_modifier(const Lattice *lt_src)
+{
+  Lattice *lt_dst = MEM_dupalloc(lt_src);
+  lt_dst->def = static_cast<BPoint *>(MEM_dupalloc(lt_src->def));
+  BKE_defgroup_copy_list(&lt_dst->vertex_group_names, &lt_src->vertex_group_names);
+  if (lt_src->dvert) {
+    int tot = lt_src->pntsu * lt_src->pntsv * lt_src->pntsw;
+    lt_dst->dvert = MEM_new_array_uninitialized<MDeformVert>(size_t(tot), "Lattice MDeformVert");
+    BKE_defvert_array_copy(lt_dst->dvert, lt_src->dvert, tot);
+  }
+  lt_dst->editlatt = nullptr;
+  lt_dst->batch_cache = nullptr;
+  lt_dst->key = nullptr;
+  lt_dst->adt = nullptr;
+  return lt_dst;
+}
+
+void BKE_lattice_free_modifier(Lattice *lt)
+{
+  if (!lt) {
+    return;
+  }
+  BKE_lattice_batch_cache_free(lt);
+  BLI_freelistN(&lt->vertex_group_names);
+  MEM_SAFE_DELETE(lt->def);
+  if (lt->dvert) {
+    BKE_defvert_array_free(lt->dvert, lt->pntsu * lt->pntsv * lt->pntsw);
+    lt->dvert = nullptr;
+  }
+  MEM_delete(lt);
+}
+
+void BKE_lattice_write_modifier(BlendWriter *writer, const Lattice *lt)
+{
+  writer->write_struct_array(lt->pntsu * lt->pntsv * lt->pntsw, lt->def);
+  BKE_defbase_blend_write(writer, &lt->vertex_group_names);
+  BKE_defvert_blend_write(writer, lt->pntsu * lt->pntsv * lt->pntsw, lt->dvert);
+}
+
+void BKE_lattice_read_modifier(BlendDataReader *reader, Lattice *lt)
+{
+  BLO_read_struct_array(reader, BPoint, lt->pntsu * lt->pntsv * lt->pntsw, &lt->def);
+  BLO_read_struct_array(reader, MDeformVert, lt->pntsu * lt->pntsv * lt->pntsw, &lt->dvert);
+  BKE_defvert_blend_read(reader, lt->pntsu * lt->pntsv * lt->pntsw, lt->dvert);
+  BLO_read_struct_list(reader, bDeformGroup, &lt->vertex_group_names);
+  lt->editlatt = nullptr;
+  lt->batch_cache = nullptr;
+  lt->adt = nullptr;
+  lt->key = nullptr;
+}
+
+void BKE_lattice_drain_from_bmain(Main *bmain)
+{
+  LISTBASE_FOREACH_MUTABLE(Lattice *, lt, &bmain->lattices) {
+    BLI_remlink(&bmain->lattices, lt);
+    BKE_lattice_batch_cache_free(lt);
+    BLI_freelistN(&lt->vertex_group_names);
+    MEM_SAFE_DELETE(lt->def);
+    if (lt->dvert) {
+      BKE_defvert_array_free(lt->dvert, lt->pntsu * lt->pntsv * lt->pntsw);
+    }
+    BKE_libblock_free_data(&lt->id, false);
+    MEM_delete(lt);
+  }
+}
+
+/** \} */
+
 }  // namespace blender

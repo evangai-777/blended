@@ -106,6 +106,8 @@ void BKE_modifier_init()
   md = BKE_modifier_new(eModifierType_Lattice);
   virtualModifierCommonData.lmd = *(reinterpret_cast<LatticeModifierData *>(md));
   BKE_modifier_free(md);
+  /* free_data frees the embedded lattice; null the copied pointer to avoid a dangling ref. */
+  virtualModifierCommonData.lmd.lattice = nullptr;
 
   md = BKE_modifier_new(eModifierType_ShapeKey);
   virtualModifierCommonData.smd = *(reinterpret_cast<ShapeKeyModifierData *>(md));
@@ -739,22 +741,8 @@ Object *BKE_modifiers_is_deformed_by_lattice(Object *ob)
     return nullptr;
   }
 
-  LatticeModifierData *lmd = nullptr;
-
-  /* return the first selected lattice, this lets us use multiple lattices */
-  for (; md; md = md->next) {
-    if (md->type == eModifierType_Lattice) {
-      lmd = reinterpret_cast<LatticeModifierData *>(md);
-      if (lmd->object && (lmd->object->base_flag & BASE_SELECTED)) {
-        return lmd->object;
-      }
-    }
-  }
-
-  if (lmd) { /* if we're still here then return the last lattice */
-    return lmd->object;
-  }
-
+  /* Standard LatticeModifier now uses an embedded Lattice (permanent home 502.29).
+   * lmd->object is null post-versioning; no OB_LATTICE to return. */
   return nullptr;
 }
 

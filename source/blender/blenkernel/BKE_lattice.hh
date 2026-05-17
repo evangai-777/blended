@@ -82,6 +82,35 @@ extern void (*BKE_lattice_batch_cache_free_cb)(Lattice *lt);
 
 LatticeDeformData *BKE_lattice_deform_data_create(const Object *oblatt,
                                                   const Object *ob) ATTR_WARN_UNUSED_RESULT;
+
+/** Variant for modifier-embedded lattices: takes the Lattice directly and a pre-computed
+ * object-to-lattice transform (stored in LatticeModifierData::object_to_lattice). */
+LatticeDeformData *BKE_lattice_deform_data_create_inline(
+    const Lattice *lt, const float object_to_lattice[4][4]) ATTR_WARN_UNUSED_RESULT;
+
+/** Full deform with mesh — inline variant for embedded-lattice modifier.
+ * Equivalent to BKE_lattice_deform_coords_with_mesh but uses the embedded Lattice and
+ * pre-computed object_to_lattice matrix stored in LatticeModifierData. */
+void BKE_lattice_deform_coords_with_mesh_inline(const Lattice *lt,
+                                                const float object_to_lattice[4][4],
+                                                const Object *ob_target,
+                                                float (*vert_coords)[3],
+                                                int vert_coords_len,
+                                                short flag,
+                                                const char *defgrp_name,
+                                                float fac,
+                                                const struct Mesh *me_target);
+
+/** Full deform with edit mesh — inline variant for embedded-lattice modifier. */
+void BKE_lattice_deform_coords_with_editmesh_inline(const Lattice *lt,
+                                                    const float object_to_lattice[4][4],
+                                                    const Object *ob_target,
+                                                    float (*vert_coords)[3],
+                                                    int vert_coords_len,
+                                                    short flag,
+                                                    const char *defgrp_name,
+                                                    float fac,
+                                                    const struct BMEditMesh *em_target);
 void BKE_lattice_deform_data_eval_co(LatticeDeformData *lattice_deform_data,
                                      float co[3],
                                      float weight);
@@ -112,6 +141,28 @@ void BKE_lattice_deform_coords_with_editmesh(const Object *ob_lattice,
                                              const char *defgrp_name,
                                              float fac,
                                              const BMEditMesh *em_target);
+
+/** \} */
+
+/* -------------------------------------------------------------------- */
+/** \name Modifier-Embedded Lattice Lifecycle
+ * \{ */
+
+/** Create a non-ID Lattice (2×2×2 default) owned by a modifier. Not added to bmain. */
+Lattice *BKE_lattice_new_modifier(const char *name);
+/** Deep-copy a modifier-owned Lattice. Excludes key and animdata. */
+Lattice *BKE_lattice_copy_modifier(const Lattice *lt_src);
+/** Free all heap data inside a modifier-owned Lattice and delete the struct. */
+void BKE_lattice_free_modifier(Lattice *lt);
+
+/** Write heap arrays for a modifier-owned Lattice (called from ModifierTypeInfo::blend_write). */
+void BKE_lattice_write_modifier(struct BlendWriter *writer, const Lattice *lt);
+/** Read heap arrays back into a modifier-owned Lattice (called from blend_read). */
+void BKE_lattice_read_modifier(struct BlendDataReader *reader, Lattice *lt);
+
+/** Drain the Scar 2 bmain->lattices non-indexed listbase after versioning 502.29 has migrated
+ * all LatticeModifierData to per-modifier embedded storage. Call from readfile.cc. */
+void BKE_lattice_drain_from_bmain(Main *bmain);
 
 /** \} */
 
