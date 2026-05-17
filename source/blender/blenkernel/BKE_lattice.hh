@@ -115,4 +115,26 @@ void BKE_lattice_deform_coords_with_editmesh(const Object *ob_lattice,
 
 /** \} */
 
+/* -------------------------------------------------------------------- */
+/** \name Modifier-Embedded Lattice Lifecycle
+ * \{ */
+
+/** Create a non-ID Lattice (2×2×2 default) owned by a modifier. Not added to bmain. */
+Lattice *BKE_lattice_new_modifier(const char *name);
+/** Deep-copy a modifier-owned Lattice. Excludes key and animdata. */
+Lattice *BKE_lattice_copy_modifier(const Lattice *lt_src);
+/** Free all heap data inside a modifier-owned Lattice and delete the struct. */
+void BKE_lattice_free_modifier(Lattice *lt);
+
+/** Write heap arrays for a modifier-owned Lattice (called from ModifierTypeInfo::blend_write). */
+void BKE_lattice_write_modifier(struct BlendWriter *writer, const Lattice *lt);
+/** Read heap arrays back into a modifier-owned Lattice (called from blend_read). */
+void BKE_lattice_read_modifier(struct BlendDataReader *reader, Lattice *lt);
+
+/** Drain the Scar 2 bmain->lattices non-indexed listbase after versioning 502.29 has migrated
+ * all LatticeModifierData to per-modifier embedded storage. Call from readfile.cc. */
+void BKE_lattice_drain_from_bmain(Main *bmain);
+
+/** \} */
+
 }  // namespace blender
