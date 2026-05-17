@@ -87,6 +87,30 @@ LatticeDeformData *BKE_lattice_deform_data_create(const Object *oblatt,
  * object-to-lattice transform (stored in LatticeModifierData::object_to_lattice). */
 LatticeDeformData *BKE_lattice_deform_data_create_inline(
     const Lattice *lt, const float object_to_lattice[4][4]) ATTR_WARN_UNUSED_RESULT;
+
+/** Full deform with mesh — inline variant for embedded-lattice modifier.
+ * Equivalent to BKE_lattice_deform_coords_with_mesh but uses the embedded Lattice and
+ * pre-computed object_to_lattice matrix stored in LatticeModifierData. */
+void BKE_lattice_deform_coords_with_mesh_inline(const Lattice *lt,
+                                                const float object_to_lattice[4][4],
+                                                const Object *ob_target,
+                                                float (*vert_coords)[3],
+                                                int vert_coords_len,
+                                                short flag,
+                                                const char *defgrp_name,
+                                                float fac,
+                                                const struct Mesh *me_target);
+
+/** Full deform with edit mesh — inline variant for embedded-lattice modifier. */
+void BKE_lattice_deform_coords_with_editmesh_inline(const Lattice *lt,
+                                                    const float object_to_lattice[4][4],
+                                                    const Object *ob_target,
+                                                    float (*vert_coords)[3],
+                                                    int vert_coords_len,
+                                                    short flag,
+                                                    const char *defgrp_name,
+                                                    float fac,
+                                                    const struct BMEditMesh *em_target);
 void BKE_lattice_deform_data_eval_co(LatticeDeformData *lattice_deform_data,
                                      float co[3],
                                      float weight);

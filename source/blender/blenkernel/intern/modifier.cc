@@ -106,6 +106,8 @@ void BKE_modifier_init()
   md = BKE_modifier_new(eModifierType_Lattice);
   virtualModifierCommonData.lmd = *(reinterpret_cast<LatticeModifierData *>(md));
   BKE_modifier_free(md);
+  /* free_data frees the embedded lattice; null the copied pointer to avoid a dangling ref. */
+  virtualModifierCommonData.lmd.lattice = nullptr;
 
   md = BKE_modifier_new(eModifierType_ShapeKey);
   virtualModifierCommonData.smd = *(reinterpret_cast<ShapeKeyModifierData *>(md));
