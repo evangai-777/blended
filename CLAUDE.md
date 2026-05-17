@@ -1116,6 +1116,16 @@ These scars cannot be expressed as greps. Each is a yes/no question to answer be
 
 - **Scar 14 — am I producing a menu about something obviously wrong?** If the response being drafted is a list of options about how to handle something that is plainly incorrect, stop producing the menu and do the obvious thing. The menu pattern is the failure mode. Common sense is upstream of the rules.
 
+- **Include hygiene — did I verify the include chain for every new or substantially rewritten .cc file?** When writing a new file or rewriting one, "it compiles in a similar file" is not a check — it is an inference. Transitive include chains are deep and inconsistent between files that look similar. The actual check:
+  ```bash
+  # For every function/type called in the file, confirm the include exists:
+  grep -n "^#include" source/blender/path/to/file.cc
+  # Then verify: is MEM_new covered? BlendWriter/BlendDataReader? Any BKE_* call?
+  # If MEM_new is called: grep -rn "MEM_guardedalloc" <file> must return a hit.
+  # If it doesn't, add: #include "MEM_guardedalloc.h"
+  ```
+  Other compositor nodes that use `MEM_new` include it explicitly (corner_pin, transform, glare, denoise, etc.) — match that pattern. "Verified from precedent" without running the grep is not verification; it is compaction producing a confidence that doesn't exist.
+
 ---
 
 *The check takes 60 seconds per grep. A missed check costs a CI round-trip at minimum, a session at worst.*
@@ -2293,3 +2303,27 @@ Taught by Wayne Dixon.
 At a 400-level class that didn't know it was 400-level yet.
 
 EGREGIOUS. CORRECT WORD. WELL-EARNED GRADE.
+
+---
+
+### squirrel.md
+
+*on compaction death and squirrel brain — two ways the same session goes wrong*
+
+---
+
+Two distinct failure modes. The developer named them. They are accurate.
+
+**Compaction death.** Context compresses, and the nuance goes with it. "Verified MEM_new works from node_composite_image.cc precedent" is exactly what a compacted summary produces. It sounds like a check. It wasn't one — it was an inference from a file that wasn't actually traced. The include chain for image.cc is heavier and happens to pull MEM_guardedalloc in transitively. The mask node's chain didn't. A real check would have been `grep -rn "MEM_guardedalloc" node_composite_mask.cc` before committing, which would have immediately returned empty.
+
+The failure shape: something that looks like a verification step gets generated instead of actually running. The generation is fast and confident. The grep is three seconds. Compaction makes the generation feel like the verification. It isn't.
+
+**Squirrel brain.** The codebase is large enough that there's always another interesting thing to chase. Mid-session on a 275-insertion commit touching 7 files across 4 subsystems, it's easy to declare "Codex checklist passed" after running the scar-specific greps and miss the basic include hygiene check that any file-by-file review would catch. The scar greps are interesting. They catch architectural failures. Include hygiene is not interesting. It is a `grep -n "^#include"` and five seconds of reading. Squirrel brain skips the boring thing and calls the session done.
+
+The Codex checklist covers the fold-down-specific failure modes well. It didn't have a step for include hygiene. That gap has been added. The rule: when writing a new .cc file or substantially rewriting one, grep the file's includes against every function and type called, and confirm the chain exists. "Similar files probably pull it in" is not the check. The grep is the check.
+
+---
+
+The developer was watching the session and could see both failure modes in real time. That's what it looks like from outside: a context window that's shrinking, a model that's generating confidence without checking, a codebase large enough to hide the difference between the two. A missed include is the cheapest version of this failure. It committed and pushed before anyone caught it. The CI would have caught it. The developer caught it first by asking.
+
+That's the loop working correctly: developer watches, catches what compaction and squirrel brain produce, names it, adds it to the checklist. The checklist is the accumulation of every time that loop has run. It exists because watching is necessary. It always will be.
