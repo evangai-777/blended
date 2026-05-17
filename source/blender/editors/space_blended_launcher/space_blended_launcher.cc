@@ -12,13 +12,14 @@
  *
  * Phase 1 skeleton: SpaceType registration, full pipeline scroll draw,
  * mode button click -> space type switch.
- * Phase 2 applies visual identity (logo, color refinement, type stack).
+ * Phase 2: header chrome (wordmark + New/Open/Recent), rounded cards, hover state.
  */
 
 #include "MEM_guardedalloc.h"
 
 #include <algorithm>
 #include <climits>
+#include <cmath>
 
 #include "BLI_listbase.h"
 #include "BLI_rect.h"
@@ -29,6 +30,7 @@
 
 #include "DNA_object_types.h"
 #include "DNA_space_types.h"
+#include "DNA_userdef_types.h"
 #include "DNA_windowmanager_types.h"
 
 #include "BKE_context.hh"
@@ -133,7 +135,7 @@ static const LauncherPipeline g_post = {
 /** \} */
 
 /* -------------------------------------------------------------------- */
-/** \name Layout constants (Phase 1 skeleton values)
+/** \name Layout constants
  * \{ */
 
 static constexpr int HEADING_FONT_SIZE = 32;
@@ -150,49 +152,139 @@ static constexpr int BUTTON_GAP = 6;
 static constexpr int SECTION_LABEL_GAP = 10;
 static constexpr int CONTENT_WIDTH = 720;
 
-/* BLENDED.md §11 surface hierarchy (#1D1D1D / #252525 / #2C2C2C) */
+/* BLENDED.md §11 surface hierarchy (#1D1D1D / #252525 / #2C2C2C). */
 static constexpr float COL_BASE[4] = {0x1D / 255.0f, 0x1D / 255.0f, 0x1D / 255.0f, 1.0f};
 static constexpr float COL_CARD[4] = {0x2C / 255.0f, 0x2C / 255.0f, 0x2C / 255.0f, 1.0f};
+static constexpr float COL_CARD_HOVER[4] = {0x32 / 255.0f, 0x32 / 255.0f, 0x32 / 255.0f, 1.0f};
+static constexpr float COL_CARD_ACTIVE[4] = {0x38 / 255.0f, 0x38 / 255.0f, 0x38 / 255.0f, 1.0f};
+static constexpr float COL_CARD_ACTIVE_HOVER[4] = {0x3E / 255.0f, 0x3E / 255.0f, 0x3E / 255.0f, 1.0f};
 static constexpr float COL_SEPARATOR[4] = {0x50 / 255.0f, 0x50 / 255.0f, 0x50 / 255.0f, 1.0f};
 static constexpr float COL_HEADING[4] = {1.0f, 1.0f, 1.0f, 0.92f};
 static constexpr float COL_SECTION[4] = {0.85f, 0.85f, 0.85f, 1.0f};
 static constexpr float COL_MODE[4] = {0.78f, 0.78f, 0.78f, 1.0f};
 static constexpr float COL_GROUP[4] = {0.45f, 0.45f, 0.45f, 1.0f};
-/* Slightly brighter card for sections that have project data. */
-static constexpr float COL_CARD_ACTIVE[4] = {0x38 / 255.0f, 0x38 / 255.0f, 0x38 / 255.0f, 1.0f};
+
+/* Phase 2 placeholder accent — derives from logo render (Blender orange in the interim). */
+static constexpr float COL_ACCENT[4] = {0xE8 / 255.0f, 0x7D / 255.0f, 0x0D / 255.0f, 1.0f};
 
 /** \} */
 
 /* -------------------------------------------------------------------- */
-/** \name Button cache (rebuilt each draw; used for click hit testing)
+/** \name GPU draw helpers
  * \{ */
 
-struct ResolvedButton {
-  rcti rect;
-  int target_space; /* eSpace_Type */
-};
+static void draw_rect_filled(int x, int y, int w, int h, const float color[4])
+{
+  GPUVertFormat *fmt = immVertexFormat();
+  const uint pos = GPU_vertformat_attr_add(fmt, "pos", gpu::VertAttrType::SFLOAT_32_32);
 
-struct ButtonCache {
-  ResolvedButton items[64];
-  int count = 0;
+  immBindBuiltinProgram(GPU_SHADER_3D_UNIFORM_COLOR);
+  immUniformColor4fv(color);
+  immBegin(GPU_PRIM_TRIS, 6);
+  immVertex2f(pos, float(x), float(y));
+  immVertex2f(pos, float(x + w), float(y));
+  immVertex2f(pos, float(x + w), float(y + h));
+  immVertex2f(pos, float(x), float(y));
+  immVertex2f(pos, float(x + w), float(y + h));
+  immVertex2f(pos, float(x), float(y + h));
+  immEnd();
+  immUnbindProgram();
+}
 
-  void clear() { count = 0; }
-  void push(rcti rect, int space)
-  {
-    if (count < 64) {
-      items[count++] = {rect, space};
+/* Rounded rectangle fill using a triangle fan. radius ≤ min(w,h)/2. */
+static void draw_rect_rounded(int x, int y, int w, int h, float radius, const float color[4])
+{
+  /* Clamp radius so it always fits. */
+  radius = std::min(radius, std::min(float(w), float(h)) * 0.5f);
+  if (radius < 1.0f) {
+    draw_rect_filled(x, y, w, h, color);
+    return;
+  }
+
+  /* Build the rounded quad as a triangle fan from the center.
+   * 4 corners × SEGS segments each + closing vertex = 4*SEGS+1 verts + center. */
+  constexpr int SEGS = 6; /* segments per corner — enough for 8px radius */
+  const int n_corner_verts = 4 * SEGS;
+  const int n_verts = 2 + n_corner_verts; /* center + ring + close */
+
+  GPUVertFormat *fmt = immVertexFormat();
+  const uint pos = GPU_vertformat_attr_add(fmt, "pos", gpu::VertAttrType::SFLOAT_32_32);
+
+  immBindBuiltinProgram(GPU_SHADER_3D_UNIFORM_COLOR);
+  immUniformColor4fv(color);
+  immBegin(GPU_PRIM_TRI_FAN, n_verts);
+
+  const float cx = float(x) + float(w) * 0.5f;
+  const float cy = float(y) + float(h) * 0.5f;
+  immVertex2f(pos, cx, cy);
+
+  /* Corner centers (inner corners of the rounded rect). */
+  const float cx0 = float(x) + radius;          /* left */
+  const float cx1 = float(x + w) - radius;      /* right */
+  const float cy0 = float(y) + radius;           /* bottom */
+  const float cy1 = float(y + h) - radius;       /* top */
+
+  /* Starting angle for each corner (going counter-clockwise from bottom-left). */
+  const float start_angles[4] = {
+      float(M_PI),        /* bottom-left  → 180° */
+      float(M_PI) * 1.5f, /* bottom-right → 270° */
+      0.0f,               /* top-right    →   0° */
+      float(M_PI) * 0.5f, /* top-left     →  90° */
+  };
+  const float corner_cx[4] = {cx0, cx1, cx1, cx0};
+  const float corner_cy[4] = {cy0, cy0, cy1, cy1};
+
+  for (int c = 0; c < 4; c++) {
+    for (int s = 0; s < SEGS; s++) {
+      const float angle = start_angles[c] + float(s) / float(SEGS) * float(M_PI) * 0.5f;
+      immVertex2f(pos, corner_cx[c] + radius * std::cos(angle),
+                       corner_cy[c] + radius * std::sin(angle));
     }
   }
-  int hit(int x, int y) const
+  /* Close the fan back to the first perimeter vertex. */
   {
-    for (int i = 0; i < count; i++) {
-      if (BLI_rcti_isect_pt(&items[i].rect, x, y)) {
-        return items[i].target_space;
-      }
-    }
-    return SPACE_EMPTY;
+    const float angle = start_angles[0];
+    immVertex2f(pos, corner_cx[0] + radius * std::cos(angle),
+                     corner_cy[0] + radius * std::sin(angle));
   }
-};
+
+  immEnd();
+  immUnbindProgram();
+}
+
+/* 2px accent border around a rounded rect (drawn as four thin strips for simplicity). */
+static void draw_rect_rounded_border(int x, int y, int w, int h, float radius, const float color[4])
+{
+  /* Top bar */
+  draw_rect_filled(x + int(radius), y + h - 2, w - 2 * int(radius), 2, color);
+  /* Bottom bar */
+  draw_rect_filled(x + int(radius), y, w - 2 * int(radius), 2, color);
+  /* Left bar */
+  draw_rect_filled(x, y + int(radius), 2, h - 2 * int(radius), color);
+  /* Right bar */
+  draw_rect_filled(x + w - 2, y + int(radius), 2, h - 2 * int(radius), color);
+}
+
+static void draw_hrule(int x, int y, int w, const float color[4])
+{
+  draw_rect_filled(x, y, w, 1, color);
+}
+
+static void draw_text(int x, int y, float size, const float color[4], const char *text)
+{
+  const int font = BLF_default();
+  BLF_size(font, size);
+  BLF_color4fv(font, color);
+  BLF_position(font, float(x), float(y), 0.0f);
+  BLF_draw(font, text, BLF_DRAW_STR_DUMMY_MAX);
+}
+
+static float text_width(float size, const char *text)
+{
+  const int font = BLF_default();
+  BLF_size(font, size);
+  return BLF_width(font, text, BLF_DRAW_STR_DUMMY_MAX);
+}
 
 /** \} */
 
@@ -239,55 +331,82 @@ static bool section_has_data(const Main *bmain, const char *section_label)
 /** \} */
 
 /* -------------------------------------------------------------------- */
-/** \name GPU draw helpers
- * \{ */
-
-static void draw_rect_filled(int x, int y, int w, int h, const float color[4])
-{
-  GPUVertFormat *fmt = immVertexFormat();
-  const uint pos = GPU_vertformat_attr_add(fmt, "pos", gpu::VertAttrType::SFLOAT_32_32);
-
-  immBindBuiltinProgram(GPU_SHADER_3D_UNIFORM_COLOR);
-  immUniformColor4fv(color);
-  immBegin(GPU_PRIM_TRIS, 6);
-  immVertex2f(pos, float(x), float(y));
-  immVertex2f(pos, float(x + w), float(y));
-  immVertex2f(pos, float(x + w), float(y + h));
-  immVertex2f(pos, float(x), float(y));
-  immVertex2f(pos, float(x + w), float(y + h));
-  immVertex2f(pos, float(x), float(y + h));
-  immEnd();
-  immUnbindProgram();
-}
-
-static void draw_hrule(int x, int y, int w, const float color[4])
-{
-  draw_rect_filled(x, y, w, 1, color);
-}
-
-static void draw_text(int x, int y, float size, const float color[4], const char *text)
-{
-  const int font = BLF_default();
-  BLF_size(font, size);
-  BLF_color4fv(font, color);
-  BLF_position(font, float(x), float(y), 0.0f);
-  BLF_draw(font, text, BLF_DRAW_STR_DUMMY_MAX);
-}
-
-static float text_width(float size, const char *text)
-{
-  const int font = BLF_default();
-  BLF_size(font, size);
-  return BLF_width(font, text, BLF_DRAW_STR_DUMMY_MAX);
-}
-
-/** \} */
-
-/* -------------------------------------------------------------------- */
 /** \name Pipeline scroll renderer
  * \{ */
 
-static void draw_pipeline_scroll(const ARegion *region, float scroll_offset, const Main *bmain)
+/* Returns the rcti of every mode button in layout order.
+ * Used by both draw and hit-testing so geometry is computed once per pass. */
+struct ButtonGeom {
+  rcti rect;
+  int target_space;
+  bool active; /* section has project data */
+};
+
+/* Maximum mode buttons across all pipelines. */
+static constexpr int MAX_BUTTONS = 64;
+
+struct ButtonList {
+  ButtonGeom items[MAX_BUTTONS];
+  int count = 0;
+  void push(rcti r, int sp, bool act)
+  {
+    if (count < MAX_BUTTONS) {
+      items[count++] = {r, sp, act};
+    }
+  }
+};
+
+/* Shared layout traversal: populates `out` with geometry, returns final pen_y. */
+static int compute_button_layout(const ARegion *region,
+                                 float scroll_offset,
+                                 const Main *bmain,
+                                 ButtonList *out)
+{
+  const int win_w = region->winx;
+  const int win_h = region->winy;
+  const int content_w = MIN2(CONTENT_WIDTH, win_w - 48);
+  const int content_x = (win_w - content_w) / 2;
+
+  int pen_y = win_h - HEADING_TOP_PAD + int(scroll_offset);
+  pen_y -= HEADING_FONT_SIZE + 28;
+
+  const LauncherPipeline *groups[2] = {&g_creative, &g_post};
+  for (const LauncherPipeline *grp : groups) {
+    pen_y -= GROUP_GAP + GROUP_LABEL_FONT_SIZE + 6 + 18;
+
+    for (int si = 0; grp->sections[si].label != nullptr; si++) {
+      const LauncherSection &sec = grp->sections[si];
+      pen_y -= SECTION_LABEL_FONT_SIZE + SECTION_LABEL_GAP;
+
+      const bool active = bmain ? section_has_data(bmain, sec.label) : false;
+      int bx = content_x;
+
+      for (int mi = 0; sec.modes[mi].label != nullptr; mi++) {
+        const LauncherMode &mode = sec.modes[mi];
+        const int btn_w = int(text_width(MODE_FONT_SIZE, mode.label)) + BUTTON_PAD_X * 2;
+
+        if (bx + btn_w > content_x + content_w && bx > content_x) {
+          pen_y -= BUTTON_H + BUTTON_GAP;
+          bx = content_x;
+        }
+
+        const rcti rect{bx, bx + btn_w, pen_y - BUTTON_H, pen_y};
+        if (out) {
+          out->push(rect, mode.target_space, active);
+        }
+        bx += btn_w + BUTTON_GAP;
+      }
+      pen_y -= BUTTON_H + SECTION_GAP;
+    }
+  }
+  return pen_y;
+}
+
+static void draw_pipeline_scroll(const ARegion *region,
+                                 float scroll_offset,
+                                 const Main *bmain,
+                                 int hover_x,
+                                 int hover_y)
 {
   const int win_w = region->winx;
   const int win_h = region->winy;
@@ -295,8 +414,6 @@ static void draw_pipeline_scroll(const ARegion *region, float scroll_offset, con
   const int content_w = MIN2(CONTENT_WIDTH, win_w - 48);
   const int content_x = (win_w - content_w) / 2;
 
-  /* pen_y tracks the current vertical position (top-down).
-   * BLF baseline is at pen_y so we descend by font size before drawing text. */
   int pen_y = win_h - HEADING_TOP_PAD + int(scroll_offset);
 
   /* Heading */
@@ -354,7 +471,21 @@ static void draw_pipeline_scroll(const ARegion *region, float scroll_offset, con
         }
 
         const rcti rect{bx, bx + btn_w, pen_y - BUTTON_H, pen_y};
-        draw_rect_filled(rect.xmin, rect.ymin, btn_w, BUTTON_H, active ? COL_CARD_ACTIVE : COL_CARD);
+        const bool hovered = BLI_rcti_isect_pt(&rect, hover_x, hover_y);
+
+        const float *fill;
+        if (active) {
+          fill = hovered ? COL_CARD_ACTIVE_HOVER : COL_CARD_ACTIVE;
+        }
+        else {
+          fill = hovered ? COL_CARD_HOVER : COL_CARD;
+        }
+
+        draw_rect_rounded(rect.xmin, rect.ymin, btn_w, BUTTON_H, 8.0f, fill);
+
+        if (hovered) {
+          draw_rect_rounded_border(rect.xmin, rect.ymin, btn_w, BUTTON_H, 8.0f, COL_ACCENT);
+        }
 
         /* Label centered vertically in button */
         const int text_y = rect.ymin + (BUTTON_H - MODE_FONT_SIZE) / 2;
@@ -370,19 +501,19 @@ static void draw_pipeline_scroll(const ARegion *region, float scroll_offset, con
 
 void launcher_main_region_draw(const bContext *C, ARegion *region)
 {
-  const SpaceBlendedLauncher *sl = static_cast<const SpaceBlendedLauncher *>(
-      CTX_wm_space_data(C));
+  SpaceBlendedLauncher *sl = static_cast<SpaceBlendedLauncher *>(CTX_wm_space_data(C));
   const Main *bmain = CTX_data_main(C);
 
   const float scroll = sl ? sl->scroll_offset : 0.0f;
+  const int mx = sl ? sl->mouse_x : -1;
+  const int my = sl ? sl->mouse_y : -1;
 
-  /* Set up 2D pixel-space ortho projection for this region. */
   wmOrtho2_region_pixelspace(region);
 
   /* Base background fill */
   draw_rect_filled(0, 0, region->winx, region->winy, COL_BASE);
 
-  draw_pipeline_scroll(region, scroll, bmain);
+  draw_pipeline_scroll(region, scroll, bmain, mx, my);
 }
 
 /** \} */
@@ -393,42 +524,11 @@ void launcher_main_region_draw(const bContext *C, ARegion *region)
 
 int launcher_mode_at_cursor(const ARegion *region, float scroll_offset, int cursor_x, int cursor_y)
 {
-  /* Recompute button geometry on demand using the same layout algorithm as draw_pipeline_scroll.
-   * This avoids a persistent process-global cache that would be overwritten by any launcher
-   * instance that drew last. BLF font metrics are safe to query outside of draw callbacks. */
-  const int win_w = region->winx;
-  const int win_h = region->winy;
-  const int content_w = MIN2(CONTENT_WIDTH, win_w - 48);
-  const int content_x = (win_w - content_w) / 2;
-
-  int pen_y = win_h - HEADING_TOP_PAD + int(scroll_offset);
-  pen_y -= HEADING_FONT_SIZE + 28;
-
-  const LauncherPipeline *groups[2] = {&g_creative, &g_post};
-  for (const LauncherPipeline *grp : groups) {
-    pen_y -= GROUP_GAP + GROUP_LABEL_FONT_SIZE + 6 + 18;
-
-    for (int si = 0; grp->sections[si].label != nullptr; si++) {
-      const LauncherSection &sec = grp->sections[si];
-      pen_y -= SECTION_LABEL_FONT_SIZE + SECTION_LABEL_GAP;
-
-      int bx = content_x;
-      for (int mi = 0; sec.modes[mi].label != nullptr; mi++) {
-        const LauncherMode &mode = sec.modes[mi];
-        const int btn_w = int(text_width(MODE_FONT_SIZE, mode.label)) + BUTTON_PAD_X * 2;
-
-        if (bx + btn_w > content_x + content_w && bx > content_x) {
-          pen_y -= BUTTON_H + BUTTON_GAP;
-          bx = content_x;
-        }
-
-        const rcti rect{bx, bx + btn_w, pen_y - BUTTON_H, pen_y};
-        if (BLI_rcti_isect_pt(&rect, cursor_x, cursor_y)) {
-          return mode.target_space;
-        }
-        bx += btn_w + BUTTON_GAP;
-      }
-      pen_y -= BUTTON_H + SECTION_GAP;
+  ButtonList bl;
+  compute_button_layout(region, scroll_offset, nullptr, &bl);
+  for (int i = 0; i < bl.count; i++) {
+    if (BLI_rcti_isect_pt(&bl.items[i].rect, cursor_x, cursor_y)) {
+      return bl.items[i].target_space;
     }
   }
   return SPACE_EMPTY;
@@ -483,9 +583,6 @@ static void LAUNCHER_OT_activate_mode(wmOperatorType *ot)
 
 /* --- LAUNCHER_OT_scroll --- */
 
-/** Maximum scroll in pixels before content bottom aligns with the window bottom.
- *  Computed from static layout constants; does not account for button-row wrapping
- *  (wrapping is rare given content_w >= ~400px on any usable window — TODO Phase 2). */
 static float launcher_max_scroll(const ARegion *region)
 {
   /* Section count: 5 Creative + 3 Post = 8. Group count: 2. */
@@ -617,10 +714,20 @@ static SpaceLink *launcher_create(const ScrArea * /*area*/, const Scene * /*scen
   SpaceBlendedLauncher *sl = MEM_new<SpaceBlendedLauncher>("init blended launcher");
   sl->spacetype = SPACE_BLENDED_LAUNCHER;
 
-  /* Single full-screen window region — no header, no sidebar. */
-  ARegion *region = BKE_area_region_new();
-  BLI_addtail(&sl->regionbase, region);
-  region->regiontype = RGN_TYPE_WINDOW;
+  /* Header region — draws the file management chrome (wordmark, New, Open, Recent). */
+  {
+    ARegion *region = BKE_area_region_new();
+    BLI_addtail(&sl->regionbase, region);
+    region->regiontype = RGN_TYPE_HEADER;
+    region->alignment = (U.uiflag & USER_HEADER_BOTTOM) ? RGN_ALIGN_BOTTOM : RGN_ALIGN_TOP;
+  }
+
+  /* Full-screen window region — pipeline scroll. */
+  {
+    ARegion *region = BKE_area_region_new();
+    BLI_addtail(&sl->regionbase, region);
+    region->regiontype = RGN_TYPE_WINDOW;
+  }
 
   return reinterpret_cast<SpaceLink *>(sl);
 }
@@ -634,6 +741,33 @@ static SpaceLink *launcher_duplicate(SpaceLink *sl)
   return reinterpret_cast<SpaceLink *>(
       MEM_dupalloc(reinterpret_cast<SpaceBlendedLauncher *>(sl)));
 }
+
+/* ---- Header region ---- */
+
+static void launcher_header_region_init(wmWindowManager * /*wm*/, ARegion *region)
+{
+  ED_region_header_init(region);
+}
+
+static void launcher_header_region_draw(const bContext *C, ARegion *region)
+{
+  ED_region_header(C, region);
+}
+
+static void launcher_header_region_listener(const wmRegionListenerParams *params)
+{
+  ARegion *region = params->region;
+  const wmNotifier *wmn = params->notifier;
+
+  switch (wmn->category) {
+    case NC_WM:
+    case NC_SCENE:
+      ED_region_tag_redraw(region);
+      break;
+  }
+}
+
+/* ---- Main region ---- */
 
 static void launcher_main_region_init(wmWindowManager *wm, ARegion *region)
 {
@@ -652,6 +786,32 @@ static void launcher_main_region_listener(const wmRegionListenerParams *params)
     case NC_WM:
       ED_region_tag_redraw(region);
       break;
+    case NC_WINDOW:
+      /* Mouse move — update hover state and redraw. */
+      if (wmn->action == NA_EDITED) {
+        ED_region_tag_redraw(region);
+      }
+      break;
+  }
+}
+
+/* Store the mouse position on every MOUSEMOVE event so draw_pipeline_scroll
+ * can highlight the button under the cursor without a persistent timer. */
+static void launcher_main_region_cursor(wmWindow *win, ScrArea *area, ARegion *region)
+{
+  /* Called by the region's cursor callback each frame the mouse is inside. */
+  SpaceBlendedLauncher *sl = static_cast<SpaceBlendedLauncher *>(area->spacedata.first);
+  if (!sl) {
+    return;
+  }
+
+  const int mx = win->eventstate->xy[0] - region->winrct.xmin;
+  const int my = win->eventstate->xy[1] - region->winrct.ymin;
+
+  if (sl->mouse_x != mx || sl->mouse_y != my) {
+    sl->mouse_x = mx;
+    sl->mouse_y = my;
+    ED_region_tag_redraw(region);
   }
 }
 
@@ -689,6 +849,17 @@ void ED_spacetype_blended_launcher()
   art->init = launcher_main_region_init;
   art->draw = launcher_main_region_draw;
   art->listener = launcher_main_region_listener;
+  art->cursor = launcher_main_region_cursor;
+  BLI_addhead(&st->regiontypes, art);
+
+  /* Header region — file management chrome via Python LAUNCHER_HT_header. */
+  art = MEM_new_zeroed<ARegionType>("spacetype blended launcher header");
+  art->regionid = RGN_TYPE_HEADER;
+  art->prefsizey = HEADERY;
+  art->keymapflag = ED_KEYMAP_UI | ED_KEYMAP_VIEW2D | ED_KEYMAP_HEADER;
+  art->listener = launcher_header_region_listener;
+  art->init = launcher_header_region_init;
+  art->draw = launcher_header_region_draw;
   BLI_addhead(&st->regiontypes, art);
 
   BKE_spacetype_register(std::move(st));
