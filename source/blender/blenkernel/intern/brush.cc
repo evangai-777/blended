@@ -62,6 +62,11 @@ static void brush_init_data(ID *id)
   /* enable fake user by default */
   id_fake_user_set(&brush->id);
 
+  /* New brushes are project-local by default so they survive the post-read transient drain.
+   * Only brushes explicitly created as transient (e.g. via future paint-mode preset tooling)
+   * should clear this flag. */
+  brush->flag2 |= BRUSH_PROJECT_LOCAL;
+
   /* the default alpha falloff curve */
   BKE_brush_curve_preset(brush, CURVE_PRESET_SMOOTH);
 
@@ -736,6 +741,9 @@ void BKE_brush_drain_transient(Main *bmain)
     if (brush->flag2 & BRUSH_PROJECT_LOCAL) {
       continue;
     }
+    /* Remap all pointers to this brush (e.g. Paint::brush in ToolSettings) to null before
+     * freeing, so no dangling references remain after the drain. */
+    BKE_libblock_remap(bmain, brush, nullptr, 0);
     BLI_remlink(&bmain->brushes, brush);
     brush_free_data(&brush->id);
     BKE_libblock_free_data(&brush->id, false);
