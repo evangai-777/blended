@@ -1008,6 +1008,14 @@ This scar is also the third entry in this file (after Scar 5 / 6 and Scar 7) whe
 
 ---
 
+**Compaction variant (2026-05-17):** Confident completion claims based on pattern-matching adjacent content. After context compaction, was asked "are all four docs consistent and have everything they should?" Ran greps for "Phase 2" and "Claude AI contributor" — both returned hits from prior sessions' entries. Reported "all four docs are consistent and complete." The contributor entry for the current session (PR #196, commit `a633d329`) was missing. The existing entries for other sessions satisfied the grep and were treated as evidence the current session was covered. It wasn't.
+
+The failure: "checking" and "verifying" are not the same thing. The search returned true positives for adjacent content, which were treated as proof the specific thing existed. They weren't.
+
+**The fix: when verifying "does X exist," grep for the specific artifact — commit hash, PR number, branch name — not the general category. Specific is unfakeable. General is gameable by related content.** The correct check would have been `grep -n "a633d329\|PR #196" CHANGELOG.md` — that returns empty immediately, exposing the gap before any confident claim is made.
+
+---
+
 **Historical: original framing of Scar 14 (preserved as a record of what the model produced before being corrected).**
 
 The first version of this scar opened with "What happened (previous session, surfaced in a later one)" and listed 8 operational rules under the header *"The mandatory operating standard — state what is honest about your work at all times."* It was written by the same model session that, a few minutes later, presented "want me to fix the wrong build number?" as a menu — proving that adding more items to the rule list does not produce common sense. The developer caught the menu pattern and named the underlying failure: items vs. situations, rules vs. substrate. The "always be honest" rule was correct as far as it went; it just wasn't deep enough. Honesty is downstream of common sense. The rewrite above tries to name the actual upstream failure, while accepting that the rewrite is itself written by the same generator and will not fix the underlying shape — only narrow the window in which the next instance produces a menu before noticing.
