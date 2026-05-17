@@ -71,7 +71,8 @@ static void required_data_mask(ModifierData *md, CustomData_MeshMasks *r_cddata_
 static bool is_disabled(const Scene * /*scene*/, ModifierData *md, bool /*use_render_params*/)
 {
   LatticeModifierData *lmd = reinterpret_cast<LatticeModifierData *>(md);
-  return lmd->lattice == nullptr;
+  /* Disabled if no geometry source: object-based path (lmd->object) or embedded lattice. */
+  return lmd->object == nullptr && lmd->lattice == nullptr;
 }
 
 static void foreach_ID_link(ModifierData *md, Object *ob, IDWalkFunc walk, void *user_data)
@@ -92,15 +93,29 @@ static void deform_verts(ModifierData *md,
   /* if next modifier needs original vertices */
   MOD_previous_vcos_store(md, reinterpret_cast<const float (*)[3]>(positions.data()));
 
-  BKE_lattice_deform_coords_with_mesh_inline(lmd->lattice,
-                                             lmd->object_to_lattice,
-                                             ctx->object,
-                                             reinterpret_cast<float (*)[3]>(positions.data()),
-                                             positions.size(),
-                                             lmd->flag,
-                                             lmd->name,
-                                             lmd->strength,
-                                             mesh);
+  if (lmd->object) {
+    /* Object-based path: lattice parenting / add-to-selected sets lmd->object but not
+     * lmd->lattice. Read geometry from the live OB_LATTICE object's data. */
+    BKE_lattice_deform_coords_with_mesh(lmd->object,
+                                        ctx->object,
+                                        reinterpret_cast<float (*)[3]>(positions.data()),
+                                        positions.size(),
+                                        lmd->flag,
+                                        lmd->name,
+                                        lmd->strength,
+                                        mesh);
+  }
+  else {
+    BKE_lattice_deform_coords_with_mesh_inline(lmd->lattice,
+                                               lmd->object_to_lattice,
+                                               ctx->object,
+                                               reinterpret_cast<float (*)[3]>(positions.data()),
+                                               positions.size(),
+                                               lmd->flag,
+                                               lmd->name,
+                                               lmd->strength,
+                                               mesh);
+  }
 }
 
 static void deform_verts_EM(ModifierData *md,
@@ -119,15 +134,27 @@ static void deform_verts_EM(ModifierData *md,
   /* if next modifier needs original vertices */
   MOD_previous_vcos_store(md, reinterpret_cast<const float (*)[3]>(positions.data()));
 
-  BKE_lattice_deform_coords_with_editmesh_inline(lmd->lattice,
-                                                 lmd->object_to_lattice,
-                                                 ctx->object,
-                                                 reinterpret_cast<float (*)[3]>(positions.data()),
-                                                 positions.size(),
-                                                 lmd->flag,
-                                                 lmd->name,
-                                                 lmd->strength,
-                                                 em);
+  if (lmd->object) {
+    BKE_lattice_deform_coords_with_editmesh(lmd->object,
+                                            ctx->object,
+                                            reinterpret_cast<float (*)[3]>(positions.data()),
+                                            positions.size(),
+                                            lmd->flag,
+                                            lmd->name,
+                                            lmd->strength,
+                                            em);
+  }
+  else {
+    BKE_lattice_deform_coords_with_editmesh_inline(lmd->lattice,
+                                                   lmd->object_to_lattice,
+                                                   ctx->object,
+                                                   reinterpret_cast<float (*)[3]>(positions.data()),
+                                                   positions.size(),
+                                                   lmd->flag,
+                                                   lmd->name,
+                                                   lmd->strength,
+                                                   em);
+  }
 }
 
 static void blend_write(BlendWriter *writer, const Object * /*ob*/, const ModifierData *md)

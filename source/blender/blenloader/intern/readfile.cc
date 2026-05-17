@@ -3984,10 +3984,16 @@ static void after_liblink_merged_bmain_process(Main *bmain, BlendFileReadReport 
    * nullifies sequencer references before this drain runs. */
   BKE_mask_drain_from_bmain(bmain);
 
-  /* Drain the Scar 2 bmain->lattices listbase. Lattice geometry now lives embedded in
-   * LatticeModifierData::lattice; the versioning pass (502.29) deep-copies Lattice data from
-   * OB_LATTICE objects into each modifier before this drain runs. */
-  BKE_lattice_drain_from_bmain(bmain);
+  /* Drain the Scar 2 bmain->lattices listbase only for pre-502.29 files. For those files, the
+   * versioning pass (502.29) has already converted OB_LATTICE→OB_EMPTY and deep-copied Lattice
+   * geometry into each LatticeModifierData, so ob->data is null before we free the blocks.
+   * For 502.29+ files, OB_LATTICE objects created at runtime (Add > Lattice) still hold live
+   * ob->data pointers into bmain->lattices — draining unconditionally would leave them dangling.
+   * The Scar 2 Category C leak (bmain->lattices accumulating across file loads) applies to
+   * post-502.29 files until OB_LATTICE is fully retired. */
+  if (!MAIN_VERSION_FILE_ATLEAST(bmain, 502, 29)) {
+    BKE_lattice_drain_from_bmain(bmain);
+  }
 }
 
 /** \} */
