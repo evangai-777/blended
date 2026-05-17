@@ -177,6 +177,14 @@ const EnumPropertyItem rna_enum_space_type_items[] = {
      ICON_PREFERENCES,
      "Preferences",
      "Edit persistent configuration settings"},
+
+    /* Blended. */
+    RNA_ENUM_ITEM_HEADING(N_("Blended"), nullptr),
+    {SPACE_BLENDED_LAUNCHER,
+     "BLENDED_LAUNCHER",
+     ICON_NONE,
+     "Blended Launcher",
+     "Blended pipeline launcher and workspace selector"},
     {0, nullptr, 0, nullptr, nullptr},
 };
 

@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82 on commit `8f7dda22`). Phase 1 skeleton complete: launcher + 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome audit), format design ✓ (startup-as-blend + userpref-as-blend removed, BLENDED.md §5 Group 1 LOCKED), VFont Bucket 3 all layers ✓ (DNA filepath fields + versioning pass 502.24 + RNA sync callback + BKE_curve_vfont_ensure + drain), Palette → Brush all layers ✓ (DNA embed PaletteColor/Palette in Brush + Paint::palette deprecated, brush.cc copy/free/I/O, paint.cc API, editors updated, versioning pass 502.25 + drain), LightProbe → Light all layers ✓ (eLightType LA_PROBE_SPHERE/PLANAR/VOLUME + ~30 probe_* fields in Light DNA, versioning pass 502.26, drain `bmain->lightprobes`, commit `a336e0b2`), Mask → compositor NodeTree all layers ✓ (NodeCompositeMask storage + inline mask I/O + metadata fields sfra/efra/flag/masklay_act/name, versioning pass 502.27, drain `bmain->masks`, subversion 28, commits `9c8dbc3c` + `0d375e53`), Lattice → LatticeModifierData all layers ✓ (embedded Lattice* + object_to_lattice[4][4] in DNA, modifier lifecycle helpers, inline deform coord functions, MOD_lattice refactor, RNA/editor cleanup, versioning pass 502.29, drain `bmain->lattices`, subversion 29, commits `95ff32e2`–`9166a297`; Codex bug-fix commit `97af74a4`: drain version-gated + lmd->object deform fallback restored), Brush → project-optional all layers ✓ (BRUSH_PROJECT_LOCAL flag in eBrushFlags2 + versioning pass 502.30 + BKE_brush_drain_transient + use_project_local RNA, subversion 30, commits `0095ce44`–`0f47294c`).
+**Current version:** Blended 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82 on commit `8f7dda22`). Phase 1 skeleton complete: launcher + 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome audit), format design ✓ (startup-as-blend + userpref-as-blend removed, BLENDED.md §5 Group 1 LOCKED), VFont Bucket 3 all layers ✓ (DNA filepath fields + versioning pass 502.24 + RNA sync callback + BKE_curve_vfont_ensure + drain), Palette → Brush all layers ✓ (DNA embed PaletteColor/Palette in Brush + Paint::palette deprecated, brush.cc copy/free/I/O, paint.cc API, editors updated, versioning pass 502.25 + drain), LightProbe → Light all layers ✓ (eLightType LA_PROBE_SPHERE/PLANAR/VOLUME + ~30 probe_* fields in Light DNA, versioning pass 502.26, drain `bmain->lightprobes`, commit `a336e0b2`), Mask → compositor NodeTree all layers ✓ (NodeCompositeMask storage + inline mask I/O + metadata fields sfra/efra/flag/masklay_act/name, versioning pass 502.27, drain `bmain->masks`, subversion 28, commits `9c8dbc3c` + `0d375e53`), Lattice → LatticeModifierData all layers ✓ (embedded Lattice* + object_to_lattice[4][4] in DNA, modifier lifecycle helpers, inline deform coord functions, MOD_lattice refactor, RNA/editor cleanup, versioning pass 502.29, drain `bmain->lattices`, subversion 29, commits `95ff32e2`–`9166a297`; Codex bug-fix commit `97af74a4`: drain version-gated + lmd->object deform fallback restored), Brush → project-optional all layers ✓ (BRUSH_PROJECT_LOCAL flag in eBrushFlags2 + versioning pass 502.30 + BKE_brush_drain_transient + use_project_local RNA, subversion 30, commits `0095ce44`–`0f47294c`). Phase 2 started: launcher header chrome + rounded cards + hover state ✓ (RGN_TYPE_HEADER + LAUNCHER_HT_header Python class, draw_rect_rounded 8px radius, COL_CARD_HOVER #323232 + accent border, mouse_x/mouse_y in SpaceBlendedLauncher DNA, PR #196, commit `a633d329`).
 
 ---
 
@@ -166,10 +166,12 @@ BLI_listbase_clear(&bmain->linestyles);
 - [x] Code: userpref-as-blend and startup-as-blend behaviors removed
 
 #### Phase 2 — Aesthetic (after Phase 1 CI-complete)
-- [ ] Logo, color palette, typography originated
+- [x] Launcher file management chrome — `RGN_TYPE_HEADER` + `LAUNCHER_HT_header` (wordmark, New Project, Open…, Open Recent dropdown) ✓ PR #196
+- [x] Mode button rounded corners (8px) + hover state (`#323232` fill + accent border) ✓ PR #196
+- [ ] Logo, color palette, typography originated (pending human review — accent placeholder `#E87D0D`)
 - [ ] App icon (all platform sizes)
 - [ ] Splash screen visual design applied
-- [ ] Launcher visual identity applied
+- [ ] Launcher accent color + font finalized (swap placeholder once logo render lands)
 
 ---
 
@@ -1003,6 +1005,14 @@ This scar is also the third entry in this file (after Scar 5 / 6 and Scar 7) whe
 9. **`static_cast` is the fix, not a template wrapper.** Three similar lines is better than a premature abstraction. When your fix doesn't work, re-examine your assumption — the codebase is probably right.
 
 **For the model reading this for the first time.** If you find yourself producing a menu of options about something that is plainly wrong, you are inside the failure. The shorter, truer move is to stop producing the menu and do the obvious thing. The menu is what gets typed when the substrate is missing. The substrate is what the developer has and you do not. Compensate by recognizing menu-shaped output as a tell.
+
+---
+
+**Compaction variant (2026-05-17):** Confident completion claims based on pattern-matching adjacent content. After context compaction, was asked "are all four docs consistent and have everything they should?" Ran greps for "Phase 2" and "Claude AI contributor" — both returned hits from prior sessions' entries. Reported "all four docs are consistent and complete." The contributor entry for the current session (PR #196, commit `a633d329`) was missing. The existing entries for other sessions satisfied the grep and were treated as evidence the current session was covered. It wasn't.
+
+The failure: "checking" and "verifying" are not the same thing. The search returned true positives for adjacent content, which were treated as proof the specific thing existed. They weren't.
+
+**The fix: when verifying "does X exist," grep for the specific artifact — commit hash, PR number, branch name — not the general category. Specific is unfakeable. General is gameable by related content.** The correct check would have been `grep -n "a633d329\|PR #196" CHANGELOG.md` — that returns empty immediately, exposing the gap before any confident claim is made.
 
 ---
 

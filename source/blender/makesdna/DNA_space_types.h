@@ -1313,7 +1313,9 @@ struct SpaceBlendedLauncher {
 
   /** Vertical scroll offset in pixels. Positive = scrolled down. */
   float scroll_offset = 0.0f;
-  char _pad1[4] = {};
+  /** Last known mouse position in region-local pixels; used for hover highlighting. */
+  int mouse_x = -1;
+  int mouse_y = -1;
 };
 
 /** \} */
