@@ -180,6 +180,39 @@ inline void BKE_mask_point_deselect_handles(MaskSplinePoint *p)
 
 Mask *BKE_mask_new(Main *bmain, const char *name);
 
+/* -------------------------------------------------------------------- */
+/** \name Node-owned mask (Blended 0.7.0 — CMP_NODE_MASK permanent home)
+ *
+ * Masks created by these functions are NOT registered in bmain->masks and are
+ * not first-class ID blocks.  They are owned exclusively by a compositor
+ * CMP_NODE_MASK node and serialised inline via per-node blend write/read
+ * callbacks rather than through the ID system.
+ * \{ */
+
+/** Allocate a new Mask for exclusive node ownership. Never adds to bmain. */
+Mask *BKE_mask_new_nodetree(const char *name);
+
+/** Deep-copy a node-owned Mask (all layers, splines, points, shapes). */
+Mask *BKE_mask_copy_nodetree(const Mask *mask);
+
+/** Free a node-owned Mask and all its sub-data. Never touches bmain. */
+void BKE_mask_free_nodetree(Mask *mask);
+
+/** Write all mask layers (and their sub-data) to \a writer.
+ * Used by CMP_NODE_MASK blend_write_storage_content callback. */
+void BKE_mask_write_layers(struct BlendWriter *writer, const Mask *mask);
+
+/** Read all mask layers (and their sub-data) into \a mask from \a reader.
+ * \a mask must already be allocated.  Called by blend_data_read_storage_content. */
+void BKE_mask_read_layers(struct BlendDataReader *reader, Mask *mask);
+
+/** Drain the Scar 2 bmain->masks non-indexed listbase after versioning has
+ * migrated all CMP_NODE_MASK nodes to per-node storage.
+ * Call once from the post-load hook in readfile.cc. */
+void BKE_mask_drain_from_bmain(struct Main *bmain);
+
+/** \} */
+
 void BKE_mask_coord_from_frame(float r_co[2], const float co[2], const float frame_size[2]);
 void BKE_mask_coord_from_movieclip(MovieClip *clip,
                                    MovieClipUser *user,

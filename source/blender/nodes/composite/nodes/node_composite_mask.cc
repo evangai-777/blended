@@ -6,6 +6,11 @@
 #include "BLI_string_utf8.h"
 
 #include "DNA_mask_types.h"
+#include "DNA_node_types.h"
+
+#include "BKE_mask.hh"
+
+#include "BLO_read_write.hh"
 
 #include "UI_interface.hh"
 #include "UI_interface_layout.hh"
@@ -16,6 +21,8 @@
 #include "node_composite_util.hh"
 
 namespace blender::nodes::node_composite_mask_cc {
+
+NODE_STORAGE_FUNCS(NodeCompositeMask)
 
 static const EnumPropertyItem size_source_items[] = {
     {0, "SCENE", 0, "Scene Size", ""},
@@ -33,10 +40,6 @@ static void node_declare(NodeDeclarationBuilder &b)
   b.use_custom_socket_order();
 
   b.add_output<decl::Float>("Mask"_ustr).structure_type(StructureType::Dynamic);
-
-  b.add_layout([](ui::Layout &layout, bContext *C, PointerRNA *ptr) {
-    template_id(&layout, C, ptr, "mask", "mask.new", nullptr, nullptr);
-  });
 
   b.add_input<decl::Menu>("Size Source"_ustr)
       .default_value(MenuValue(0))
@@ -83,7 +86,52 @@ static void node_label(const bNodeTree * /*ntree*/,
                        char *label,
                        int label_maxncpy)
 {
-  BLI_strncpy_utf8(label, node->id ? node->id->name + 2 : IFACE_("Mask"), label_maxncpy);
+  const NodeCompositeMask *data = static_cast<const NodeCompositeMask *>(node->storage);
+  const char *name = (data && data->mask) ? data->mask->id.name + 2 : IFACE_("Mask");
+  BLI_strncpy_utf8(label, name, label_maxncpy);
+}
+
+static void node_init(bNodeTree * /*ntree*/, bNode *node)
+{
+  NodeCompositeMask *data = MEM_new<NodeCompositeMask>(__func__);
+  data->mask = BKE_mask_new_nodetree("Mask");
+  node->storage = data;
+}
+
+static void node_free(bNode *node)
+{
+  NodeCompositeMask *data = static_cast<NodeCompositeMask *>(node->storage);
+  if (data) {
+    BKE_mask_free_nodetree(data->mask);
+    MEM_delete(data);
+  }
+}
+
+static void node_copy(bNodeTree * /*dest_ntree*/, bNode *dest_node, const bNode *src_node)
+{
+  const NodeCompositeMask *src = static_cast<const NodeCompositeMask *>(src_node->storage);
+  NodeCompositeMask *dst = MEM_new<NodeCompositeMask>(__func__);
+  dst->mask = BKE_mask_copy_nodetree(src ? src->mask : nullptr);
+  dest_node->storage = dst;
+}
+
+static void node_blend_write(const bNodeTree & /*ntree*/,
+                             const bNode &node,
+                             BlendWriter &writer)
+{
+  const NodeCompositeMask *data = static_cast<const NodeCompositeMask *>(node.storage);
+  if (data) {
+    BKE_mask_write_layers(&writer, data->mask);
+  }
+}
+
+static void node_blend_read(bNodeTree & /*ntree*/, bNode &node, BlendDataReader &reader)
+{
+  NodeCompositeMask *data = static_cast<NodeCompositeMask *>(node.storage);
+  if (data) {
+    data->mask = BKE_mask_new_nodetree("Mask");
+    BKE_mask_read_layers(&reader, data->mask);
+  }
 }
 
 using namespace blender::compositor;
@@ -180,7 +228,8 @@ class MaskOperation : public NodeOperation {
 
   Mask *get_mask()
   {
-    return reinterpret_cast<Mask *>(this->node().id);
+    const NodeCompositeMask *data = static_cast<const NodeCompositeMask *>(this->node().storage);
+    return data ? data->mask : nullptr;
   }
 };
 
@@ -195,12 +244,16 @@ static void node_register()
 
   cmp_node_type_base(&ntype, "CompositorNodeMask"_ustr, CMP_NODE_MASK);
   ntype.ui_name = "Mask";
-  ntype.ui_description = "Input mask from a mask data-block, created in the image editor";
+  ntype.ui_description = "Input mask, node-owned and embedded in the compositor node tree";
   ntype.enum_name_legacy = "MASK";
   ntype.nclass = NODE_CLASS_INPUT;
   ntype.declare = node_declare;
   ntype.labelfunc = node_label;
+  ntype.initfunc = node_init;
   ntype.get_compositor_operation = get_compositor_operation;
+  ntype.blend_write_storage_content = node_blend_write;
+  ntype.blend_data_read_storage_content = node_blend_read;
+  bke::node_type_storage(ntype, "NodeCompositeMask", node_free, node_copy);
 
   bke::node_register_type(ntype);
 }

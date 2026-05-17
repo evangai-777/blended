@@ -2460,6 +2460,15 @@ struct NodeCMPCombSepColor {
   uint8_t ycc_mode = 0;
 };
 
+/** Storage for CMP_NODE_MASK — Blended 0.7.0 Mask permanent home.
+ * The mask is node-owned: not in bmain->masks, not serialized as an ID block.
+ * Blend write/read callbacks serialize the mask layers inline. */
+struct NodeCompositeMask {
+  /* Runtime pointer to the node-owned Mask; rebuilt by blend_data_read_storage_content.
+   * NOT serialized as an ID-block pointer — written inline via blend_write_storage_content. */
+  struct Mask *mask = nullptr;
+};
+
 /** Defocus blur node. */
 struct NodeDefocus {
   DNA_DEFINE_CXX_METHODS(NodeDefocus)
