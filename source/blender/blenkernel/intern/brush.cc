@@ -730,6 +730,19 @@ bool BKE_brush_delete(Main *bmain, Brush *brush)
   return true;
 }
 
+void BKE_brush_drain_transient(Main *bmain)
+{
+  LISTBASE_FOREACH_MUTABLE(Brush *, brush, &bmain->brushes) {
+    if (brush->flag2 & BRUSH_PROJECT_LOCAL) {
+      continue;
+    }
+    BLI_remlink(&bmain->brushes, brush);
+    brush_free_data(&brush->id);
+    BKE_libblock_free_data(&brush->id, false);
+    MEM_delete(brush);
+  }
+}
+
 Brush *BKE_brush_duplicate(Main *bmain,
                            Brush *brush,
                            eDupli_ID_Flags /*dupflag*/,

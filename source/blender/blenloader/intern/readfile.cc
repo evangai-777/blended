@@ -97,6 +97,7 @@
 #include "BKE_report.hh"
 #include "BKE_scene.hh"
 #include "BKE_screen.hh"
+#include "BKE_brush.hh"
 #include "BKE_lattice.hh"
 #include "BKE_lightprobe.h"
 #include "BKE_mask.hh"
@@ -3994,6 +3995,13 @@ static void after_liblink_merged_bmain_process(Main *bmain, BlendFileReadReport 
   if (!MAIN_VERSION_FILE_ATLEAST(bmain, 502, 29)) {
     BKE_lattice_drain_from_bmain(bmain);
   }
+
+  /* Drain transient brushes from the Scar 2 bmain->brushes listbase. Brushes without
+   * BRUSH_PROJECT_LOCAL in flag2 are default/transient — paint modes recreate them on demand.
+   * Brushes with the flag are project-local user customizations and are preserved.
+   * For legacy files (pre-502.30), versioning pass 502.30 has set BRUSH_PROJECT_LOCAL on all
+   * existing brushes, so no brushes are drained from those files. */
+  BKE_brush_drain_transient(bmain);
 }
 
 /** \} */
