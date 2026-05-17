@@ -996,6 +996,122 @@ Mask *BKE_mask_new(Main *bmain, const char *name)
   return mask;
 }
 
+/* -------------------------------------------------------------------- */
+/** \name Node-owned mask helpers (Blended 0.7.0 — CMP_NODE_MASK permanent home)
+ * \{ */
+
+Mask *BKE_mask_new_nodetree(const char *name)
+{
+  Mask *mask = MEM_new<Mask>("Mask");
+  /* Deliberately NOT inserted into bmain->masks — node owns this mask exclusively. */
+  /* Set the two-letter type prefix so compositor cache keys are globally unique. */
+  *reinterpret_cast<short *>(mask->id.name) = ID_MSK;
+  STRNCPY_UTF8(mask->id.name + 2, (name && name[0]) ? name : "Mask");
+  mask->sfra = 1;
+  mask->efra = 100;
+  return mask;
+}
+
+Mask *BKE_mask_copy_nodetree(const Mask *mask)
+{
+  if (!mask) {
+    return nullptr;
+  }
+  Mask *copy = MEM_new<Mask>("Mask");
+  STRNCPY(copy->id.name, mask->id.name);
+  copy->sfra = mask->sfra;
+  copy->efra = mask->efra;
+  copy->flag = mask->flag;
+  copy->masklay_act = mask->masklay_act;
+  BKE_mask_layer_copy_list(&copy->masklayers, &mask->masklayers);
+  copy->masklay_tot = mask->masklay_tot;
+  return copy;
+}
+
+void BKE_mask_free_nodetree(Mask *mask)
+{
+  if (!mask) {
+    return;
+  }
+  BKE_mask_layer_free_list(&mask->masklayers);
+  MEM_delete(mask);
+}
+
+void BKE_mask_write_layers(BlendWriter *writer, const Mask *mask)
+{
+  if (!mask) {
+    return;
+  }
+  for (const MaskLayer &masklay : mask->masklayers) {
+    writer->write_struct(&masklay);
+    for (const MaskSpline &spline : masklay.splines) {
+      MaskSplinePoint *points_deform = spline.points_deform;
+      const_cast<MaskSpline &>(spline).points_deform = nullptr;
+      writer->write_struct(&spline);
+      writer->write_struct_array(spline.tot_point, spline.points);
+      const_cast<MaskSpline &>(spline).points_deform = points_deform;
+      for (int i = 0; i < spline.tot_point; i++) {
+        const MaskSplinePoint *point = &spline.points[i];
+        if (point->tot_uw) {
+          writer->write_struct_array(point->tot_uw, point->uw);
+        }
+      }
+    }
+    for (const MaskLayerShape &masklay_shape : masklay.splines_shapes) {
+      writer->write_struct(&masklay_shape);
+      writer->write_float_array(masklay_shape.tot_vert *
+                                    (sizeof(MaskLayerShapeElem) / sizeof(float)),
+                                masklay_shape.data);
+    }
+  }
+}
+
+void BKE_mask_read_layers(BlendDataReader *reader, Mask *mask)
+{
+  BLO_read_struct_list(reader, MaskLayer, &mask->masklayers);
+  for (MaskLayer &masklay : mask->masklayers) {
+    MaskSplinePoint *act_point_search = nullptr;
+    BLO_read_struct_list(reader, MaskSpline, &masklay.splines);
+    for (MaskSpline &spline : masklay.splines) {
+      MaskSplinePoint *points_old = spline.points;
+      BLO_read_struct_array(reader, MaskSplinePoint, spline.tot_point, &spline.points);
+      for (int i = 0; i < spline.tot_point; i++) {
+        MaskSplinePoint *point = &spline.points[i];
+        if (point->tot_uw) {
+          BLO_read_struct_array(reader, MaskSplinePointUW, point->tot_uw, &point->uw);
+        }
+      }
+      if ((act_point_search == nullptr) && (masklay.act_point >= points_old) &&
+          (masklay.act_point < points_old + spline.tot_point))
+      {
+        act_point_search = &spline.points[masklay.act_point - points_old];
+      }
+    }
+    BLO_read_struct_list(reader, MaskLayerShape, &masklay.splines_shapes);
+    for (MaskLayerShape &masklay_shape : masklay.splines_shapes) {
+      BLO_read_float_array(reader,
+                           masklay_shape.tot_vert * (sizeof(MaskLayerShapeElem) / sizeof(float)),
+                           &masklay_shape.data);
+    }
+    BLO_read_struct(reader, MaskSpline, &masklay.act_spline);
+    masklay.act_point = act_point_search;
+  }
+  mask_runtime_reset(mask);
+}
+
+void BKE_mask_drain_from_bmain(Main *bmain)
+{
+  LISTBASE_FOREACH_MUTABLE (Mask *, mask, &bmain->masks) {
+    BLI_remlink(&bmain->masks, mask);
+    BKE_mask_layer_free_list(&mask->masklayers);  /* type-specific free */
+    BKE_libblock_free_data(&mask->id, false);     /* animdata, ID props, runtime */
+    MEM_delete(mask);
+  }
+  BLI_listbase_clear(&bmain->masks);
+}
+
+/** \} */
+
 void BKE_mask_point_free(MaskSplinePoint *point)
 {
   if (point->uw) {

@@ -8,6 +8,8 @@
 
 #define DNA_DEPRECATED_ALLOW
 
+#include "MEM_guardedalloc.h"
+
 #include "NOD_geometry_nodes_srna.hh"
 
 #include "DNA_ID.h"
@@ -15,6 +17,8 @@
 #include "DNA_curve_types.h"
 #include "DNA_light_types.h"
 #include "DNA_lightprobe_types.h"
+#include "DNA_mask_types.h"
+#include "DNA_sequence_types.h"
 #include "DNA_vfont_types.h"
 #include "DNA_modifier_types.h"
 #include "DNA_node_tree_interface_types.h"
@@ -35,6 +39,7 @@
 #include "BKE_lib_id.hh"
 #include "BKE_light.h"
 #include "BKE_lightprobe.h"
+#include "BKE_mask.hh"
 #include "BKE_main.hh"
 #include "BKE_mesh_legacy_convert.hh"
 #include "BKE_node.hh"
@@ -635,6 +640,61 @@ void blo_do_versions_520(FileData * /*fd*/, Library * /*lib*/, Main *bmain)
       ob->type = OB_LAMP;
       ob->data = la;
       id_us_plus(&la->id);
+    }
+  }
+
+  if (!MAIN_VERSION_FILE_ATLEAST(bmain, 502, 27)) {
+    /* Bucket 3 Mask permanent home (Blended 0.7.0): CMP_NODE_MASK nodes used to reference a
+     * Mask ID from bmain->masks via node->id.  Migrate the mask data into per-node storage
+     * (NodeCompositeMask) so that masks are owned by the compositor NodeTree, not bmain.
+     * Sequencer strip->mask and StripModifierData::mask_id references are nullified
+     * (Category A data loss: VSE mask input is rare; data cannot be safely forwarded). */
+    FOREACH_NODETREE_BEGIN (bmain, ntree, id_owner) {
+      if (ntree->type != NTREE_COMPOSIT) {
+        continue;
+      }
+      for (bNode &node : ntree->nodes) {
+        if (node.type_legacy != CMP_NODE_MASK) {
+          continue;
+        }
+        if (!node.id) {
+          /* Already migrated or never assigned — ensure storage exists. */
+          if (!node.storage) {
+            NodeCompositeMask *data = MEM_new<NodeCompositeMask>(__func__);
+            data->mask = BKE_mask_new_nodetree("Mask");
+            node.storage = data;
+          }
+          continue;
+        }
+        const Mask *src_mask = reinterpret_cast<const Mask *>(node.id);
+        NodeCompositeMask *data = MEM_new<NodeCompositeMask>(__func__);
+        data->mask = BKE_mask_copy_nodetree(src_mask);
+        /* Populate metadata from the migrated mask so the struct is fully initialised. */
+        data->sfra = src_mask->sfra;
+        data->efra = src_mask->efra;
+        data->flag = src_mask->flag;
+        data->masklay_act = src_mask->masklay_act;
+        STRNCPY(data->name, src_mask->id.name + 2);
+        node.storage = data;
+        /* Release the ID reference; bmain->masks drain in readfile.cc will free it. */
+        id_us_min(node.id);
+        node.id = nullptr;
+      }
+    }
+    FOREACH_NODETREE_END;
+
+    /* Null sequencer mask references — their Mask blocks will be drained from bmain->masks. */
+    LISTBASE_FOREACH (Scene *, scene, &bmain->scenes) {
+      if (!scene->ed) {
+        continue;
+      }
+      seq::foreach_strip(&scene->ed->seqbase, [](Strip *strip) -> bool {
+        strip->mask = nullptr;
+        LISTBASE_FOREACH (StripModifierData *, mod, &strip->modifiers) {
+          mod->mask_id = nullptr;
+        }
+        return true;
+      });
     }
   }
 

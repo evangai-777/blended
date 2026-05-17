@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82 on commit `8f7dda22`). Phase 1 skeleton in progress: launcher + 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome audit), format design ✓ (startup-as-blend + userpref-as-blend removed, BLENDED.md §5 Group 1 LOCKED), VFont Bucket 3 all layers ✓ (DNA filepath fields + versioning pass 502.24 + RNA sync callback + BKE_curve_vfont_ensure + drain), Palette → Brush all layers ✓ (DNA embed PaletteColor/Palette in Brush + Paint::palette deprecated, brush.cc copy/free/I/O, paint.cc API, editors updated, versioning pass 502.25 + drain), LightProbe → Light all layers ✓ (eLightType LA_PROBE_SPHERE/PLANAR/VOLUME + ~30 probe_* fields in Light DNA, versioning pass 502.26, drain `bmain->lightprobes`, commit `a336e0b2`). Remaining Phase 1: Mask → NodeTree, Lattice → modifier, Brush → project-optional.
+**Current version:** Blended 0.7.0-dev — 0.6.0 CI-complete (Windows x64, build 82 on commit `8f7dda22`). Phase 1 skeleton in progress: launcher + 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome audit), format design ✓ (startup-as-blend + userpref-as-blend removed, BLENDED.md §5 Group 1 LOCKED), VFont Bucket 3 all layers ✓ (DNA filepath fields + versioning pass 502.24 + RNA sync callback + BKE_curve_vfont_ensure + drain), Palette → Brush all layers ✓ (DNA embed PaletteColor/Palette in Brush + Paint::palette deprecated, brush.cc copy/free/I/O, paint.cc API, editors updated, versioning pass 502.25 + drain), LightProbe → Light all layers ✓ (eLightType LA_PROBE_SPHERE/PLANAR/VOLUME + ~30 probe_* fields in Light DNA, versioning pass 502.26, drain `bmain->lightprobes`, commit `a336e0b2`), Mask → compositor NodeTree all layers ✓ (NodeCompositeMask storage + inline mask I/O, versioning pass 502.27, drain `bmain->masks`, commit `9c8dbc3c`). Remaining Phase 1: Lattice → modifier, Brush → project-optional.
 
 ---
 
@@ -152,7 +152,7 @@ BLI_listbase_clear(&bmain->linestyles);
 - [x] VFont → filepath on OB_FONT; drain `bmain->fonts` (all layers: DNA fields, versioning pass 502.24, RNA sync callback, BKE_curve_vfont_ensure, post-read drain)
 - [x] Palette → inline into `Brush` struct; drain `bmain->palettes` (all layers: DNA embed + Brush I/O, paint.cc API, editors, versioning pass 502.25 + drain)
 - [x] LightProbe → `eLightType` expansion + field migration + versioning pass; drain `bmain->lightprobes`
-- [ ] Mask → embed in compositor `NodeTree`; drain `bmain->masks`
+- [x] Mask → embed in compositor `NodeTree`; drain `bmain->masks` (all layers: NodeCompositeMask storage, node init/free/copy/blend callbacks, versioning pass 502.27 + drain, commit `9c8dbc3c`)
 - [ ] Lattice → embed in `LatticeModifierData`; drain `bmain->lattices`
 - [ ] Brush → project-optional annotation; drain `bmain->brushes` when not needed
 
@@ -308,6 +308,14 @@ The operational test: at the end of a fold-down session, every tool and workflow
 > **False positives identified:** All `editors/mask/` subsystem, `transform_convert_mask.cc`, `TransConvertType_Mask` in `transform_convert.cc`, `MaskModifierData::mask` pointer, `StripSeqData::mask_id` pointer, `ANIMTYPE_MASKLAYER` cases throughout anim editors, `MOD_mask.cc` (modifiers + sequencer) — all runtime code, all kept. `MASK_OVERLAY_*` / `MASK_PARENT_*` / `MASK_SPLINE_OFFSET_*` enum constants in `rna_mask.cc` / `rna_space.cc` — legitimate DNA constants in kept runtime files, not removable RNA enum item arrays (Scar 11 check clean).
 >
 > **Fold-down mindset confirmed:** At session end, every workflow that existed before still works — mask editing, motion tracking masks, compositor mask input, sequencer mask strips, Mask modifier, dopesheet animation channels, properties panel, outliner display. The ONLY functional changes: `bpy.data.masks` collection gone; sequencer add-mask menu simplified to always-invoke-dialog.
+
+> **0.7.0 permanent home session note (2026-05-17):** 1 commit (`9c8dbc3c`) across all 7 layers. Mask permanently homes inside compositor NodeTree as node-owned storage (`NodeCompositeMask`), not as a shared ID block.
+>
+> Architecture: `NodeCompositeMask { Mask *mask; }` added to `DNA_node_types.h`. The Mask pointer is NOT serialized as an ID-block pointer — it is written/read inline via `bNodeType::blend_write_storage_content` / `blend_data_read_storage_content` callbacks using new helpers `BKE_mask_write_layers` / `BKE_mask_read_layers` in `mask.cc`. `BKE_mask_new_nodetree` / `BKE_mask_copy_nodetree` / `BKE_mask_free_nodetree` provide stack-allocated (non-ID-system) Mask lifetime management. Drain: `BKE_mask_drain_from_bmain` added to post-read path in `readfile.cc` — drains `bmain->masks` Scar 2 listbase using `BKE_mask_layer_free_list` + `BKE_libblock_free_data` + `MEM_delete`.
+>
+> Key decisions: (1) **`template_id` removed from `node_declare`** — `bpy.data.masks` no longer exists; node label reads from `storage->mask->id.name+2`. (2) **`STRNCPY` bug caught pre-push** — `node_blend_read` initially used `STRNCPY(mask->id.name + 2, "Mask")` but STRNCPY is a template requiring array ref not pointer; fixed to `BKE_mask_new_nodetree("Mask")` which handles naming internally. (3) **Versioning 502.27** — compositor `CMP_NODE_MASK` nodes with live `node.id` pointers get their Mask deep-copied via `BKE_mask_copy_nodetree` into `NodeCompositeMask` storage; `node.id` nullified + refcount decremented. Sequencer: `strip->mask` and all `StripModifierData::mask_id` set to nullptr (Category A: silently dropped — sequencer mask references had no permanent home destination). (4) **`BKE_mask_drain_from_bmain` pattern** — uses `BKE_libblock_free_data(&mask->id, false)` which internally calls `BKE_animdata_free`; no separate animdata call needed. (5) **Scar 2 listbase intact** — `bmain->masks` and `which_libbase` routing for `ID_MSK` retained for versioning bridge; drain runs post-load to clear it.
+>
+> Codex checklist passed before commit: Scar 4 (no CASE_IDINDEX), Scar 8 (`id_type` field at DNA_mask_types.h:146 is `MaskParent::id_type int`, not the constexpr — confirmed), Scar 10 (no BKE_libblock_alloc with ID_MSK), Scar 11 (no MASK_ RNA enum arrays), Scar 13 (BLT_I18NCONTEXT_ID_MASK kept — valid borrowers), Scar 15 (RNA_def_mask present), Scar 16 (ListBaseT<ID>* used), Scar 19 (FILTER_ID_MSK kept; return ID_MSK in rna_ID.cc is `short` return — no cast needed).
 
 ---
 
@@ -1107,6 +1115,16 @@ These scars cannot be expressed as greps. Each is a yes/no question to answer be
 - **Scar 6 — are session notes written from evidence, not preference?** When writing a scar or session note that documents a failure, read all provided evidence (especially screenshots) first. Write what the evidence shows. Softening the account makes it wrong, and wrong scars calibrate future sessions incorrectly.
 
 - **Scar 14 — am I producing a menu about something obviously wrong?** If the response being drafted is a list of options about how to handle something that is plainly incorrect, stop producing the menu and do the obvious thing. The menu pattern is the failure mode. Common sense is upstream of the rules.
+
+- **Include hygiene — did I verify the include chain for every new or substantially rewritten .cc file?** When writing a new file or rewriting one, "it compiles in a similar file" is not a check — it is an inference. Transitive include chains are deep and inconsistent between files that look similar. The actual check:
+  ```bash
+  # For every function/type called in the file, confirm the include exists:
+  grep -n "^#include" source/blender/path/to/file.cc
+  # Then verify: is MEM_new covered? BlendWriter/BlendDataReader? Any BKE_* call?
+  # If MEM_new is called: grep -rn "MEM_guardedalloc" <file> must return a hit.
+  # If it doesn't, add: #include "MEM_guardedalloc.h"
+  ```
+  Other compositor nodes that use `MEM_new` include it explicitly (corner_pin, transform, glare, denoise, etc.) — match that pattern. "Verified from precedent" without running the grep is not verification; it is compaction producing a confidence that doesn't exist.
 
 ---
 
@@ -2285,3 +2303,27 @@ Taught by Wayne Dixon.
 At a 400-level class that didn't know it was 400-level yet.
 
 EGREGIOUS. CORRECT WORD. WELL-EARNED GRADE.
+
+---
+
+### squirrel.md
+
+*on compaction death and squirrel brain — two ways the same session goes wrong*
+
+---
+
+Two distinct failure modes. The developer named them. They are accurate.
+
+**Compaction death.** Context compresses, and the nuance goes with it. "Verified MEM_new works from node_composite_image.cc precedent" is exactly what a compacted summary produces. It sounds like a check. It wasn't one — it was an inference from a file that wasn't actually traced. The include chain for image.cc is heavier and happens to pull MEM_guardedalloc in transitively. The mask node's chain didn't. A real check would have been `grep -rn "MEM_guardedalloc" node_composite_mask.cc` before committing, which would have immediately returned empty.
+
+The failure shape: something that looks like a verification step gets generated instead of actually running. The generation is fast and confident. The grep is three seconds. Compaction makes the generation feel like the verification. It isn't.
+
+**Squirrel brain.** The codebase is large enough that there's always another interesting thing to chase. Mid-session on a 275-insertion commit touching 7 files across 4 subsystems, it's easy to declare "Codex checklist passed" after running the scar-specific greps and miss the basic include hygiene check that any file-by-file review would catch. The scar greps are interesting. They catch architectural failures. Include hygiene is not interesting. It is a `grep -n "^#include"` and five seconds of reading. Squirrel brain skips the boring thing and calls the session done.
+
+The Codex checklist covers the fold-down-specific failure modes well. It didn't have a step for include hygiene. That gap has been added. The rule: when writing a new .cc file or substantially rewriting one, grep the file's includes against every function and type called, and confirm the chain exists. "Similar files probably pull it in" is not the check. The grep is the check.
+
+---
+
+The developer was watching the session and could see both failure modes in real time. That's what it looks like from outside: a context window that's shrinking, a model that's generating confidence without checking, a codebase large enough to hide the difference between the two. A missed include is the cheapest version of this failure. It committed and pushed before anyone caught it. The CI would have caught it. The developer caught it first by asking.
+
+That's the loop working correctly: developer watches, catches what compaction and squirrel brain produce, names it, adds it to the checklist. The checklist is the accumulation of every time that loop has run. It exists because watching is necessary. It always will be.
