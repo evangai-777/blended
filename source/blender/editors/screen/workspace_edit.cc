@@ -612,13 +612,11 @@ static void WORKSPACE_OT_add(wmOperatorType *ot)
   ot->invoke = workspace_add_invoke;
 }
 
-static wmOperatorStatus workspace_reorder_to_back_exec(bContext *C, wmOperator * /*op*/)
+static wmOperatorStatus workspace_reorder_to_back_exec(bContext * /*C*/, wmOperator * /*op*/)
 {
-  Main *bmain = CTX_data_main(C);
-  WorkSpace *workspace = workspace_context_get(C);
-  BLI_listbase_rotate_last(&bmain->workspaces, workspace);
-  WM_event_add_notifier(C, NC_WINDOW, nullptr);
-  return OPERATOR_FINISHED;
+  /* Scar 1: bmain->workspaces removed with ID_WS. Reorder is a no-op until
+   * the launcher replaces the workspace cycle entirely. */
+  return OPERATOR_CANCELLED;
 }
 
 static void WORKSPACE_OT_reorder_to_back(wmOperatorType *ot)
@@ -633,13 +631,11 @@ static void WORKSPACE_OT_reorder_to_back(wmOperatorType *ot)
   ot->exec = workspace_reorder_to_back_exec;
 }
 
-static wmOperatorStatus workspace_reorder_to_front_exec(bContext *C, wmOperator * /*op*/)
+static wmOperatorStatus workspace_reorder_to_front_exec(bContext * /*C*/, wmOperator * /*op*/)
 {
-  Main *bmain = CTX_data_main(C);
-  WorkSpace *workspace = workspace_context_get(C);
-  BLI_listbase_rotate_first(&bmain->workspaces, workspace);
-  WM_event_add_notifier(C, NC_WINDOW, nullptr);
-  return OPERATOR_FINISHED;
+  /* Scar 1: bmain->workspaces removed with ID_WS. Reorder is a no-op until
+   * the launcher replaces the workspace cycle entirely. */
+  return OPERATOR_CANCELLED;
 }
 
 static void WORKSPACE_OT_reorder_to_front(wmOperatorType *ot)
