@@ -413,11 +413,14 @@ void BKE_vfont_drain_from_bmain(Main *bmain)
   }
 
   /* Free every VFont in the Scar 2 non-indexed listbase. */
-  LISTBASE_FOREACH_MUTABLE(VFont *, vfont, &bmain->fonts) {
+  VFont *vfont = static_cast<VFont *>(bmain->fonts.first);
+  while (vfont) {
+    VFont *next = static_cast<VFont *>(vfont->id.next);
     BLI_remlink(&bmain->fonts, vfont);
     vfont_free_data(&vfont->id);
     BKE_libblock_free_data(&vfont->id, false);
     MEM_delete(vfont);
+    vfont = next;
   }
 }
 

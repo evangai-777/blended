@@ -1260,11 +1260,14 @@ bool BKE_palette_is_empty(const Palette *palette)
 
 void BKE_palette_drain_from_bmain(Main *bmain)
 {
-  LISTBASE_FOREACH_MUTABLE(Palette *, palette, &bmain->palettes) {
+  Palette *palette = static_cast<Palette *>(bmain->palettes.first);
+  while (palette) {
+    Palette *next = static_cast<Palette *>(palette->id.next);
     BLI_remlink(&bmain->palettes, palette);
     BLI_freelistN(&palette->colors);
     BKE_libblock_free_data(&palette->id, false);
     MEM_delete(palette);
+    palette = next;
   }
 }
 

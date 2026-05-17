@@ -98,10 +98,13 @@ void BKE_lightprobe_type_apply_to_light(Light *la, int probe_type)
 
 void BKE_lightprobe_drain_from_bmain(Main *bmain)
 {
-  LISTBASE_FOREACH_MUTABLE(LightProbe *, probe, &bmain->lightprobes) {
+  LightProbe *probe = static_cast<LightProbe *>(bmain->lightprobes.first);
+  while (probe) {
+    LightProbe *next = static_cast<LightProbe *>(probe->id.next);
     BLI_remlink(&bmain->lightprobes, probe);
     BKE_libblock_free_data(&probe->id, false);
     MEM_delete(probe);
+    probe = next;
   }
 }
 

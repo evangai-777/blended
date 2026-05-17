@@ -1101,11 +1101,14 @@ void BKE_mask_read_layers(BlendDataReader *reader, Mask *mask)
 
 void BKE_mask_drain_from_bmain(Main *bmain)
 {
-  LISTBASE_FOREACH_MUTABLE (Mask *, mask, &bmain->masks) {
+  Mask *mask = static_cast<Mask *>(bmain->masks.first);
+  while (mask) {
+    Mask *next = static_cast<Mask *>(mask->id.next);
     BLI_remlink(&bmain->masks, mask);
-    BKE_mask_layer_free_list(&mask->masklayers);  /* type-specific free */
-    BKE_libblock_free_data(&mask->id, false);     /* animdata, ID props, runtime */
+    BKE_mask_layer_free_list(&mask->masklayers);
+    BKE_libblock_free_data(&mask->id, false);
     MEM_delete(mask);
+    mask = next;
   }
   BLI_listbase_clear(&bmain->masks);
 }

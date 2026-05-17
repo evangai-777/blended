@@ -765,7 +765,9 @@ void BKE_lattice_read_modifier(BlendDataReader *reader, Lattice *lt)
 
 void BKE_lattice_drain_from_bmain(Main *bmain)
 {
-  LISTBASE_FOREACH_MUTABLE(Lattice *, lt, &bmain->lattices) {
+  Lattice *lt = static_cast<Lattice *>(bmain->lattices.first);
+  while (lt) {
+    Lattice *next = static_cast<Lattice *>(lt->id.next);
     BLI_remlink(&bmain->lattices, lt);
     BKE_lattice_batch_cache_free(lt);
     BLI_freelistN(&lt->vertex_group_names);
@@ -775,6 +777,7 @@ void BKE_lattice_drain_from_bmain(Main *bmain)
     }
     BKE_libblock_free_data(&lt->id, false);
     MEM_delete(lt);
+    lt = next;
   }
 }
 
