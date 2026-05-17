@@ -737,17 +737,19 @@ bool BKE_brush_delete(Main *bmain, Brush *brush)
 
 void BKE_brush_drain_transient(Main *bmain)
 {
-  LISTBASE_FOREACH_MUTABLE(Brush *, brush, &bmain->brushes) {
-    if (brush->flag2 & BRUSH_PROJECT_LOCAL) {
-      continue;
+  Brush *brush = static_cast<Brush *>(bmain->brushes.first);
+  while (brush) {
+    Brush *next = static_cast<Brush *>(brush->id.next);
+    if (!(brush->flag2 & BRUSH_PROJECT_LOCAL)) {
+      /* Remap all pointers to this brush (e.g. Paint::brush in ToolSettings) to null before
+       * freeing, so no dangling references remain after the drain. */
+      BKE_libblock_remap(bmain, brush, nullptr, 0);
+      BLI_remlink(&bmain->brushes, brush);
+      brush_free_data(&brush->id);
+      BKE_libblock_free_data(&brush->id, false);
+      MEM_delete(brush);
     }
-    /* Remap all pointers to this brush (e.g. Paint::brush in ToolSettings) to null before
-     * freeing, so no dangling references remain after the drain. */
-    BKE_libblock_remap(bmain, brush, nullptr, 0);
-    BLI_remlink(&bmain->brushes, brush);
-    brush_free_data(&brush->id);
-    BKE_libblock_free_data(&brush->id, false);
-    MEM_delete(brush);
+    brush = next;
   }
 }
 
