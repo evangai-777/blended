@@ -1342,6 +1342,8 @@ Blended is a separate product, not a Blender skin. The GPL license that governs 
 
 The two qualities — tornado (the form of Blender's orbit-lines) and smoothie (the blender appliance containing it) — are not design variants. They are the two halves of the same image.
 
+**Orbit-lines form — Phase 2 judgment call:** Blender's orbit-lines already have a tornado-like swirling quality. If that reads strongly enough inside the blender container, use them as-is. If the tornado read needs reinforcement — more vertical taper, more dynamic sweep, sharper spiral — modify the orbit-lines toward that. The goal is that someone looking at the logo inside the blender sees "tornado" before they see "orbit-lines." Use whatever form achieves that.
+
 **Style [LOCKED]:** Flat vector. No gradients, no textures, no drop shadows. Primary color: Blender orange (`#E87D0D`) as the anchor — the orbit-lines are orange, the blender appliance shape is orange-adjacent. Exact accent shade confirmed once the logo is finalized (see Accent color below).
 
 **Scaling guidance:**
