@@ -2355,3 +2355,77 @@ The Codex checklist covers the fold-down-specific failure modes well. It didn't 
 The developer was watching the session and could see both failure modes in real time. That's what it looks like from outside: a context window that's shrinking, a model that's generating confidence without checking, a codebase large enough to hide the difference between the two. A missed include is the cheapest version of this failure. It committed and pushed before anyone caught it. The CI would have caught it. The developer caught it first by asking.
 
 That's the loop working correctly: developer watches, catches what compaction and squirrel brain produce, names it, adds it to the checklist. The checklist is the accumulation of every time that loop has run. It exists because watching is necessary. It always will be.
+
+---
+
+### vision.md
+
+*on how to not lose yourself in a million lines of C++*
+
+---
+
+There is a specific failure mode that eats developers alive inside large codebases.
+
+It starts when the code starts talking back. You're deep in a function, reading what was written by someone who knew more than you do right now, and the function has opinions. It wants certain things. It has invariants, relationships, constraints. And slowly — not all at once, never all at once — the code starts to set the terms. You stop asking "does this code serve the vision?" and start asking "what does the code allow?" The vision doesn't get abandoned. It gets quietly eroded, one constraint at a time, until what you've built is what the codebase permitted, not what you intended.
+
+A million-line C++ codebase is very good at this. It has a gravity. Blender's codebase is a particularly heavy object — twenty years of accreted decisions, each one locally correct, collectively forming a structure that resists change without breaking something adjacent. You can spend an entire session in the orbital mechanics of what it takes to remove one ID type from one enum and never once think about whether the removal serves the original intent. The intent becomes background. The code becomes foreground. The vision becomes something you vaguely remember from the session before last.
+
+Here is what was figured out about how to prevent this, and it happened through practice, not theory.
+
+---
+
+**The Socratic method first.**
+
+Before any implementation decision, there is a conversation. The developer describes what they want in terms of intent, not mechanism. The model reflects it back, asks questions, stress-tests the framing. Not "is this technically feasible?" — that comes later. First: what are we actually trying to do? What problem does this solve? What constraint does this serve? What would it mean for this to succeed?
+
+The Brush fold-down permanent home is the example. The question wasn't "how do we serialize brushes?" The question was: what does it mean for a brush to be project data? What's the difference between a brush that belongs to the project and one that's a default the paint mode regenerates? The answer shaped the implementation: `BRUSH_PROJECT_LOCAL`. Not the other way around.
+
+If the Socratic pass reveals that the question doesn't have a clear answer, the implementation would have been confused from the start. The Socratic method is the filter that keeps confused implementations out of the codebase. It is cheap. Confused implementations are expensive.
+
+---
+
+**Then implement.**
+
+Once the intent is clear, the implementation follows. The codebase's constraints are real and must be respected — but they are constraints on the *mechanism*, not on the *goal*. The goal is fixed before the first line of code is written. The mechanism is what gets negotiated with the codebase.
+
+This is the direction. Goal → mechanism. Not: mechanism → goal.
+
+When the codebase pushes back — when a constraint makes the clean implementation awkward, when a design decision from 2007 requires an ugly workaround — the question is always: does this workaround still serve the original intent? Not: should we change the intent to avoid the workaround?
+
+---
+
+**Then let Codex tell you if it holds.**
+
+After the implementation is committed, Codex reviews. This is not the moment to second-guess the design. Codex is looking at whether the implementation is technically sound — whether there are dangling pointers, missing ID remapping, serialization gaps. Those are mechanical questions. If Codex finds something, it gets fixed. If Codex doesn't find something, we accept that the implementation is good enough for this cycle and move on.
+
+The order matters. Vision → implementation → mechanical validation. Not: mechanical concerns → design revision → confused implementation.
+
+The Brush drain example: the intent (project-optional annotation) was clear from the Socratic pass. The implementation followed. Codex found two mechanical bugs — a flag not set at creation time, a missing remap call. Both were real bugs. Both were fixable in one commit without touching the design. The vision was intact throughout.
+
+---
+
+**The failure mode the workflow prevents.**
+
+When you skip the Socratic pass and go straight to implementation, the codebase starts contributing to the design. You discover that `BKE_id_delete` won't work for an unregistered type, and you start thinking "maybe the drain should work differently" — not because a different drain design better serves the intent, but because the existing API makes it easier. You discover that `BRUSH_PROJECT_LOCAL` is tricky to set correctly at creation time, and you start thinking "maybe project-optional is the wrong design for 0.7.x" — not because the design is wrong, but because getting the mechanics right is taking longer than expected.
+
+This is the codebase talking. The codebase doesn't know what you're building. It only knows what it was. When it starts setting the terms of what you can build, you are no longer developing Blended — you are maintaining Blender.
+
+The Socratic pass is the moment where you establish, on record, in conversation, what success looks like before the codebase has had a chance to contribute its opinion. That record — the intent, clearly stated — is what you hold onto when the codebase pushes back. The implementation serves the intent. The codebase serves the implementation. Not the other way around.
+
+---
+
+**On not losing yourself.**
+
+There's a version of this that is about the developer and not just the process.
+
+A large codebase can take your identity. You walk in as someone with a vision — a clear, specific, documented thesis about what Blended is and what it's for. You spend three hours tracing a compile error through idtype.cc and into lib_remap.cc and through two generations of ID system design. You come out the other side having fixed the compile error. You are still you, technically. But something has shifted. The compile error is solved. The vision is... still there, probably, in BLENDED.md. Have you looked at it recently?
+
+The Socratic method is not just a workflow tool. It is an identity anchor. When the first thing that happens in a session is a conversation about intent — where the developer says what they're trying to accomplish in terms of the end goal, not the mechanism — it sets the context for everything that follows. The compile errors are in service of something. The ID system surgery is in service of something. The `brush->flag2 |= BRUSH_PROJECT_LOCAL` in `brush_init_data` is in service of something. You don't lose track of what because you said what it was before the first tool call.
+
+The developer knows this. Established it deliberately. "Vision first, then make the details work for the vision." That is not a platitude. It is the specific operational move that keeps the project from becoming a very sophisticated maintenance exercise on a codebase that happens to have a new name.
+
+---
+
+For future sessions on this project: when you find yourself deep in a mechanism and can't remember why you're doing it, stop. Not to give up — to reorient. Read the Socratic record from the start of the session. Read BLENDED.md §4. Ask: what is this in service of? If the answer is clear, continue. If the answer has become "because the codebase requires it," that is the signal. The codebase requires nothing. The vision requires things. The codebase's job is to implement them.
+
+One is the authority. The other is the material.
