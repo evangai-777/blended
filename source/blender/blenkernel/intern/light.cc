@@ -14,6 +14,7 @@
 /* Allow using deprecated functionality for .blend file I/O. */
 #define DNA_DEPRECATED_ALLOW
 
+#include "DNA_collection_types.h"
 #include "DNA_light_types.h"
 #include "DNA_node_types.h"
 #include "DNA_scene_types.h"
