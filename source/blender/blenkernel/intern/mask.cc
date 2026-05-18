@@ -20,6 +20,7 @@
 #include "BLI_math_geom.h"
 #include "BLI_math_matrix.h"
 #include "BLI_math_vector.h"
+#include "BLI_string.h"
 #include "BLI_string_utf8.h"
 #include "BLI_string_utils.hh"
 #include "BLI_utildefines.h"
@@ -1006,7 +1007,8 @@ Mask *BKE_mask_new_nodetree(const char *name)
   /* Deliberately NOT inserted into bmain->masks — node owns this mask exclusively. */
   /* Set the two-letter type prefix so compositor cache keys are globally unique. */
   *reinterpret_cast<short *>(mask->id.name) = ID_MSK;
-  STRNCPY_UTF8(mask->id.name + 2, (name && name[0]) ? name : "Mask");
+  const char *mask_name = (name && name[0]) ? name : "Mask";
+  BLI_strncpy_utf8(mask->id.name + 2, mask_name, sizeof(mask->id.name) - 2);
   mask->sfra = 1;
   mask->efra = 100;
   return mask;
