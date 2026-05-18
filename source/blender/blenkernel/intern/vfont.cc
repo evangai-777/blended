@@ -405,11 +405,11 @@ void BKE_vfont_drain_from_bmain(Main *bmain)
 {
   /* Clear vfont pointers on all curves so they become dangling-pointer-free.
    * BKE_curve_vfont_ensure (called by BKE_vfont_to_curve*) will reload on first use. */
-  LISTBASE_FOREACH(Curve *, cu, &bmain->curves) {
-    cu->vfont = nullptr;
-    cu->vfontb = nullptr;
-    cu->vfonti = nullptr;
-    cu->vfontbi = nullptr;
+  for (Curve &cu : bmain->curves) {
+    cu.vfont = nullptr;
+    cu.vfontb = nullptr;
+    cu.vfonti = nullptr;
+    cu.vfontbi = nullptr;
   }
 
   /* Free every VFont in the Scar 2 non-indexed listbase. */
