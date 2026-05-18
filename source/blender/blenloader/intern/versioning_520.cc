@@ -557,7 +557,8 @@ void blo_do_versions_520(FileData * /*fd*/, Library * /*lib*/, Main *bmain)
     /* Bucket 3 Palette permanent home (Blended 0.7.0): palette data is now embedded in
      * Brush::palette. Clear the deprecated Paint::palette pointer so it does not point
      * into the just-drained bmain->palettes listbase after file load. */
-    LISTBASE_FOREACH (Scene *, scene, &bmain->scenes) {
+    for (Scene &scene_ref : bmain->scenes) {
+      Scene *scene = &scene_ref;
       ToolSettings *ts = scene->toolsettings;
       if (ts) {
         auto clear_palette = [](Paint *paint) {
@@ -598,7 +599,8 @@ void blo_do_versions_520(FileData * /*fd*/, Library * /*lib*/, Main *bmain)
     /* Bucket 3 LightProbe permanent home (Blended 0.7.0): OB_LIGHTPROBE objects become
      * OB_LAMP objects with an LA_PROBE_* light type. Copy all probe fields from the legacy
      * LightProbe data-block into a new Light, then retarget ob->data. */
-    LISTBASE_FOREACH (Object *, ob, &bmain->objects) {
+    for (Object &ob_ref : bmain->objects) {
+      Object *ob = &ob_ref;
       if (ob->type != OB_LIGHTPROBE) {
         continue;
       }
@@ -687,14 +689,18 @@ void blo_do_versions_520(FileData * /*fd*/, Library * /*lib*/, Main *bmain)
     FOREACH_NODETREE_END;
 
     /* Null sequencer mask references — their Mask blocks will be drained from bmain->masks. */
-    LISTBASE_FOREACH (Scene *, scene, &bmain->scenes) {
+    for (Scene &scene_ref : bmain->scenes) {
+      Scene *scene = &scene_ref;
       if (!scene->ed) {
         continue;
       }
       seq::foreach_strip(&scene->ed->seqbase, [](Strip *strip) -> bool {
         strip->mask = nullptr;
-        LISTBASE_FOREACH (StripModifierData *, mod, &strip->modifiers) {
+        StripModifierData *mod = static_cast<StripModifierData *>(strip->modifiers.first);
+        while (mod) {
+          StripModifierData *next = static_cast<StripModifierData *>(mod->next);
           mod->mask_id = nullptr;
+          mod = next;
         }
         return true;
       });
@@ -716,7 +722,9 @@ void blo_do_versions_520(FileData * /*fd*/, Library * /*lib*/, Main *bmain)
 
     /* Step 1: migrate each standard LatticeModifier lmd->object → lmd->lattice. */
     for (Object &ob : bmain->objects) {
-      LISTBASE_FOREACH (ModifierData *, md, &ob.modifiers) {
+      for (ModifierData *md = static_cast<ModifierData *>(ob.modifiers.first); md;
+           md = static_cast<ModifierData *>(md->next))
+      {
         if (md->type != eModifierType_Lattice) {
           continue;
         }
@@ -734,7 +742,9 @@ void blo_do_versions_520(FileData * /*fd*/, Library * /*lib*/, Main *bmain)
       }
       /* Step 2: null GreasePencilLatticeModifier object refs so they don't dangle after
        * OB_LATTICE → OB_EMPTY conversion (Category A: GP lattice deformation silently drops). */
-      LISTBASE_FOREACH (ModifierData *, md, &ob.modifiers) {
+      for (ModifierData *md = static_cast<ModifierData *>(ob.modifiers.first); md;
+           md = static_cast<ModifierData *>(md->next))
+      {
         if (md->type == eModifierType_GreasePencilLattice) {
           reinterpret_cast<GreasePencilLatticeModifierData *>(md)->object = nullptr;
         }
