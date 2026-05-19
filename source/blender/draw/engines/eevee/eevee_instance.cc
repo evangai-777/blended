@@ -413,7 +413,8 @@ void Instance::object_sync(ObjectRef &ob_ref, Manager & /*manager*/)
   if (object_is_visible) {
     switch (ob->type) {
       case OB_LAMP: {
-        const blender::Light *la = static_cast<const blender::Light *>(ob_ref.object->data);
+        const blender::Light *la = static_cast<const blender::Light *>(
+            static_cast<const void *>(ob_ref.object->data));
         if (ELEM(la->type, LA_PROBE_SPHERE, LA_PROBE_PLANAR, LA_PROBE_VOLUME)) {
           light_probes.sync_probe(ob_ref);
         }
