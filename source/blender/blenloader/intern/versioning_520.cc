@@ -536,7 +536,7 @@ void blo_do_versions_520(FileData * /*fd*/, Library * /*lib*/, Main *bmain)
      * the vfont/vfontb/vfonti/vfontbi pointers will be deprecated in a later layer. */
     for (Object &object : bmain->objects) {
       if (object.type == OB_FONT && object.data != nullptr) {
-        Curve *cu = static_cast<Curve *>(object.data);
+        Curve *cu = static_cast<Curve *>(static_cast<void *>(object.data));
         if (cu->font_filepath[0] == '\0' && cu->vfont != nullptr) {
           STRNCPY(cu->font_filepath, cu->vfont->filepath);
         }
@@ -604,7 +604,7 @@ void blo_do_versions_520(FileData * /*fd*/, Library * /*lib*/, Main *bmain)
       if (ob->type != OB_LIGHTPROBE) {
         continue;
       }
-      const LightProbe *probe = static_cast<const LightProbe *>(ob->data);
+      const LightProbe *probe = static_cast<const LightProbe *>(static_cast<const void *>(ob->data));
       Light *la = BKE_light_add(bmain, ob->id.name + 2);
       BKE_lightprobe_type_apply_to_light(la, probe ? probe->type : LIGHTPROBE_TYPE_SPHERE);
       if (probe) {
@@ -643,7 +643,7 @@ void blo_do_versions_520(FileData * /*fd*/, Library * /*lib*/, Main *bmain)
         id_us_min(static_cast<ID *>(ob->data));
       }
       ob->type = OB_LAMP;
-      ob->data = la;
+      ob->data = static_cast<ID *>(static_cast<void *>(la));
       id_us_plus(&la->id);
     }
   }
