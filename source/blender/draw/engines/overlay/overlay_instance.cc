@@ -619,7 +619,7 @@ void Instance::object_sync(ObjectRef &ob_ref, Manager &manager)
         }
         break;
       case OB_LAMP: {
-        const Light *la = static_cast<const Light *>(ob_ref.object->data);
+        const Light *la = static_cast<const Light *>(static_cast<const void *>(ob_ref.object->data));
         if (ELEM(la->type, LA_PROBE_SPHERE, LA_PROBE_PLANAR, LA_PROBE_VOLUME)) {
           layer.light_probes.object_sync(manager, ob_ref, resources, state);
         }
