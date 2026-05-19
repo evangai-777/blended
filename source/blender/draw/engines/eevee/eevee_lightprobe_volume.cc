@@ -1021,11 +1021,11 @@ void IrradianceBake::surfels_create(const Object &probe_object)
   float min_distance_between_grid_samples = math::reduce_min(grid_scale / float3(grid_resolution));
   capture_info_buf_.min_distance_to_surface *= min_distance_between_grid_samples;
   capture_info_buf_.max_virtual_offset *= min_distance_between_grid_samples;
-  capture_info_buf_.clamp_direct = (lightprobe.grid_clamp_direct > 0.0) ?
-                                       lightprobe.grid_clamp_direct :
+  capture_info_buf_.clamp_direct = (la.probe_grid_clamp_direct > 0.0) ?
+                                       la.probe_grid_clamp_direct :
                                        1e20f;
-  capture_info_buf_.clamp_indirect = (lightprobe.grid_clamp_indirect > 0.0) ?
-                                         lightprobe.grid_clamp_indirect :
+  capture_info_buf_.clamp_indirect = (la.probe_grid_clamp_indirect > 0.0) ?
+                                         la.probe_grid_clamp_indirect :
                                          1e20f;
 
   eGPUTextureUsage texture_usage = GPU_TEXTURE_USAGE_SHADER_READ | GPU_TEXTURE_USAGE_SHADER_WRITE |
