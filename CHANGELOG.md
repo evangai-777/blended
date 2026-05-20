@@ -27,7 +27,7 @@ carries a one-liner status per active item.
 | 0.4.x | Datablock audit — fossil removals (Buckets 5 + 6): 9 ID types |
 | 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) |
 | 0.6.x | Evaluation model — depsgraph audit | ✓ CI-complete (build 82, commit `8f7dda22`) |
-| 0.7.x | App lenses — launcher as canonical workspace system + full product identity | In progress |
+| 0.7.x | App lenses — launcher as canonical workspace system + full product identity | Phase 1 + Phase 2 partial ✓ CI-complete (build 97, commit `aa6ec698`). Pending: graphic design assets |
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary |
 | 0.9.x | `.blend` import — seamless read with dropped-data manifest output |
 | 1.0.0 | Foundation complete; basic pipeline navigation working; GitHub Pages launch |
@@ -173,10 +173,14 @@ Each mode button opens the focused editor layout described in the corresponding 
 #### Phase 2 — Aesthetic (begins after Phase 1 CI-complete)
 - [x] Launcher file management chrome — `RGN_TYPE_HEADER` + `LAUNCHER_HT_header` (wordmark, New Project, Open…, Open Recent) ✓ PR #196
 - [x] Mode button rounded corners (8px) + hover state (`#323232` + accent border) ✓ PR #196
-- [ ] Logo, color palette, typography originated (pending human review)
-- [ ] App icon assets generated (all platform sizes)
-- [ ] Splash screen — visual identity applied to Phase 1 skeleton
-- [ ] Launcher accent color + font finalized (swap `#E87D0D` placeholder; Montserrat embed or collapse to Source Sans Pro)
+- [ ] **[NEXT — human design work]** Logo illustration originated
+- [ ] **[NEXT — human design work]** Final accent hex confirmed (placeholder `#E87D0D`)
+- [ ] **[NEXT — human design work]** Montserrat decision (embed OTF vs. collapse to Source Sans Pro)
+- [ ] **[NEXT — human design work]** App icon assets generated (all platform sizes)
+- [ ] **[NEXT — human design work]** Splash screen — visual identity applied to Phase 1 skeleton
+- [ ] Launcher accent color + font finalized in code (swap placeholder once design assets land)
+
+**CI-complete: Windows x64, build 97, commit `aa6ec698`.** Phase 1 skeleton + Phase 2 launcher chrome/cards/hover. 15 build runs to close the MSVC gap across the 0.7.0 migration commits (ID* cast patterns, LISTBASE_FOREACH unavailability, namespace collisions in EEVEE, uninitialized const arrays). PRs #201–#210.
 
 #### Mandatory docs update at each CI-complete patch
 - [ ] `BKE_blender_version.h` — PATCH bumped if needed
