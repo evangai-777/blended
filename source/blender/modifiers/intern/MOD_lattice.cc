@@ -157,7 +157,7 @@ static void deform_verts_EM(ModifierData *md,
   }
 }
 
-static void blend_write(BlendWriter *writer, const Object * /*ob*/, const ModifierData *md)
+static void blend_write(BlendWriter *writer, const ID * /*ob*/, const ModifierData *md)
 {
   const LatticeModifierData *lmd = reinterpret_cast<const LatticeModifierData *>(md);
   if (lmd->lattice) {
