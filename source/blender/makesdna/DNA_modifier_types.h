@@ -292,7 +292,7 @@ struct LatticeModifierData {
   /** Embedded lattice geometry owned by this modifier (permanent home from bmain->lattices). */
   struct Lattice *lattice = nullptr;
   /** Transforms a point from modified-object local space to lattice local space. */
-  float object_to_lattice[4][4];
+  float object_to_lattice[4][4] = {};
   /** Optional vertex-group name. */
   char name[/*MAX_VGROUP_NAME*/ 64] = "";
   float strength = 1.0f;
