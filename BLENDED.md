@@ -1,7 +1,7 @@
 # BLENDED — Identity & Design Agreements
 
 **Developer/Publisher:** CHJ 3 Productions LLC (Indiana).
-**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.7.0-dev — CI-complete (Windows x64, build 97, commit `aa6ec698`). Phase 1 skeleton complete ✓ + Phase 2 partial CI-complete ✓. Phase 1: launcher ✓, 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome), format design ✓ (startup/userpref-as-blend removed, §5 Group 1 LOCKED), all 6 Bucket 3 permanent homes ✓ (VFont→filepath 502.24, Palette→Brush 502.25, LightProbe→Light 502.26, Mask→NodeTree 502.27/28, Lattice→LatticeModifierData 502.29, Brush→project-optional 502.30). Phase 2 CI-complete: launcher header chrome ✓ (RGN_TYPE_HEADER + LAUNCHER_HT_header Python class, wordmark + New Project + Open… + Open Recent), mode button rounded cards ✓ (8px radius, draw_rect_rounded GPU helper, COL_CARD_HOVER #323232 + accent border #E87D0D placeholder, PR #196, commit `a633d329`). Next step: human graphic design work — logo illustration, final accent hex, Montserrat decision, app icon, splash visual. All pending human review; no code work until design assets land.
+**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.7.0-dev — CI-complete (Windows x64, build 97, commit `aa6ec698`). Phase 1 skeleton complete ✓ + Phase 2 partial CI-complete ✓. Phase 1: launcher ✓, 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome), format design ✓ (startup/userpref-as-blend removed, §5 Group 1 LOCKED), all 6 Bucket 3 permanent homes ✓ (VFont→filepath 502.24, Palette→Brush 502.25, LightProbe→Light 502.26, Mask→NodeTree 502.27/28, Lattice→LatticeModifierData 502.29, Brush→project-optional 502.30). Phase 2 CI-complete: launcher header chrome ✓ (RGN_TYPE_HEADER + LAUNCHER_HT_header Python class, wordmark + New Project + Open… + Open Recent), mode button rounded cards ✓ (8px radius, draw_rect_rounded GPU helper, COL_CARD_HOVER #323232 + accent border #E87D0D placeholder, PR #196, commit `a633d329`). Next step: human graphic design work — logo illustration, final accent hex, app icon, splash visual. All pending human review; no code work until design assets land. Typeface: Inter (Blender's bundled font) — permanent, decision closed.
 **Purpose:** So any future session, contributor, or Claude instance can pick up without re-litigating what's already been decided. Read this first before proposing changes to scope, identity, or architecture.
 
 ---
@@ -444,13 +444,7 @@ Phase 2 visual identity may warm these slightly, but the three-level hierarchy i
 | Active/pressed | Accent color (Phase 2) | Defined when brand palette originates |
 | Focused | Accent outline 2px, `#2C2C2C` fill | Keyboard navigation |
 
-**Typography stack — Phase 1 skeleton.** No embedded fonts. System sans-serif cascade:
-
-```
-"Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Trebuchet MS", sans-serif
-```
-
-Phase 2 replaces this with the Blended brand typeface (§16): Montserrat for display/identity surfaces ("Blending?" prompt, wordmark), Source Sans Pro for all UI text. Scale is locked:
+**Typography stack — permanent.** Inter (Blender's bundled interface font) for all surfaces. No custom embedding required. Scale is locked:
 
 | Role | Size | Weight |
 |------|------|--------|
@@ -1376,18 +1370,12 @@ This derivation rule is the constraint: the accent is not chosen independently �
 
 ### Typeface [LOCKED]
 
-**Phase 2 font stack (replaces Phase 1 system-sans cascade in §11):**
+**Inter** — Blender's bundled interface font. Used for all surfaces (display/identity and UI alike). No custom embedding required. Decision is permanent; do not reopen.
 
 | Role | Font | Weight |
 |------|------|--------|
-| Display / identity surfaces | Montserrat | SemiBold (600) |
-| UI / interface text | Source Sans Pro | Regular (400) / SemiBold (600) |
-
-**Identity surfaces using Montserrat:** the "Blended" wordmark, the "Blending?" launcher prompt (28px SemiBold — size already locked in §11), section group separators if they use a distinct register. Everything else — mode button labels, section headings, file names, metadata, attribution — uses Source Sans Pro.
-
-**Aesthetic gate:** If Montserrat + Source Sans Pro reads as two competing personalities rather than one composed voice, collapse to Source Sans Pro throughout. This is an aesthetic judgment made during Phase 2 implementation. The split is preferred; the collapse is the safe fallback. Do not attempt to resolve this in the spec — resolve it with eyes on the actual render.
-
-**Embedding:** Both are OFL-licensed. Must be embedded in the release build (no remote font loading). Phase 1 skeleton uses the system-sans cascade already in §11; Phase 2 replaces it with the embedded fonts.
+| Display / identity surfaces | Inter | SemiBold (600) |
+| UI / interface text | Inter | Regular (400) / SemiBold (600) |
 
 ---
 
@@ -1396,7 +1384,7 @@ This derivation rule is the constraint: the accent is not chosen independently �
 Structure, top to bottom, on dark base (`#1D1D1D`):
 
 1. Blended logo — prominent, centered or left-anchored
-2. Wordmark — "Blended" in Montserrat SemiBold
+2. Wordmark — "Blended" in Inter SemiBold
 3. Tagline — `"Blender, simplified."` (already in `wm_splash_screen.cc`)
 4. Version — "Blended X.Y.Z" from `BKE_blended_version_string()`
 5. GPL attribution — "Based on Blender · blender.org" (required by GPL-2.0-or-later)
@@ -1413,7 +1401,7 @@ Currently implemented in `wm_window.cc`:
 - Title suffix: `"[filename] — Blended X.Y.Z"` via `BKE_blended_version_string()`
 - Fallback title: `"Blended"`
 
-Phase 2: wordmark in Montserrat applied to splash and about dialog. Title bar text is OS-controlled and stays as-is.
+Phase 2: wordmark styling (Inter SemiBold) applied to splash and about dialog. Title bar text is OS-controlled and stays as-is.
 
 ---
 
