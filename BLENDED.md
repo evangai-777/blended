@@ -1423,6 +1423,73 @@ Upstream Blender code retains its original copyright (Blender Foundation and con
 
 ---
 
+### Phase 2 Design Asset Checklist
+
+Assets the human developer is responsible for creating and committing. All commit to branch `claude/0-7-0-phase2-materials-9WEBB`. After each asset (or all at once): commit, push, tell Claude. Claude writes the integration code.
+
+---
+
+#### 1. Logo illustration
+
+- [ ] Create the flat-vector kitchen blender + orbit-lines logo (concept locked above)
+- **SVG export:** no pixel constraint — vector, scales to whatever the code renders at. SVG is the real deliverable.
+- **PNG export:** size depends on aspect ratio of the design:
+  - Roughly square → **512×512px minimum, 1024×1024px recommended** (HiDPI + future headroom)
+  - Wider than tall → **1024px wide**, let height follow the natural aspect ratio
+  - Taller than wide → **1024px tall**, let width follow the natural aspect ratio
+  - 512px on the longest side is the floor; 1024px is the target. The PNG is the derived export the C++ code loads — Claude sizes the rendering call to match whatever is provided.
+- **Commit to:**
+  - `release/datafiles/blended_logo.svg`
+  - `release/datafiles/blended_logo.png`
+
+---
+
+#### 2. Final accent hex
+
+- [ ] Pick the accent color derived from the logo render (currently placeholder `#E87D0D`)
+- **No file needed** — tell Claude the hex value in chat. Claude does the find-replace across the codebase.
+
+---
+
+#### 3. App icon
+
+- [ ] Create icon artwork (logo mark cropped/adapted for square format)
+
+| Format | Size | Notes |
+|--------|------|-------|
+| Windows ICO | 16, 32, 48, 64, 128, 256px combined into one `.ico` | Multi-size ICO, all sizes in one file |
+| Linux SVG | no constraint | Vector, scales |
+| Linux PNG ×8 | 16, 22, 24, 32, 48, 64, 128, 256px | One file per size |
+
+- **Commit to:**
+  - `release/windows/icons/blended.ico`
+  - `release/freedesktop/icons/hicolor/scalable/apps/blended.svg`
+  - `release/freedesktop/icons/hicolor/16x16/apps/blended.png`
+  - `release/freedesktop/icons/hicolor/22x22/apps/blended.png`
+  - `release/freedesktop/icons/hicolor/24x24/apps/blended.png`
+  - `release/freedesktop/icons/hicolor/32x32/apps/blended.png`
+  - `release/freedesktop/icons/hicolor/48x48/apps/blended.png`
+  - `release/freedesktop/icons/hicolor/64x64/apps/blended.png`
+  - `release/freedesktop/icons/hicolor/128x128/apps/blended.png`
+  - `release/freedesktop/icons/hicolor/256x256/apps/blended.png`
+
+---
+
+#### 4. Splash screen
+
+- [ ] Design the full splash composition — background art only
+- **Do NOT include:**
+  - Round corners — applied in code by `wm_block_splash_image_roundcorners_add`, not baked into the image
+  - Version text — overlaid in code, changes each release; leave that area clear
+- **Dimensions:** **1920×960px (2:1 ratio)**
+  - The splash width is computed dynamically as `style->widget.points * 45 * UI_SCALE_FAC`, capped at 70% of window width (~495px at 1x DPI, ~742px at 1.5x). The code scales the image down to fit using Box filter (`IMBScaleFilter::Box`). Aspect ratio is what is fixed; pixels are scaled. 1920×960 gives enough resolution to scale cleanly at any DPI.
+- **File size:** keep reasonable — the splash is **compiled directly into the binary** (`datatoc_splash_png`), not loaded from the filesystem at runtime. It bloats the executable if oversized. The existing Blender asset is ~725KB; stay in that range. Compress the PNG accordingly.
+- **Testing without recompiling:** set env var `BLENDER_CUSTOM_SPLASH=/path/to/your/splash.png` to preview the splash at runtime before committing. `BLENDER_CUSTOM_SPLASH_BANNER` overrides the secondary banner element within the splash.
+- **Commit to:** `release/datafiles/splash.png` — overwrites Blender's existing file in-place. This is the only splash file to touch.
+  - `release/datafiles/splash_template.xcf` is Blender's GIMP design source file for their splash. It is not referenced by any code. Delete it or leave it — does not matter.
+
+---
+
 ## 15. Document Conventions
 
 - Tag new sections with [LOCKED] / [OPEN] / [REJECTED] / [GUARDRAIL].
