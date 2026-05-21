@@ -8,29 +8,6 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 ---
 
-## What Blended Is Now
-
-Not a tiered UI skin. Not a WASM port. A rebuild — subtracting Blender down to its true shape, then restructuring around one stated identity: **free 2D and 3D software tools, with an explicit focus on the craft of animation.**
-
-The old approach (tiered UI, smart defaults, Emscripten) was prototyping toward the real vision. Don't propose reinstating it without re-reading `BLENDED.md` §8 Guardrails first.
-
-**Foundation-first build order (from BLENDED.md §4):**
-1. File format — `.blended` is the project, period
-2. Datablocks — 39 → ~19 ID types (fossils and UI-state removed)
-3. Evaluation model — depsgraph audit
-4. App lenses — launcher as canonical workspace system
-5. UI — only after 1–4 are honest
-
-**`ID_WS` (WorkSpace) removal — compile-clean.** All layers merged (`makesdna`, `blenkernel`, `makesrna`, `editors`, `depsgraph`, `python`, `windowmanager`). `grep -rn "ID_WS" source/` returns zero hits. CI green at 0.2.0. Runtime debt (workspace cycle, reorder operators, factory name translation) documented in Scar 1 below. **Scar 1 reorder operators resolved (0.7.0 Phase 2 CI, commit `fd50eb93`):** `workspace_reorder_to_back_exec` and `workspace_reorder_to_front_exec` in `editors/screen/workspace_edit.cc` both called `BLI_listbase_rotate_last/first(&bmain->workspaces, ...)` — stubbed to `OPERATOR_CANCELLED` until the launcher replaces the workspace cycle entirely.
-
-**`ID_SCR` and `ID_WM` removal — CI-complete (Windows x64, build 49, commit `34a4d0da`).** All layers merged. The blast radius was enormous — see Scar 2 below. Key architectural outcome: `bmain->screens` and `bmain->wm` kept as non-indexed runtime listbases; `ID_SCR_LEGACY` / `ID_WM_LEGACY` defines route through `which_libbase` for allocation but are excluded from `BKE_main_lists_get`. Layer-by-layer status in [`CHANGELOG.md`](CHANGELOG.md).
-
-**Bucket 5 + 6 fossil removals (0.4.x) — complete.** All 9 types removed: `ID_PC` ✓ `ID_SPK` ✓ `ID_PA` ✓ `ID_GD_LEGACY` ✓ `ID_LS` ✓ `ID_MB` ✓ `ID_TE` ✓ `ID_CU_LEGACY` ✓ `ID_CF` ✓. Post-merge CI fixes complete. Next version: 0.5.x — Bucket 3 fold-downs (39 → ~19 ID types). See roadmap in CHANGELOG.md.
-
-Pattern for each pending layer: `grep -rn "ID_WS"` the directory, delete or redirect every hit. The breakage is the audit — follow the compile errors, don't paper over them.
-
----
-
 ## Deferred Debt & Roadmap Snapshot
 
 Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.md.
@@ -100,21 +77,7 @@ BLI_listbase_clear(&bmain->linestyles);
 | 0.9.x | `.blend` import — seamless read with dropped-data manifest output | Pending |
 | 1.0.0 | Foundation complete; basic pipeline navigation working. Two concurrent workstreams: (1) 1.0.0-dev runtime audit — developer runs the build, works through Known Runtime Artifacts + deferred debt checklists, reports findings to Claude for triage and fix; (2) GitHub Pages launch — landing, marketing, tech demo. Release tag when both clear. | Pending |
 
-### 0.7.0 Implementation Decisions (settled 2026-05-16)
-
-**Launcher:** New C++ editor space type — `SPACE_BLENDED_LAUNCHER` in `editors/space_blended_launcher/`. Full draw callback, custom vertical scroll view, input handling. Maximum visual control for §11/§12 fidelity.
-
-**Mode lens fidelity:** Full §12 spec. All 28 modes precisely implement their §12.x screen layouts. No skeleton shortcuts.
-
-**Bucket 3 permanent homes:** All 6 as code changes in 0.7.0. Commit order: VFont → Palette → LightProbe → Mask → Lattice → Brush.
-- VFont → `char filepath[FILE_MAX]` on OB_FONT objects; drain `bmain->fonts`
-- Palette → embedded field inside `Brush` struct; drain `bmain->palettes`
-- LightProbe → expand `eLightType` enum + LP-specific fields migrated into `Light` DNA + versioning pass; drain `bmain->lightprobes`
-- Mask → embed inside compositor `NodeTree`; drain `bmain->masks`
-- Lattice → embed geometry in `LatticeModifierData`; drain `bmain->lattices`
-- Brush → **project-optional**: brushes stay in the project file, flagged as non-portable user customization. Full user-state + shareable-packs migration deferred to 1.x.
-
-**Format design:** BLENDED.md §5 Group 1 Spine decisions written AND early code changes (userpref-as-blend + startup-as-blend behaviors removed from startup path).
+### 0.7.0 Implementation Decisions — Phase 2 context
 
 **Product identity:** Visual identity design phase complete (Socratic session 2026-05-17). Full spec locked in BLENDED.md §16. Key decisions: logo = flat-vector kitchen blender (appliance) with Blender's orbit-lines logo — which already looks like a tornado — inside the blender container, being blended like a smoothie. The tornado IS the Blender logo; the blender IS the appliance; one logo, one concept ("Blender + blender = Blended"). Orbit-lines may be modified to read more explicitly tornado-like (more taper, sharper spiral) if the unmodified form doesn't land; use as-is if it does. Phase 2 judgment call. Accent = derives from logo render, anchored at/near Blender orange `#E87D0D`. Typeface = Inter (Blender's bundled interface font) for all surfaces — no custom embedding required. Phase 2 is implementation of the locked spec.
 
@@ -122,50 +85,7 @@ BLI_listbase_clear(&bmain->linestyles);
 
 **Scar 1 debt:** Resolve during launcher build. Delete or replace broken workspace operators as they surface. **Operator stub pattern (learned from Codex review on PR #199):** When stubbing a removed operator, return `OPERATOR_FINISHED` — not `OPERATOR_CANCELLED`. `OPERATOR_CANCELLED` aborts macro/chain execution, turning a benign no-op into a hard failure for any script or menu invoking the operator. Also remove the poll function so the operator is grayed out in the UI rather than appearing available. Pattern: `ot->exec = stub_exec; /* no ot->poll */` where `stub_exec` returns `OPERATOR_FINISHED`.
 
-### 0.7.0 To-Do Checklist
-
-#### Phase 1 — Skeleton (ordered by dependency)
-
-**Launcher (gate item)**
-- [x] `source/blender/editors/space_blended_launcher/` — new directory, `CMakeLists.txt` entry
-- [x] `space_blended_launcher.cc` — `SpaceType` registration, `SPACE_BLENDED_LAUNCHER` enum value, draw callback
-- [x] Vertical scroll renderer — "Blending?" heading, `╌╌ CREATIVE ╌╌` / `╌╌ POST ╌╌` separators, section headers, mode buttons
-- [x] Input: mode button click → opens corresponding §12.x editor layout
-- [x] Project state reflection — sections with data look different from empty
-- [x] Global re-entry hotkey (Ctrl+Alt+Home)
-- [x] Scar 1: workspace reorder stubs fixed; broken cycle operator stubs replaced
-
-**28 mode lenses (full §12 spec; commit section by section)** ✓ All 28 shipped
-
-| Section | Modes |
-|---------|-------|
-| Storyboarding | Board |
-| 2D Animation | Animate, Frame-by-Frame, Paint |
-| 3D Animation | Sculpt, Model, Rig, Environment, VFX, Animate |
-| Game | Asset, Level, Bake, Export |
-| Design | Graphic, Illustration, Concept |
-| Finalizing | Storyboard, 2D, 3D, Game, Design, Mixed |
-| Compositing | Composite, Color, Cleanup |
-| Audio | Mix, Score |
-
-**Bucket 3 permanent homes (VFont → Palette → LightProbe → Mask → Lattice → Brush)**
-- [x] VFont → filepath on OB_FONT; drain `bmain->fonts` (all layers: DNA fields, versioning pass 502.24, RNA sync callback, BKE_curve_vfont_ensure, post-read drain)
-- [x] Palette → inline into `Brush` struct; drain `bmain->palettes` (all layers: DNA embed + Brush I/O, paint.cc API, editors, versioning pass 502.25 + drain)
-- [x] LightProbe → `eLightType` expansion + field migration + versioning pass; drain `bmain->lightprobes`
-- [x] Mask → embed in compositor `NodeTree`; drain `bmain->masks` (all layers: NodeCompositeMask storage, node init/free/copy/blend callbacks, versioning pass 502.27 + drain, commit `9c8dbc3c`)
-- [x] Lattice → embed in `LatticeModifierData`; drain `bmain->lattices`
-- [x] Brush → project-optional annotation; drain `bmain->brushes` when not needed (`BRUSH_PROJECT_LOCAL` flag in `eBrushFlags2`, versioning pass 502.30, `BKE_brush_drain_transient` in brush.cc + readfile.cc, `use_project_local` RNA prop, subversion 30, commits `0095ce44`–`0f47294c`)
-
-**Product identity skeleton**
-- [x] `wm_splash_screen.cc` — Blended identity; "Blender" only for GPL attribution
-- [x] About dialog — CHJ 3 Productions LLC as publisher
-- [x] Window chrome audit — remaining "Blender" strings corrected
-
-**Format design**
-- [x] BLENDED.md §5 Group 1 Spine decisions written
-- [x] Code: userpref-as-blend and startup-as-blend behaviors removed
-
-#### Phase 2 — Aesthetic (after Phase 1 CI-complete)
+### 0.7.0 To-Do Checklist — Phase 2 Pending
 - [x] Launcher file management chrome — `RGN_TYPE_HEADER` + `LAUNCHER_HT_header` (wordmark, New Project, Open…, Open Recent dropdown) ✓ PR #196
 - [x] Mode button rounded corners (8px) + hover state (`#323232` fill + accent border) ✓ PR #196
 - [ ] **[NEXT — human design work]** Logo illustration originated
@@ -209,274 +129,6 @@ Every checklist item must reach one of two states: **fixed** (code change, commi
 The more specific the report, the faster the triage. "It crashed" is harder to work with than "adding a lattice modifier to an object in a file loaded from disk crashes at startup."
 
 **Concurrent with GitHub Pages** — the Pages workstream does not gate on the runtime audit and the audit does not gate on Pages. Both run in parallel. The release tag ships when both are done.
-
----
-
-### Bucket 3 Fold-Down Protocol (0.5.x)
-
-Bucket 3 is not chiseling. Read this before touching any of the six types.
-
-**The mindset distinction — get this right first.** A fold-down is halfway to a chisel and will make things worse if you treat it as one. The ID system surgery is identical: same scars apply, same blast radius protocol runs. But the intent is completely different. A chisel says "this functionality is dead, remove it." A fold-down says "this functionality is alive and staying alive — we are only removing its registration as first-class project data." If you approach a fold-down with fossil-removal energy, you will start deleting things that are still running. That is the failure mode.
-
-The operational test: at the end of a fold-down session, every tool and workflow that used the type before the session should still work after it. Sculpt mode still has brushes. Lattice deformers still work. EEVEE light probes still evaluate. VFont text objects still render. The only thing that changed is that these data blocks are no longer serialized as named, linkable, first-class datablocks in `.blended` files. They are now runtime-managed data that lives in non-indexed listbases.
-
-**What the ID system surgery involves (shared with chiseling):** `INIT_TYPE`, `INDEX_ID_XX`, `FILTER_ID_XX`, `BKE_main_lists_get` entry all go. Scar 4 applies (sweep both `CASE_IDINDEX` blocks in `idtype.cc`). Scar 8 applies (remove the `id_type` constexpr and its entire `#ifdef __cplusplus` block together). Scar 10 applies (allocation functions that called `BKE_libblock_alloc` must be rewritten using `MEM_new<T>` + manual listbase insert). The two-phase blast radius protocol still runs: literal grep first, true blast radius emerges during editing, document both.
-
-**What stays (everything else):** the struct definition in DNA, the files that implement the type, the allocation functions (patched per Scar 10), and all runtime code that creates and uses instances of the type. Nothing gets deleted. This is not a removal.
-
-**Scar 2 is mandatory and unconditional for all six types.** Keep `bmain->brushes` / `bmain->lattices` / `bmain->palettes` / `bmain->lightprobes` / `bmain->masks` / `bmain->fonts` as non-indexed listbases. Keep their `which_libbase` routing. These listbases serve two purposes simultaneously: (1) runtime tool code that reads and writes them during active sessions, and (2) the 0.9.x `.blend` import pipeline — the blenloader versioning infrastructure that reads upstream `.blend` files routes legacy data through `which_libbase`, and removing these listbases would break that read path before 0.9.x exists to replace it. The Scar 2 listbases are the bridge forward on two fronts at once.
-
-**0.5.0 and 0.7.x are separate versions — 0.6.x sits between them.**
-
-*0.5.0 (this version) — deregistration only:* Remove these six from the ID system. Close the datablock audit number (39 → ~19). The Scar 2 listbases keep everything working. The "where does this data truly live in the final product" question is explicitly not answered here — that is not a failure, it is correct.
-
-*0.7.x (current dev cycle) — actual new homes (all 6 as code changes, settled commit order: VFont → Palette → LightProbe → Mask → Lattice → Brush):* VFont → `char filepath[FILE_MAX]` on OB_FONT objects. Palette inlines into Brush struct. LightProbe merges into Light with a type flag (expand `eLightType` + migrate LP fields into Light DNA + versioning pass). Mask embeds in compositor NodeTree. Lattice embeds in LatticeModifierData. Brush → **project-optional** (stays in project file, flagged as non-portable user customization; full user-state + shareable-packs migration is 1.x). The Scar 2 listbases remain as bridges for blenloader versioning infrastructure until 0.9.x. Do not attempt to implement the 1.x brush-as-user-state architecture during the fold-down or during 0.7.x — project-optional annotation is the correct and complete 0.7.0 target.
-
-**The failure modes (named explicitly):**
-- Treating it like a Bucket 6 fossil removal — deleting files, removing struct definitions, gutting runtime code. Wrong. The functionality is alive.
-- Searching for a "replacement" for the functionality and trying to build it. Wrong. There is no replacement in 0.5.0. The replacement is 0.7.x architecture that doesn't exist yet.
-- Removing a `bmain->X` field because it "shouldn't be project data anymore." Wrong. Keep it. Scar 2 is unconditional.
-- Skipping Scar 10 because "the allocation function is probably not called." Wrong. These types are active at runtime — their allocation functions have live callers.
-
-**Pre-chisel blast radius reference (grepped 2026-05-08):**
-
-| ID | Literal hits | Files | Eventual home (0.7.x) |
-|----|-------------|-------|-----------------------|
-| ~~`ID_LP`~~ | ~~35 hits~~ | ~~25 files~~ | ~~Merge into `ID_LA` with type flag~~ ✓ |
-| ~~`ID_PAL`~~ | ~~38 hits~~ | ~~24 files~~ | ~~Inline into Brush~~ ✓ |
-| ~~`ID_MSK`~~ | ~~41 hits~~ | ~~27 files~~ | ~~Hang off compositor NodeTree~~ ✓ |
-| ~~`ID_VF`~~ | ~~45 hits~~ | ~~27 files~~ | ~~Filepath on Text object~~ ✓ |
-| ~~`ID_LT`~~ | ~~70 hits~~ | ~~32 files~~ | ~~Owned by Lattice modifier~~ ✓ |
-| ~~`ID_BR`~~ | ~~119 hits~~ | ~~44 files~~ | ~~User state + shareable brush packs~~ ✓ |
-
-**Scar 2 fields and runtime status:**
-
-| ID | bmain field | Runtime note |
-|----|-------------|-------------|
-| ~~`ID_BR`~~ | `bmain->brushes` | Every paint/sculpt mode reads this every frame — Scar 2 kept ✓ |
-| ~~`ID_PAL`~~ | `bmain->palettes` | Referenced by Brush; active in any paint session — Scar 2 kept ✓ |
-| ~~`ID_LT`~~ | `bmain->lattices` | OB_LATTICE objects actively deform meshes — Scar 2 kept ✓ |
-| ~~`ID_LP`~~ | `bmain->lightprobes` | Active in EEVEE rendering — Scar 2 kept ✓ |
-| ~~`ID_MSK`~~ | `bmain->masks` | Used in motion tracking and compositor — Scar 2 kept ✓ |
-| ~~`ID_VF`~~ | `bmain->fonts` | Text objects reference these every render — Scar 2 kept ✓ |
-
----
-
-### Bucket 3 Fold-Down Audit (0.5.x)
-
-**ID_LP — ✓ COMPLETE (0.5.0)** *(true blast radius: ~40 hits / 28 files — fold-down, not chisel; all runtime code kept)*
-
-> **Session note (2026-05-13):** 5 commits across all layers. Fold-down philosophy applied correctly: no files deleted, no runtime code removed, only the ID system registration stripped.
->
-> Key decisions vs. pre-fold-down audit: (1) **Editors standard sweep skipped entirely** — editor dispatch cases (icons, outliner, template_id browse string, buttons_context, render_opengl traversal) are runtime code and were kept. The fold-down protocol says "every tool and workflow should still work" — these cases make it work. (2) **Anim chain kept** — ANIMTYPE_DSLIGHTPROBE, ACF_DSLIGHTPROBE, all anim_channels_defines/edit/filter ANIMTYPE cases kept. Only the `if (ads_filterflag2 & ADS_FILTER_NOLIGHTPROBE)` block removed in anim_filter.cc (3 lines) — forced by makesdna removal of `ADS_FILTER_NOLIGHTPROBE`. LP animation still shows in dopesheet, just without per-type filter toggle. (3) **Depsgraph dispatch kept** — `case ID_LP:` in deg_builder_nodes.cc and deg_builder_relations.cc kept; build_lightprobe still called. Two OOB fixes applied: `DEG_id_type_any_exists` and `DEG_id_type_updated` in depsgraph_query.cc guarded with `if (id_type_index < 0) return false;` — needed because BKE_idtype_idcode_to_index(ID_LP) returns -1 after INIT_TYPE removal. EEVEE callers (eevee_lightprobe_planar.cc:54, eevee_lightprobe_sphere.cc:24) changed from `DEG_id_type_any_exists(depsgraph, ID_LP)` → `true` (conservative always-update). (4) **Scar 13 clean** — BLT_I18NCONTEXT_ID_LIGHTPROBE removed from BLT_translation.hh + BLT_I18N_MSGID_MULTI_CTXT in interface_template_id.cc; no borrowers found. (5) **wm.py LIGHT_PROBE operator entry removed** — the copy-to-selected operator accessed bpy.data.lightprobes which no longer exists; entry removed to prevent AttributeError at runtime. space_userpref.py use_duplicate_lightprobe kept — property lives in rna_userdef.cc, not tied to bpy.data collection. (6) **MEM_new used** for Scar 10 allocator rewrite — LightProbe has in-class default member initializers throughout (`adt = nullptr`, `type = 0`, `falloff = 0.2f`, `clipsta = 0.8f`, etc.), making it non-trivially constructible. `MEM_new_zeroed` was used originally and rejected by static_assert at CI step 6612/8093 (Scar 18). Corrected to `MEM_new<LightProbe>`. (7) **DNA_action_types.h ADS_FILTER_NOLIGHTPROBE removed** — this was the one makesdna item that forced a runtime code change (anim_filter.cc), unlike the other DNA changes which only affected the ID system machinery.
->
-> **Fold-down mindset confirmed:** At session end, every workflow that existed before still works — EEVEE probe rendering, properties panel, outliner display, animation dopesheet channels, icon display, outliner filter. The ONLY functional change: bpy.data.lightprobes collection is gone; users create light probes via Add > Light Probe object (which calls BKE_lightprobe_add → manual listbase insert, Scar 2).
-
----
-
-**ID_PAL — ✓ COMPLETE (0.5.0, pending CI)** *(true blast radius: 38 literal / ~46 true hits — fold-down, not chisel; all runtime code kept)*
-
-> **Session note (2026-05-13):** 4 code commits across all layers + 1 docs commit. Fold-down philosophy applied correctly: no files deleted, no runtime code removed, only the ID system registration stripped.
->
-> Key decisions vs. pre-fold-down audit: (1) **No anim chain removal** — `ANIMTYPE_PALETTE` in `ED_anim_api.hh:233` is a stub enum value that only appears as a fallthrough case in `anim_channels_edit.cc:966`. No `ACF_DSPALETTE` or `animdata_filter_ds_palette` function exists. No dopesheet filter property (`ADS_FILTER_NOPALETTE` does not exist in DNA). Nothing to remove — all kept. (2) **No rna_action.cc change** — `ID_PAL` had no `ADS_FILTER_NOPALETTE` flag in DNA_action_types.h (unlike LP's `ADS_FILTER_NOLIGHTPROBE`). Cleaner than ID_LP — zero forced runtime code changes from the DNA sweep. (3) **Depsgraph dispatch kept** — `case ID_PAL:` in both `deg_builder_nodes.cc:643` and `deg_builder_relations.cc:584` (fallthrough to `build_generic_id`). OOB guards already generic in `depsgraph_query.cc` from ID_LP fold-down — no new per-type fix needed. (4) **No eevee callers** — no site calls `DEG_id_type_any_exists(depsgraph, ID_PAL)`, so no `→ true` substitution needed (unlike ID_LP). (5) **Scar 8** — `DNA_brush_types.h` Palette struct had `id_type = ID_PAL` in `#ifdef __cplusplus` block. Verified DNA_brush_types.h has one remaining `#ifdef __cplusplus` (Brush struct with `DNA_DEFINE_CXX_METHODS` + `id_type = ID_BR` — correct, untouched). (6) **Scar 10** — `BKE_palette_add` used `BKE_id_new<Palette>` — rewritten to `MEM_new<Palette>` + manual listbase insert. Palette has `ListBaseT<PaletteColor> colors = {nullptr, nullptr}` in-class initializer — non-trivial → `MEM_new` confirmed correct (Scar 18). `palette_init_data`'s `id_fake_user_set` call explicitly replicated in the Scar 10 allocator. (7) **Scar 13 clean** — `BLT_I18NCONTEXT_ID_PALETTE` had no external borrowers (grep clean). (8) **Python** — only `settings.py` "palettes" data path removed. No entries in space_dopesheet.py, space_outliner.py, or wm.py (no copy-to-selected entry, no outliner filter). (9) **True blast radius additions**: `anim_data_bmain_utils.cc:110`, `anim_sys.cc:4155`, `gpencil_legacy.cc:1170,1174`, `versioning_500.cc:3950` (all Scar 2 field-name grep misses, kept); `versioning_290.cc:843` `{ID_BR, ID_PAL}` which_libbase call (kept — versioning repair path).
->
-> **False positives identified**: `bonecolor.cc`, `DNA_armature_types.h`, `rna_armature.cc`, `overlay_armature.cc` — bone color `palette_index` integer, unrelated to Palette ID type. `versioning_270.cc`, `versioning_280.cc`, `grease_pencil_modes.cc` — `gpd->palettes` / `bGPDpalette` (GP-internal legacy palette, not `bmain->palettes`).
->
-> **Fold-down mindset confirmed:** At session end, every paint workflow that existed before still works — paint palette UI, palette operators, outliner display, icon display, depsgraph evaluation. The ONLY functional change: `bpy.data.palettes` collection is gone; users access palettes via `bpy.context.tool_settings.paint.palette` (pointer still exists on Paint struct, Scar 2).
-
----
-
-**ID_LT — ✓ COMPLETE (0.5.0, pending CI)** *(true blast radius: 70 literal / ~90 true hits — fold-down, not chisel; all runtime code kept)*
-
-> **Session note (2026-05-13):** 4 code commits across all layers + 1 docs commit. Fold-down philosophy applied correctly: no files deleted, no runtime code removed, only the ID system registration stripped.
->
-> Key decisions vs. pre-fold-down audit: (1) **Anim chain fully kept** — `ANIMTYPE_DSLAT`, `ACF_DSLAT`, `animdata_filter_ds_lat`, `ADS_FILTER_NOLAT`, and `show_lattices` RNA prop in `rna_action.cc:1458` all kept. Lattice animation is live runtime functionality; this is the key distinction from ID_LP (`ADS_FILTER_NOLIGHTPROBE` was removed because the flag was forced-dead by the DNA removal; `ADS_FILTER_NOLAT` stays because Lattice objects and their animation channels remain fully active). (2) **`lattice_deform_test.cc` — no action** — lines 43 and 68 call `IDType_ID_LT.init_data`/`IDType_ID_LT.free_data`, but both are inside `#if DO_PERF_TESTS 0` dead code. Removing `extern IDTypeInfo IDType_ID_LT` from `BKE_idtype.hh` is safe. (3) **Scar 8 partial** — `DNA_lattice_types.h` `#ifdef __cplusplus` block contains BOTH `DNA_DEFINE_CXX_METHODS(Lattice)` AND `id_type = ID_LT`. Remove only the `id_type` line — guard and CXX methods macro stay. This differs from Palette/LightProbe where the block was only the `id_type` line. (4) **`key.cc:173` compile-error site** — `Key IDTypeInfo.dependencies_id_types = FILTER_ID_ME | FILTER_ID_LT`; once `FILTER_ID_LT` removed from DNA_ID.h, this fails. Changed to `= FILTER_ID_ME`. (5) **No depsgraph OOB fixes** — guards in `depsgraph_query.cc` already generic from ID_LP fold-down; `case ID_LT:` in both depsgraph builders kept. (6) **`BLT_I18NCONTEXT_ID_LATTICE` — only one borrower** — `interface_template_id.cc:966` (standard Scar 13 sweep target). No unrelated code borrowed it. (7) **Python — two `bpy.data.lattices` patterns** — `space_dopesheet.py:117` `if bpy.data.lattices:` guard removed, `show_lattices` prop kept unconditional; `space_outliner.py:528` `bpy.data.lattices or` removed; `_bpy_types.py:141` `"lattices"` from attr_links removed. (8) **Only one `BKE_main_lists_get` copy** confirmed. (9) **Scar 10** — Lattice has in-class initializers (`adt = nullptr`, `pntsu = 0`, `_pad2[3] = {}`, etc.) — non-trivial → `MEM_new<Lattice>` (Scar 18). No `id_fake_user_set` in `lattice_init_data` (unlike Palette). (10) **Static blend I/O callbacks kept** — `lattice_blend_write` and `lattice_blend_read_data` remain as static functions in `lattice.cc` for 0.9.x format work; `BLO_read_write.hh` include retained (Scar 17 pattern).
->
-> **True blast radius additions (field-name grep misses):** `anim_data_bmain_utils.cc` (bmain->lattices.first), `anim_sys.cc` (main->lattices.first), `versioning_250.cc:960`, `versioning_legacy.cc:1352,2385` (all iterate bmain->lattices — kept as Scar 2 versioning bridge). `key.cc:173` FILTER_ID_LT dependency (compile-error site, fixed).
->
-> **False positives identified:** No significant false positives. `LT_OUTSIDE`/`LT_GRID` flag constants in `rna_lattice.cc` are legitimate Lattice struct flags, not constant-prefix RNA enum arrays (Scar 11 check passed clean).
->
-> **Fold-down mindset confirmed:** At session end, every workflow that existed before still works — Lattice deform modifiers, OB_LATTICE objects, edit lattice mode, dopesheet animation channels, transform, properties panel, outliner display. The ONLY functional change: `bpy.data.lattices` collection is gone; users create lattices via Add > Lattice object (which calls `BKE_lattice_add` → manual listbase insert, Scar 2).
-
-> **0.7.0 permanent home session note (2026-05-17):** 6 commits (`95ff32e2`–`9166a297`) across all layers. Lattice geometry permanently homes inside `LatticeModifierData` as an owned `Lattice *lattice` field, not as a shared ID block.
->
-> Architecture: `LatticeModifierData` gains `Lattice *lattice` (embedded geometry) + `float object_to_lattice[4][4]` (transforms modified-object local space → lattice local space, replaces runtime `inv(oblatt->world) * ob->world` computation). `lmd->object` kept as deprecated field for lib-link and versioning bridge.
->
-> New BKE functions: `BKE_lattice_new_modifier` / `BKE_lattice_copy_modifier` / `BKE_lattice_free_modifier` (lifecycle), `BKE_lattice_write_modifier` / `BKE_lattice_read_modifier` (inline blend I/O), `BKE_lattice_drain_from_bmain` (post-read drain). `BKE_lattice_deform_data_create_inline` / `BKE_lattice_deform_coords_with_mesh_inline` / `BKE_lattice_deform_coords_with_editmesh_inline` (inline deform path bypassing oblatt Object).
->
-> Key decisions: (1) **VirtualModifierData dangling pointer** — `modifier_common_data_init` shallow-copies LatticeModifierData then frees the temporary; `free_data` frees `lmd->lattice`; fixed by nulling `virtualModifierCommonData.lmd.lattice` after the free. (2) **`foreach_ID_link` kept for deprecated `lmd->object`** — lib-link pass resolves the old Object pointer before versioning 502.29 migrates it; required for loading legacy files. (3) **particle.cc** updated to use `BKE_lattice_deform_data_create_inline` for embedded lattice with fallback to legacy `lmd->object` path for pre-502.29 files. (4) **`is_disabled`** checks `lmd->lattice == nullptr` instead of `lmd->object == nullptr`; new modifiers always have an embedded 2×2×2 lattice from `init_data`. (5) **`object_to_lattice = identity`** in versioning 502.29 (Category A limitation: deformation may shift for OB_LATTICE objects with non-identity world transforms). (6) **OB_LATTICE → OB_EMPTY** in versioning 502.29 to prevent dangling `ob->data` after drain. (7) **GreasePencilLatticeModifier** `lmd->object` nulled in 502.29 (Category A: GP lattice deformation silently drops for legacy GP lattice modifiers). (8) **Shape keys** — `Lattice::key` set to nullptr in copy/read/new (Category A: animated lattice shape keys in legacy files silently drop).
->
-> Drain: `BKE_lattice_drain_from_bmain` added to post-read path in `readfile.cc` — drains `bmain->lattices` Scar 2 listbase using `BKE_lattice_batch_cache_free` + `BLI_freelistN` + `BKE_libblock_free_data` + `MEM_delete`. Subversion 29.
-
-> **Codex bug-fix session note (2026-05-17):** One follow-up commit (`97af74a4`) on branch `claude/new-session-aYkA3` after Codex PR review. Two bugs fixed:
->
-> **Bug 1 — drain use-after-free for post-502.29 files.** `BKE_lattice_drain_from_bmain` ran unconditionally in `after_liblink_merged_bmain_process`. For files saved at subversion 502.29+ with OB_LATTICE objects created at runtime (via Add > Lattice), `ob->data` pointed into `bmain->lattices` — after the unconditional drain it dangled. Fix: wrapped the drain call with `if (!MAIN_VERSION_FILE_ATLEAST(bmain, 502, 29))` so only legacy files (pre-502.29) have their Lattice ID blocks drained. Post-502.29 Lattice blocks accumulate in `bmain->lattices` as a bounded session-scoped Category C leak (documented in Deferred Debt — fix when OB_LATTICE is fully retired at 0.9.x).
->
-> **Bug 2 — lmd->object deform path silently dropped.** Lattice parenting (`Ctrl+P → Lattice Deform`) and add-to-selected workflows set `lmd->object` but never `lmd->lattice`. After the 0.7.0 refactor, `deform_verts` and `deform_verts_EM` read only `lmd->lattice`, ignoring `lmd->object`. Fix: restored the `lmd->object` check as the primary deformation source in both functions; the embedded `lmd->lattice` (default 2×2×2) is used only when `lmd->object` is null. `is_disabled` updated to return true when BOTH are null. Files changed: `readfile.cc` (drain guard), `MOD_lattice.cc` (deform_verts/EM + is_disabled).
-
----
-
-**ID_MSK — ✓ COMPLETE (0.5.0, pending CI)** *(true blast radius: 38 literal / ~55 true hits — fold-down, not chisel; all runtime code kept)*
-
-> **Session note (2026-05-13):** 4 code commits across all layers + 1 docs commit. Fold-down philosophy applied correctly: no files deleted, no runtime code removed, only the ID system registration stripped.
->
-> Key decisions vs. pre-fold-down audit: (1) **No ANIMTYPE_DSMASK or ACF_DSMASK** — the mask anim chain uses `ANIMTYPE_MASKLAYER` (a direct layer-channel type, not a DS-wrapper type). No `ADS_FILTER_NOMASK` exists in DNA. No dopesheet filter property to remove. All `animdata_filter_mask()` and `ANIMTYPE_MASKLAYER` code kept entirely. (2) **Depsgraph dispatch kept** — `case ID_MSK:` in both builders + `case ID_MSK:` in `depsgraph_tag.cc` kept. No OOB guards needed — the guards in `depsgraph_query.cc` are already generic from ID_LP fold-down. (3) **Scar 8 clean** — `DNA_mask_types.h` `#ifdef __cplusplus` block contained only `id_type`; entire block removed. Second `#ifdef __cplusplus` block at line 229 (`MaskLayerShape::vertices()` methods) is untouched. (4) **BLT_I18NCONTEXT_ID_MASK kept** — unlike LP/PAL where the constant was removed, Mask has legitimate runtime borrowers: `rna_mask.cc` (mask layer properties) and `rna_brush.cc` (sculpt `mask_tool` property). Constant retained in `BLT_translation.hh`; only the `interface_template_id.cc` MULTI_CTXT entry removed (Scar 13). (5) **`editmesh_bisect.cc:449` remap** — `use_fill` boolean borrowed `BLT_I18NCONTEXT_ID_MASK`; remapped to `BLT_I18NCONTEXT_DEFAULT` (fill geometry has no relation to Mask ID type). (6) **`sequencer_edit.cc` forced runtime fix** — `BKE_idtype_idcode_to_name[_plural](ID_MSK)` returns nullptr after INIT_TYPE removal (`BLI_assert` fires in debug). Replaced with hardcoded `"Mask"`/`"Masks"` strings. (7) **`space_sequencer.py`** — `bpy.data.masks` collection removed; replaced conditional length check with always-INVOKE_DEFAULT path (mask strip add operator still works, just launches with a selector dialog). (8) **Scar 10** — Mask has in-class initializers (`adt = nullptr`, `masklayers = {nullptr, nullptr}`, `masklay_act = 0`, `sfra = 0`, etc.) — non-trivial → `MEM_new<Mask>` (Scar 18). `id_fake_user_set` explicitly replicated from original `mask_alloc`. (9) **`rna_ID.cc` both `case ID_MSK:` sites kept** — runtime RNA↔ID bidirectional mappings; `rna_mask.cc` struct RNA stays so the lookups must stay. (10) **No `_bpy_types.py` entry** — no `"masks"` attr_links entry existed.
->
-> **True blast radius additions (field-name grep misses):** `anim_data_bmain_utils.cc:92` `ANIMDATA_IDS_CB(bmain->masks.first)`, `anim_sys.cc:4175` `EVAL_ANIM_IDS(main->masks.first, ...)`, `versioning_270.cc:1314` `for (Mask &mask : bmain->masks)` — all kept as Scar 2 versioning bridge. `sequencer_edit.cc:2393-2394` `BKE_idtype_idcode_to_name[_plural](ID_MSK)` — forced runtime fix (hardcoded strings). `space_sequencer.py:707-715` `bpy.data.masks` — forced Python fix.
->
-> **False positives identified:** All `editors/mask/` subsystem, `transform_convert_mask.cc`, `TransConvertType_Mask` in `transform_convert.cc`, `MaskModifierData::mask` pointer, `StripSeqData::mask_id` pointer, `ANIMTYPE_MASKLAYER` cases throughout anim editors, `MOD_mask.cc` (modifiers + sequencer) — all runtime code, all kept. `MASK_OVERLAY_*` / `MASK_PARENT_*` / `MASK_SPLINE_OFFSET_*` enum constants in `rna_mask.cc` / `rna_space.cc` — legitimate DNA constants in kept runtime files, not removable RNA enum item arrays (Scar 11 check clean).
->
-> **Fold-down mindset confirmed:** At session end, every workflow that existed before still works — mask editing, motion tracking masks, compositor mask input, sequencer mask strips, Mask modifier, dopesheet animation channels, properties panel, outliner display. The ONLY functional changes: `bpy.data.masks` collection gone; sequencer add-mask menu simplified to always-invoke-dialog.
-
-> **0.7.0 permanent home session note (2026-05-17):** 1 commit (`9c8dbc3c`) across all 7 layers. Mask permanently homes inside compositor NodeTree as node-owned storage (`NodeCompositeMask`), not as a shared ID block.
->
-> Architecture: `NodeCompositeMask { Mask *mask; }` added to `DNA_node_types.h`. The Mask pointer is NOT serialized as an ID-block pointer — it is written/read inline via `bNodeType::blend_write_storage_content` / `blend_data_read_storage_content` callbacks using new helpers `BKE_mask_write_layers` / `BKE_mask_read_layers` in `mask.cc`. `BKE_mask_new_nodetree` / `BKE_mask_copy_nodetree` / `BKE_mask_free_nodetree` provide stack-allocated (non-ID-system) Mask lifetime management. Drain: `BKE_mask_drain_from_bmain` added to post-read path in `readfile.cc` — drains `bmain->masks` Scar 2 listbase using `BKE_mask_layer_free_list` + `BKE_libblock_free_data` + `MEM_delete`.
->
-> Key decisions: (1) **`template_id` removed from `node_declare`** — `bpy.data.masks` no longer exists; node label reads from `storage->mask->id.name+2`. (2) **`STRNCPY` bug caught pre-push** — `node_blend_read` initially used `STRNCPY(mask->id.name + 2, "Mask")` but STRNCPY is a template requiring array ref not pointer; fixed to `BKE_mask_new_nodetree("Mask")` which handles naming internally. (3) **Versioning 502.27** — compositor `CMP_NODE_MASK` nodes with live `node.id` pointers get their Mask deep-copied via `BKE_mask_copy_nodetree` into `NodeCompositeMask` storage; `node.id` nullified + refcount decremented. Sequencer: `strip->mask` and all `StripModifierData::mask_id` set to nullptr (Category A: silently dropped — sequencer mask references had no permanent home destination). (4) **`BKE_mask_drain_from_bmain` pattern** — uses `BKE_libblock_free_data(&mask->id, false)` which internally calls `BKE_animdata_free`; no separate animdata call needed. (5) **Scar 2 listbase intact** — `bmain->masks` and `which_libbase` routing for `ID_MSK` retained for versioning bridge; drain runs post-load to clear it.
->
-> Codex checklist passed before commit: Scar 4 (no CASE_IDINDEX), Scar 8 (`id_type` field at DNA_mask_types.h:146 is `MaskParent::id_type int`, not the constexpr — confirmed), Scar 10 (no BKE_libblock_alloc with ID_MSK), Scar 11 (no MASK_ RNA enum arrays), Scar 13 (BLT_I18NCONTEXT_ID_MASK kept — valid borrowers), Scar 15 (RNA_def_mask present), Scar 16 (ListBaseT<ID>* used), Scar 19 (FILTER_ID_MSK kept; return ID_MSK in rna_ID.cc is `short` return — no cast needed).
-
-> **Codex bug-fix session note (2026-05-17):** Three follow-up commits on branch `claude/continue-0.7.0-zvzZR` after PR #191 review. (1) Commits `6324b269` + `4375e6f4` — squirrel brain: missing `#include "MEM_guardedalloc.h"` in `node_composite_mask.cc` and `versioning_520.cc` (MEM_new called without explicit include; transitive chain not verified before commit — documented as `squirrel.md` in wtf.md + include hygiene check added to Codex checklist). (2) Commit `0d375e53` — two Codex review bugs fixed: **Bug 1** `BKE_mask_new_nodetree` wrote only `mask->id.name+2`, leaving the two-byte ID prefix as `\0\0`; compositor cache keys on `std::string(mask->id.name)` so blank prefix caused aliasing between any two Mask nodes with matching render params — fixed by setting `*reinterpret_cast<short *>(mask->id.name) = ID_MSK` before STRNCPY_UTF8. **Bug 2** `NodeCompositeMask` had only `Mask *mask` — top-level metadata (sfra, efra, flag, masklay_act, name) was never serialized; blend callbacks wrote/read layer heap data only, reconstructing with hardcoded defaults on load — fixed by adding `int sfra=1; int efra=100; int flag=0; int masklay_act=0; char name[66]={}; char _pad[6]={}` fields to `NodeCompositeMask` so SDNA handles them; `node_blend_write` syncs from mask into struct; `node_blend_read` restores from struct into mask (efra==0 sentinel for pre-502.28 files); versioning 502.27 also populates struct metadata from migrated src_mask; `BLI_string.h` added for STRNCPY template. Subversion bumped 27 → 28.
-
----
-
-**ID_VF — ✓ COMPLETE (0.5.0, pending CI)** *(true blast radius: 45 literal / ~55 true hits — fold-down, not chisel; all runtime code kept)*
-
-> **Session note (2026-05-13):** 4 code commits across all layers + 1 docs commit. Fold-down philosophy applied correctly: no files deleted, no runtime code removed, only the ID system registration stripped.
->
-> Key decisions vs. pre-fold-down audit: (1) **No anim chain** — VFont has no `ANIMTYPE_DSVFONT`, no `ACF_DSVFONT`, no `ADS_FILTER_NOVFONT`. VFont is not animatable directly; text object position/rotation is animated via Object, not VFont. Nothing to remove in anim chain. (2) **Depsgraph dispatch kept** — `case ID_VF:` in both `deg_builder_nodes.cc` and `deg_builder_relations.cc` kept; `build_vfont` still called for OB_FONT objects. OOB guards already generic from ID_LP fold-down — no new per-type fix needed. (3) **Scar 8 clean** — `DNA_vfont_types.h` `#ifdef __cplusplus` block contained only `id_type`; entire block removed. (4) **BLT_I18NCONTEXT_ID_VFONT fully removed** — unlike ID_MSK where `rna_mask.cc` / `rna_brush.cc` were legitimate borrowers, VFont's context was only used by the IDTypeInfo block itself. No external borrowers found (grep clean). Fully removed from `BLT_translation.hh`. Not present in `interface_template_id.cc` MULTI_CTXT list (VFont was never added there). (5) **Scar 10 — allocator inside BKE_vfont_load()** — unlike other fold-downs where a dedicated `BKE_X_add()` was the sole allocator, VFont allocation happens inside `BKE_vfont_load()` which also parses the font file. Scar 10 pattern applied surgically: replaced only the `BKE_libblock_alloc` call with `MEM_new<VFont>` + manual listbase insert, then continued setting `vfont->data` and other fields. VFont has in-class initializers (`filepath = ""`, `data = nullptr`, `packedfile = nullptr`, `temp_pf = nullptr`) — non-trivial → `MEM_new<VFont>` (Scar 18). No `id_fake_user_set` call (IDTypeInfo had no `init_data` that set it). (6) **SOCK_FONT kept** — VFont has an active node socket type `SOCK_FONT` used throughout geometry nodes (`node_geo_input_font.cc`, `node_geo_string_to_curves.cc`) and compositor. All SOCK_FONT handling kept entirely — fold-down protocol. (7) **`rna_space.cc` category_misc** — `FILTER_ID_VF |` removed from `{FILTER_ID_BR | FILTER_ID_TXT | FILTER_ID_VF, "category_misc", ...}` asset browser filter. (8) **Python** — `settings.py` "fonts" data path removed; `_bpy_types.py` `"fonts"` from attr_links removed; `space_outliner.py` `bpy.data.fonts or` removed from orphan data condition. No entries in space_dopesheet.py or wm.py (no copy-to-selected operator for fonts, no dopesheet filter).
->
-> **True blast radius additions (field-name grep misses):** `anim_data_bmain_utils.cc` `ANIMDATA_IDS_CB(bmain->fonts.first)`, `anim_sys.cc` `EVAL_ANIM_IDS(main->fonts.first, ...)`, versioning files iterating `bmain->fonts` (versioning_250, versioning_260, versioning_280, versioning_legacy) — all kept as Scar 2 versioning bridge. `sequencer_clipboard.cc` `VSE_COPYBUFFER_IDTYPES` macro includes `ID_VF` — stays valid since deprecated define has same value.
->
-> **False positives identified:** All `SOCK_FONT` socket handling throughout geometry nodes and compositor — runtime code, all kept. `build_vfont` depsgraph builder — runtime code, kept. `case ID_VF:` in RNA bidirectional mappings (`rna_ID.cc`) and `interface_template_id.cc` browse string — runtime code, kept. `OB_FONT` object type handling throughout the codebase — text objects, entirely separate from VFont ID deregistration.
->
-> **Fold-down mindset confirmed:** At session end, every workflow that existed before still works — text objects with custom fonts, geometry nodes string-to-curves, SOCK_FONT socket inputs, depsgraph evaluation of font data, properties panel, outliner display. The ONLY functional change: `bpy.data.fonts` collection is gone; users load fonts via the font selector on Text objects (which calls `BKE_vfont_load` → manual listbase insert, Scar 2).
-
----
-
-**ID_BR — ✓ COMPLETE (0.5.0, pending CI)** *(true blast radius: 119 literal / ~135 true hits — fold-down, not chisel; all runtime code kept)*
-
-> **Session note (2026-05-13):** 4 code commits across all layers + 1 docs commit. Fold-down philosophy applied correctly: no files deleted, no runtime code removed, only the ID system registration stripped. Final Bucket 3 fold-down — datablock audit closed at 39 → ~19 ID types.
->
-> Key decisions vs. pre-fold-down audit: (1) **No anim chain** — Brush has no `ANIMTYPE_DSBRUSH`, `ACF_DSBRUSH`, or `ADS_FILTER_NOBRUSH`. Brush is not directly animatable; paint strokes are driven by Object and tool settings. Nothing to remove in anim chain. (2) **Depsgraph dispatch kept** — `case ID_BR:` in both `deg_builder_nodes.cc` and `deg_builder_relations.cc` kept; build_brush still called. OOB guards already generic from ID_LP fold-down — no new per-type fix needed. (3) **Scar 8 partial** — `DNA_brush_types.h` `#ifdef __cplusplus` block contains BOTH `DNA_DEFINE_CXX_METHODS(Brush)` AND `id_type = ID_BR`. Remove only the `id_type` line — guard and CXX methods macro stay (same pattern as ID_LT). (4) **BLT_I18NCONTEXT_ID_BRUSH kept** — 20+ borrowers in `rna_brush.cc` + 1 in `dynamicpaint.cc` (Scar 13 partial: only the `interface_template_id.cc` MULTI_CTXT entry removed). (5) **Scar 10 — BKE_brush_add** — Brush has `DNA_DEFINE_CXX_METHODS(Brush)` + multiple in-class initializers → non-trivial → `MEM_new<Brush>` (Scar 18). `BKE_brush_add` calls `brush_init_data` (static in same file) after manual listbase insert — all curve setup and `id_fake_user_set` handled there. (6) **lib_id_test.cc Scar 10 secondary site** — `BKE_id_new(ctx.bmain, ID_BR, "BR_A")` replaced with `&BKE_brush_add(ctx.bmain, "BR_A", OB_MODE_OBJECT)->id` + `#include "BKE_brush.hh"` added. (7) **rna_space.cc category_misc** — `FILTER_ID_BR |` removed from `{FILTER_ID_BR | FILTER_ID_TXT, "category_misc", ...}` asset browser filter. (8) **scene.cc and ED_asset_type.hh compile sites** — `FILTER_ID_BR |` removed from `dependencies_id_types` in scene.cc IDTypeInfo and from `ED_ASSET_TYPE_IDS_NON_EXPERIMENTAL_FLAGS` macro — both would fail to compile with FILTER_ID_BR removed from DNA_ID.h. (9) **Python** — `settings.py` "brushes" data path removed; `_bpy_types.py` `"brushes"` from attr_links removed; `wm.py` copy-to-selected brush fallback replaced with `[]` (outliner path still works; non-outliner path silently returns no brushes, which is correct — brushes are not named project data in 0.5.0). (10) **No space_dopesheet.py or space_outliner.py changes** — no `bpy.data.brushes` guard conditions in those files.
->
-> **True blast radius additions (field-name grep misses):** `anim_data_bmain_utils.cc` `ANIMDATA_IDS_CB(bmain->brushes.first)`, `anim_sys.cc` `EVAL_ANIM_IDS(main->brushes.first, ...)`, versioning files iterating `bmain->brushes` (versioning_280, versioning_290, versioning_legacy) — all kept as Scar 2 versioning bridge. `scene.cc:1611` `FILTER_ID_BR` in dependencies_id_types — compile-error site caught during audit. `ED_asset_type.hh:21` `FILTER_ID_BR` in non-experimental flags — compile-error site caught during audit.
->
-> **False positives identified:** All `eevee_lightprobe_volume.cc` and `eevee_defines.hh` hits — matched broader grep due to `IRRADIANCE_GRID_BRICK_SIZE` substring "BR"; confirmed not ID_BR references. `PE_BRUSH_*` / `BRUSH_CURVE_*` / `BRUSH_AUTOMASKING_*` RNA enum items in `rna_sculpt_paint.cc` and `rna_dynamicpaint.cc` — flag constants on the kept Brush struct, not ID-type-registration artifacts (Scar 11 clean). All `rna_brush.cc` RNA struct definitions — runtime code, kept. `BKE_brush_*` function bodies throughout `brush.cc` — runtime code, kept.
->
-> **Fold-down mindset confirmed:** At session end, every workflow that existed before still works — sculpt and paint brushes, brush panels, brush assets, depsgraph brush evaluation, dopesheet, properties panel, outliner display. The ONLY functional change: `bpy.data.brushes` collection is gone; brushes are accessed via `bpy.context.tool_settings.*.brush` pointer per paint mode (which calls `BKE_brush_add` → manual listbase insert, Scar 2). **Bucket 3 fold-down protocol complete. Datablock audit: 39 → ~19 ID types.**
-
-> **0.7.0 permanent home session note (2026-05-17):** 4 commits (`0095ce44`–`0f47294c`) across all layers. Brush permanently homes as project-optional data: brushes in the `.blended` file are those the user explicitly flags as project-local via `BRUSH_PROJECT_LOCAL`; transient paint-mode defaults are drained post-read.
->
-> Architecture: `BRUSH_PROJECT_LOCAL = (1 << 12)` added to `eBrushFlags2` in `DNA_brush_enums.h`. This flag distinguishes project-owned brushes (serialized in `.blended`) from transient defaults (regenerated by paint-mode `init_brushes` at startup). `BKE_brush_drain_transient(Main *bmain)` iterates `bmain->brushes` and frees every brush that does NOT have `BRUSH_PROJECT_LOCAL` set — calling `brush_free_data` (static, curvemappings + gpencil + gradient + preview) + `BKE_libblock_free_data` + `MEM_delete`. Drain lives in `brush.cc` to access the static callback; cannot use the generic `BKE_id_free` template which would skip the callback post-`INIT_TYPE` removal.
->
-> Versioning pass 502.30: all brushes in files older than 502.30 get `BRUSH_PROJECT_LOCAL` set — preserving all legacy brush data without data loss. New-file brushes (post-502.30) created by paint-mode init are transient by default; user customizations are flagged by the user or via future tooling.
->
-> `BKE_brush_drain_transient` called from `after_liblink_merged_bmain_process` in `readfile.cc` (added `#include "BKE_brush.hh"` alongside other drain includes). RNA property `use_project_local` (bool, flag2 bit 12) added to `rna_brush.cc` so Python and the UI can inspect and set the flag.
->
-> Key decisions: (1) **drain in brush.cc, not readfile.cc** — `brush_free_data` is static; only brush.cc can call it. Alternative (exposing `brush_free_data` as non-static) rejected — unnecessary API surface. (2) **versioning 502.30 flags ALL legacy brushes** — no user loses brush data on first load of an old file; project-local semantics activate only for new files forward. (3) **no Scar 2 Category C leak** — `BKE_brush_drain_transient` runs unconditionally (unlike the lattice drain which is version-gated); transient brushes are always cleared post-read, so `bmain->brushes` does not accumulate across file loads. (4) **full user-state + shareable brush pack migration deferred to 1.x** — this commit is project-optional annotation only; the UX surface for brush pack management is out of scope for 0.7.x. Subversion 30.
-
----
-
-### Bucket 5 + 6 Blast Radius Audit (pre-chisel)
-
-Grepped 2026-04-29 before starting the removal. Use this as the checklist.
-
-#### Two-Phase Blast Radius Protocol (mandatory)
-
-Every chisel goes through two audits. They are not the same thing and must not be collapsed into one.
-
-**Phase 1 — Literal audit (pre-chisel, grep only):**
-Run `grep -rn "ID_XX" source/` before touching a single file. Count hits, list files, record line numbers. This is the *lower bound* — the minimum number of sites that reference the token string. It is always an undercount. Write it into CLAUDE.md (here) and CHANGELOG.md before starting.
-
-**Phase 2 — True audit (during editing, as breakage surfaces):**
-Once the editing phase begins, the real blast radius emerges. Struct fields embedded in DNA. Files whose names don't contain the ID token but whose logic is entirely owned by the type. Enum values that were the only consumer of a code path. Undo subsystems. Transform convert types. Translation context macros. These don't show in the grep — they show in the compile errors and in the "what does this function actually do" moment during editing.
-
-When the true blast radius diverges from the literal count, **update the CLAUDE.md entry for that type in place** — replace the literal count header (e.g. `**ID_PC — 21 hits, 15 files**`) with the true one, and add a session note explaining what the grep missed. The CHANGELOG layer rows get the true file lists, not the grep lists.
-
-**The rule:** The pre-chisel grep count is a starting map, not a final answer. The editing phase is always the real audit. Always update the documentation to reflect the true scope — future sessions calibrate their estimates off these numbers. If they're systematically low, every future blast radius estimate will be wrong in the same direction.
-
-**ID_CU_LEGACY — ✓ COMPLETE (0.4.0)** *(true blast radius: ~86 hits / 36 files — Scar 2 applied, Scar 10 on BKE_curve_add, two depsgraph OOB guards)*
-
-> **Session note (2026-05-06):** 6 layers committed (editors/draw had zero compile errors; all `case ID_CU_LEGACY:` sites in those layers compile fine because `ID_CU_LEGACY` is kept as a `#define` with the same value). Key decisions vs. pre-chisel audit: (1) **Scar 2 mandatory** — `bmain->curves` field and `which_libbase` routing kept; 23+ `bmain->curves` iterations across versioning files 250–520 + `anim_data_bmain_utils.cc` + `anim_sys.cc`. (2) **Scar 8 applied correctly** — `DNA_curve_types.h` `Curve` struct has `DNA_DEFINE_CXX_METHODS(Curve)` AND `id_type` in the same `#ifdef __cplusplus` block; removed only the `id_type` line, kept the rest. (3) **Scar 10** — `BKE_curve_add` calls `BKE_libblock_alloc(bmain, ID_CU_LEGACY, ...)` which crashes after INIT_TYPE removal; applied MEM_new<Curve> + manual-insert pattern; added `BKE_main.hh` include; `BKE_curve_add` has live callers: object.cc (3 types), Alembic NURBS reader, OBJ NURBS importer, mesh_convert.cc, rna_main_api.cc. (4) **Active migration path preserved** — `blenfile_link_append.cc` converter code untouched; case statements in `object.cc`, `material.cc`, `key.cc`, etc. left in place because Alembic/OBJ importers still create legacy curve objects at runtime. (5) **Two depsgraph OOB guards added** — same crash path as ID_TE `build_texture()` but different fix: `add_id_node()` in `depsgraph.cc` guarded with `id_type_index >= 0` check (legacy curves still get IDNodes; only `id_type_exist` write skipped), `DEG_graph_id_type_tag()` in `depsgraph_tag.cc` guarded with early return. (6) **makesrna cleanup** — `rna_Main_curves_new()`, `RNA_def_main_curves()`, `RNA_MAIN_ID_TAG_FUNCS_DEF(curves)`, listbase funcs, and table entry all removed. `rna_space.cc:3951` `FILTER_ID_CU_LEGACY |` in geometry filter removed (same grep-miss pattern). (7) **`FILTER_ID_CU_LEGACY`** was the primary compile-error source in non-core files; once removed from `DNA_ID.h`, `key.cc:173` `.dependencies_id_types` and `rna_space.cc:3951` were the two non-obvious grep-miss sites. (8) Deferred: `rna_curve.cc` entirely intact — `CU_BEZIER/CU_POLY/CU_NURBS` RNA enum arrays stay since `DNA_curve_types.h` is kept for runtime use.
-
----
-
-**ID_GD_LEGACY — ✓ COMPLETE (0.4.0)** *(true blast radius: 5 layers removed, depsgraph/deform/material kept — ~31 files)*
-
-> **Session note (2026-04-30):** Three key true-blast-radius findings vs. the literal audit: (1) `bmain->gpencils` field stays in `BKE_main.hh` and `which_libbase` routing stays in `main.cc` — same Scar 2 pattern as ID_SCR_LEGACY. OB_GPENCIL_LEGACY objects and annotation creation via `BKE_gpencil_data_addnew` still need the runtime listbase. (2) All four depsgraph sites (`depsgraph_tag.cc:72,626`, `deg_builder_nodes.cc:630`, `deg_builder_relations.cc:580,2758`) were left untouched — OB_GPENCIL_LEGACY objects still exist at runtime, so the geometry node building and relations for bGPdata must survive. (3) `material.cc` mat/totcol pointer cases were initially removed then restored — OB_GPENCIL_LEGACY objects have material slots that are still accessed at runtime. The `BLI_assert_unreachable()` render case was correctly removed. What actually went: IDTypeInfo definition, INIT_TYPE, both CASE_IDINDEX entries (Scar 4 sweep), CASE_ID_INDEX(INDEX_ID_GD_LEGACY), lb[] assignment in BKE_main_lists_get, all RNA registration, all editor dispatch table entries. Deprecated `#define ID_GD_LEGACY` added to DNA_ID_enums.h for .blend read-skip and runtime GS checks.
-
----
-
-**ID_TE — ✓ COMPLETE (0.4.0)** *(true blast radius: ~76 hits, 45+ files — 9 source layers, Scar 2 applied, 2 field-name grep-misses caught post-chisel)*
-
-> **Session note (2026-05-05):** 9 layers committed individually. Scar 2 applied: `bmain->textures` restored as non-indexed listbase — `versioning_250.cc`, `versioning_260.cc`, `versioning_280.cc`, `versioning_legacy.cc` all iterate `bmain->textures` to upgrade legacy Blender Internal texture data. Field-name grep-miss 1: `anim_sys.cc` `EVAL_ANIM_NODETREE_IDS(main->textures.first, ...)` invisible to `ID_TE` grep. Field-name grep-miss 2: `deg_eval_copy_on_write.cc` block 3 (copy variant `((dna_type*)(new_id))->field = ((dna_type*)(old_id))->field`) missed in Layer 7 — caught in post-chisel scar checks. `brush_test.cc` fixtures deleted in makesdna/blenkernel layers. `tree_element_id_texture.cc/.hh` deleted; CMakeLists.txt updated. All 4 mandatory docs updated.
-
----
-
-**ID_PA — ✓ COMPLETE (0.4.0)** *(true blast radius was ~40 files vs 35 literal hits)*
-
-> **Session note (2026-04-30):** The "35 hits" count was literal `ID_PA` string occurrences only. True scope additions: `particle.cc` IDTypeInfo + all static callbacks (particle_settings_init/copy/free/foreach_id, write_boid_state, blend_write/read_data/read_after_liblink) + `fluid_free_settings` forward decl and definition; `BKE_idtype.hh` extern decl; `BKE_main.hh` listbase field; `rna_internal.hh` declaration; `rna_main.cc` listbase macro + table entry; `rna_main_api.cc` RNA_def_main_particles() function + rna_Main_particles_new(); `rna_space.cc` — the FILTER_ID_PA in the asset browser category filter was a literal grep miss (uses the macro, not the string `ID_PA`). Notable decisions: `BKE_particle_partdeflect_blend_read_data` kept (still called from `object.cc`); `rna_particle.cc` / `rna_boid.cc` / `rna_color.cc` / `rna_object_force.cc` kept intact — only the GS == ID_PA checks remain, which compile fine since ID_PA is now a deprecated `#define` constant; `depsgraph.cc` teardown guard changed from `id_type != ID_PA` (preserve particles for last) to `id_type != ID_SCE` (scenes already destroyed in pass 1); ID_PA added to deprecated `#define` block in `DNA_ID_enums.h` for `.blend` read-skip.
-
-> **Correction note (2026-05-01):** Three bugs found during the 0.4.0 cleanup build — all missed in the original chisel:
->
-> **(1) Scar 2 applied retroactively — `bmain->particles` restored.** The chisel declared ID_PA a "true fossil — no runtime rescue" and fully removed `bmain->particles` from `BKE_main.hh` and the `which_libbase` routing. This was wrong. `blenloader/intern/versioning_250.cc`, `versioning_260.cc`, `versioning_270.cc`, `versioning_280.cc`, `versioning_290.cc`, `versioning_400.cc`, and `versioning_legacy.cc` contain 15+ sites that iterate `bmain->particles` to upgrade old particle data on file load — none appeared in the literal grep because they use the field name, not `ID_PA`. Without the field and routing, loading any legacy `.blend` with particle data would crash. Fix: restored `bmain->particles` as a non-indexed Scar 2 listbase (not in `BKE_main_lists_get`) and restored `case ID_PA: return &(bmain->particles.cast<ID>());` in `which_libbase`. `INIT_TYPE` and `BKE_main_lists_get` entry remain removed. Key Note 1 updated to reflect this.
->
-> **(2) Dangling `#ifdef __cplusplus` in `DNA_particle_types.h`.** The chisel removed `static constexpr ID_Type id_type = ID_PA;`, its comment, and the closing `#endif` from `ParticleSettings` — but left the opening `#ifdef __cplusplus` behind. This caused MSVC C1070 (mismatched #if/#endif). The initial fix (placing `#endif` at end of struct) was wrong: `dna_parse.cc`'s `strip_ignored_tokens()` consumes all tokens between `#ifdef __cplusplus` and `#endif`, which would have silently voided every `ParticleSettings` member from the SDNA database, breaking runtime serialization. The correct fix: remove the now-empty `#ifdef __cplusplus` entirely. **Rule: when removing `id_type` constexpr, always remove the entire `#ifdef __cplusplus` / comment / `#endif` block — not just the constexpr line.** See Scar 8.
->
-> **(3) Missed site: `anim_data_bmain_utils.cc:92`** — `ANIMDATA_IDS_CB(bmain->particles.first)` was not in the literal or true blast radius audit. Caught at compile step 6484/8112.
->
-> **(4) `BKE_id_new<ParticleSettings>` template instantiation failure — `particle.cc:3770`.** Removing `static constexpr ID_Type id_type = ID_PA` from `ParticleSettings` also broke the template `BKE_id_new<T>`, which requires `T::id_type`. Initial fix replaced with `BKE_libblock_alloc(bmain, ID_PA, name, 0)` — that returned `nullptr` at runtime (no `INIT_TYPE`). **Corrected fix (Scar 10):** `BKE_particlesettings_add` now uses `MEM_new<ParticleSettings>` + manual insertion into `bmain->particles` via `which_libbase` Scar 2 routing. Returns a valid object. Particle system creation works. Memory is not freed by `BKE_main_free` (Category C leak). The depsgraph OOB issue (`add_id_node` → `BKE_idtype_idcode_to_index(ID_PA)` → -1) is guarded by the `id_type_index >= 0` check in `depsgraph.cc` applied during the ID_CU_LEGACY chisel.
-
----
-
-**ID_MB — ✓ COMPLETE (0.4.0)** *(true blast radius: ~130+ files across 16 layers — editors/metaball subsystem, ABC/USD writers, overlay_metaball.hh, transform_convert_mball.cc, depsgraph MetaBall basis machinery, ANIMTYPE_DSMBALL channel, Python startup menus)*
-
-> **Session note (2026-05-02):** True blast radius significantly exceeded the ~110-file pre-chisel estimate. Key additions beyond the literal audit: (1) `editors/metaball/` subsystem deleted (mball_edit.cc, mball_ops.cc, editmball_undo.cc, mball_intern.hh + CMakeLists.txt); (2) `overlay_metaball.hh` entire MetaBall draw overlay deleted; (3) `transform_convert_mball.cc` entire file deleted; (4) `abc_writer_mball.cc/.h` and `usd_writer_metaball.cc/.hh` deleted (WITH_ALEMBIC and WITH_USD both ON in CI); (5) `ANIMTYPE_DSMBALL` enum + `ACF_DSMBALL` animation channel (3 callbacks + struct + table entry) in `anim_channels_defines.cc` + `anim_filter.cc`; (6) MetaBall basis machinery in `deg_builder_relations.cc` (mother-ball geometry, parent dupli, particle MBall visualization); (7) MetaBall single-thread evaluation workaround (`is_metaball_object_operation()`) in `deg_eval.cc`; (8) Scar 9 (TREESTORE_ID_TYPE blank line) applied correctly; (9) Python startup: `properties_data_metaball.py` deleted, 5 space_view3d.py classes removed (VIEW3D_MT_select_edit_metaball, VIEW3D_MT_edit_metaball_context_menu, VIEW3D_MT_metaball_add, VIEW3D_MT_edit_meta, VIEW3D_MT_edit_meta_showhide), bl_ui/__init__.py import cleaned, space_dopesheet/outliner/userpref/wm.py patched, rigify metaball.new() call removed; (10) `makesrna.cc` rna_meta entry removed (rna_meta.cc and rna_meta_api.cc deleted in earlier session); (11) `ed_transverts.cc` dead `MetaElem *ml;` variable removed; (12) `ED_view3d.hh` orphaned `struct MetaElem;` forward decl removed; (13) `BLT_I18NCONTEXT_ID_METABALL` define and ITEM entry removed from `BLT_translation.hh`; (14) `OB_MBALL` removed from `OB_TYPE_SUPPORT_MATERIAL`, `OB_TYPE_IS_GEOMETRY`, `OB_TYPE_SUPPORT_EDITMODE` macros in `DNA_object_types.h` — `OB_MBALL = 5` enum value kept for .blend compat. Scar 2 rule: `bmain->metaballs` was fully removed (true fossil — no blenloader versioning pass iterates it; verified in versioning_legacy.cc which had a `idproperties_fix_group_lengths(bmain->metaballs)` that was removed in an earlier layer). `DNA_meta_types.h` and `dna_rename_defs.h` MetaBall entries kept for SDNA read-skip on old .blend files.
-
-> **Correction note (2026-05-02):** Post-merge CI catch at step 5233/8099: `rna_object.cc:195` defined `rna_enum_metaelem_type_items[]` using `MB_BALL`, `MB_TUBE`, `MB_PLANE`, `MB_ELIPSOID`, `MB_CUBE` — MetaBall element type enum values from `DNA_meta_types.h` (kept for SDNA read-skip). The array contained no `ID_MB` or `OB_MBALL` string, so it was invisible to both the literal grep and the broader pattern grep (`grep -rln "OB_MBALL\|MetaBall\|metaball\|mball\|rna_meta\|BKE_mball\|DNA_meta"`). Fix: removed the 9-line array definition from `rna_object.cc` and its `DEF_ENUM(rna_enum_metaelem_type_items)` entry from `RNA_enum_items.hh`. The detection method: grep `source/blender/makesrna/` for type-specific constant prefixes (`MB_`, `SPK_`, `PA_`, etc.) after each chisel — RNA enum item arrays using those constants will surface immediately. See Scar 11.
-
-> **Correction note (2026-05-04):** Post-merge CI catch at step 6271/8099: `transform_convert.cc:712` and `:800` still referenced `&TransConvertType_MBall` in two ELEM checks — `init_proportional_edit` and `init_TransDataContainers`. The pre-chisel audit listed `transform/transform_convert.cc — OB_MBALL in convert dispatch — remove` and correctly deleted `transform_convert_mball.cc`, but the two surviving ELEM checks use the C++ *extern object name* `TransConvertType_MBall`, not the string `OB_MBALL` or `ID_MB`. All grep patterns missed them. **Detection method: when deleting a file that exports `TransConvertTypeXxx` or any other C++ extern objects, grep the whole codebase for that symbol name before deleting the file.** `grep -rn "TransConvertType_MBall" source/` would have caught both. The general rule: after any file deletion, `grep -rn "<SymbolName>" source/` for every exported symbol the deleted file defined.
-
-> **Pre-chisel note (2026-05-02):** Literal grep confirms 60 hits across 32 files. Broader pattern grep (`grep -rln "OB_MBALL\|MetaBall\|metaball\|mball\|rna_meta\|BKE_mball\|DNA_meta"`) surfaces ~110 additional files that carry no `ID_MB` string but will break in the chisel. Key scope not in literal: (1) entire `editors/metaball/` tree — `mball_edit.cc`, `mball_ops.cc`, `editmball_undo.cc`, `mball_intern.hh` (MetaBall has its own editor subsystem like Armature); (2) `ANIMTYPE_DSMBALL` enum + `ACF_DSMBALL` animation channel (3 callbacks + struct + `animchannelTypeInfo` table entry) in `anim_channels_defines.cc` + `anim_filter.cc` OB_MBALL dispatch — same pattern as ID_LS's ANIMTYPE_DSLINESTYLE; (3) `tree_element_id_metaball.cc/.hh` — dedicated outliner tree element files to delete; (4) entire `io/alembic/exporter/abc_writer_mball.cc` and `io/usd/intern/usd_writer_metaball.cc` — WITH_ALEMBIC and WITH_USD are both ON in CI; (5) `draw/engines/overlay/overlay_metaball.hh` — entire metaball draw overlay; (6) `transform/transform_convert_mball.cc` — entire mball transform convert file; (7) `BKE_main.hh:369` — `bmain->metaballs` field; (8) `anim_data_bmain_utils.cc:77` — `ANIMDATA_IDS_CB(bmain->metaballs.first)` — same missed-site pattern as ID_PA/`anim_data_bmain_utils.cc:92`; (9) `anim_sys.cc:4135` — `EVAL_ANIM_IDS(main->metaballs.first, ...)`; (10) `object_update.cc:157,291` — OB_MBALL update dispatch. Scar 9 (TREESTORE_ID_TYPE blank continuation line) applies: after removing ID_MB from `outliner_intern.hh` macro, verify no blank lines remain in the ELEM body.
-
----
-
-**ID_LS — ✓ COMPLETE (0.4.0)** *(true blast radius: ~50 files vs 28 literal hits — ANIMTYPE/ACF chain, anim filter function, DNA_action_types, node_texture_tree, view layer builder callers, space_node NC_LINESTYLE)*
-
-> **Session note (2026-04-30):** True blast radius significantly exceeded the literal grep. Key additional scope beyond the 28-file audit: (1) `ANIMTYPE_DSLINESTYLE` enum value in `ED_anim_api.hh` + 9 fallthrough `case ANIMTYPE_DSLINESTYLE:` sites across `anim_channels_edit.cc`, `anim_deps.cc`, `nla_buttons.cc`, `nla_draw.cc`, `nla_tracks.cc`, `transform_convert_action.cc`; (2) `ACF_DSLINESTYLE` animation channel block (3 functions + struct + `animchannelTypeInfo` entry) in `anim_channels_defines.cc`; (3) `animdata_filter_ds_linestyle` function + call site in `anim_filter.cc`; (4) `ADS_FILTER_NOLINESTYLE` bitmask in `DNA_action_types.h` + `show_linestyles` RNA prop in `rna_action.cc`; (5) `FILTER_LS_SCED` macro in `ED_anim_api.hh`; (6) `tree_element_id_linestyle.cc/.hh` deleted + CMakeLists.txt updated; (7) `NC_LINESTYLE` notifier cases in `space_node.cc` (2 sites, unguarded); (8) `node_texture_tree.cc` unguarded `SNODE_TEX_LINESTYLE` branch; (9) `deg_builder_nodes_view_layer.cc` + `deg_builder_relations_view_layer.cc` calls to `build_freestyle_linestyle`; (10) `build_freestyle_linestyle` implementations + declarations removed from both depsgraph builders. Scar 2 pattern: `bmain->linestyles` field and `which_libbase` routing kept; `rna_linestyle.cc` kept (FreestyleLineStyle struct still referenced by `FreestyleLineSet::linestyle` DNA field and iterated in `node.cc`). All WITH_FREESTYLE-guarded code left untouched.
-
-> **Review note (2026-04-30):** Two Codex bot review comments flagged issues with this chisel. Analysis:
->
-> **Comment 1 — "Keep ID_LS registered while style creation still exists"** (flagged `INIT_TYPE(ID_LS)` removal): The bot is correct about the failure *mechanism* — `BKE_linestyle_new` calls `BKE_libblock_alloc(bmain, ID_LS, ...)`, which calls `BKE_libblock_get_alloc_info`, which calls `BKE_idtype_get_info_from_idcode(ID_LS)`. Without `INIT_TYPE`, that returns `nullptr`, size is 0, and `BLI_assert_msg(0, "Request to allocate unknown data type")` fires. **However**, the code path is dead with `WITH_FREESTYLE=OFF`. `freestyle_linestyle_new_exec` and `SCENE_OT_freestyle_linestyle_new` are inside the `#ifdef WITH_FREESTYLE` block in `render_shading.cc:1817` and `render_ops.cc:55`. The operator is never registered. `BKE_linestyle_new` is never called at runtime. This comment does not require action for the current build config.
->
-> **Comment 2 — "Include linestyles in main list traversal"** (flagged `lb[INDEX_ID_LS]` removal): This is a real architectural asymmetry. The Scar 2 pattern was designed for `ID_SCR` and `ID_WM`, which are runtime-only objects — they are created fresh at app startup and are never populated by loading a `.blend` file in normal operation. Linestyle IDs are different: `which_libbase` still routes `ID_LS` to `bmain->linestyles` (deliberately kept), and blenloader's legacy read path is not guarded by `WITH_FREESTYLE`. Opening a legacy `.blend` file with Freestyle data in a `WITH_FREESTYLE=OFF` build will load `FreestyleLineStyle` ID blocks into `bmain->linestyles`. Because that listbase is not in `BKE_main_lists_get`, `BKE_main_free` will not free those IDs. They leak. **Accepted as a known artifact.** The project does not ship with Freestyle enabled, and there are no legacy Freestyle `.blend` fixtures in the CI test suite, so this does not affect CI or release builds. It is a latent memory leak for any user who opens a legacy file with Freestyle data — the blocks accumulate for the session and are freed when the process exits. If this ever becomes a problem, the correct fix is a blenloader post-read pass that immediately drains `bmain->linestyles` after any file load when `WITH_FREESTYLE=OFF`, not restoring the listbase to `BKE_main_lists_get`.
-
----
-
-**ID_SPK — ✓ COMPLETE (0.4.0)** *(true blast radius was ~45 files vs 23 literal hits)*
-
-> **Session note (2026-04-30):** The "23 hits" count was literal `ID_SPK` string occurrences only. True scope: `DNA_speaker_types.h` deleted entire; `BKE_speaker.hh`/`speaker.cc` deleted; `sound.cc` speaker iteration loop + `SceneAudioRuntime.speaker_handles` removed; `BKE_nla_add_soundstrip` removed; `overlay_speaker.hh` deleted; `OBJECT_OT_speaker_add` + `NLA_OT_soundclip_add` operators deleted; `ACF_DSSPK` animation channel + `ANIMTYPE_DSSPK` enum removed; `rna_speaker.cc` deleted entire; `SPEAKER_EVAL` depsgraph opcode removed; 9 `case ANIMTYPE_DSSPK:` fallthrough sites across NLA/transform/anim editors; `OB_SPEAKER = 12` removed from object type enum; versioning pass added (502.23) converting old speaker objects to OB_EMPTY.
-
----
-
-**ID_PC — ✓ COMPLETE (0.4.0)** *(true blast radius was ~35 files vs 21 literal hits)*
-
-> **Session note (2026-04-29):** The "21 hits" count was literal `ID_PC` string occurrences only. PaintCurve as a struct was woven into `Brush::paint_curve` DNA, three entirely-PaintCurve-specific files (deleted), and the paint cursor/stroke rendering path. All layers removed across makesdna, blenkernel, makesrna, editors, depsgraph.
-
----
-
-**ID_CF — ✓ COMPLETE (0.4.0)** *(true blast radius: ~76 files across 8 committed layers — no Scar 2, true fossil, inline per-instance)*
-
-> **Pre-chisel audit (2026-05-06):** Literal `ID_CF` grep: 29 hits. Broader pattern grep (`CacheFile`, `cachefile`, `MeshSeqCache`, `bTransformCacheConstraint`, `ANIMTYPE_DSCACHEFILE`, `BKE_cachefile`, `rna_cachefile`, `io_cache`, etc.): 76 files after removing 3 false-positive categories (`blenlib/memory_cache_file_load.cc` — BLI memory cache, unrelated; `gpu/vulkan/vk_pipeline_pool.cc` — GPU pipeline cache, unrelated; `nodes/geometry/nodes/node_geo_import_*.cc` — 5 files, 0 CacheFile struct hits).
->
-> **Design decision settled (2026-05-06): inline per-instance.** `CacheFile *` pointers in `MeshSeqCacheModifierData` and `bTransformCacheConstraint` are replaced with the relevant fields inlined directly into those structs — filepath, override_frame flag, frame_offset, velocity settings, is_sequence flag, type (Alembic vs. USD). Precedent: VSE sequence strips store external file paths directly in the strip struct without a shared ID. The "shared reference" feature of `CacheFile` is not load-bearing — two objects pointing at the same `.abc` file can both store the path; the file is on disk. **`bmain->cachefiles` is removed entirely — no Scar 2 rescue. True fossil.** `which_libbase` routing goes away. No versioning file iterates `bmain->cachefiles` (verified: `versioning_290.cc` creates CacheFile IDs but does not iterate the listbase for upgrade purposes — those blocks get SDNA-read-skipped on load after removal).
->
-> **DNA migration targets:**
-> - `MeshSeqCacheModifierData.cache_file` (`DNA_modifier_types.h:2332`) → inline `char filepath[FILE_MAX]` + `override_frame`, `frame`, `frame_offset`, `velocity_unit`, `velocity_name`, `is_sequence`, `type` from `CacheFile` struct
-> - `bTransformCacheConstraint.cache_file` (`DNA_constraint_types.h:1152`) → same inline pattern; `object_path[FILE_MAX]` already present in both structs
->
-> **Files to DELETE entirely:** `editors/io/io_cache.cc`, `editors/io/io_cache.hh`, `editors/interface/templates/interface_template_cache_file.cc`, `makesrna/intern/rna_cachefile.cc`, `blenkernel/BKE_cachefile.hh`, `blenkernel/intern/cachefile.cc` (after inlining any utility functions needed by MOD_meshsequencecache or constraint.cc)
 
 ---
 
@@ -542,11 +194,9 @@ make check_mypy     # Python type checking
 
 **Publisher:** Blended is developed and published by **CHJ 3 Productions LLC**, an Indiana-registered LLC. This is the legal entity behind the fork. All Blended-specific design decisions, the product identity, and fork-specific code additions are the work of CHJ 3 Productions LLC. Upstream Blender code retains its original copyright (Blender Foundation and contributors) under GPL-2.0-or-later — Blended inherits and preserves that license.
 
-**UI surfaces for CHJ 3 Productions LLC branding (pending implementation):** The splash screen and about dialog (`wm_splash_screen.cc`) are the right place to surface the publisher name in the running application. When that work is done, it belongs in the same file as the existing tagline and version label.
-
 **Code locations:**
 - `CMakeLists.txt:81` — `project(Blended)`
-- `source/blender/blenkernel/BKE_blender_version.h` — `BLENDED_VERSION_MAJOR/MINOR/PATCH` defines (currently 0.5.0; see Version Management section for bump procedure), plus `BKE_blended_version_string()` declaration
+- `source/blender/blenkernel/BKE_blender_version.h` — `BLENDED_VERSION_MAJOR/MINOR/PATCH` defines (see Version Management section for bump procedure), plus `BKE_blended_version_string()` declaration
 - `source/blender/blenkernel/intern/blender.cc` — `blended_version_string` built in `blender_version_init()`, `BKE_blended_version_string()` implemented
 - `source/blender/windowmanager/intern/wm_window.cc` — fallback title `"Blended"`, title suffix `"- Blended X.Y.Z"` via `BKE_blended_version_string()` (rendered dynamically from the defines above)
 - `source/blender/windowmanager/intern/wm_splash_screen.cc` — about dialog name/description, tagline `"Blender, simplified."`, splash version label
@@ -620,11 +270,12 @@ The 0.4.0 CI-complete milestone (build 70) shipped without bumping the version h
 ```
 **Note:** The four mandatory docs each contain multiple sections that reference version state — roadmap tables, mid-document planning blocks, subsection headers. A headline-only pass misses them. `grep -n "0\\.X" <file>` (replace X with the version) before staging each doc.
 
-### Datablock Cuts in Progress (BLENDED.md §10)
-Target: 39 → ~19 ID types.
-- **Bucket 4 (UI state, remove):** `ID_WS` ✓ (0.2.0), `ID_SCR` ✓ (0.3.0 WIP), `ID_WM` ✓ (0.3.0 WIP)
+### Datablock Audit — Complete (BLENDED.md §10)
+Result: 39 → ~19 ID types. All buckets closed.
+- **Bucket 4 (UI state, remove):** `ID_WS` ✓ (0.2.0), `ID_SCR` ✓ (0.3.0), `ID_WM` ✓ (0.3.0)
 - **Bucket 5 (upstream deprecations, finish):** `ID_CU_LEGACY` ✓ (0.4.0), `ID_GD_LEGACY` ✓ (0.4.0)
 - **Bucket 6 (fossils, cut):** `ID_CF` ✓ (0.4.0); `ID_PC` ✓ (0.4.0); `ID_SPK` ✓ (0.4.0); `ID_PA` ✓ (0.4.0); `ID_LS` ✓ (0.4.0); `ID_MB` ✓ (0.4.0); `ID_TE` ✓ (0.4.0)
+- **Bucket 3 (runtime types, fold-down then permanent home):** `ID_LP` ✓ (0.5.0 fold-down → 0.7.0 Light type flag), `ID_PAL` ✓ (0.5.0 → 0.7.0 Brush embed), `ID_LT` ✓ (0.5.0 → 0.7.0 LatticeModifierData), `ID_MSK` ✓ (0.5.0 → 0.7.0 compositor NodeTree), `ID_VF` ✓ (0.5.0 → 0.7.0 OB_FONT filepath), `ID_BR` ✓ (0.5.0 → 0.7.0 project-optional flag)
 
 ---
 
