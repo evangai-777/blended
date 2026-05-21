@@ -1,7 +1,7 @@
 # BLENDED — Identity & Design Agreements
 
 **Developer/Publisher:** CHJ 3 Productions LLC (Indiana).
-**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.7.0-dev — CI-complete (Windows x64, build 97, commit `aa6ec698`). Phase 1 skeleton complete ✓ + Phase 2 partial CI-complete ✓. Phase 1: launcher ✓, 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome), format design ✓ (startup/userpref-as-blend removed, §5 Group 1 LOCKED), all 6 Bucket 3 permanent homes ✓ (VFont→filepath 502.24, Palette→Brush 502.25, LightProbe→Light 502.26, Mask→NodeTree 502.27/28, Lattice→LatticeModifierData 502.29, Brush→project-optional 502.30). Phase 2 CI-complete: launcher header chrome ✓ (RGN_TYPE_HEADER + LAUNCHER_HT_header Python class, wordmark + New Project + Open… + Open Recent), mode button rounded cards ✓ (8px radius, draw_rect_rounded GPU helper, COL_CARD_HOVER #323232 + accent border #E87D0D placeholder, PR #196, commit `a633d329`). Next step: human graphic design work — logo illustration, final accent hex, Montserrat decision, app icon, splash visual. All pending human review; no code work until design assets land.
+**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.7.0-dev — CI-complete (Windows x64, build 97, commit `aa6ec698`). Phase 1 skeleton complete ✓ + Phase 2 partial CI-complete ✓. Phase 1: launcher ✓, 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome), format design ✓ (startup/userpref-as-blend removed, §5 Group 1 LOCKED), all 6 Bucket 3 permanent homes ✓ (VFont→filepath 502.24, Palette→Brush 502.25, LightProbe→Light 502.26, Mask→NodeTree 502.27/28, Lattice→LatticeModifierData 502.29, Brush→project-optional 502.30). Phase 2 CI-complete: launcher header chrome ✓ (RGN_TYPE_HEADER + LAUNCHER_HT_header Python class, wordmark + New Project + Open… + Open Recent), mode button rounded cards ✓ (8px radius, draw_rect_rounded GPU helper, COL_CARD_HOVER #323232 + accent border #E87D0D placeholder, PR #196, commit `a633d329`). Next step: human graphic design work — logo illustration, final accent hex, app icon, splash visual. All pending human review; no code work until design assets land. Typeface: Inter (Blender's bundled font) — permanent, decision closed.
 **Purpose:** So any future session, contributor, or Claude instance can pick up without re-litigating what's already been decided. Read this first before proposing changes to scope, identity, or architecture.
 
 ---
@@ -444,13 +444,7 @@ Phase 2 visual identity may warm these slightly, but the three-level hierarchy i
 | Active/pressed | Accent color (Phase 2) | Defined when brand palette originates |
 | Focused | Accent outline 2px, `#2C2C2C` fill | Keyboard navigation |
 
-**Typography stack — Phase 1 skeleton.** No embedded fonts. System sans-serif cascade:
-
-```
-"Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Trebuchet MS", sans-serif
-```
-
-Phase 2 replaces this with the Blended brand typeface (§16): Montserrat for display/identity surfaces ("Blending?" prompt, wordmark), Source Sans Pro for all UI text. Scale is locked:
+**Typography stack — permanent.** Inter (Blender's bundled interface font) for all surfaces. No custom embedding required. Scale is locked:
 
 | Role | Size | Weight |
 |------|------|--------|
@@ -1376,18 +1370,12 @@ This derivation rule is the constraint: the accent is not chosen independently �
 
 ### Typeface [LOCKED]
 
-**Phase 2 font stack (replaces Phase 1 system-sans cascade in §11):**
+**Inter** — Blender's bundled interface font. Used for all surfaces (display/identity and UI alike). No custom embedding required. Decision is permanent; do not reopen.
 
 | Role | Font | Weight |
 |------|------|--------|
-| Display / identity surfaces | Montserrat | SemiBold (600) |
-| UI / interface text | Source Sans Pro | Regular (400) / SemiBold (600) |
-
-**Identity surfaces using Montserrat:** the "Blended" wordmark, the "Blending?" launcher prompt (28px SemiBold — size already locked in §11), section group separators if they use a distinct register. Everything else — mode button labels, section headings, file names, metadata, attribution — uses Source Sans Pro.
-
-**Aesthetic gate:** If Montserrat + Source Sans Pro reads as two competing personalities rather than one composed voice, collapse to Source Sans Pro throughout. This is an aesthetic judgment made during Phase 2 implementation. The split is preferred; the collapse is the safe fallback. Do not attempt to resolve this in the spec — resolve it with eyes on the actual render.
-
-**Embedding:** Both are OFL-licensed. Must be embedded in the release build (no remote font loading). Phase 1 skeleton uses the system-sans cascade already in §11; Phase 2 replaces it with the embedded fonts.
+| Display / identity surfaces | Inter | SemiBold (600) |
+| UI / interface text | Inter | Regular (400) / SemiBold (600) |
 
 ---
 
@@ -1396,7 +1384,7 @@ This derivation rule is the constraint: the accent is not chosen independently �
 Structure, top to bottom, on dark base (`#1D1D1D`):
 
 1. Blended logo — prominent, centered or left-anchored
-2. Wordmark — "Blended" in Montserrat SemiBold
+2. Wordmark — "Blended" in Inter SemiBold
 3. Tagline — `"Blender, simplified."` (already in `wm_splash_screen.cc`)
 4. Version — "Blended X.Y.Z" from `BKE_blended_version_string()`
 5. GPL attribution — "Based on Blender · blender.org" (required by GPL-2.0-or-later)
@@ -1413,7 +1401,7 @@ Currently implemented in `wm_window.cc`:
 - Title suffix: `"[filename] — Blended X.Y.Z"` via `BKE_blended_version_string()`
 - Fallback title: `"Blended"`
 
-Phase 2: wordmark in Montserrat applied to splash and about dialog. Title bar text is OS-controlled and stays as-is.
+Phase 2: wordmark styling (Inter SemiBold) applied to splash and about dialog. Title bar text is OS-controlled and stays as-is.
 
 ---
 
@@ -1432,6 +1420,73 @@ Phase 2: wordmark in Montserrat applied to splash and about dialog. Title bar te
 - Release packaging copyright notices
 
 Upstream Blender code retains its original copyright (Blender Foundation and contributors) under GPL-2.0-or-later. Blended inherits and preserves that license.
+
+---
+
+### Phase 2 Design Asset Checklist
+
+Assets the human developer is responsible for creating and committing. All commit to branch `claude/0-7-0-phase2-materials-9WEBB`. After each asset (or all at once): commit, push, tell Claude. Claude writes the integration code.
+
+---
+
+#### 1. Logo illustration
+
+- [ ] Create the flat-vector kitchen blender + orbit-lines logo (concept locked above)
+- **SVG export:** no pixel constraint — vector, scales to whatever the code renders at. SVG is the real deliverable.
+- **PNG export:** size depends on aspect ratio of the design:
+  - Roughly square → **512×512px minimum, 1024×1024px recommended** (HiDPI + future headroom)
+  - Wider than tall → **1024px wide**, let height follow the natural aspect ratio
+  - Taller than wide → **1024px tall**, let width follow the natural aspect ratio
+  - 512px on the longest side is the floor; 1024px is the target. The PNG is the derived export the C++ code loads — Claude sizes the rendering call to match whatever is provided.
+- **Commit to:**
+  - `release/datafiles/blended_logo.svg`
+  - `release/datafiles/blended_logo.png`
+
+---
+
+#### 2. Final accent hex
+
+- [ ] Pick the accent color derived from the logo render (currently placeholder `#E87D0D`)
+- **No file needed** — tell Claude the hex value in chat. Claude does the find-replace across the codebase.
+
+---
+
+#### 3. App icon
+
+- [ ] Create icon artwork (logo mark cropped/adapted for square format)
+
+| Format | Size | Notes |
+|--------|------|-------|
+| Windows ICO | 16, 32, 48, 64, 128, 256px combined into one `.ico` | Multi-size ICO, all sizes in one file |
+| Linux SVG | no constraint | Vector, scales |
+| Linux PNG ×8 | 16, 22, 24, 32, 48, 64, 128, 256px | One file per size |
+
+- **Commit to:**
+  - `release/windows/icons/blended.ico`
+  - `release/freedesktop/icons/hicolor/scalable/apps/blended.svg`
+  - `release/freedesktop/icons/hicolor/16x16/apps/blended.png`
+  - `release/freedesktop/icons/hicolor/22x22/apps/blended.png`
+  - `release/freedesktop/icons/hicolor/24x24/apps/blended.png`
+  - `release/freedesktop/icons/hicolor/32x32/apps/blended.png`
+  - `release/freedesktop/icons/hicolor/48x48/apps/blended.png`
+  - `release/freedesktop/icons/hicolor/64x64/apps/blended.png`
+  - `release/freedesktop/icons/hicolor/128x128/apps/blended.png`
+  - `release/freedesktop/icons/hicolor/256x256/apps/blended.png`
+
+---
+
+#### 4. Splash screen
+
+- [ ] Design the full splash composition — background art only
+- **Do NOT include:**
+  - Round corners — applied in code by `wm_block_splash_image_roundcorners_add`, not baked into the image
+  - Version text — overlaid in code, changes each release; leave that area clear
+- **Dimensions:** **1920×960px (2:1 ratio)**
+  - The splash width is computed dynamically as `style->widget.points * 45 * UI_SCALE_FAC`, capped at 70% of window width (~495px at 1x DPI, ~742px at 1.5x). The code scales the image down to fit using Box filter (`IMBScaleFilter::Box`). Aspect ratio is what is fixed; pixels are scaled. 1920×960 gives enough resolution to scale cleanly at any DPI.
+- **File size:** keep reasonable — the splash is **compiled directly into the binary** (`datatoc_splash_png`), not loaded from the filesystem at runtime. It bloats the executable if oversized. The existing Blender asset is ~725KB; stay in that range. Compress the PNG accordingly.
+- **Testing without recompiling:** set env var `BLENDER_CUSTOM_SPLASH=/path/to/your/splash.png` to preview the splash at runtime before committing. `BLENDER_CUSTOM_SPLASH_BANNER` overrides the secondary banner element within the splash.
+- **Commit to:** `release/datafiles/splash.png` — overwrites Blender's existing file in-place. This is the only splash file to touch.
+  - `release/datafiles/splash_template.xcf` is Blender's GIMP design source file for their splash. It is not referenced by any code. Delete it or leave it — does not matter.
 
 ---
 
