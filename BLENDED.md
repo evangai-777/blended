@@ -1317,6 +1317,17 @@ Earlier pipeline drafts had Assets, Environments, VFX, and Animate as standalone
 
 ---
 
+## 15. Document Conventions
+
+- Tag new sections with [LOCKED] / [OPEN] / [REJECTED] / [GUARDRAIL].
+- When reopening a LOCKED section, state why and what new evidence changed the call.
+- When a decision closes an OPEN question, move it out and summarize in the relevant section.
+- Keep the active sections (§1–§12) tight. They're working agreements, not narrative.
+- §14 Notes is the doc's history. Renames, supersessions, and reframes go there in narrative form. Git has the full record; §14 has the summary a reader can read in a minute.
+- When a section is renamed or superseded, leave a one-line stub at the old location pointing to its new home, and add the entry to §14.
+
+---
+
 ## 16. Product Identity [LOCKED in principle, Phase 2 implementation OPEN]
 
 Blended is a separate product, not a Blender skin. The GPL license that governs Blender grants full latitude to rebrand, redesign, and ship under a completely distinct identity — Blended exercises that latitude completely.
@@ -1488,13 +1499,3 @@ Assets the human developer is responsible for creating and committing. All commi
 - **Commit to:** `release/datafiles/splash.png` — overwrites Blender's existing file in-place. This is the only splash file to touch.
   - `release/datafiles/splash_template.xcf` is Blender's GIMP design source file for their splash. It is not referenced by any code. Delete it or leave it — does not matter.
 
----
-
-## 15. Document Conventions
-
-- Tag new sections with [LOCKED] / [OPEN] / [REJECTED] / [GUARDRAIL].
-- When reopening a LOCKED section, state why and what new evidence changed the call.
-- When a decision closes an OPEN question, move it out and summarize in the relevant section.
-- Keep the active sections (§1–§12) tight. They're working agreements, not narrative.
-- §14 Notes is the doc's history. Renames, supersessions, and reframes go there in narrative form. Git has the full record; §14 has the summary a reader can read in a minute.
-- When a section is renamed or superseded, leave a one-line stub at the old location pointing to its new home, and add the entry to §14.
