@@ -24,7 +24,7 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 
 ### Known Runtime Artifacts (QA Reference)
 
-**Check here before assuming a new bug.** These are the expected consequences of completed chisels. The build is CI-green; these are bounded, documented runtime gaps — not regressions.
+**Check here before assuming a new bug.** These are the expected consequences of completed chisels. The build is CI-green; these are bounded, documented runtime gaps — not regressions. **Category D** lists crashes caught and fixed during the 1.0.0-dev runtime audit — real crashes that shipped in a released build and were resolved.
 
 #### Category A — Expected behavior changes (by design, won't fix)
 
@@ -63,6 +63,12 @@ LISTBASE_FOREACH_MUTABLE(ID *, id, &bmain->linestyles) {
 BLI_listbase_clear(&bmain->linestyles);
 ```
 `BKE_id_free` skips the `IDTypeInfo::id_free` callback when the type is unregistered (INIT_TYPE removed) but still frees the memory block and animation data. Before using this pattern, audit the original `IDTypeInfo::id_free` implementation to confirm nothing non-trivial was being cleaned up there (e.g., GPU resources, runtime caches). For ID_LS, ID_PA, ID_TE, and ID_CU_LEGACY the callbacks were simple struct-internal frees with no GPU state — the drain is safe. Do NOT use `BKE_id_multi_tagged_delete` — that API operates on tagged blocks within the main indexed list and will not reach Scar 2 unindexed listbases.
+
+#### Category D — Fixed crashes (caught at runtime audit)
+
+| Trigger | Failure | Introduced | Fixed |
+|---------|---------|------------|-------|
+| Any startup — fresh install or default file | `BKE_palette_add` crashed immediately via `BKE_gpencil_palette_ensure` → `BLO_update_defaults_startup_blend`. Root cause: the Scar 10 allocator called `BKE_id_new_name_validate`, which routes into `BKE_main_namemap_get_unique_name` → `namemap_get_name`. The namemap is indexed by `BKE_idtype_idcode_to_index(ID_PAL)`, which returns -1 for the deregistered Scar 2 type. Accessing `maps[-1]` (an 8-byte pointer array) yields address `0xFFFFFFFFFFFFFFF8` — reading garbage as a `Map<string>` object, crashing in the string slot destructor. Build 97 (the first 0.7.0 release artifact) crashed on launch for all users. Fix: replace `BKE_id_new_name_validate` with direct `BLI_strncpy_utf8(palette->id.name + 2, name, sizeof(palette->id.name) - 2)` — Palette is an internal Scar 2 type embedded in Brush and does not require namemap uniqueness. **General rule for all future Scar 10 allocators:** never call `BKE_id_new_name_validate` for a deregistered type; use direct `BLI_strncpy_utf8` instead. | 0.5.0 (ID_PAL Scar 10 allocator) | PR #214, commit `25f59735` (`paint.cc`) |
 
 
 ### Foundation Layer Roadmap
