@@ -36,6 +36,7 @@
 #include "BLI_math_vector.h"
 #include "BLI_noise.hh"
 #include "BLI_string.h"
+#include "BLI_string_utils.hh"
 #include "BLI_utildefines.h"
 #include "BLI_vector.hh"
 
@@ -1238,9 +1239,16 @@ Palette *BKE_palette_add(Main *bmain, const char *name)
     BLI_addtail(lb, palette);
     /* ID_PAL is a deregistered Scar 2 type — BKE_main_namemap_get_unique_name
      * indexes by BKE_idtype_idcode_to_index(ID_PAL) which returns -1, causing
-     * an out-of-bounds array access and crash. Assign the name directly instead;
-     * Palette is not user-visible named project data so uniqueness is not needed. */
+     * an out-of-bounds array access and crash. Bypass the namemap: assign the
+     * name directly then walk the listbase to guarantee uniqueness (prevents
+     * duplicate names that make PALETTE_OT_join lookups ambiguous). */
     BLI_strncpy_utf8(palette->id.name + 2, name, sizeof(palette->id.name) - 2);
+    BLI_uniquename(reinterpret_cast<const ListBase *>(lb),
+                   palette,
+                   name,
+                   '.',
+                   offsetof(ID, name) + 2,
+                   sizeof(palette->id.name) - 2);
     bmain->is_memfile_undo_written = false;
     BKE_main_unlock(bmain);
   }
