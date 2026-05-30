@@ -30,7 +30,7 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 
 | Trigger | What happens | Introduced |
 |---------|-------------|------------|
-| Object with `PFIELD_TEXTURE` force field in legacy file | Texture displacement silently dead. `build_texture()` is a no-op — Tex IDNodes never enter the depsgraph. Force field evaluates but ignores the texture parameter entirely. *(Post-chisel fix `c320633b`: two direct `add_relation()` calls in `deg_builder_relations.cc` that bypassed the no-op were removed — without the fix these logged repeated "Failed to add relation" errors at graph-build time. See Scar 12.)* | 0.4.0 (ID_TE) |
+| Object with `PFIELD_TEXTURE` force field in legacy file | Texture displacement silently dead. `build_texture()` is a no-op — Tex IDNodes never enter the depsgraph. Force field evaluates but ignores the texture parameter entirely. *(Post-chisel fix `c320633b`: two direct `add_relation()` calls in `deg_builder_relations.cc` that bypassed the no-op were removed — without the fix these logged repeated "Failed to add relation" errors at graph-build time.)* | 0.4.0 (ID_TE) |
 | Object with particle system that has texture slots (legacy file) | Texture slots silently ignored. Particle system otherwise evaluates (geometry nodes path). | 0.4.0 (ID_TE) |
 | Node with `SOCK_TEXTURE` socket and a `Tex *` default value (legacy file) | Socket's texture not depsgraph-tracked; texture changes don't trigger node re-evaluation. | 0.4.0 (ID_TE) |
 | Brush with `paint_curve` assigned in legacy file | `Brush::paint_curve` field no longer exists in DNA; SDNA remapping skips it on load. Brush uses default stroke shape. No crash. | 0.4.0 (ID_PC) |
@@ -82,30 +82,6 @@ BLI_listbase_clear(&bmain->linestyles);
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary | In progress |
 | 0.9.x | `.blend` import — seamless read with dropped-data manifest output | Pending |
 | 1.0.0 | Foundation complete; basic pipeline navigation working. Two concurrent workstreams: (1) 1.0.0-dev runtime audit — developer runs the build, works through Known Runtime Artifacts + deferred debt checklists, reports findings to Claude for triage and fix; (2) GitHub Pages launch — landing, marketing, tech demo. Release tag when both clear. | Pending |
-
-### 0.7.0 Implementation Decisions — Phase 2 context
-
-**Product identity:** Visual identity design complete. Full spec in BLENDED.md §16. Key decisions: logo = flat-vector orange blender appliance (`release/datafiles/blended_logo.svg` + `.png`). Accent = `#ff7f00` (final, definitive — replaces `#E87D0D` placeholder). Typeface = Inter (Blender's bundled interface font) for all surfaces — no custom embedding required.
-
-**Launcher aesthetic:** Hybrid of Adobe Creative Cloud home screen and Blender splash. **The pipeline scroll is the launcher** — "Blending?" at top, §11 Creative/Post sections with mode button cards filling the screen. LOCKED. File management chrome (wordmark, [New Project], [Open…], recent file thumbnail cards ~160×120px, project settings, version attribution) is implementation-flexible: fixed left sidebar (~220px) OR compact top dropdown above the scroll. Content is the same either way; packaging is an implementation decision. Three-level dark surface hierarchy: base `#1D1D1D` → panel `#252525` → card `#2C2C2C` (resting). Interaction states separate: hover `#323232`, active/pressed = accent (Phase 2). Mode button cards: 8px radius, 16px/12px padding, 130ms ease-out hover. Type stack: Inter (Blender's bundled interface font) — permanent decision, no embedding needed. 8px spacing base unit. Full spec in BLENDED.md §11 Launcher aesthetic.
-
-**Scar 1 debt:** Resolve during launcher build. Delete or replace broken workspace operators as they surface. **Operator stub pattern (learned from Codex review on PR #199):** When stubbing a removed operator, return `OPERATOR_FINISHED` — not `OPERATOR_CANCELLED`. `OPERATOR_CANCELLED` aborts macro/chain execution, turning a benign no-op into a hard failure for any script or menu invoking the operator. Also remove the poll function so the operator is grayed out in the UI rather than appearing available. Pattern: `ot->exec = stub_exec; /* no ot->poll */` where `stub_exec` returns `OPERATOR_FINISHED`.
-
-### 0.7.0 To-Do Checklist — Complete ✓
-- [x] Launcher file management chrome — `RGN_TYPE_HEADER` + `LAUNCHER_HT_header` (wordmark, New Project, Open…, Open Recent dropdown) ✓ PR #196
-- [x] Mode button rounded corners (8px) + hover state (`#323232` fill + accent border) ✓ PR #196
-- [x] Logo illustration originated ✓ (`release/datafiles/blended_logo.svg` + `blended_logo.png` — orange blender appliance, flat-vector)
-- [x] Logo artwork credit ✓ (`release/datafiles/license.txt` + SVG `<metadata>` attribution — "Orange Blender clip art" by Michelle L., clker.com, 03-09-2013)
-- [x] Final accent hex confirmed ✓ (`#ff7f00` — logo orange, sourced from SVG fill; `#2596be` was a bad hex-picker read)
-- [x] Launcher accent color finalized in code ✓ (`COL_ACCENT` = `#ff7f00` in `space_blended_launcher.cc`, commit `c43aa3c0`)
-- [x] App icon (all platform sizes) ✓
-
-| Format | Sizes | Artwork file | Build system |
-|--------|-------|-------------|-------------|
-| Windows ICO | 16, 32, 48, 64, 128, 256px combined | `release/windows/icons/winblended.ico` ✓ | `winblended.rc` ✓; `packaging.cmake` ✓; `source/creator/CMakeLists.txt` ✓ |
-| Linux SVG | scalable | `release/freedesktop/icons/scalable/apps/blended.svg` ✓ (`blender.svg` deleted ✓) | `blended.desktop` ✓; `windowmanager/CMakeLists.txt` ✓; `source/creator/CMakeLists.txt` ✓ |
-
-- [x] Splash screen visual design applied ✓ (`release/datafiles/splash.png`, 1920×960, PNG-24)
 
 ---
 
@@ -260,9 +236,8 @@ The 0.4.0 CI-complete milestone (build 70) shipped without bumping the version h
 1. **`BKE_blender_version.h`** — increment `BLENDED_VERSION_MINOR` (or `PATCH`).
 
 2. **`CLAUDE.md`** (this file) — update the "Current version" line at the top:
-   - For a new dev-cycle start: `Blended X.Y.0-dev — [first type] fold-down/chisel in progress`
-   - For a CI-complete milestone: `Blended X.Y.0-dev — [type] CI-complete (Windows x64, build N on commit XXXXXXX)`
-   - Keep the base version reference accurate: `X.(Y-1).0 base: CI-complete (build N, commit XXXXXXX)`
+   - For a new dev-cycle start: `Blended X.Y.0-dev — [layer description] in progress`
+   - For a CI-complete milestone: `Blended X.Y.0-dev — X.(Y-1).0 base: CI-complete (Windows x64, build N, commit XXXXXXX)`
 
 3. **`CHANGELOG.md`** — add a version bump note to the active *Unreleased* section (or the completed version section):
    - One line: which define changed, old value → new value, what triggered it, commit reference.
@@ -385,36 +360,6 @@ A chisel session that touches 7 layers and 60 files in one unbounded run is a co
 
 ---
 
-### Scar 4: Old Wrappers Left Behind New Implementations (screen.cc Pattern)
-
-**This is the same root cause as the `idtype.cc` saga (Scar 3 / PR #122).** The 0.3.0 chisel left behind old IDTypeInfo-era code in two separate places: `CASE_IDINDEX(SCR/WM)` in `idtype.cc`'s lookup switches (found first), and duplicate wrapper bodies in `screen.cc` (found second). Same failure mode, different files — old code that referenced the removed machinery was not fully swept when the new code was written above it.
-
-**What happened:** The 0.3.0 chisel wrote new direct implementations of `BKE_screen_free_data` and `BKE_screen_copy_data` near the top of `screen.cc` (lines 69, 87) as part of removing `IDTypeInfo IDType_ID_SCR`. But the old IDTypeInfo-era wrapper bodies at the bottom of the file (lines 664, 669) — which called `screen_free_data(&screen->id)` and `screen_copy_data(nullptr, std::nullopt, ...)` — were left in place. Those statics were already gone, so CI failed with C2084 (duplicate body) and C3861 (identifier not found).
-
-**The pattern to watch for:** When a chisel session rewrites a public `BKE_*` function to be a direct implementation instead of a thin wrapper around an IDTypeInfo static callback, there are now TWO copies of the function in the file: the new one near the top, and the old wrapper near the bottom. The compiler catches it. The fix is always: delete the old wrapper at the bottom.
-
-**How to grep before CI tells you:**
-```bash
-# After any chisel session touching screen.cc or wm.cc, check for duplicate public signatures:
-grep -n "^void BKE_\|^bool BKE_\|^int BKE_" source/blender/blenkernel/intern/screen.cc | sort | uniq -d
-grep -n "^void BKE_\|^bool BKE_\|^int BKE_" source/blender/windowmanager/intern/wm.cc | sort | uniq -d
-```
-
-**Verified clean after 0.3.0:** Both files grep clean as of the PR #123 fix. No remaining duplicate definitions.
-
-**Mandatory after removing any ID type — sweep `idtype.cc` switch tables:**
-```bash
-# Both lookup functions must have no entry for the removed type:
-grep -n "CASE_IDINDEX(PC)\|CASE_IDINDEX(SPK)" source/blender/blenkernel/intern/idtype.cc
-# Replace PC/SPK with whichever two-letter code was just removed.
-# BKE_idtype_idcode_to_index() and BKE_idtype_idfilter_to_index() each have
-# their own CASE_IDINDEX block — the removed entry must be gone from BOTH.
-# MSVC C2051/C2065 is the error when you miss one; grep catches it before CI does.
-```
-This is not optional. The 0.3.0 chisel left `CASE_IDINDEX(SCR)` and `CASE_IDINDEX(WM)` behind — four lines, two sessions to find. The 0.4.0 chisel (ID_PC + ID_SPK) left the same four lines behind for the same reason. It will happen again unless it is checked explicitly after every removal.
-
----
-
 ### Scar 5: Disobedience Causes Stream Idle Timeout (The Exact Error That Killed Two Sessions)
 
 **Problem:** The developer explicitly said "section by section." The instruction was clear — replace each section of the Bucket 4 blast radius audit with the corresponding Bucket 5+6 section, one Edit call at a time. Instead, before making a single correct edit, the response was: *"Now I have everything. Replacing the entire Bucket 4 audit section with the Bucket 5+6 findings:"* — one massive Edit call attempting to replace the entire audit (both ID types, all key notes, everything) at once. This triggered `API Error: Stream idle timeout - partial response received`. The same error that killed the two sessions that birthed 0.3.0. The developer had explicitly warned this would happen. It happened anyway.
@@ -448,38 +393,6 @@ This is two failures compounded:
 **The failure mode:** Writing a note and then not checking whether anything already in the diff contradicts it. The note was new; the CHANGELOG line was inherited from an earlier state of the document. Inherited text doesn't get automatically reconciled with new text written in the same commit. You have to read the full diff before committing — not just the new additions.
 
 **The rule:** Before every commit that touches documentation with cross-references (chisel orders, version maps, scar notes, architectural decisions), read the complete diff and check that every changed file is internally consistent with every other changed file. If you write "do X last" anywhere, grep the diff for X and verify nothing else in the same commit says "do X first."
-
----
-
-### Scar 8: dna_parse.cc Silently Voids Struct Members Inside #ifdef __cplusplus
-
-**What happened:** The ID_PA chisel removed `static constexpr ID_Type id_type = ID_PA;` and its `#endif` from `ParticleSettings`, but left the opening `#ifdef __cplusplus` behind. MSVC reported C1070 (mismatched #if/#endif). The first fix placed `#endif /* __cplusplus */` at the end of the struct — that resolved the compiler error. A Codex bot review caught that this was wrong.
-
-**Why the first fix was wrong:** `dna_parse.cc`'s `strip_ignored_tokens()` (lines 271–276) explicitly skips all tokens between `#ifdef __cplusplus` and the next `#endif`. It is not a C++ compatibility guard in the ordinary sense — it is a DNA parser exclusion marker. Placing `#endif` at the end of `ParticleSettings` would have caused `strip_ignored_tokens()` to consume every struct member, producing an empty struct in the SDNA database. Runtime serialization of particle data would have silently broken — no compile error, no assert, just wrong data.
-
-**The correct fix:** Remove the `#ifdef __cplusplus` entirely. When `id_type` is the only content of the block, there is nothing left to guard. The struct members were always outside the `#ifdef __cplusplus` / `#endif` pair; removing the now-empty guard leaves them exactly where they were.
-
-**The rule for all future id_type removals:** When removing `static constexpr ID_Type id_type = X;` from a DNA struct, find the `#ifdef __cplusplus` that opens the block and remove it and its `#endif` together with the constexpr and its comment. Never leave an unclosed or empty `#ifdef __cplusplus` in a DNA file. Verify with `grep -n "__cplusplus" <file>` — the result should either be zero hits or show a balanced open/close pair with real content between them.
-
-**How to check before touching any DNA file:**
-```bash
-grep -n "#ifdef __cplusplus\|#endif" source/blender/makesdna/DNA_<type>_types.h
-```
-If the only content between `#ifdef __cplusplus` and `#endif` is `id_type` (plus comment), remove all three lines together. If there is other C++-only content (constructors, `DNA_DEFINE_CXX_METHODS`, etc.), keep the guard and only remove the `id_type` line.
-
----
-
-### Scar 9: Blank Continuation Line Silently Terminates a Multi-Line Macro
-
-**What happened:** `TREESTORE_ID_TYPE` in `outliner_intern.hh` is a multi-line `ELEM()` macro. ID_SPK, ID_PA, ID_GD_LEGACY, and ID_LS were removed from the middle of the argument list across four separate chisel sessions. Each removal left the preceding line's backslash continuation intact. But the four IDs were consecutive in the list — removing all of them left a blank line with no `\` in the middle of the expanded call. This silently terminated the macro at the blank line, causing the remaining `ID_LP`, `ID_CV`, `ID_PT`, `ID_VO`, `ID_GP` entries and the `eOLDrawState` enum to be parsed as invalid top-level declarations (C4430, C2059). The error appeared at compile step 6107/8112, far from the chisel.
-
-**Why this is hard to catch:** Each individual removal looked correct. The blank line it left behind only became a problem when combined with the removals from prior sessions. No single session's diff showed the broken macro — only the cumulative result did.
-
-**The rule:** After any chisel session that removes IDs from an `ELEM()` or similar multi-line macro, scan the macro for blank lines with no `\`. One blank line in the middle = broken macro.
-```bash
-grep -n "TREESTORE_ID_TYPE\|ELEM(" source/blender/editors/space_outliner/outliner_intern.hh
-```
-Then read the full macro body and confirm every non-closing line ends with `\`.
 
 ---
 
@@ -526,114 +439,6 @@ The rule that would have caught #2 immediately: **read the struct before choosin
 grep -rn "BKE_libblock_alloc.*ID_XX" source/ --include="*.cc" --include="*.c"
 ```
 Every hit is a potential crash. Each allocation function must be patched to the manual pattern above, or the caller must be removed entirely if the path is truly dead.
-
----
-
-### Scar 11: RNA Enum Item Arrays Using Type-Specific Constants Are Invisible to ID Grep
-
-**What happened:** The ID_MB chisel removed `rna_meta.cc`, `rna_meta_api.cc`, and all `ID_MB` references from `rna_object.cc`. But `rna_object.cc:195` also contained `rna_enum_metaelem_type_items[]` — a `const EnumPropertyItem` array listing MetaBall element types using `MB_BALL`, `MB_TUBE`, `MB_PLANE`, `MB_ELIPSOID`, `MB_CUBE`. The array had no `ID_MB` string and no `OB_MBALL` string. It was invisible to both the literal grep and the pre-chisel broader pattern grep. CI caught it at step 5233/8099 with C2065 (`MB_BALL: undeclared identifier`) and C2737 (`rna_enum_metaelem_type_items: const object must be initialized`). Fix: remove the array definition and its `DEF_ENUM(rna_enum_metaelem_type_items)` entry in `RNA_enum_items.hh`.
-
-**Why this is a distinct failure mode:** `DNA_meta_types.h` was intentionally kept for SDNA read-skip on old .blend files — the `MB_*` enum values still exist in the header. The issue is that nothing in the RNA compilation path includes `DNA_meta_types.h` anymore after the chisel. The array compiled fine before the chisel (something in the old include chain pulled in the meta types header). After the chisel, the include chain is broken but the array is still there. No `ID_MB` string. No compiler warning until that translation unit is actually compiled.
-
-**The pattern:** Any RNA file can contain `EnumPropertyItem` arrays that enumerate values from a removed type's DNA header. These arrays:
-- Contain no `ID_XX` token string
-- Contain no `OB_TYPENAME` string  
-- Are not covered by the pre-chisel broader pattern grep unless the type-specific constant prefix appears in the broader grep pattern
-- Surface only when the translation unit compiles and the include chain is broken
-
-**The detection method — run this after every chisel, before committing the final layer:**
-```bash
-# Replace MB_ with the type's constant prefix (SPK_, PA_, CU_, TE_, CF_, etc.)
-grep -rn "MB_BALL\|MB_TUBE\|MB_PLANE\|MB_ELIPSOID\|MB_CUBE" source/blender/makesrna/
-```
-More generally:
-```bash
-# Grep makesrna/ for any surviving constant from the removed type's DNA header
-grep -rn "<TYPE_PREFIX>_" source/blender/makesrna/ --include="*.cc" --include="*.hh"
-```
-Any hit that is not inside a `#ifdef` guard for the old type and is not explicitly kept is a candidate for removal.
-
-**The `DEF_ENUM` entry is always paired.** Every `const EnumPropertyItem foo[]` definition in an `.cc` file has a matching `DEF_ENUM(foo)` line in `RNA_enum_items.hh`. When you remove the array, also remove the `DEF_ENUM` entry. Grep: `grep -n "DEF_ENUM.*<partial_name>" source/blender/makesrna/RNA_enum_items.hh`.
-
-**Add to the mandatory post-chisel checklist (runs before every commit of the final layer):**
-```bash
-# Scar 11: RNA enum item arrays with type-specific constants
-grep -rn "OB_MBALL\|MB_BALL\|MB_CUBE"  source/blender/makesrna/  # example for ID_MB
-# For ID_TE: grep for TEX_CLOUDS, TEX_WOOD, TEX_MARBLE, TEX_MAGIC, TEX_BLEND,
-#            TEX_STUCCI, TEX_NOISE, TEX_IMAGE, TEX_MUSGRAVE, TEX_VORONOI, TEX_DISTNOISE
-grep -rn "TEX_CLOUDS\|TEX_WOOD\|TEX_MARBLE\|TEX_MAGIC\|TEX_BLEND\|TEX_STUCCI\|TEX_NOISE\b\|TEX_IMAGE\|TEX_MUSGRAVE\|TEX_VORONOI\|TEX_DISTNOISE" source/blender/makesrna/
-
-# Scar 11 extension: BLT_I18NCONTEXT_ID_<TYPE> borrowed by unrelated code
-# When BLT_I18NCONTEXT_ID_XX is removed from BLT_translation.hh, any file that uses
-# that constant as a translation context for unrelated properties will break at compile
-# time with C2065. These callers contain the constant NAME, not the ID token string,
-# so they are invisible to grep -rn "ID_XX".
-# Run after removing any BLT_I18NCONTEXT_ID_XX entry from BLT_translation.hh:
-grep -rn "BLT_I18NCONTEXT_ID_CF\|BLT_I18NCONTEXT_ID_XX" source/  # replace XX with removed type
-# General form — grep the whole source tree, not just makesrna:
-grep -rn "BLT_I18NCONTEXT_ID_<TYPE>" source/ --include="*.cc" --include="*.hh"
-```
-
-**ID_CF post-merge CI catch (2026-05-07):** `rna_modifier.cc:8027` and `:8178` — two `NodesModifier` bake_target properties used `BLT_I18NCONTEXT_ID_CACHEFILE` as their `RNA_def_property_translation_context` argument. Completely unrelated to CacheFile; the constant was borrowed as a convenient translation namespace. Invisible to `grep "ID_CF"`. Surfaced at step 5230/8093 as C2065 after `BLT_I18NCONTEXT_ID_CACHEFILE` was removed from `BLT_translation.hh` in Layer 8. Fix: remapped to `BLT_I18NCONTEXT_ID_NODETREE` (bake target is a Geometry Nodes Modifier concept). PR #157. See Scar 13 for the full pattern including the community i18n principle and the `interface_template_id.cc` sweep.
-
----
-
-### Scar 12: build_X() No-Op in Node Builder Does Not Silence Direct add_relation() Calls in Relations Builder
-
-**What happened:** The ID_TE chisel made `build_texture()` a no-op in `deg_builder_nodes.cc` — Tex datablocks never get IDNodes. But `deg_builder_relations.cc` had two sites that called `add_relation()` with `ComponentKey(&tex->id, NodeType::GENERIC_DATABLOCK)` directly, without going through `build_texture()`:
-
-1. Effector relations loop (~line 464): PFIELD_TEXTURE force-field relation
-2. RigidBody effector loop (~line 2272): PFIELD_TEXTURE force-field relation
-
-Since no IDNode existed for `tex->id`, these `add_relation()` calls failed at runtime on any legacy file containing a PFIELD_TEXTURE force field — logging repeated "Failed to add relation" errors during graph build. Caught by Codex review on PR #154 (post-chisel fix commit `c320633b`).
-
-**Why it's easy to miss:** The no-op in the nodes builder looks complete — `build_texture()` is the single public entry point for texture depsgraph work, so it appears to be a clean boundary. But the relations builder has its own separate `ComponentKey`/`add_relation()` blocks that directly reference `tex->id` without calling `build_texture()` at all. Both files must be checked independently.
-
-**The fix:** Remove the direct `add_relation()` blocks in `deg_builder_relations.cc`. The force-field texture displacement remains silently dead (the force field evaluates but the texture parameter is ignored and no error logs are emitted).
-
-**The detection pattern — run this after making any `build_X()` a no-op in either depsgraph builder:**
-```bash
-# Replace 'tex' with the type's field name (part, mball, etc.)
-grep -n "tex->id\|tex_key" source/blender/depsgraph/intern/builder/deg_builder_relations.cc
-# General form:
-grep -n "X->id\|X_key" source/blender/depsgraph/intern/builder/deg_builder_relations.cc
-```
-Any `ComponentKey` or `add_relation()` site that references the removed type's `->id` directly — without going through `build_X()` — is a latent "Failed to add relation" error that surfaces at runtime on legacy files.
-
-**Add to the mandatory post-chisel checklist:**
-```bash
-# Scar 12: direct add_relation() calls in relations builder bypassing the no-op
-# Run after making build_X() a no-op in either depsgraph builder
-grep -n "tex->id\|tex_key" source/blender/depsgraph/intern/builder/deg_builder_relations.cc
-```
-
----
-
-### Scar 13: BLT_I18NCONTEXT_ID_<TYPE> Borrowed by Unrelated Code Is Invisible to ID Grep (Community i18n Pattern)
-
-**What happened:** The ID_CF chisel removed `BLT_I18NCONTEXT_ID_CACHEFILE` from `BLT_translation.hh` in Layer 8. After the PR merged, CI failed at step 5230/8093 — `rna_modifier.cc:8027` and `:8178` in the `NodesModifier` bake_target RNA used that constant as their `RNA_def_property_translation_context` argument. These were Geometry Nodes Modifier properties with no connection to CacheFile. Zero `ID_CF` strings in those lines. Invisible to `grep "ID_CF"`. C2065 at compile time.
-
-**Separate failure in same session:** The ID_MB chisel removed `BLT_I18NCONTEXT_ID_METABALL` but left `interface_template_id.cc:973` — a `BLT_I18N_MSGID_MULTI_CTXT` registration call listing every ID type's context — still referencing it. Also invisible to `grep "ID_MB"` because the macro is a no-op and contains only the constant name.
-
-**Why this fails silently in audit:** The `grep -rn "ID_XX"` sweep finds sites that reference the ID token string directly. Context constants are named `BLT_I18NCONTEXT_ID_XX` — that string never appears at the borrowing site. Only the constant name does. The grep pattern catches it only if you also grep the constant name.
-
-**The community i18n principle (BLENDED.md §13):** When removing a type's context constant, borrow sites must be *remapped to the semantically correct context*, not dropped. Drop = existing community translations are silently orphaned. Remap = translations key correctly to the right msgctxt. Example: `NodesModifier` bake_target remapped to `BLT_I18NCONTEXT_ID_NODETREE` (PR #157).
-
-**`BLT_I18NCONTEXT_ID_CURVE_LEGACY` — kept intentionally:** 12 sites used this with `/* Abusing id_curve :/ */` comments. These are NOT abuse — they are curve-shape/interpolation properties (proportional edit falloff, modifier falloff types, shutter curve, mask feather) that genuinely belong under the `"Curve"` msgctxt. The constant is retained in `BLT_translation.hh` after ID_CU_LEGACY removal precisely because these 12 sites need it. The apology comments were removed in 0.4.0.
-
-**Mandatory post-chisel grep (run after removing any `BLT_I18NCONTEXT_ID_<TYPE>` from `BLT_translation.hh`):**
-```bash
-# Replace CACHEFILE with the removed type's constant suffix
-grep -rn "BLT_I18NCONTEXT_ID_CACHEFILE" source/  # finds borrow sites in any file
-# General form:
-grep -rn "BLT_I18NCONTEXT_ID_<TYPE>" source/ --include="*.cc" --include="*.hh"
-```
-For each hit that is NOT inside the type's own RNA file (or a `BLT_I18N_MSGID_MULTI_CTXT` registration call in `interface_template_id.cc`):
-1. Identify the semantic concept the property is actually about
-2. Remap to the nearest correct `BLT_I18NCONTEXT_*` constant
-3. Document the remap in the commit message
-
-**Also sweep `interface_template_id.cc`:** The `BLT_I18N_MSGID_MULTI_CTXT("New", ...)` block around line 956–983 lists every ID type context. After any chisel that removes a context constant, find and remove that constant's entry from this list.
 
 ---
 
@@ -706,7 +511,7 @@ The checklist has two parts. Both run before every commit. Neither is optional.
 *Applies to every commit touching CLAUDE.md, CHANGELOG.md, BLENDED.md, or any file with cross-references, ordered lists, version maps, or architectural decisions.*
 
 1. **Run `git diff` and read the entire output.** Not a skim. Every line.
-2. **For every ordered list in the diff, find every other representation of that same order in the diff and in the touched files.** Type processing order (fold-down order for Bucket 3; chisel order for Buckets 5/6) is documented in at minimum three places. All must agree.
+2. **For every ordered list in the diff, find every other representation of that same order in the diff and in the touched files.** All representations must agree.
 3. **For every statement of the form "do X last / first / never / always," grep the diff for X.** Verify nothing else in the same diff contradicts it.
 4. **For every version number mentioned, verify it matches the version map in CHANGELOG.md.**
 5. **Search all sections within each of the four mandatory docs for stale references to the version or milestone being updated.** The headline status lines (CLAUDE.md "Current version", BLENDED.md "Status", README "Currently at") are obvious. The non-obvious ones are harder: internal roadmap tables, mid-document planning sections, version-specific subsection headers. `grep -n "0\\.X" CHANGELOG.md` (replace X with the version) will surface every reference — update all of them, not just the first one. The 0.6.0 design session caught a stale `### 0.6.x — Evaluation model` planning block at CHANGELOG.md:706 and a stale `In progress` status in the CLAUDE.md roadmap table — both invisible to a headline-only pass.
@@ -716,94 +521,7 @@ The checklist has two parts. Both run before every commit. Neither is optional.
 
 ---
 
-#### Part 2 — Code Verification Greps (by operation type)
-
-*Applies to every chisel or fold-down layer commit. Replace `XX`, `<type>`, `<TYPE_PREFIX>` with the type being processed.*
-
-**Both chisels and fold-downs:**
-
-```bash
-# Scar 4: both CASE_IDINDEX entries removed from idtype.cc (two independent switch tables)
-grep -n "CASE_IDINDEX(XX)" source/blender/blenkernel/intern/idtype.cc
-# Zero hits required. MSVC C2051/C2065 if one is missed.
-
-# Scar 8: no id_type constexpr survives in the DNA struct
-grep -n "id_type" source/blender/makesdna/DNA_<type>_types.h
-# Chisel: entire __cplusplus block gone (id_type was the only content).
-# Fold-down where DNA_DEFINE_CXX_METHODS also exists: only the id_type line removed; guard and macro stay.
-# Either way: zero `static constexpr ID_Type id_type` hits.
-grep -n "#ifdef __cplusplus\|#endif" source/blender/makesdna/DNA_<type>_types.h
-# After a fold-down partial: must show balanced open/close with real content between them, not empty.
-
-# Scar 10 + 18: allocator uses MEM_new<T>, not BKE_libblock_alloc; check constructibility first
-grep -rn "BKE_libblock_alloc.*ID_XX" source/ --include="*.cc" --include="*.c"
-# Zero hits required. Any surviving call crashes at runtime after INIT_TYPE removal.
-# Before writing the allocator, verify trivial constructibility — never from memory:
-grep -n "= nullptr\|= {}\|= 0\b\|= false\|= true\|= [0-9]" source/blender/makesdna/DNA_<type>_types.h | head -5
-grep -n "DNA_DEFINE_CXX_METHODS" source/blender/makesdna/DNA_<type>_types.h
-# Any hit = non-trivial = MEM_new<T>. Zero hits = MEM_new_zeroed<T> is safe.
-
-# Scar 16: allocator stores which_libbase result as ListBaseT<ID>*, not ListBase*
-grep -n "ListBase \*lb = which_libbase" source/blender/blenkernel/intern/<type>.cc
-# Zero hits required. ListBase* cannot bind to ListBaseT<ID>& argument (MSVC C2664).
-
-# Scar 11: no RNA EnumPropertyItem arrays using the removed type's constant prefix
-grep -rn "<TYPE_PREFIX>_" source/blender/makesrna/ --include="*.cc" --include="*.hh"
-# Any surviving hit (MB_BALL, TEX_CLOUDS, SPK_*, etc.) in an array = C2065 at compile time.
-# Paired DEF_ENUM entry: grep -n "DEF_ENUM.*<partial_name>" source/blender/makesrna/RNA_enum_items.hh
-
-# Scar 13: no BLT_I18NCONTEXT_ID_<TYPE> borrowers remain anywhere in source
-grep -rn "BLT_I18NCONTEXT_ID_<TYPE>" source/ --include="*.cc" --include="*.hh"
-# Zero hits required. Also remove the entry from interface_template_id.cc BLT_I18N_MSGID_MULTI_CTXT.
-
-# Scar 17: BLO_read_write.hh still included if any blend I/O helpers remain in the file
-grep -n "BlendWriter\|BlendDataReader\|BLO_read_\|BLO_write_" source/blender/blenkernel/intern/<type>.cc
-grep -n "BLO_read_write" source/blender/blenkernel/intern/<type>.cc
-# If first grep hits and second is empty → add explicit #include "BLO_read_write.hh".
-```
-
-**Chisels only:**
-
-```bash
-# Scar 9: TREESTORE_ID_TYPE multi-line ELEM macro — blank lines without backslash terminate it silently
-grep -n "TREESTORE_ID_TYPE" source/blender/editors/space_outliner/outliner_intern.hh
-# Read the full macro body. Every non-closing line must end with \.
-
-# Scar 12: no direct add_relation() calls in the depsgraph relations builder bypassing no-op build_X()
-# (fold-downs keep build_X() live, so this failure mode does not apply)
-grep -n "<field>->id\|<field>_key" source/blender/depsgraph/intern/builder/deg_builder_relations.cc
-# Any surviving ComponentKey or add_relation() referencing the removed type's ->id directly
-# = latent "Failed to add relation" error on legacy files at runtime.
-```
-
-**Fold-downs only:**
-
-```bash
-# Scar 15: RNA_def_main_<types> removed; RNA_def_<type> kept
-grep -n "RNA_def_main_<types>\|RNA_def_<type>" source/blender/makesrna/intern/rna_internal.hh
-# RNA_def_main_<types> (two-parameter form, ends in PropertyRNA *cprop) — must be GONE.
-# RNA_def_<type> (single-parameter form, only BlenderRNA *brna) — must be PRESENT.
-# Cross-check: makesrna.cc table entry and rna_<type>.cc definition must also survive — all three together.
-
-# Scar 19: FILTER_ID_* survival for fold-down runtime filter code
-grep -rn "FILTER_ID_LP\|FILTER_ID_PAL\|FILTER_ID_LT\|FILTER_ID_MSK\|FILTER_ID_VF\|FILTER_ID_BR" source/ --include="*.cc" --include="*.c" --include="*.h" --include="*.hh"
-# Any hit = the define was removed but runtime code still uses it.
-# Fix: restore #define FILTER_ID_XX (1ULL << N) in DNA_ID.h, absent from FILTER_ID_ALL.
-# The bit value N must match the original — check git log on DNA_ID.h for the removed line.
-
-# Scar 19: fold-down ID type values in any ID_Type-typed position (return OR argument)
-# 'return' form:
-grep -rn "return ID_LP\b\|return ID_PAL\b\|return ID_LT\b\|return ID_MSK\b\|return ID_VF\b\|return ID_BR\b" source/ --include="*.cc" --include="*.c"
-# Argument form (missed by the return grep — caught ID_BR in paint/sculpt, ID_MSK in node_add):
-grep -rn ",\s*ID_BR\b\|,\s*ID_VF\b\|,\s*ID_MSK\b\|,\s*ID_LT\b\|,\s*ID_PAL\b\|,\s*ID_LP\b" source/ --include="*.cc" --include="*.c"
-# IMPORTANT: grep cannot distinguish ID_Type from short/int params — check each callee manually.
-# ID_Type callees (cast required): asset_edit_id_from_weak_reference,
-#   WM_operator_properties_id_lookup_from_name_or_session_uid.
-# short/int callees (no cast): BKE_libblock_find_name, WM_drag_is_ID_type,
-#   RNA_type_to_ID_code, which_libbase, do_versions_rename_id.
-```
-
-**General (all operations) — Scars 1, 2, 3, 5, 6, 14:**
+#### Part 2 — General Pre-Commit Checks
 
 These scars cannot be expressed as greps. Each is a yes/no question to answer before committing.
 
@@ -838,135 +556,6 @@ These scars cannot be expressed as greps. Each is a yes/no question to answer be
 ---
 
 *The check takes 60 seconds per grep. A missed check costs a CI round-trip at minimum, a session at worst.*
-
----
-
-### Scar 15: Fold-Down Strips RNA_def_<type> Along With RNA_def_main_<types>
-
-**What happened:** The ID_LP fold-down correctly removed `RNA_def_main_lightprobes` from `rna_internal.hh` — that is the `bpy.data.lightprobes` collection accessor, which goes when the ID type is deregistered. But the same editing pass also stripped `RNA_def_lightprobe` — the LightProbe *struct* RNA definition. `rna_lightprobe.cc` is kept (fold-down protocol: runtime code stays), and `makesrna.cc` still calls `RNA_def_lightprobe` at line 4051. CI failed at step 4347/8093: `makesrna.cc(4051): error C2065: 'RNA_def_lightprobe': undeclared identifier`.
-
-**Why this is easy to do:** For every ID type there are two RNA declarations in `rna_internal.hh` that look similar:
-- `void RNA_def_main_lightprobes(BlenderRNA *brna, PropertyRNA *cprop);` — collection accessor, **goes** (the `bpy.data.lightprobes` collection is removed)
-- `void RNA_def_lightprobe(BlenderRNA *brna);` — struct RNA, **stays** (the `LightProbe` struct and its RNA defs are kept runtime code)
-
-During a fold-down, the instinct is to grep `lightprobe` in `rna_internal.hh` and remove all hits. That removes both. Only the collection accessor should go. The struct RNA declaration is not a registration artifact — it is the forward declaration for runtime RNA that must survive.
-
-**This failure mode is unique to fold-downs, not chisels.** In a chisel, both declarations go because the entire type goes. In a fold-down, the struct RNA stays — so only the `RNA_def_main_<types>` declaration is removed and `RNA_def_<type>` is kept.
-
-**The rule:** After any fold-down session that touches `rna_internal.hh`, explicitly verify that `RNA_def_<type>` (singular, no "main") is still present:
-```bash
-grep -n "RNA_def_lightprobe\b" source/blender/makesrna/intern/rna_internal.hh
-# Must return the declaration. If empty, it was accidentally stripped.
-```
-Then cross-check `makesrna.cc` for the matching table entry and `rna_<type>.cc` for the matching definition — all three must be present together.
-
-**For the remaining Bucket 3 fold-downs (ID_PAL, ID_LT, ID_MSK, ID_VF, ID_BR), the pairs to keep vs. remove:**
-
-| Type | Remove from rna_internal.hh | Keep in rna_internal.hh |
-|------|---------------------------|------------------------|
-| ID_PAL | `RNA_def_main_palettes(...)` | `RNA_def_palette(...)` |
-| ID_LT | `RNA_def_main_lattices(...)` | `RNA_def_lattice(...)` |
-| ID_MSK | `RNA_def_main_masks(...)` | `RNA_def_mask(...)` |
-| ID_VF | `RNA_def_main_fonts(...)` | `RNA_def_vfont(...)` |
-| ID_BR | `RNA_def_main_brushes(...)` | `RNA_def_brush(...)` |
-
-In every case: the `RNA_def_main_<types>` signature has a second `PropertyRNA *cprop` parameter (it is a collection accessor registered by `rna_main.cc`). The `RNA_def_<type>` signature takes only `BlenderRNA *brna`. That parameter difference is a visual check — if you're removing a declaration with two parameters, that is always the collection accessor. Single-parameter = struct RNA = keep.
-
----
-
-### Scar 16: Scar 10 Allocator Uses ListBase* Instead of ListBaseT<ID>*
-
-**What happened:** The ID_LP fold-down applied the Scar 10 manual allocator pattern to `BKE_lightprobe_add`. The template in CLAUDE.md correctly shows `ListBaseT<ID> *lb = which_libbase(bmain, ID_XX);`, but the implementation stored the result as `ListBase *lb`. CI failed at step 6624/8093: `error C2664: cannot convert argument 2 from 'blender::ListBase' to 'blender::ListBaseT<blender::ID> &'`.
-
-**Why it happens:** `which_libbase` returns `ListBaseT<ID>*`. `BKE_id_new_name_validate` takes `ListBaseT<ID>&` as its second argument. Storing the pointer as `ListBase*` and then dereferencing gives `ListBase`, which cannot bind to `ListBaseT<ID>&`. MSVC C2664 is the diagnostic.
-
-**The fix is one word:** `ListBase *lb` → `ListBaseT<ID> *lb`. The dereference `*lb` then yields `ListBaseT<ID>` and the call resolves.
-
-**Mandatory check after every Scar 10 application:**
-```bash
-grep -n "ListBase \*lb = which_libbase" source/blender/blenkernel/intern/<type>.cc
-# Must be empty. Any hit is a wrong-type bug waiting to hit CI.
-# Correct form:
-grep -n "ListBaseT<ID> \*lb = which_libbase" source/blender/blenkernel/intern/<type>.cc
-```
-
-**For the remaining Bucket 3 fold-downs** — every `BKE_<type>_add` rewritten under Scar 10 must use `ListBaseT<ID> *lb`, not `ListBase *lb`. The CLAUDE.md template is correct; the implementation must match it exactly.
-
----
-
-### Scar 17: Removing IDTypeInfo Drops the Implicit Include Chain for Blend Write/Read
-
-**What happened:** The ID_LP fold-down removed the `IDTypeInfo IDType_ID_LP` block from `lightprobe.cc`. The IDTypeInfo callbacks (`lightprobe_blend_write`, `lightprobe_blend_read_data`) previously brought `BLO_read_write.hh` into the file's include chain. The fold-down kept `BKE_lightprobe_cache_blend_write` and `BKE_lightprobe_cache_blend_read` as public runtime functions (correct — these are called from object serialization, not from the ID type system). But without the IDTypeInfo callbacks, `BLO_read_write.hh` was no longer included, leaving `BlendWriter`, `BLO_read_struct_array`, `BLO_read_float3_array`, `BLO_read_float_array`, `BLO_read_int8_array`, and `BLO_read_struct` all undefined. CI failed at step 6624/8093 with 15+ C2027/C3861 errors.
-
-**Why this is easy to miss:** The IDTypeInfo callbacks and the public cache blend functions live in the same file and look related — they both do blend file I/O. But they are independent code paths. The IDTypeInfo callbacks write/read the `LightProbe` ID block itself. The cache functions write/read the runtime `LightProbeObjectCache` attached to `Object`. The fold-down correctly removed the first and kept the second. The broken include chain is a side effect, not a logic error.
-
-**The rule:** After removing any IDTypeInfo block from a `.cc` file, audit the remaining code for any use of `BlendWriter`, `BlendDataReader`, or `BLO_*` functions. If any remain, add `#include "BLO_read_write.hh"` explicitly. `blenkernel` links `bf::blenloader` (see `CMakeLists.txt:560`) so the include is always available — it just needs to be stated.
-
-**Detection grep — run after removing IDTypeInfo from any file:**
-```bash
-grep -n "BlendWriter\|BlendDataReader\|BLO_read_\|BLO_write_" source/blender/blenkernel/intern/<type>.cc
-# Any hit that is NOT inside a removed IDTypeInfo callback needs BLO_read_write.hh included.
-grep -n "BLO_read_write" source/blender/blenkernel/intern/<type>.cc
-# If empty and the above grep had hits, add the include.
-```
-
-**This applies to both chisels and fold-downs.** Any file that loses its IDTypeInfo but retains public blend I/O helpers must add the explicit include. The pattern will recur in any type that has object-level cache data (e.g., `LightProbeObjectCache`-style structs attached to `Object` rather than the ID itself).
-
----
-
-### Scar 18: Confident Wrong Assessment of Trivial Constructibility
-
-**What happened:** The ID_LP fold-down session note stated explicitly: *"LightProbe has no DNA_DEFINE_CXX_METHODS, no user-defined constructor, trivially constructible."* Based on that assessment, `MEM_new_zeroed<LightProbe>` was used in the Scar 10 allocator. CI failed at step 6612/8093: `static_assert failed: 'For non-trivial types, MEM_new must be used.'` A single grep of `DNA_lightprobe_types.h` shows `adt = nullptr`, `type = 0`, `falloff = 0.2f`, `clipsta = 0.8f` and more in-class initializers throughout. The struct is non-trivial by definition.
-
-**Why this is a distinct scar from Scar 10:** Scar 10's decision tree is correct — it says "any in-class initializer → `MEM_new`." The failure here is not ignorance of the rule. It is writing down a confident wrong assessment without running the one grep that would have proven it wrong. The session had the right rule and misapplied it because it didn't check.
-
-**The rule:** Never assess a DNA struct as "trivially constructible" from memory or inference. Always grep the struct header before choosing the allocator:
-```bash
-grep -n "= nullptr\|= {}\|= 0\b\|= false\|= true\|= [0-9]" source/blender/makesdna/DNA_<type>_types.h | head -5
-# Any hit = non-trivial = MEM_new<T>, not MEM_new_zeroed<T>
-# Also check for DNA_DEFINE_CXX_METHODS:
-grep -n "DNA_DEFINE_CXX_METHODS" source/blender/makesdna/DNA_<type>_types.h
-```
-If either grep returns hits, the type is non-trivial. Use `MEM_new<T>`. The static_assert in `MEM_guardedalloc.h` enforces this at compile time — it is not a suggestion.
-
-**The meta-failure:** The session note was written as a permanent record and was wrong. Future sessions calibrate off these notes. A confident wrong note about trivial constructibility will cause the same wrong allocator choice every time the type is touched. Writing "I believe X" without verifying X and then documenting the belief as fact is how wrong knowledge propagates across sessions.
-
-**For the remaining Bucket 3 fold-downs** — before writing the Scar 10 allocator for any type, run the grep above on that type's DNA header. Do not assess from memory.
-
----
-
-### Scar 19: Fold-Down Types Demoted from ID_Type Enum — Two Failure Modes
-
-**What happened:** All six Bucket 3 fold-down types (`ID_LP`, `ID_PAL`, `ID_LT`, `ID_MSK`, `ID_VF`, `ID_BR`) were removed from the `ID_Type` enum in `DNA_ID_enums.h` and demoted to plain `#define` integer constants (`MAKE_ID2(...)`) in the deprecated block. This is correct — they are no longer registered ID types. But two distinct runtime failure modes surface from this demotion, both invisible to the blast radius grep.
-
-**Failure mode A — `FILTER_ID_*` missing from `DNA_ID.h`:** The fold-down removes `FILTER_ID_MSK` (and the others) from `DNA_ID.h`. Runtime code that uses `FILTER_ID_MSK` as an early-out guard in `contains_mappings_for_any()` calls — `space_image.cc:1214`, `space_clip.cc:1186` — produces C2065 at compile time. These sites are runtime remap functions that legitimately need the filter bit: `mask_info.mask` is still remapped at runtime, so skipping remap when no Mask IDs are in the remap set is a valid optimization that must remain. **Fix:** restore `#define FILTER_ID_MSK (1ULL << 15)` in `DNA_ID.h`, intentionally absent from `FILTER_ID_ALL` (Mask is not project data).
-
-**Failure mode B — fold-down ID value passed where `ID_Type` is expected:** When a fold-down type value appears in any position — `return`, function argument, initializer — where the target type is `ID_Type` (or `std::optional<ID_Type>`), MSVC C2440/C2664 fires. The fold-down type is now a plain `int` constant, not an enum member. Found in three shapes: (1) `socket_type_to_id_type` in `node_group_operator.cc` returning `ID_VF`/`ID_MSK` — caught by a `return ID_XX` grep. (2) Six calls to `asset_edit_id_from_weak_reference(*bmain, ID_BR, ...)` across `brush_asset_ops.cc`, `paint.cc`, and `grease_pencil/erase.cc` — missed by the `return` grep. (3) `WM_operator_properties_id_lookup_from_name_or_session_uid(bmain, op->ptr, ID_MSK)` in `node_add.cc:1099` — also missed by the `return` grep. **Fix:** `static_cast<ID_Type>(ID_XX)` at every such site. The bit value is a valid `short`; the cast is safe. Functions typed `short` or `int` (e.g. `RNA_type_to_ID_code`, `BKE_libblock_find_name`, `WM_drag_is_ID_type`) are not affected — implicit conversion is fine. **The detection grep must cover both shapes, but the argument-position grep requires manual callee verification** — see checklist below.
-
-**Why both are invisible to blast radius grep:** Failure mode A uses the `FILTER_ID_MSK` constant name, not the `ID_MSK` token — a field-name grep-miss variant. Failure mode B surfaces only where a callee's parameter type is `ID_Type`; the argument-position grep finds the constant but cannot determine whether the matched call site's parameter is `ID_Type` vs `short`/`int` — that requires opening the callee's declaration. Every hit from the argument grep must be verified manually.
-
-**Known functions that take `ID_Type` (require cast):** `asset_edit_id_from_weak_reference`, `WM_operator_properties_id_lookup_from_name_or_session_uid`, `socket_type_to_id_type` (return). **Known functions that take `short`/`int` (no cast needed):** `BKE_libblock_find_name`, `WM_drag_is_ID_type`, `RNA_type_to_ID_code`, `which_libbase`, `do_versions_rename_id`. Add to this list as new cases surface.
-
-**Also caught in the same build:** `SOCK_TEXTURE` was not present in the `socket_type_to_id_type` switch, producing W4062 (unhandled enumerator). `ID_TE` was chiseled in 0.4.0 — `SOCK_TEXTURE` has no corresponding ID type and belongs in the `std::nullopt` group. **Fix:** add `case SOCK_TEXTURE:` to the nullopt group.
-
-**Mandatory post-fold-down greps (added to Codex checklist above):**
-```bash
-# Failure mode A: FILTER_ID_* survival
-grep -rn "FILTER_ID_LP\|FILTER_ID_PAL\|FILTER_ID_LT\|FILTER_ID_MSK\|FILTER_ID_VF\|FILTER_ID_BR" source/ --include="*.cc" --include="*.c" --include="*.h" --include="*.hh"
-# Failure mode B: fold-down ID values in any ID_Type-typed position (return OR argument)
-# 'return' form catches functions returning ID_Type/optional<ID_Type>:
-grep -rn "return ID_LP\b\|return ID_PAL\b\|return ID_LT\b\|return ID_MSK\b\|return ID_VF\b\|return ID_BR\b" source/ --include="*.cc" --include="*.c"
-# Argument form catches call sites passing the value to an ID_Type parameter —
-# 'return' grep misses these entirely. Grep for the constant next to a comma or closing paren:
-grep -rn ",\s*ID_BR\b\|,\s*ID_VF\b\|,\s*ID_MSK\b\|,\s*ID_LT\b\|,\s*ID_PAL\b\|,\s*ID_LP\b" source/ --include="*.cc" --include="*.c"
-# IMPORTANT: the grep cannot distinguish ID_Type parameters from short/int ones.
-# Every hit requires opening the callee's declaration to check the parameter type.
-# ID_Type → static_cast<ID_Type>(ID_XX). short/int → no cast needed.
-# Known ID_Type callees: asset_edit_id_from_weak_reference,
-#   WM_operator_properties_id_lookup_from_name_or_session_uid.
-# Known short/int callees: BKE_libblock_find_name, WM_drag_is_ID_type,
-#   RNA_type_to_ID_code, which_libbase, do_versions_rename_id.
-```
 
 ---
 
@@ -1200,7 +789,7 @@ If you're an AI working on this codebase:
 | `CLAUDE.md` `## wtf.md` section | Who the developer is and how to work with them (embedded in this file, not a separate doc) |
 | `UPSTREAM_SYNC.md` | How to merge upstream Blender, conflict-prone files |
 
-**Document responsibility pattern** — for chisel work and any future structural change:
+**Document responsibility pattern** — for any structural change:
 
 | What | Where it goes |
 |------|--------------|
@@ -1212,11 +801,11 @@ If you're an AI working on this codebase:
 
 **Claude AI contributor notes go in CHANGELOG, not the README.** The README Contributors section is two sentences linking to CHANGELOG. All per-session implementation detail — what was built, what was removed, what scars were applied — belongs in the CHANGELOG *Unreleased* entry for that version, alongside the code progress rows. The README is a landing page.
 
-**After every chisel or fold-down, all four documents must be updated before the session ends.** The four are: `CLAUDE.md`, `CHANGELOG.md`, `BLENDED.md`, `.github/README.md`. Specific targets per document:
-- **CLAUDE.md** — type entry header → ✓ COMPLETE, session note added, current version line updated, in-progress paragraph updated, protocol order updated (chisel order for Bucket 5/6; fold-down order for Bucket 3)
-- **CHANGELOG.md** — layer rows → ✓, type status line → ✓ bolded, key notes updated; Claude AI contributor detail added to *Unreleased* section
-- **BLENDED.md** — relevant Bucket table: mark type `✓ X.Y.Z` when work is complete (Bucket 3 for 0.5.x; Buckets 4–6 are fully done)
-- **`.github/README.md`** — "What's Different" section current state (datablock audit bullet updated with new removal or fold-down)
+**After every milestone or structural change, all four documents must be updated before the session ends.** The four are: `CLAUDE.md`, `CHANGELOG.md`, `BLENDED.md`, `.github/README.md`. Specific targets per document:
+- **CLAUDE.md** — current version line updated, roadmap table row updated
+- **CHANGELOG.md** — milestone note added; Claude AI contributor detail added to *Unreleased* section
+- **BLENDED.md** — Status line updated; relevant sections updated
+- **`.github/README.md`** — version/status sentence updated
 
 **Note:** `.github/` is in `.gitignore` on this repo. Use `git add -f .github/README.md` when staging README updates — normal `git add` silently skips it.
 
@@ -1236,7 +825,7 @@ Use the TodoWrite tool. The list is the audit trail of what's actually getting d
 
 One item per logical step. Mark complete the instant it's done — never batch. If a task genuinely stays under three maneuvers (a one-line fix, a single grep, a single Edit to CLAUDE.md), skip the list. Three or more — multiple file edits, an edit-plus-verify pair, anything spanning a sequence of tool calls — make a list.
 
-Chisel sessions in particular: every layer is a list item. **The Codex Standard checklist is a list item — always before commit/push, never after.** It covers both documentation consistency (Part 1) and the scar-mapped code greps (Part 2). If it's not on the list, it doesn't get done — that's the whole point.
+**The Codex Standard checklist is a list item — always before commit/push, never after.** If it's not on the list, it doesn't get done — that's the whole point.
 
 ### High-Leverage Patterns
 
