@@ -132,7 +132,7 @@ if(WITH_GHOST_WAYLAND)
   )
   # Full-color application icon for the Wayland window icon.
   data_to_c(
-    "${CMAKE_SOURCE_DIR}/release/freedesktop/icons/scalable/apps/blender.svg"
+    "${CMAKE_SOURCE_DIR}/release/freedesktop/icons/scalable/apps/blended.svg"
     "${CMAKE_CURRENT_BINARY_DIR}/blender_app_icon.svg.c"
     SRC
     # Name override to avoid conflicting with the UI icon `datatoc_blender_svg`.
