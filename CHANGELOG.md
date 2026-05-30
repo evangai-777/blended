@@ -179,10 +179,10 @@ Each mode button opens the focused editor layout described in the corresponding 
 - [x] Launcher accent color finalized in code ✓ (`COL_ACCENT` = `#ff7f00` in `space_blended_launcher.cc`)
 - [ ] **[NEXT]** App icon assets generated (all platform sizes):
 
-| Format | Sizes | Artwork file | Also update |
-|--------|-------|-------------|-------------|
-| Windows ICO | 16, 32, 48, 64, 128, 256px combined | `release/windows/icons/winblended.ico` | Rename `winblender.rc` → `winblended.rc`; inside it line 12 `"winblender.ico"` → `"winblended.ico"`; `build_files/cmake/packaging.cmake` lines 92+98; `source/creator/CMakeLists.txt` lines 168+348 |
-| Linux SVG | scalable | `release/freedesktop/icons/scalable/apps/blended.svg` | Rename `blender.desktop` → `blended.desktop`; inside it line 83 `Icon=blender` → `Icon=blended`; `source/blender/windowmanager/CMakeLists.txt` line 135; `source/creator/CMakeLists.txt` lines 766+767+821+829 |
+| Format | Sizes | Artwork file (pending) | Build system (✓ done — commit `0bb9e585`) |
+|--------|-------|----------------------|------------------------------------------|
+| Windows ICO | 16, 32, 48, 64, 128, 256px combined | `release/windows/icons/winblended.ico` | `winblender.rc` → `winblended.rc` ✓; `packaging.cmake` lines 92+98 ✓; `source/creator/CMakeLists.txt` lines 168+348 ✓ |
+| Linux SVG | scalable | `release/freedesktop/icons/scalable/apps/blended.svg` (also delete `blender.svg`) | `blender.desktop` → `blended.desktop` ✓; `windowmanager/CMakeLists.txt` line 135 ✓; `source/creator/CMakeLists.txt` lines 766+767+821+829 ✓ |
 
 - [ ] **[NEXT]** Splash screen — visual identity applied to Phase 1 skeleton:
   - **Dimensions:** 1920×960px (2:1 ratio) — code scales; this resolution covers HiDPI

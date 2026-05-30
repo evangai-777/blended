@@ -1458,16 +1458,16 @@ Assets the human developer is responsible for creating and committing. All commi
 | Windows ICO | 16, 32, 48, 64, 128, 256px combined into one `.ico` | Multi-size ICO, all sizes in one file |
 | Linux SVG | no constraint | Vector, scales |
 
-- **Artwork files:**
+- **Artwork files (pending):**
   - `release/windows/icons/winblended.ico`
-  - `release/freedesktop/icons/scalable/apps/blended.svg`
-- **Also update (build system + config):**
-  - Rename `release/windows/icons/winblender.rc` → `winblended.rc`; line 12: `"winblender.ico"` → `"winblended.ico"`
-  - `build_files/cmake/packaging.cmake` lines 92+98: `winblender.ico` → `winblended.ico`
-  - `source/creator/CMakeLists.txt` lines 168+348: `winblender.rc` → `winblended.rc`
-  - Rename `release/freedesktop/blender.desktop` → `blended.desktop`; line 83: `Icon=blender` → `Icon=blended`
-  - `source/blender/windowmanager/CMakeLists.txt` line 135: `blender.svg` → `blended.svg`
-  - `source/creator/CMakeLists.txt` lines 766+767+821+829: `blender.desktop` / `blender.svg` → `blended.desktop` / `blended.svg`
+  - `release/freedesktop/icons/scalable/apps/blended.svg` (also delete `blender.svg` once committed)
+- **Build system + config ✓ done (commit `0bb9e585`):**
+  - `winblender.rc` → `winblended.rc` ✓; line 12 updated
+  - `build_files/cmake/packaging.cmake` lines 92+98 ✓
+  - `source/creator/CMakeLists.txt` lines 168+348 ✓
+  - `blender.desktop` → `blended.desktop` ✓; `Icon=` updated
+  - `source/blender/windowmanager/CMakeLists.txt` line 135 ✓
+  - `source/creator/CMakeLists.txt` lines 766+767+821+829 ✓
 
 ---
 
