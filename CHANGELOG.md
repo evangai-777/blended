@@ -68,6 +68,23 @@ carries a one-liner status per active item.
 
 **Version bump:** `BLENDED_VERSION_MINOR` 7 → 8. First commit of 0.8.x dev cycle.
 
+### Design decisions locked (Socratic dialogue, 2026-05-30)
+
+- **Magic bytes:** write `"BLENDED"` (7 bytes), read accepts both `"BLENDER"` and `"BLENDED"`. One-way compatibility — Blended reads `.blend` files, upstream Blender cannot read `.blended` files. Hard boundary by design (BLENDED.md §5).
+- **File extension:** `.blended` on all write paths. Backups: `.blended1`, `.blended2`, etc. Crash recovery: `_crash.blended`. Autosave: `_autosave.blended`. Default: `Untitled.blended`.
+- **`FILE_TYPE_BLENDED`:** new bit flag in `DNA_space_enums.h`, added alongside existing `FILE_TYPE_BLENDER`. Open/browse dialogs OR both flags; save dialogs use `FILE_TYPE_BLENDED` only. Two flags preserved to distinguish native `.blended` from legacy `.blend` in the file browser — distinction becomes meaningful at 0.9.x when `.blend` import lands.
+- **Bundled upstream datafiles** (e.g. `compositing_nodes_essentials.blend`, `procedural_hair_node_assets.blend`) stay `.blend` — upstream assets, not Blended project files.
+- **MIME type:** `application/x-blended` (new, for native format) alongside `application/x-blender` (kept for `.blend` read compat).
+
+### Scope
+
+~50 total sites: ~32 C/C++ across ~15 source files, ~10 Python across ~7 script files, ~5 platform/packaging files, ~3 UI string sites. Full blast radius audit in CLAUDE.md `### 0.8.0 Blast Radius Audit`.
+
+### Claude AI contributor notes
+
+- Scoping survey of all `.blend` format touchpoints across the codebase: magic bytes (writefile.cc, blo_core_blend_header), extension enforcement (wm_files.cc), file detection (filelist.cc, blendfile.cc, asset_library_service.cc), platform integration (winstuff.cc, blended.desktop, freedesktop.py, Info.plist), Python scripts, UI strings. Full audit committed to CLAUDE.md with per-file line numbers.
+- Socratic design dialogue locked three key decisions: one-way compatibility (hard boundary via magic bytes), `FILE_TYPE_BLENDED` as new bit flag (preserves `.blend` vs `.blended` distinction for 0.9.x import), bundled datafiles stay `.blend`.
+
 ---
 
 ## 0.7.0 — 2026-05-30 — CI-complete (build 99, commit `2ddd1dd0`)
