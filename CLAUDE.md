@@ -824,6 +824,12 @@ These scars cannot be expressed as greps. Each is a yes/no question to answer be
 
 - **Scar 14 — am I producing a menu about something obviously wrong?** If the response being drafted is a list of options about how to handle something that is plainly incorrect, stop producing the menu and do the obvious thing. The menu pattern is the failure mode. Common sense is upstream of the rules.
 
+- **Scar 20 — did I grep the full repo root (no directory or extension filter) after any file rename?** When renaming a file that may be referenced by path strings anywhere in the codebase, the verification grep must cover the entire repo with no directory restriction and no `--include` filter. A scoped grep (`source/`, `build_files/`, `--include="*.cmake"`, `--include="*.txt"`) silently misses files outside those directories or with non-matching extensions. `doc/doxygen/Doxyfile` has no extension and lives in `doc/` — both invisible to scoped searches. Correct check after any rename:
+  ```bash
+  grep -rn "old_filename" /home/user/Blended --exclude-dir=.git
+  ```
+  Zero hits required. If any hit remains, update it before committing.
+
 - **Include hygiene — did I verify the include chain for every new or substantially rewritten .cc file?** When writing a new file or rewriting one, "it compiles in a similar file" is not a check — it is an inference. Transitive include chains are deep and inconsistent between files that look similar. The actual check:
   ```bash
   # For every function/type called in the file, confirm the include exists:
@@ -966,6 +972,22 @@ grep -rn ",\s*ID_BR\b\|,\s*ID_VF\b\|,\s*ID_MSK\b\|,\s*ID_LT\b\|,\s*ID_PAL\b\|,\s
 # Known short/int callees: BKE_libblock_find_name, WM_drag_is_ID_type,
 #   RNA_type_to_ID_code, which_libbase, do_versions_rename_id.
 ```
+
+---
+
+### Scar 20: Scoped Grep Misses Files Outside the Expected Directory or Without Extensions
+
+**What happened:** When renaming `blender.svg` → `blended.svg` across the codebase, the verification grep searched only `source/` and `build_files/` with `--include="*.cmake" --include="*.txt"`. `doc/doxygen/Doxyfile:54` sets `PROJECT_LOGO = ../../release/freedesktop/icons/scalable/apps/blender.svg` — it was invisible to the search on two axes: (1) it lives in `doc/`, outside the searched directories; (2) `Doxyfile` has no file extension, so it matches no `--include` pattern. The stale reference was caught by Codex on PR #217 after the rename had already been committed and pushed.
+
+**Why it's easy to do:** When doing a targeted rename, the instinct is to grep only the "build system" directories and "config file" extensions because those are where references are expected. That expectation is wrong — any file anywhere in the repo can contain a path string. Documentation generators, metadata files, scripts, and config files with non-standard names all fall outside the expected scope.
+
+**The rule:** After renaming any file that is referenced by path string in the codebase, the verification grep must be repo-root with no restrictions:
+```bash
+grep -rn "old_filename" /home/user/Blended --exclude-dir=.git
+```
+No `--include` filter. No directory restriction. Zero hits required before committing. The `--exclude-dir=.git` is the only safe exclusion — everything else must be searched.
+
+**This applies to any file rename, not just SVGs.** `.ico`, `.rc`, `.desktop`, `.py`, `.png`, `.blend` — if a file is referenced somewhere, the reference can live anywhere.
 
 ---
 
