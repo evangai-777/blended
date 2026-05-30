@@ -1460,7 +1460,7 @@ Assets the human developer is responsible for creating and committing. All commi
 
 - **Commit to:**
   - `release/windows/icons/winblender.ico` (replace in place — `winblender.rc` hardcodes this filename)
-  - `release/freedesktop/icons/scalable/apps/blender.svg` (replace in place — no `hicolor/` prefix; this repo ships SVG only, no PNG size dirs)
+  - `release/freedesktop/icons/scalable/apps/blended.svg` (new file — no `hicolor/` prefix; also update `Icon=blender` → `Icon=blended` in `release/freedesktop/blender.desktop`)
 
 ---
 

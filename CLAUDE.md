@@ -102,8 +102,8 @@ BLI_listbase_clear(&bmain->linestyles);
 
 | Format | Sizes | Commit target |
 |--------|-------|---------------|
-| Windows ICO | 16, 32, 48, 64, 128, 256px (combined multi-size) | `release/windows/icons/winblender.ico` (replace in place — `.rc` hardcodes this name) |
-| Linux SVG | scalable (no constraint) | `release/freedesktop/icons/scalable/apps/blender.svg` (replace in place — no `hicolor/` prefix; no PNG size dirs in this repo) |
+| Windows ICO | 16, 32, 48, 64, 128, 256px (combined multi-size) | `release/windows/icons/winblender.ico` (replace in place — `winblender.rc` hardcodes this name) |
+| Linux SVG | scalable (no constraint) | `release/freedesktop/icons/scalable/apps/blended.svg` (new file; also update `Icon=blender` → `Icon=blended` in `release/freedesktop/blender.desktop` line 83) |
 
 - [ ] **[NEXT]** Splash screen visual design applied:
   - **Dimensions:** 1920×960px (2:1 ratio) — code scales it at runtime; this resolution handles HiDPI cleanly
