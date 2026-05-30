@@ -1437,6 +1437,10 @@ Assets the human developer is responsible for creating and committing. All commi
 
 - [x] ✓ **Done** — flat-vector orange blender appliance committed to `release/datafiles/blended_logo.svg` + `blended_logo.png`
 
+#### 1a. Logo artwork credit
+
+- [x] ✓ **Done** — `release/datafiles/license.txt` created (follows `studiolights/world/license.txt` pattern); `blended_logo.svg` `<metadata>` block updated with inline attribution: "Orange Blender clip art" by Michelle L., 03-09-2013, https://www.clker.com/clipart-orange-blender.html
+
 ---
 
 #### 2. Final accent hex
@@ -1453,19 +1457,17 @@ Assets the human developer is responsible for creating and committing. All commi
 |--------|------|-------|
 | Windows ICO | 16, 32, 48, 64, 128, 256px combined into one `.ico` | Multi-size ICO, all sizes in one file |
 | Linux SVG | no constraint | Vector, scales |
-| Linux PNG ×8 | 16, 22, 24, 32, 48, 64, 128, 256px | One file per size |
 
-- **Commit to:**
-  - `release/windows/icons/blended.ico`
-  - `release/freedesktop/icons/hicolor/scalable/apps/blended.svg`
-  - `release/freedesktop/icons/hicolor/16x16/apps/blended.png`
-  - `release/freedesktop/icons/hicolor/22x22/apps/blended.png`
-  - `release/freedesktop/icons/hicolor/24x24/apps/blended.png`
-  - `release/freedesktop/icons/hicolor/32x32/apps/blended.png`
-  - `release/freedesktop/icons/hicolor/48x48/apps/blended.png`
-  - `release/freedesktop/icons/hicolor/64x64/apps/blended.png`
-  - `release/freedesktop/icons/hicolor/128x128/apps/blended.png`
-  - `release/freedesktop/icons/hicolor/256x256/apps/blended.png`
+- **Artwork files (pending):**
+  - `release/windows/icons/winblended.ico`
+  - `release/freedesktop/icons/scalable/apps/blended.svg` (also delete `blender.svg` once committed)
+- **Build system + config ✓ done (commit `0bb9e585`):**
+  - `winblender.rc` → `winblended.rc` ✓; line 12 updated
+  - `build_files/cmake/packaging.cmake` lines 92+98 ✓
+  - `source/creator/CMakeLists.txt` lines 168+348 ✓
+  - `blender.desktop` → `blended.desktop` ✓; `Icon=` updated
+  - `source/blender/windowmanager/CMakeLists.txt` line 135 ✓
+  - `source/creator/CMakeLists.txt` lines 766+767+821+829 ✓
 
 ---
 

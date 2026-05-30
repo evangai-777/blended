@@ -165,7 +165,7 @@ if(WIN32 AND NOT UNIX)
   )
 
   list(APPEND SRC
-    ${CMAKE_SOURCE_DIR}/release/windows/icons/winblender.rc
+    ${CMAKE_SOURCE_DIR}/release/windows/icons/winblended.rc
   )
 
   if(NOT WITH_WINDOWS_EXTERNAL_MANIFEST)
@@ -345,7 +345,7 @@ else()
   if(WIN32)
     add_executable(blender-launcher WIN32
       blender_launcher_win32.c
-      ${CMAKE_SOURCE_DIR}/release/windows/icons/winblender.rc
+      ${CMAKE_SOURCE_DIR}/release/windows/icons/winblended.rc
     )
     if(NOT WITH_WINDOWS_EXTERNAL_MANIFEST)
       target_sources(blender-launcher PRIVATE
@@ -763,8 +763,8 @@ if(UNIX AND NOT APPLE)
 
     install(
       FILES
-        ${CMAKE_SOURCE_DIR}/release/freedesktop/blender.desktop
-        ${CMAKE_SOURCE_DIR}/release/freedesktop/icons/scalable/apps/blender.svg
+        ${CMAKE_SOURCE_DIR}/release/freedesktop/blended.desktop
+        ${CMAKE_SOURCE_DIR}/release/freedesktop/icons/scalable/apps/blended.svg
         ${CMAKE_SOURCE_DIR}/release/freedesktop/icons/symbolic/apps/blender-symbolic.svg
       DESTINATION "."
     )
@@ -818,7 +818,7 @@ file(REMOVE ${CMAKE_BINARY_DIR}/bin/lib/libglapi.so.0.0.0)\n
     )
     # Misc files.
     install(
-      FILES ${CMAKE_SOURCE_DIR}/release/freedesktop/blender.desktop
+      FILES ${CMAKE_SOURCE_DIR}/release/freedesktop/blended.desktop
       DESTINATION "./share/applications"
     )
     install(
@@ -826,7 +826,7 @@ file(REMOVE ${CMAKE_BINARY_DIR}/bin/lib/libglapi.so.0.0.0)\n
       DESTINATION "./share/metainfo"
     )
     install(
-      FILES ${CMAKE_SOURCE_DIR}/release/freedesktop/icons/scalable/apps/blender.svg
+      FILES ${CMAKE_SOURCE_DIR}/release/freedesktop/icons/scalable/apps/blended.svg
       DESTINATION "./share/icons/hicolor/scalable/apps"
     )
     install(

@@ -94,11 +94,23 @@ BLI_listbase_clear(&bmain->linestyles);
 ### 0.7.0 To-Do Checklist — Phase 2 Pending
 - [x] Launcher file management chrome — `RGN_TYPE_HEADER` + `LAUNCHER_HT_header` (wordmark, New Project, Open…, Open Recent dropdown) ✓ PR #196
 - [x] Mode button rounded corners (8px) + hover state (`#323232` fill + accent border) ✓ PR #196
-- [x] Logo illustration originated ✓ (`blended_logo.svg` + `.png` — orange blender appliance, flat-vector)
-- [x] Final accent hex confirmed ✓ (`#ff7f00` — definitive, replaces `#E87D0D` placeholder)
-- [ ] **[NEXT]** App icon (all platform sizes)
-- [ ] **[NEXT]** Splash screen visual design applied
-- [x] Launcher accent color finalized in code ✓ (`COL_ACCENT` swapped `#E87D0D` → `#ff7f00` in `space_blended_launcher.cc`, commit `c43aa3c0`)
+- [x] Logo illustration originated ✓ (`release/datafiles/blended_logo.svg` + `blended_logo.png` — orange blender appliance, flat-vector)
+- [x] Logo artwork credit ✓ (`release/datafiles/license.txt` + SVG `<metadata>` attribution — "Orange Blender clip art" by Michelle L., clker.com, 03-09-2013)
+- [x] Final accent hex confirmed ✓ (`#ff7f00` — logo orange, sourced from SVG fill; `#2596be` was a bad hex-picker read)
+- [x] Launcher accent color finalized in code ✓ (`COL_ACCENT` = `#ff7f00` in `space_blended_launcher.cc`, commit `c43aa3c0`)
+- [ ] **[NEXT]** App icon (all platform sizes):
+
+| Format | Sizes | Artwork file (pending) | Build system (✓ done — commit `0bb9e585`) |
+|--------|-------|----------------------|------------------------------------------|
+| Windows ICO | 16, 32, 48, 64, 128, 256px combined | `release/windows/icons/winblended.ico` | `winblender.rc` → `winblended.rc` ✓; `packaging.cmake` lines 92+98 ✓; `source/creator/CMakeLists.txt` lines 168+348 ✓ |
+| Linux SVG | scalable | `release/freedesktop/icons/scalable/apps/blended.svg` (also delete `blender.svg`) | `blender.desktop` → `blended.desktop` ✓; `windowmanager/CMakeLists.txt` line 135 ✓; `source/creator/CMakeLists.txt` lines 766+767+821+829 ✓ |
+
+- [ ] **[NEXT]** Splash screen visual design applied:
+  - **Dimensions:** 1920×960px (2:1 ratio) — code scales it at runtime; this resolution handles HiDPI cleanly
+  - **File size:** ~725KB target — splash is compiled directly into the binary (`datatoc_splash_png`), not loaded from disk; it bloats the executable if oversized
+  - **Do NOT include:** round corners (applied in code by `wm_block_splash_image_roundcorners_add`) or version text (overlaid in code, changes each release)
+  - **Preview without recompiling:** `BLENDER_CUSTOM_SPLASH=/path/to/splash.png`
+  - **Commit to:** `release/datafiles/splash.png` (overwrites Blender's existing file in-place)
 
 ---
 
