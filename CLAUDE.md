@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.7.0-dev — CI-complete (Windows x64, build 97 on commit `aa6ec698`). Phase 1 skeleton complete ✓ + Phase 2 partial CI-complete ✓. Phase 1: launcher + 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome audit), format design ✓ (startup-as-blend + userpref-as-blend removed, BLENDED.md §5 Group 1 LOCKED), VFont Bucket 3 all layers ✓ (DNA filepath fields + versioning pass 502.24 + RNA sync callback + BKE_curve_vfont_ensure + drain), Palette → Brush all layers ✓ (DNA embed PaletteColor/Palette in Brush + Paint::palette deprecated, brush.cc copy/free/I/O, paint.cc API, editors updated, versioning pass 502.25 + drain), LightProbe → Light all layers ✓ (eLightType LA_PROBE_SPHERE/PLANAR/VOLUME + ~30 probe_* fields in Light DNA, versioning pass 502.26, drain `bmain->lightprobes`, commit `a336e0b2`), Mask → compositor NodeTree all layers ✓ (NodeCompositeMask storage + inline mask I/O + metadata fields sfra/efra/flag/masklay_act/name, versioning pass 502.27, drain `bmain->masks`, subversion 28, commits `9c8dbc3c` + `0d375e53`), Lattice → LatticeModifierData all layers ✓ (embedded Lattice* + object_to_lattice[4][4] in DNA, modifier lifecycle helpers, inline deform coord functions, MOD_lattice refactor, RNA/editor cleanup, versioning pass 502.29, drain `bmain->lattices`, subversion 29, commits `95ff32e2`–`9166a297`; Codex bug-fix commit `97af74a4`: drain version-gated + lmd->object deform fallback restored), Brush → project-optional all layers ✓ (BRUSH_PROJECT_LOCAL flag in eBrushFlags2 + versioning pass 502.30 + BKE_brush_drain_transient + use_project_local RNA, subversion 30, commits `0095ce44`–`0f47294c`). Phase 2 CI-complete items: launcher header chrome + rounded cards + hover state ✓ (RGN_TYPE_HEADER + LAUNCHER_HT_header Python class, draw_rect_rounded 8px radius, COL_CARD_HOVER #323232 + accent border, mouse_x/mouse_y in SpaceBlendedLauncher DNA, PR #196, commit `a633d329`). Phase 2 design: logo ✓ (orange blender appliance, flat-vector, `release/datafiles/blended_logo.svg` + `.png`), accent hex ✓ (`#ff7f00`). **Next step:** app icon (all platform sizes) + splash visual. Typeface: Inter (Blender's bundled font) — permanent, no embedding needed, decision closed.
+**Current version:** Blended 0.7.0-dev — CI-complete (Windows x64, build 97 on commit `aa6ec698`). Phase 1 skeleton complete ✓ + Phase 2 partial CI-complete ✓. Phase 1: launcher + 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome audit), format design ✓ (startup-as-blend + userpref-as-blend removed, BLENDED.md §5 Group 1 LOCKED), VFont Bucket 3 all layers ✓ (DNA filepath fields + versioning pass 502.24 + RNA sync callback + BKE_curve_vfont_ensure + drain), Palette → Brush all layers ✓ (DNA embed PaletteColor/Palette in Brush + Paint::palette deprecated, brush.cc copy/free/I/O, paint.cc API, editors updated, versioning pass 502.25 + drain), LightProbe → Light all layers ✓ (eLightType LA_PROBE_SPHERE/PLANAR/VOLUME + ~30 probe_* fields in Light DNA, versioning pass 502.26, drain `bmain->lightprobes`, commit `a336e0b2`), Mask → compositor NodeTree all layers ✓ (NodeCompositeMask storage + inline mask I/O + metadata fields sfra/efra/flag/masklay_act/name, versioning pass 502.27, drain `bmain->masks`, subversion 28, commits `9c8dbc3c` + `0d375e53`), Lattice → LatticeModifierData all layers ✓ (embedded Lattice* + object_to_lattice[4][4] in DNA, modifier lifecycle helpers, inline deform coord functions, MOD_lattice refactor, RNA/editor cleanup, versioning pass 502.29, drain `bmain->lattices`, subversion 29, commits `95ff32e2`–`9166a297`; Codex bug-fix commit `97af74a4`: drain version-gated + lmd->object deform fallback restored), Brush → project-optional all layers ✓ (BRUSH_PROJECT_LOCAL flag in eBrushFlags2 + versioning pass 502.30 + BKE_brush_drain_transient + use_project_local RNA, subversion 30, commits `0095ce44`–`0f47294c`). Phase 2 CI-complete items: launcher header chrome + rounded cards + hover state ✓ (RGN_TYPE_HEADER + LAUNCHER_HT_header Python class, draw_rect_rounded 8px radius, COL_CARD_HOVER #323232 + accent border, mouse_x/mouse_y in SpaceBlendedLauncher DNA, PR #196, commit `a633d329`). Phase 2 design: logo ✓ (orange blender appliance, flat-vector, `release/datafiles/blended_logo.svg` + `.png`), accent hex ✓ (`#ff7f00`), app icon ✓ (`winblended.ico` + `blended.svg`, PR #216). **Next step:** splash visual. Typeface: Inter (Blender's bundled font) — permanent, no embedding needed, decision closed.
 
 ---
 
@@ -98,12 +98,12 @@ BLI_listbase_clear(&bmain->linestyles);
 - [x] Logo artwork credit ✓ (`release/datafiles/license.txt` + SVG `<metadata>` attribution — "Orange Blender clip art" by Michelle L., clker.com, 03-09-2013)
 - [x] Final accent hex confirmed ✓ (`#ff7f00` — logo orange, sourced from SVG fill; `#2596be` was a bad hex-picker read)
 - [x] Launcher accent color finalized in code ✓ (`COL_ACCENT` = `#ff7f00` in `space_blended_launcher.cc`, commit `c43aa3c0`)
-- [ ] **[NEXT]** App icon (all platform sizes):
+- [x] App icon (all platform sizes) ✓
 
-| Format | Sizes | Artwork file (pending) | Build system (✓ done — commit `0bb9e585`) |
-|--------|-------|----------------------|------------------------------------------|
-| Windows ICO | 16, 32, 48, 64, 128, 256px combined | `release/windows/icons/winblended.ico` | `winblender.rc` → `winblended.rc` ✓; `packaging.cmake` lines 92+98 ✓; `source/creator/CMakeLists.txt` lines 168+348 ✓ |
-| Linux SVG | scalable | `release/freedesktop/icons/scalable/apps/blended.svg` (also delete `blender.svg`) | `blender.desktop` → `blended.desktop` ✓; `windowmanager/CMakeLists.txt` line 135 ✓; `source/creator/CMakeLists.txt` lines 766+767+821+829 ✓ |
+| Format | Sizes | Artwork file | Build system |
+|--------|-------|-------------|-------------|
+| Windows ICO | 16, 32, 48, 64, 128, 256px combined | `release/windows/icons/winblended.ico` ✓ | `winblended.rc` ✓; `packaging.cmake` ✓; `source/creator/CMakeLists.txt` ✓ |
+| Linux SVG | scalable | `release/freedesktop/icons/scalable/apps/blended.svg` ✓ (`blender.svg` deleted ✓) | `blended.desktop` ✓; `windowmanager/CMakeLists.txt` ✓; `source/creator/CMakeLists.txt` ✓ |
 
 - [ ] **[NEXT]** Splash screen visual design applied:
   - **Dimensions:** 1920×960px (2:1 ratio) — code scales it at runtime; this resolution handles HiDPI cleanly
@@ -824,6 +824,12 @@ These scars cannot be expressed as greps. Each is a yes/no question to answer be
 
 - **Scar 14 — am I producing a menu about something obviously wrong?** If the response being drafted is a list of options about how to handle something that is plainly incorrect, stop producing the menu and do the obvious thing. The menu pattern is the failure mode. Common sense is upstream of the rules.
 
+- **Scar 20 — did I grep the full repo root (no directory or extension filter) after any file rename?** When renaming a file that may be referenced by path strings anywhere in the codebase, the verification grep must cover the entire repo with no directory restriction and no `--include` filter. A scoped grep (`source/`, `build_files/`, `--include="*.cmake"`, `--include="*.txt"`) silently misses files outside those directories or with non-matching extensions. `doc/doxygen/Doxyfile` has no extension and lives in `doc/` — both invisible to scoped searches. Correct check after any rename:
+  ```bash
+  grep -rn "old_filename" /home/user/Blended --exclude-dir=.git
+  ```
+  Zero hits required. If any hit remains, update it before committing.
+
 - **Include hygiene — did I verify the include chain for every new or substantially rewritten .cc file?** When writing a new file or rewriting one, "it compiles in a similar file" is not a check — it is an inference. Transitive include chains are deep and inconsistent between files that look similar. The actual check:
   ```bash
   # For every function/type called in the file, confirm the include exists:
@@ -966,6 +972,22 @@ grep -rn ",\s*ID_BR\b\|,\s*ID_VF\b\|,\s*ID_MSK\b\|,\s*ID_LT\b\|,\s*ID_PAL\b\|,\s
 # Known short/int callees: BKE_libblock_find_name, WM_drag_is_ID_type,
 #   RNA_type_to_ID_code, which_libbase, do_versions_rename_id.
 ```
+
+---
+
+### Scar 20: Scoped Grep Misses Files Outside the Expected Directory or Without Extensions
+
+**What happened:** When renaming `blender.svg` → `blended.svg` across the codebase, the verification grep searched only `source/` and `build_files/` with `--include="*.cmake" --include="*.txt"`. `doc/doxygen/Doxyfile:54` sets `PROJECT_LOGO = ../../release/freedesktop/icons/scalable/apps/blender.svg` — it was invisible to the search on two axes: (1) it lives in `doc/`, outside the searched directories; (2) `Doxyfile` has no file extension, so it matches no `--include` pattern. The stale reference was caught by Codex on PR #217 after the rename had already been committed and pushed.
+
+**Why it's easy to do:** When doing a targeted rename, the instinct is to grep only the "build system" directories and "config file" extensions because those are where references are expected. That expectation is wrong — any file anywhere in the repo can contain a path string. Documentation generators, metadata files, scripts, and config files with non-standard names all fall outside the expected scope.
+
+**The rule:** After renaming any file that is referenced by path string in the codebase, the verification grep must be repo-root with no restrictions:
+```bash
+grep -rn "old_filename" /home/user/Blended --exclude-dir=.git
+```
+No `--include` filter. No directory restriction. Zero hits required before committing. The `--exclude-dir=.git` is the only safe exclusion — everything else must be searched.
+
+**This applies to any file rename, not just SVGs.** `.ico`, `.rc`, `.desktop`, `.py`, `.png`, `.blend` — if a file is referenced somewhere, the reference can live anywhere.
 
 ---
 
