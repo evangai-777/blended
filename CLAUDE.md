@@ -585,6 +585,16 @@ No `--include` filter. No directory restriction. Zero hits required before commi
 
 **The revert was the correct move.** `git checkout HEAD -- CLAUDE.md` and start over. A botched edit that creates new problems is worse than no edit. When the file is in a worse state than you found it, revert and try again — don't try to fix forward through the mess.
 
+**Why this is a prime example of Scar 3 — commit and push in sections.** The revert was only possible because the prior work (CI fix, version bump, four-doc milestone update) had already been committed and pushed as separate logical units before the CLAUDE.md cleanup began. If everything had been held in one uncommitted working tree — the paint.cc fix, the version header bump, the CHANGELOG/BLENDED/README updates, *and* the botched CLAUDE.md edit — the revert would have destroyed all of it. `git checkout HEAD -- CLAUDE.md` only works cleanly when CLAUDE.md is the only dirty file. If five files are dirty and one is ruined, the options are ugly: either revert everything and redo the good work, or try to salvage the mess forward. Neither is acceptable.
+
+Commit-and-push-per-logical-unit serves two purposes simultaneously:
+
+1. **System restore failsafe.** Each pushed commit is a safe rollback point. When something goes wrong — a botched edit, a context death, an environment reset — the damage is bounded to the current uncommitted work. Everything before the last push is safe. The more granular the commits, the less work is at risk. This session had four clean commits pushed before the bad edit started. The revert cost zero prior work.
+
+2. **Readability on GitHub.** A PR with one monolithic commit containing a CI fix, a version bump, four doc updates, and a 400-line cleanup is unreadable. A reviewer (or the developer scrolling the PR later) cannot tell what was intentional from what was collateral. Separate commits tell a story: *this* commit fixed the CI error, *this* one bumped the version, *this* one marked 0.7.0 complete across all docs, *this* one cleaned up stale content. Each commit message names exactly what changed and why. The git log becomes a readable narrative of the session's work, not a blob.
+
+Both purposes reinforce the same discipline: when a logical unit of work is done, commit it and push it before starting the next thing. The CI fix is a logical unit. The version bump is a logical unit. The doc cleanup is a logical unit. Mixing them into one commit is how you lose the failsafe *and* the readability at the same time.
+
 ---
 
 ## Development Philosophy
