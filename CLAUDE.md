@@ -85,6 +85,113 @@ BLI_listbase_clear(&bmain->linestyles);
 
 ---
 
+### 0.8.0 Blast Radius Audit
+
+**Design decisions locked (Socratic dialogue, 2026-05-30):**
+- Magic bytes: write `"BLENDED"`, read accepts both `"BLENDER"` and `"BLENDED"`. One-way compatibility — Blended reads `.blend` files, upstream Blender cannot read `.blended` files.
+- File extension: `.blended` on all write paths (save, autosave, crash recovery, backups).
+- `FILE_TYPE_BLENDED`: new bit flag in `DNA_space_enums.h`. `FILE_TYPE_BLENDER` stays for `.blend` import compat. Open dialogs OR both; save dialogs use `BLENDED` only.
+- Bundled upstream datafiles (e.g. `compositing_nodes_essentials.blend`, `procedural_hair_node_assets.blend`) stay `.blend` — they are upstream assets, not Blended project files.
+
+#### Write path — `"BLENDED"` magic, `.blended` extension
+
+| File | What to change | Sites |
+|------|---------------|-------|
+| `blenloader/intern/writefile.cc` | `"BLENDER"` → `"BLENDED"` in `get_blend_file_header()` (both v0 and v1 format branches) | 1612, 1629 |
+| `wm_files.cc` | `".blend"` → `".blended"` in `BLI_path_extension_ensure` on save | 3906, 4095 |
+| `wm_files.cc` | `"Untitled.blend"` → `"Untitled.blended"` | 3861, 4809, 5030 |
+| `wm_files.cc` | `"_crash.blend"` → `"_crash.blended"` | 2046 |
+| `wm_files.cc` | `"_autosave.blend"` → `"_autosave.blended"` | 2277, 2280 |
+| `writefile.cc` | `do_history()` backup rotation — `.blend1` → `.blended1` etc. | 1870, 2108 |
+
+#### Read path — accept both `"BLENDER"` and `"BLENDED"`
+
+| File | What to change | Sites |
+|------|---------------|-------|
+| `blenloader_core/intern/blo_core_blend_header.cc` | `STREQLEN(header_bytes, "BLENDER", 7)` — add `"BLENDED"` as second valid magic | 38 |
+| `blenloader_core/intern/blo_core_file_reader.cc` | `memcmp(first_bytes, "BLENDER", ...)` — accept both | 49 |
+| `blenloader_core/BLO_core_blend_header.hh` | Header constants/comments — document dual-magic read | throughout |
+
+#### File type constants
+
+| File | What to change | Sites |
+|------|---------------|-------|
+| `DNA_space_enums.h` | Add `FILE_TYPE_BLENDED` as new bit flag, next available bit. Keep `FILE_TYPE_BLENDER` at `(1 << 2)` and `FILE_TYPE_BLENDER_BACKUP` at `(1 << 3)` | near 641 |
+
+#### File detection & browser
+
+| File | What to change | Sites |
+|------|---------------|-------|
+| `blendfile.cc` | Extension test array: add `".blended"`, keep `".blend"` for import compat | 90 |
+| `filelist.cc` | `.blend` detection — add `.blended`, map `.blended` → `FILE_TYPE_BLENDED`, `.blend` → `FILE_TYPE_BLENDER` | 1762 |
+| `filelist_sort.cc` | `.blend.gz` sorting — add `.blended.gz` | 229, 232 |
+| `filelist_readjob_asset_library_remote.cc` | `.blend` assert — add `.blended` | 67 |
+| `asset_library_service.cc` | `.blend` / `.blend.gz` path matching — add `.blended` / `.blended.gz` variants | 420-424 |
+| `wm_files.cc` | Open/browse dialogs: filter changes from `FILE_TYPE_BLENDER` to `FILE_TYPE_BLENDER | FILE_TYPE_BLENDED` | 3387, 3607, 4137, 4246 |
+| `wm_files.cc` | Save dialogs: filter uses `FILE_TYPE_BLENDED` only | same area |
+| `file_handler_test.cc` | Test expectations for extension detection — add `.blended` | 45 |
+
+#### Platform integration
+
+| File | What to change | Sites |
+|------|---------------|-------|
+| `winstuff.cc` | Windows registry: add `.blended` file association alongside `.blend` | 221, 304 |
+| `blended.desktop` | `MimeType=application/x-blended;application/x-blender;` | 88 |
+| `freedesktop.py` | Add `application/x-blended` MIME type, add `*.blended` glob pattern, keep `application/x-blender` and `*.blend` for read compat | 72, 256-329, 310 |
+| `Info.plist` (macOS) | Add `.blended` UTI alongside existing `.blend` UTI | multiple |
+| `org.blender.Blender.metainfo.xml` | Add `.blended` extension reference | — |
+
+#### Python/scripts
+
+| File | What to change | Sites |
+|------|---------------|-------|
+| `cli_listing_generator.py` | `*.blend` glob — add `*.blended` | 70 |
+| `listing_downloader.py` | `.blend` in examples/docs — update to `.blended` where describing native format | 115 |
+| `bl_extract_messages.py` | `*.blend` globs — add `*.blended` | 948, 1068 |
+| `space_node.py` | `compositing_nodes_essentials.blend` — bundled datafile, stays `.blend` (upstream asset) | 1199 |
+| `userpref.py` | `userpref.blend` — already removed from startup path in 0.7.0, verify dead code | 166-167 |
+| `object_quick_effects.py` | `procedural_hair_node_assets.blend` — bundled datafile, stays `.blend` (upstream asset) | 110 |
+| `assets.py` | `.asset.blend` check — add `.asset.blended` | 96 |
+| `pose_library/operators.py` | `copied_asset.blend` temp file — change to `.blended` (write path) | 147 |
+
+#### UI strings
+
+| File | What to change | Sites |
+|------|---------------|-------|
+| `rna_space.cc` | "Show .blend1, .blend2, etc." → "Show .blended1, .blended2, etc." for new backup filter; keep `.blend1` description on legacy backup filter | 7658 |
+| `rna_space.cc` | Add RNA description for `FILE_TYPE_BLENDED` filter flag | near 7658 |
+| `wm_operator_props.cc` | "Filter backup .blend files" → update or add parallel description for `.blended` backups | 144 |
+
+#### Totals
+
+~32 C/C++ sites across ~15 source files, ~10 Python sites across ~7 script files, ~5 platform/packaging files, ~3 UI string sites. ~50 total sites.
+
+#### 0.8.0 Implementation Checklist
+
+```
+□ Layer 1 — Magic bytes: write "BLENDED" in get_blend_file_header() (v0 and v1)
+□ Layer 2 — Read path: accept both "BLENDER" and "BLENDED" magic in header decode and format detection
+□ Layer 3 — Extension enforcement: save path writes .blended via BLI_path_extension_ensure
+□ Layer 4 — Default filenames: Untitled.blended, _crash.blended, _autosave.blended
+□ Layer 5 — Backup rotation: do_history() produces .blended1, .blended2, etc.
+□ Layer 6 — FILE_TYPE_BLENDED: new bit flag in DNA_space_enums.h
+□ Layer 7 — File detection: filelist.cc maps .blended → FILE_TYPE_BLENDED, .blend → FILE_TYPE_BLENDER
+□ Layer 8 — File browser filters: open dialogs OR both flags, save dialogs use BLENDED only
+□ Layer 9 — Asset system: asset_library_service.cc accepts .blended and .blended.gz paths
+□ Layer 10 — blendfile.cc extension test array: add .blended, keep .blend for import
+□ Layer 11 — Platform — Windows: add .blended registry association
+□ Layer 12 — Platform — Linux: update blended.desktop MIME, freedesktop.py MIME + glob
+□ Layer 13 — Platform — macOS: add .blended UTI to Info.plist
+□ Layer 14 — Python scripts: update globs and extension checks (write paths → .blended, read paths → accept both)
+□ Layer 15 — UI strings: update RNA descriptions and operator tooltips
+□ Layer 16 — Tests: update file_handler_test.cc expectations
+□ Scar 20 verification grep: zero hits for stale .blend-only references in write paths
+□ Codex Standard checklist before each commit
+□ Five mandatory docs updated
+```
+
+---
+
 ### 1.0.0-dev Runtime Audit Protocol
 
 **Read this before the first 1.0.0-dev session. The collaboration mode is different from every prior session in this project.**
