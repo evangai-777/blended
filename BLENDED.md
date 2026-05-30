@@ -1368,7 +1368,7 @@ Applies to:
 - **Focused element outlines** (§11 interaction states)
 - Any other accent surface in the UI
 
-The codebase swap (`#E87D0D` → `#2596be` in `COL_ACCENT` and any other hardcoded sites) is the next code task once the C++ accent constant is updated.
+The codebase swap is complete: `COL_ACCENT` in `space_blended_launcher.cc` updated `#E87D0D` → `#2596be`, commit `c43aa3c0`. The two remaining `#E87D0D` hits in the repo are upstream Blender icon SVGs (`release/freedesktop` and `release/darwin`) — unrelated to the UI accent, not changed.
 
 ---
 
@@ -1441,7 +1441,7 @@ Assets the human developer is responsible for creating and committing. All commi
 
 #### 2. Final accent hex
 
-- [x] ✓ **Done** — `#2596be` (final, definitive). Codebase swap (`#E87D0D` → `#2596be`) is the next code task.
+- [x] ✓ **Done** — `#2596be` (final, definitive). Codebase swap complete: `COL_ACCENT` in `space_blended_launcher.cc`, commit `c43aa3c0`.
 
 ---
 

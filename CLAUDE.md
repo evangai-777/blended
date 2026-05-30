@@ -98,7 +98,7 @@ BLI_listbase_clear(&bmain->linestyles);
 - [x] Final accent hex confirmed ✓ (`#2596be` — definitive, replaces `#E87D0D` placeholder)
 - [ ] **[NEXT]** App icon (all platform sizes)
 - [ ] **[NEXT]** Splash screen visual design applied
-- [ ] Launcher accent color finalized in code (swap `#E87D0D` → `#2596be`)
+- [x] Launcher accent color finalized in code ✓ (`COL_ACCENT` swapped `#E87D0D` → `#2596be` in `space_blended_launcher.cc`, commit `c43aa3c0`)
 
 ---
 
