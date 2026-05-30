@@ -1,7 +1,7 @@
 # BLENDED — Identity & Design Agreements
 
 **Developer/Publisher:** CHJ 3 Productions LLC (Indiana).
-**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.7.0-dev — CI-complete (Windows x64, build 97, commit `aa6ec698`). Phase 1 skeleton complete ✓ + Phase 2 partial CI-complete ✓. Phase 1: launcher ✓, 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome), format design ✓ (startup/userpref-as-blend removed, §5 Group 1 LOCKED), all 6 Bucket 3 permanent homes ✓ (VFont→filepath 502.24, Palette→Brush 502.25, LightProbe→Light 502.26, Mask→NodeTree 502.27/28, Lattice→LatticeModifierData 502.29, Brush→project-optional 502.30). Phase 2 CI-complete: launcher header chrome ✓ (RGN_TYPE_HEADER + LAUNCHER_HT_header Python class, wordmark + New Project + Open… + Open Recent), mode button rounded cards ✓ (8px radius, draw_rect_rounded GPU helper, COL_CARD_HOVER #323232 + accent border, PR #196, commit `a633d329`). Phase 2 design: logo ✓ (orange blender appliance, flat-vector, `release/datafiles/blended_logo.svg` + `.png`), accent hex ✓ (`#2596be` — final, definitive). Next step: app icon (all platform sizes) + splash visual. Typeface: Inter (Blender's bundled font) — permanent, decision closed.
+**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.7.0-dev — CI-complete (Windows x64, build 97, commit `aa6ec698`). Phase 1 skeleton complete ✓ + Phase 2 partial CI-complete ✓. Phase 1: launcher ✓, 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome), format design ✓ (startup/userpref-as-blend removed, §5 Group 1 LOCKED), all 6 Bucket 3 permanent homes ✓ (VFont→filepath 502.24, Palette→Brush 502.25, LightProbe→Light 502.26, Mask→NodeTree 502.27/28, Lattice→LatticeModifierData 502.29, Brush→project-optional 502.30). Phase 2 CI-complete: launcher header chrome ✓ (RGN_TYPE_HEADER + LAUNCHER_HT_header Python class, wordmark + New Project + Open… + Open Recent), mode button rounded cards ✓ (8px radius, draw_rect_rounded GPU helper, COL_CARD_HOVER #323232 + accent border, PR #196, commit `a633d329`). Phase 2 design: logo ✓ (orange blender appliance, flat-vector, `release/datafiles/blended_logo.svg` + `.png`), accent hex ✓ (`#ff7f00` — final, definitive). Next step: app icon (all platform sizes) + splash visual. Typeface: Inter (Blender's bundled font) — permanent, decision closed.
 **Purpose:** So any future session, contributor, or Claude instance can pick up without re-litigating what's already been decided. Read this first before proposing changes to scope, identity, or architecture.
 
 ---
@@ -1349,7 +1349,7 @@ Blended is a separate product, not a Blender skin. The GPL license that governs 
 - `release/datafiles/blended_logo.svg` — vector source, scales to any size
 - `release/datafiles/blended_logo.png` — raster export for C++ loading
 
-**Style [LOCKED]:** Flat vector. No gradients, no textures, no drop shadows. Primary color: orange. Accent hex: `#2596be` (see Accent color below).
+**Style [LOCKED]:** Flat vector. No gradients, no textures, no drop shadows. Primary color: orange. Accent hex: `#ff7f00` (see Accent color below).
 
 **Platform icon packaging (Phase 2):**
 - macOS: squircle mask, logo centered with appropriate padding
@@ -1360,7 +1360,7 @@ Blended is a separate product, not a Blender skin. The GPL license that governs 
 
 ### Accent color [LOCKED]
 
-**Final value: `#2596be`** — definitive, replaces the `#E87D0D` placeholder used during development.
+**Final value: `#ff7f00`** — definitive, replaces the `#E87D0D` placeholder used during development.
 
 Applies to:
 - **[New Project] CTA button** (§11 chrome)
@@ -1368,7 +1368,7 @@ Applies to:
 - **Focused element outlines** (§11 interaction states)
 - Any other accent surface in the UI
 
-The codebase swap is complete: `COL_ACCENT` in `space_blended_launcher.cc` updated `#E87D0D` → `#2596be`, commit `c43aa3c0`. The two remaining `#E87D0D` hits in the repo are upstream Blender icon SVGs (`release/freedesktop` and `release/darwin`) — unrelated to the UI accent, not changed.
+The codebase swap is complete: `COL_ACCENT` in `space_blended_launcher.cc` updated `#E87D0D` → `#ff7f00`, commit `c43aa3c0`. The two remaining `#E87D0D` hits in the repo are upstream Blender icon SVGs (`release/freedesktop` and `release/darwin`) — unrelated to the UI accent, not changed.
 
 ---
 
@@ -1441,7 +1441,7 @@ Assets the human developer is responsible for creating and committing. All commi
 
 #### 2. Final accent hex
 
-- [x] ✓ **Done** — `#2596be` (final, definitive). Codebase swap complete: `COL_ACCENT` in `space_blended_launcher.cc`, commit `c43aa3c0`.
+- [x] ✓ **Done** — `#ff7f00` (final, definitive). Codebase swap complete: `COL_ACCENT` in `space_blended_launcher.cc`, commit `c43aa3c0`.
 
 ---
 
