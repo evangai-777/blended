@@ -78,7 +78,7 @@ carries a one-liner status per active item.
 
 ### Scope
 
-~50 total sites: ~32 C/C++ across ~15 source files, ~10 Python across ~7 script files, ~5 platform/packaging files, ~3 UI string sites. Full blast radius audit in CLAUDE.md `### 0.8.0 Blast Radius Audit`.
+~70 total sites: ~50 C/C++ across ~22 source files, ~10 Python across ~7 script files, ~5 platform/packaging files, ~5 UI string sites. Full blast radius audit in CLAUDE.md `### 0.8.0 Blast Radius Audit`.
 
 ### Claude AI contributor notes
 

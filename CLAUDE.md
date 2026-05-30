@@ -122,14 +122,26 @@ BLI_listbase_clear(&bmain->linestyles);
 
 | File | What to change | Sites |
 |------|---------------|-------|
-| `blendfile.cc` | Extension test array: add `".blended"`, keep `".blend"` for import compat | 90 |
-| `filelist.cc` | `.blend` detection — add `.blended`, map `.blended` → `FILE_TYPE_BLENDED`, `.blend` → `FILE_TYPE_BLENDER` | 1762 |
+| `blendfile.cc` | `BKE_blendfile_extension_check()`: add `".blended"` and `".blended.gz"` to ext_test array, keep `".blend"` for import compat | 90 |
+| `filelist.cc` | `file_is_blend_backup()`: hardcoded `.blend` scan in last 7-8 chars — must also detect `.blended` to recognize `.blended1`/`.blended2` backups. Without this fix, `do_history()` produces `.blended1` files that `FILE_TYPE_BLENDER_BACKUP` never sees | 1745-1769 |
+| `filelist.cc` | `ED_path_extension_type()`: `.blended` detection via `BKE_blendfile_extension_check` (fixed by blendfile.cc above), map to `FILE_TYPE_BLENDED` instead of `FILE_TYPE_BLENDER` | 1777-1778 |
+| `filelist.cc` | `BLI_strcasestr` for `.blend` detection — add `.blended` | 1762 |
 | `filelist_sort.cc` | `.blend.gz` sorting — add `.blended.gz` | 229, 232 |
+| `filelist_sort.cc` | Sort priority: `FILE_TYPE_BLENDER | FILE_TYPE_BLENDER_BACKUP` — add `FILE_TYPE_BLENDED` | 99-104 |
 | `filelist_readjob_asset_library_remote.cc` | `.blend` assert — add `.blended` | 67 |
-| `asset_library_service.cc` | `.blend` / `.blend.gz` path matching — add `.blended` / `.blended.gz` variants | 420-424 |
+| `filelist_readjob_common.cc` | `entry->typeflag = FILE_TYPE_BLENDER` — needs to distinguish `.blended` vs `.blend` | 322 |
+| `filelist_readjob_common.cc` | `FILE_TYPE_BLENDER | FILE_TYPE_BLENDER_BACKUP` filter check — add `FILE_TYPE_BLENDED` | 663 |
+| `filelist_filter.cc` | `FILE_TYPE_BLENDERLIB | FILE_TYPE_BLENDER | FILE_TYPE_BLENDER_BACKUP` filter — add `FILE_TYPE_BLENDED` | 101-102 |
+| `asset_library_service.cc` | `.blend` / `.blend.gz` / `.ble` path matching — add `.blended` / `.blended.gz` variants | 420-425 |
+| `file_draw.cc` | `FILE_TYPE_BLENDER | FILE_TYPE_BLENDER_BACKUP` icon/draw checks — add `FILE_TYPE_BLENDED` | 205, 787, 1250 |
+| `screen_ops.cc` | `ELEM(file_type, FILE_TYPE_BLENDER, FILE_TYPE_BLENDER_BACKUP)` — add `FILE_TYPE_BLENDED` | 7524 |
+| `asset_ops.cc` | `FILE_TYPE_BLENDER` filter in asset browser — add `FILE_TYPE_BLENDED` | 857 |
 | `wm_files.cc` | Open/browse dialogs: filter changes from `FILE_TYPE_BLENDER` to `FILE_TYPE_BLENDER | FILE_TYPE_BLENDED` | 3387, 3607, 4137, 4246 |
 | `wm_files.cc` | Save dialogs: filter uses `FILE_TYPE_BLENDED` only | same area |
+| `wm_files_link.cc` | Link/Append dialogs: `FILE_TYPE_BLENDER` — add `FILE_TYPE_BLENDED` | 1066, 1096 |
+| `filesel.cc` | `filter_blender` RNA prop sets `FILE_TYPE_BLENDER` — needs to also set `FILE_TYPE_BLENDED` | 234 |
 | `file_handler_test.cc` | Test expectations for extension detection — add `.blended` | 45 |
+| `wm_dragdrop_test.cc` | Drag-drop tests with `FILE_TYPE_BLENDER` — add `FILE_TYPE_BLENDED` test cases | 39-88 |
 
 #### Platform integration
 
@@ -159,12 +171,14 @@ BLI_listbase_clear(&bmain->linestyles);
 | File | What to change | Sites |
 |------|---------------|-------|
 | `rna_space.cc` | "Show .blend1, .blend2, etc." → "Show .blended1, .blended2, etc." for new backup filter; keep `.blend1` description on legacy backup filter | 7658 |
+| `rna_space.cc` | `use_filter_blender` property with `FILE_TYPE_BLENDER` SDNA — add `FILE_TYPE_BLENDED` equivalent or OR | 7649-7650 |
 | `rna_space.cc` | Add RNA description for `FILE_TYPE_BLENDED` filter flag | near 7658 |
+| `wm_operator_props.cc` | `"filter_blender"` RNA property def — OR `FILE_TYPE_BLENDED` into the default, update "Filter .blend files" description | 139 |
 | `wm_operator_props.cc` | "Filter backup .blend files" → update or add parallel description for `.blended` backups | 144 |
 
 #### Totals
 
-~32 C/C++ sites across ~15 source files, ~10 Python sites across ~7 script files, ~5 platform/packaging files, ~3 UI string sites. ~50 total sites.
+~50 C/C++ sites across ~22 source files, ~10 Python sites across ~7 script files, ~5 platform/packaging files, ~5 UI string sites. ~70 total sites.
 
 #### 0.8.0 Implementation Checklist
 
@@ -179,12 +193,19 @@ BLI_listbase_clear(&bmain->linestyles);
 □ Layer 8 — File browser filters: open dialogs OR both flags, save dialogs use BLENDED only
 □ Layer 9 — Asset system: asset_library_service.cc accepts .blended and .blended.gz paths
 □ Layer 10 — blendfile.cc extension test array: add .blended, keep .blend for import
-□ Layer 11 — Platform — Windows: add .blended registry association
-□ Layer 12 — Platform — Linux: update blended.desktop MIME, freedesktop.py MIME + glob
-□ Layer 13 — Platform — macOS: add .blended UTI to Info.plist
-□ Layer 14 — Python scripts: update globs and extension checks (write paths → .blended, read paths → accept both)
-□ Layer 15 — UI strings: update RNA descriptions and operator tooltips
-□ Layer 16 — Tests: update file_handler_test.cc expectations
+□ Layer 11 — Backup classification: file_is_blend_backup() detects .blended backups
+□ Layer 12 — File browser draw: file_draw.cc FILE_TYPE_BLENDED in icon/preview checks
+□ Layer 13 — File browser filter: filelist_filter.cc, filesel.cc add FILE_TYPE_BLENDED to filter logic
+□ Layer 14 — File browser sort: filelist_sort.cc FILE_TYPE_BLENDED in sort priority
+□ Layer 15 — Link/Append: wm_files_link.cc FILE_TYPE_BLENDED in dialog filters
+□ Layer 16 — Screen ops: screen_ops.cc FILE_TYPE_BLENDED in file type dispatch
+□ Layer 17 — Asset ops: asset_ops.cc FILE_TYPE_BLENDED in asset browser filter
+□ Layer 18 — Platform — Windows: add .blended registry association
+□ Layer 19 — Platform — Linux: update blended.desktop MIME, freedesktop.py MIME + glob
+□ Layer 20 — Platform — macOS: add .blended UTI to Info.plist
+□ Layer 21 — Python scripts: update globs and extension checks (write paths → .blended, read paths → accept both)
+□ Layer 22 — UI strings: update RNA descriptions and operator tooltips
+□ Layer 23 — Tests: update file_handler_test.cc, wm_dragdrop_test.cc expectations
 □ Scar 20 verification grep: zero hits for stale .blend-only references in write paths
 □ Codex Standard checklist before each commit
 □ Five mandatory docs updated
