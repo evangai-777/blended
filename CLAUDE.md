@@ -681,6 +681,8 @@ These scars cannot be expressed as greps. Each is a yes/no question to answer be
   ```
   Other compositor nodes that use `MEM_new` include it explicitly (corner_pin, transform, glare, denoise, etc.) — match that pattern. "Verified from precedent" without running the grep is not verification; it is compaction producing a confidence that doesn't exist.
 
+- **Scar 22 — did I search all three axes of a format/type change?** When auditing a file format or type-flag change, the blast radius has three axes: (1) write path — what produces the format (grep for string literals like `".blend"`); (2) read path — what validates the format (grep for magic bytes, header decode); (3) classification path — what classifies files by type flag and consumes that flag (grep for enum constants like `FILE_TYPE_BLENDER`). The initial 0.8.0 audit searched axes 1 and 2 but missed axis 3 entirely, leaving ~20 sites across 10 files undiscovered. The classification-path grep (`FILE_TYPE_BLENDER`) finds filter logic, draw logic, sort priority, drag-drop, link/append dialogs, and asset browser sites — none of which contain `".blend"` as a string literal.
+
 ---
 
 *The check takes 60 seconds per grep. A missed check costs a CI round-trip at minimum, a session at worst.*
@@ -722,6 +724,27 @@ Commit-and-push-per-logical-unit serves two purposes simultaneously:
 2. **Readability on GitHub.** A PR with one monolithic commit containing a CI fix, a version bump, four doc updates, and a 400-line cleanup is unreadable. A reviewer (or the developer scrolling the PR later) cannot tell what was intentional from what was collateral. Separate commits tell a story: *this* commit fixed the CI error, *this* one bumped the version, *this* one marked 0.7.0 complete across all docs, *this* one cleaned up stale content. Each commit message names exactly what changed and why. The git log becomes a readable narrative of the session's work, not a blob.
 
 Both purposes reinforce the same discipline: when a logical unit of work is done, commit it and push it before starting the next thing. The CI fix is a logical unit. The version bump is a logical unit. The doc cleanup is a logical unit. Mixing them into one commit is how you lose the failsafe *and* the readability at the same time.
+
+---
+
+### Scar 22: The Blast Radius You Write Down Is Not the Blast Radius That Exists
+
+**What happened:** The 0.8.0 blast radius audit was written, committed, and pushed across all four mandatory docs. It covered ~50 sites across ~15 source files. It was thorough — per-file, per-line-number, organized by category. It felt complete. Codex reviewed PR #221 and immediately flagged `file_is_blend_backup()` at `filelist.cc:1745`: the function hardcodes a `.blend` scan in the last 7-8 characters of the filename, so `.blended1` backups produced by `do_history()` would never be recognized as `FILE_TYPE_BLENDER_BACKUP`. The audit had `do_history()` on the write side (produce `.blended1`) but not the read side (detect `.blended1`).
+
+That one catch triggered a deep sweep that found ~20 additional missed sites across 10 files: `BKE_blendfile_extension_check()` (the central extension validator, missing `.blended`), `file_draw.cc` (3 icon/draw sites), `filelist_filter.cc` (filter logic), `filelist_readjob_common.cc` (type assignment), `filelist_sort.cc` (sort priority), `screen_ops.cc` (file type dispatch), `wm_files_link.cc` (Link/Append dialogs), `wm_dragdrop_test.cc` (drag-drop tests), `filesel.cc` (filter property), `asset_ops.cc` (asset browser). Revised totals: ~70 sites across ~22 source files.
+
+**Why 20 sites were invisible to the initial audit:** The initial grep strategy searched for literal `".blend"` strings — extension strings in quotes, magic byte strings, path patterns. That catches write-path sites (where `.blend` appears as a string literal) but misses consumption sites where `FILE_TYPE_BLENDER` is used as a *constant* in bitwise checks. The file browser subsystem has ~15 files that check `FILE_TYPE_BLENDER` or `FILE_TYPE_BLENDER_BACKUP` in filter/draw/sort/dispatch logic. None of those files contain the string `".blend"` — they use the enum constant. A grep for `".blend"` finds zero of them. A grep for `FILE_TYPE_BLENDER` finds all of them.
+
+**The deeper failure:** The audit was organized around the *write path* (what writes `.blend`) and the *read path* (what reads `"BLENDER"` magic). That framing is correct but incomplete. The third category — *classification path* (what decides a file's type flag and then acts on that flag throughout the UI) — was not a named category in the audit. `file_is_blend_backup()`, `ED_path_extension_type()`, `BKE_blendfile_extension_check()`, and every `FILE_TYPE_BLENDER` consumer in the file browser are all classification-path sites. They don't read file contents or write file contents — they classify filenames and then propagate that classification through filter/draw/sort/dispatch logic. The initial audit didn't have a category for that, so those sites weren't searched for.
+
+**The rule:** When auditing a file format change, the blast radius has three axes, not two:
+1. **Write path** — what produces the format (magic bytes, extension, backup naming)
+2. **Read path** — what validates the format (header decode, extension check for opening)
+3. **Classification path** — what *classifies* files by type flag and then *consumes* that flag (file browser detection, filter logic, draw logic, sort priority, drag-drop, link/append dialogs, asset browser)
+
+Grep for the format's enum constant (`FILE_TYPE_BLENDER`) is the classification-path search. Grep for the format's string literal (`".blend"`) is the write/read-path search. Both are required. The initial audit ran only the second.
+
+**Credit:** Codex caught the first missed site. The deep sweep that followed was triggered by that catch. This is the system working: Codex reviews mechanically, Claude investigates the implications. The embarrassing part is not that Codex found something — it's that the audit was described as complete when an entire axis of the blast radius was unsearched.
 
 ---
 
