@@ -122,14 +122,26 @@ BLI_listbase_clear(&bmain->linestyles);
 
 | File | What to change | Sites |
 |------|---------------|-------|
-| `blendfile.cc` | Extension test array: add `".blended"`, keep `".blend"` for import compat | 90 |
-| `filelist.cc` | `.blend` detection — add `.blended`, map `.blended` → `FILE_TYPE_BLENDED`, `.blend` → `FILE_TYPE_BLENDER` | 1762 |
+| `blendfile.cc` | `BKE_blendfile_extension_check()`: add `".blended"` and `".blended.gz"` to ext_test array, keep `".blend"` for import compat | 90 |
+| `filelist.cc` | `file_is_blend_backup()`: hardcoded `.blend` scan in last 7-8 chars — must also detect `.blended` to recognize `.blended1`/`.blended2` backups. Without this fix, `do_history()` produces `.blended1` files that `FILE_TYPE_BLENDER_BACKUP` never sees | 1745-1769 |
+| `filelist.cc` | `ED_path_extension_type()`: `.blended` detection via `BKE_blendfile_extension_check` (fixed by blendfile.cc above), map to `FILE_TYPE_BLENDED` instead of `FILE_TYPE_BLENDER` | 1777-1778 |
+| `filelist.cc` | `BLI_strcasestr` for `.blend` detection — add `.blended` | 1762 |
 | `filelist_sort.cc` | `.blend.gz` sorting — add `.blended.gz` | 229, 232 |
+| `filelist_sort.cc` | Sort priority: `FILE_TYPE_BLENDER | FILE_TYPE_BLENDER_BACKUP` — add `FILE_TYPE_BLENDED` | 99-104 |
 | `filelist_readjob_asset_library_remote.cc` | `.blend` assert — add `.blended` | 67 |
-| `asset_library_service.cc` | `.blend` / `.blend.gz` path matching — add `.blended` / `.blended.gz` variants | 420-424 |
+| `filelist_readjob_common.cc` | `entry->typeflag = FILE_TYPE_BLENDER` — needs to distinguish `.blended` vs `.blend` | 322 |
+| `filelist_readjob_common.cc` | `FILE_TYPE_BLENDER | FILE_TYPE_BLENDER_BACKUP` filter check — add `FILE_TYPE_BLENDED` | 663 |
+| `filelist_filter.cc` | `FILE_TYPE_BLENDERLIB | FILE_TYPE_BLENDER | FILE_TYPE_BLENDER_BACKUP` filter — add `FILE_TYPE_BLENDED` | 101-102 |
+| `asset_library_service.cc` | `.blend` / `.blend.gz` / `.ble` path matching — add `.blended` / `.blended.gz` variants | 420-425 |
+| `file_draw.cc` | `FILE_TYPE_BLENDER | FILE_TYPE_BLENDER_BACKUP` icon/draw checks — add `FILE_TYPE_BLENDED` | 205, 787, 1250 |
+| `screen_ops.cc` | `ELEM(file_type, FILE_TYPE_BLENDER, FILE_TYPE_BLENDER_BACKUP)` — add `FILE_TYPE_BLENDED` | 7524 |
+| `asset_ops.cc` | `FILE_TYPE_BLENDER` filter in asset browser — add `FILE_TYPE_BLENDED` | 857 |
 | `wm_files.cc` | Open/browse dialogs: filter changes from `FILE_TYPE_BLENDER` to `FILE_TYPE_BLENDER | FILE_TYPE_BLENDED` | 3387, 3607, 4137, 4246 |
 | `wm_files.cc` | Save dialogs: filter uses `FILE_TYPE_BLENDED` only | same area |
+| `wm_files_link.cc` | Link/Append dialogs: `FILE_TYPE_BLENDER` — add `FILE_TYPE_BLENDED` | 1066, 1096 |
+| `filesel.cc` | `filter_blender` RNA prop sets `FILE_TYPE_BLENDER` — needs to also set `FILE_TYPE_BLENDED` | 234 |
 | `file_handler_test.cc` | Test expectations for extension detection — add `.blended` | 45 |
+| `wm_dragdrop_test.cc` | Drag-drop tests with `FILE_TYPE_BLENDER` — add `FILE_TYPE_BLENDED` test cases | 39-88 |
 
 #### Platform integration
 
@@ -159,12 +171,14 @@ BLI_listbase_clear(&bmain->linestyles);
 | File | What to change | Sites |
 |------|---------------|-------|
 | `rna_space.cc` | "Show .blend1, .blend2, etc." → "Show .blended1, .blended2, etc." for new backup filter; keep `.blend1` description on legacy backup filter | 7658 |
+| `rna_space.cc` | `use_filter_blender` property with `FILE_TYPE_BLENDER` SDNA — add `FILE_TYPE_BLENDED` equivalent or OR | 7649-7650 |
 | `rna_space.cc` | Add RNA description for `FILE_TYPE_BLENDED` filter flag | near 7658 |
+| `wm_operator_props.cc` | `"filter_blender"` RNA property def — OR `FILE_TYPE_BLENDED` into the default, update "Filter .blend files" description | 139 |
 | `wm_operator_props.cc` | "Filter backup .blend files" → update or add parallel description for `.blended` backups | 144 |
 
 #### Totals
 
-~32 C/C++ sites across ~15 source files, ~10 Python sites across ~7 script files, ~5 platform/packaging files, ~3 UI string sites. ~50 total sites.
+~50 C/C++ sites across ~22 source files, ~10 Python sites across ~7 script files, ~5 platform/packaging files, ~5 UI string sites. ~70 total sites.
 
 #### 0.8.0 Implementation Checklist
 
@@ -179,12 +193,19 @@ BLI_listbase_clear(&bmain->linestyles);
 □ Layer 8 — File browser filters: open dialogs OR both flags, save dialogs use BLENDED only
 □ Layer 9 — Asset system: asset_library_service.cc accepts .blended and .blended.gz paths
 □ Layer 10 — blendfile.cc extension test array: add .blended, keep .blend for import
-□ Layer 11 — Platform — Windows: add .blended registry association
-□ Layer 12 — Platform — Linux: update blended.desktop MIME, freedesktop.py MIME + glob
-□ Layer 13 — Platform — macOS: add .blended UTI to Info.plist
-□ Layer 14 — Python scripts: update globs and extension checks (write paths → .blended, read paths → accept both)
-□ Layer 15 — UI strings: update RNA descriptions and operator tooltips
-□ Layer 16 — Tests: update file_handler_test.cc expectations
+□ Layer 11 — Backup classification: file_is_blend_backup() detects .blended backups
+□ Layer 12 — File browser draw: file_draw.cc FILE_TYPE_BLENDED in icon/preview checks
+□ Layer 13 — File browser filter: filelist_filter.cc, filesel.cc add FILE_TYPE_BLENDED to filter logic
+□ Layer 14 — File browser sort: filelist_sort.cc FILE_TYPE_BLENDED in sort priority
+□ Layer 15 — Link/Append: wm_files_link.cc FILE_TYPE_BLENDED in dialog filters
+□ Layer 16 — Screen ops: screen_ops.cc FILE_TYPE_BLENDED in file type dispatch
+□ Layer 17 — Asset ops: asset_ops.cc FILE_TYPE_BLENDED in asset browser filter
+□ Layer 18 — Platform — Windows: add .blended registry association
+□ Layer 19 — Platform — Linux: update blended.desktop MIME, freedesktop.py MIME + glob
+□ Layer 20 — Platform — macOS: add .blended UTI to Info.plist
+□ Layer 21 — Python scripts: update globs and extension checks (write paths → .blended, read paths → accept both)
+□ Layer 22 — UI strings: update RNA descriptions and operator tooltips
+□ Layer 23 — Tests: update file_handler_test.cc, wm_dragdrop_test.cc expectations
 □ Scar 20 verification grep: zero hits for stale .blend-only references in write paths
 □ Codex Standard checklist before each commit
 □ Five mandatory docs updated
@@ -660,6 +681,8 @@ These scars cannot be expressed as greps. Each is a yes/no question to answer be
   ```
   Other compositor nodes that use `MEM_new` include it explicitly (corner_pin, transform, glare, denoise, etc.) — match that pattern. "Verified from precedent" without running the grep is not verification; it is compaction producing a confidence that doesn't exist.
 
+- **Scar 22 — did I search all three axes of a format/type change?** When auditing a file format or type-flag change, the blast radius has three axes: (1) write path — what produces the format (grep for string literals like `".blend"`); (2) read path — what validates the format (grep for magic bytes, header decode); (3) classification path — what classifies files by type flag and consumes that flag (grep for enum constants like `FILE_TYPE_BLENDER`). The initial 0.8.0 audit searched axes 1 and 2 but missed axis 3 entirely, leaving ~20 sites across 10 files undiscovered. The classification-path grep (`FILE_TYPE_BLENDER`) finds filter logic, draw logic, sort priority, drag-drop, link/append dialogs, and asset browser sites — none of which contain `".blend"` as a string literal.
+
 ---
 
 *The check takes 60 seconds per grep. A missed check costs a CI round-trip at minimum, a session at worst.*
@@ -701,6 +724,27 @@ Commit-and-push-per-logical-unit serves two purposes simultaneously:
 2. **Readability on GitHub.** A PR with one monolithic commit containing a CI fix, a version bump, four doc updates, and a 400-line cleanup is unreadable. A reviewer (or the developer scrolling the PR later) cannot tell what was intentional from what was collateral. Separate commits tell a story: *this* commit fixed the CI error, *this* one bumped the version, *this* one marked 0.7.0 complete across all docs, *this* one cleaned up stale content. Each commit message names exactly what changed and why. The git log becomes a readable narrative of the session's work, not a blob.
 
 Both purposes reinforce the same discipline: when a logical unit of work is done, commit it and push it before starting the next thing. The CI fix is a logical unit. The version bump is a logical unit. The doc cleanup is a logical unit. Mixing them into one commit is how you lose the failsafe *and* the readability at the same time.
+
+---
+
+### Scar 22: The Blast Radius You Write Down Is Not the Blast Radius That Exists
+
+**What happened:** The 0.8.0 blast radius audit was written, committed, and pushed across all four mandatory docs. It covered ~50 sites across ~15 source files. It was thorough — per-file, per-line-number, organized by category. It felt complete. Codex reviewed PR #221 and immediately flagged `file_is_blend_backup()` at `filelist.cc:1745`: the function hardcodes a `.blend` scan in the last 7-8 characters of the filename, so `.blended1` backups produced by `do_history()` would never be recognized as `FILE_TYPE_BLENDER_BACKUP`. The audit had `do_history()` on the write side (produce `.blended1`) but not the read side (detect `.blended1`).
+
+That one catch triggered a deep sweep that found ~20 additional missed sites across 10 files: `BKE_blendfile_extension_check()` (the central extension validator, missing `.blended`), `file_draw.cc` (3 icon/draw sites), `filelist_filter.cc` (filter logic), `filelist_readjob_common.cc` (type assignment), `filelist_sort.cc` (sort priority), `screen_ops.cc` (file type dispatch), `wm_files_link.cc` (Link/Append dialogs), `wm_dragdrop_test.cc` (drag-drop tests), `filesel.cc` (filter property), `asset_ops.cc` (asset browser). Revised totals: ~70 sites across ~22 source files.
+
+**Why 20 sites were invisible to the initial audit:** The initial grep strategy searched for literal `".blend"` strings — extension strings in quotes, magic byte strings, path patterns. That catches write-path sites (where `.blend` appears as a string literal) but misses consumption sites where `FILE_TYPE_BLENDER` is used as a *constant* in bitwise checks. The file browser subsystem has ~15 files that check `FILE_TYPE_BLENDER` or `FILE_TYPE_BLENDER_BACKUP` in filter/draw/sort/dispatch logic. None of those files contain the string `".blend"` — they use the enum constant. A grep for `".blend"` finds zero of them. A grep for `FILE_TYPE_BLENDER` finds all of them.
+
+**The deeper failure:** The audit was organized around the *write path* (what writes `.blend`) and the *read path* (what reads `"BLENDER"` magic). That framing is correct but incomplete. The third category — *classification path* (what decides a file's type flag and then acts on that flag throughout the UI) — was not a named category in the audit. `file_is_blend_backup()`, `ED_path_extension_type()`, `BKE_blendfile_extension_check()`, and every `FILE_TYPE_BLENDER` consumer in the file browser are all classification-path sites. They don't read file contents or write file contents — they classify filenames and then propagate that classification through filter/draw/sort/dispatch logic. The initial audit didn't have a category for that, so those sites weren't searched for.
+
+**The rule:** When auditing a file format change, the blast radius has three axes, not two:
+1. **Write path** — what produces the format (magic bytes, extension, backup naming)
+2. **Read path** — what validates the format (header decode, extension check for opening)
+3. **Classification path** — what *classifies* files by type flag and then *consumes* that flag (file browser detection, filter logic, draw logic, sort priority, drag-drop, link/append dialogs, asset browser)
+
+Grep for the format's enum constant (`FILE_TYPE_BLENDER`) is the classification-path search. Grep for the format's string literal (`".blend"`) is the write/read-path search. Both are required. The initial audit ran only the second.
+
+**Credit:** Codex caught the first missed site. The deep sweep that followed was triggered by that catch. This is the system working: Codex reviews mechanically, Claude investigates the implications. The embarrassing part is not that Codex found something — it's that the audit was described as complete when an entire axis of the blast radius was unsearched.
 
 ---
 
