@@ -1,7 +1,7 @@
 # BLENDED — Identity & Design Agreements
 
 **Developer/Publisher:** CHJ 3 Productions LLC (Indiana).
-**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.7.0-dev — CI-complete (Windows x64, build 97, commit `aa6ec698`). Phase 1 skeleton complete ✓ + Phase 2 partial CI-complete ✓. Phase 1: launcher ✓, 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome), format design ✓ (startup/userpref-as-blend removed, §5 Group 1 LOCKED), all 6 Bucket 3 permanent homes ✓ (VFont→filepath 502.24, Palette→Brush 502.25, LightProbe→Light 502.26, Mask→NodeTree 502.27/28, Lattice→LatticeModifierData 502.29, Brush→project-optional 502.30). Phase 2 CI-complete: launcher header chrome ✓ (RGN_TYPE_HEADER + LAUNCHER_HT_header Python class, wordmark + New Project + Open… + Open Recent), mode button rounded cards ✓ (8px radius, draw_rect_rounded GPU helper, COL_CARD_HOVER #323232 + accent border #E87D0D placeholder, PR #196, commit `a633d329`). Next step: human graphic design work — logo illustration, final accent hex, app icon, splash visual. All pending human review; no code work until design assets land. Typeface: Inter (Blender's bundled font) — permanent, decision closed.
+**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.7.0-dev — CI-complete (Windows x64, build 97, commit `aa6ec698`). Phase 1 skeleton complete ✓ + Phase 2 partial CI-complete ✓. Phase 1: launcher ✓, 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome), format design ✓ (startup/userpref-as-blend removed, §5 Group 1 LOCKED), all 6 Bucket 3 permanent homes ✓ (VFont→filepath 502.24, Palette→Brush 502.25, LightProbe→Light 502.26, Mask→NodeTree 502.27/28, Lattice→LatticeModifierData 502.29, Brush→project-optional 502.30). Phase 2 CI-complete: launcher header chrome ✓ (RGN_TYPE_HEADER + LAUNCHER_HT_header Python class, wordmark + New Project + Open… + Open Recent), mode button rounded cards ✓ (8px radius, draw_rect_rounded GPU helper, COL_CARD_HOVER #323232 + accent border, PR #196, commit `a633d329`). Phase 2 design: logo ✓ (orange blender appliance, flat-vector, `release/datafiles/blended_logo.svg` + `.png`), accent hex ✓ (`#ff7f00` — final, definitive). Next step: app icon (all platform sizes) + splash visual. Typeface: Inter (Blender's bundled font) — permanent, decision closed.
 **Purpose:** So any future session, contributor, or Claude instance can pick up without re-litigating what's already been decided. Read this first before proposing changes to scope, identity, or architecture.
 
 ---
@@ -1335,30 +1335,21 @@ Blended is a separate product, not a Blender skin. The GPL license that governs 
 **Direction [LOCKED]:** Full separate product identity. Blended looks like Blended, not like Blender. The word "Blender" appears only where GPL attribution requires it and in the import dialog ("Open .blend file").
 
 **Design lineage [LOCKED]:** "Blender and Adobe got married and Blended is their child." The identity draws from:
-- **Blender's heritage** — the craft-forward energy, the creative community, the orange color language, the orbit-lines logo. These are the raw material being blended.
+- **Blender's heritage** — the craft-forward energy, the creative community, the orange color language. These are the raw material being blended.
 - **Adobe's discipline** — typographic restraint, dark card surfaces, clean hierarchy. The form of the identity, not its warmth.
 - **Blended's own thesis** — a blender (the kitchen appliance) as the logo. Precise, self-referential, immediately legible. Blender is named after a blender; Blended is what comes out of the blender. The logo makes that literal.
 
 ---
 
-### Logo [LOCKED in concept, final render Phase 2]
+### Logo [LOCKED]
 
-**Concept [LOCKED]:** A flat-vector kitchen blender (the appliance) with Blender's orbit-lines logo — which already has a tornado-like swirling form — placed inside the blender container, as if it's being blended like a smoothie. One logo, one concept: the tornado IS the Blender logo; the blender IS the appliance; together they read as "the Blender logo, being blended." Blender + blender = Blended. The gag is self-documenting.
+**Concept [LOCKED]:** A flat-vector orange blender appliance (the kitchen appliance). Blender is named after a blender; Blended is what comes out of the blender. The logo makes that literal — simple, self-referential, immediately legible.
 
-The two qualities — tornado (the form of Blender's orbit-lines) and smoothie (the blender appliance containing it) — are not design variants. They are the two halves of the same image.
+**Assets committed:**
+- `release/datafiles/blended_logo.svg` — vector source, scales to any size
+- `release/datafiles/blended_logo.png` — raster export for C++ loading
 
-**Orbit-lines form — Phase 2 judgment call:** Blender's orbit-lines already have a tornado-like swirling quality. If that reads strongly enough inside the blender container, use them as-is. If the tornado read needs reinforcement — more vertical taper, more dynamic sweep, sharper spiral — modify the orbit-lines toward that. The goal is that someone looking at the logo inside the blender sees "tornado" before they see "orbit-lines." Use whatever form achieves that.
-
-**Style [LOCKED]:** Flat vector. No gradients, no textures, no drop shadows. Primary color: Blender orange (`#E87D0D`) as the anchor — the orbit-lines are orange, the blender appliance shape is orange-adjacent. Exact accent shade confirmed once the logo is finalized (see Accent color below).
-
-**Scaling guidance:**
-
-| Size range | Rendering |
-|------------|-----------|
-| 512px–1024px | Full blender with orbit-lines detail inside |
-| 128–256px | Blender silhouette with orange swirl suggestion; reduced orbit-line detail |
-| 32–64px | Blender silhouette in orange; orbit-lines simplified to single arc or removed |
-| 16×16 | Blender silhouette only, orange fill, no interior detail |
+**Style [LOCKED]:** Flat vector. No gradients, no textures, no drop shadows. Primary color: orange. Accent hex: `#ff7f00` (see Accent color below).
 
 **Platform icon packaging (Phase 2):**
 - macOS: squircle mask, logo centered with appropriate padding
@@ -1367,15 +1358,17 @@ The two qualities — tornado (the form of Blender's orbit-lines) and smoothie (
 
 ---
 
-### Accent color [LOCKED in derivation, exact value Phase 2]
+### Accent color [LOCKED]
 
-The accent color derives from the logo render. The dominant warm color in the final blender logo — anchored at/near Blender orange (`#E87D0D`) — becomes the accent for:
+**Final value: `#ff7f00`** — definitive, replaces the `#E87D0D` placeholder used during development.
+
+Applies to:
 - **[New Project] CTA button** (§11 chrome)
 - **Active/pressed mode button cards** (§11 interaction states)
 - **Focused element outlines** (§11 interaction states)
 - Any other accent surface in the UI
 
-This derivation rule is the constraint: the accent is not chosen independently — it is extracted from the logo. This guarantees the UI palette and the brand mark are the same color language, not separately tuned toward each other.
+The codebase swap is complete: `COL_ACCENT` in `space_blended_launcher.cc` updated `#E87D0D` → `#ff7f00`, commit `c43aa3c0`. The two remaining `#E87D0D` hits in the repo are upstream Blender icon SVGs (`release/freedesktop` and `release/darwin`) — unrelated to the UI accent, not changed.
 
 ---
 
@@ -1442,23 +1435,13 @@ Assets the human developer is responsible for creating and committing. All commi
 
 #### 1. Logo illustration
 
-- [ ] Create the flat-vector kitchen blender + orbit-lines logo (concept locked above)
-- **SVG export:** no pixel constraint — vector, scales to whatever the code renders at. SVG is the real deliverable.
-- **PNG export:** size depends on aspect ratio of the design:
-  - Roughly square → **512×512px minimum, 1024×1024px recommended** (HiDPI + future headroom)
-  - Wider than tall → **1024px wide**, let height follow the natural aspect ratio
-  - Taller than wide → **1024px tall**, let width follow the natural aspect ratio
-  - 512px on the longest side is the floor; 1024px is the target. The PNG is the derived export the C++ code loads — Claude sizes the rendering call to match whatever is provided.
-- **Commit to:**
-  - `release/datafiles/blended_logo.svg`
-  - `release/datafiles/blended_logo.png`
+- [x] ✓ **Done** — flat-vector orange blender appliance committed to `release/datafiles/blended_logo.svg` + `blended_logo.png`
 
 ---
 
 #### 2. Final accent hex
 
-- [ ] Pick the accent color derived from the logo render (currently placeholder `#E87D0D`)
-- **No file needed** — tell Claude the hex value in chat. Claude does the find-replace across the codebase.
+- [x] ✓ **Done** — `#ff7f00` (final, definitive). Codebase swap complete: `COL_ACCENT` in `space_blended_launcher.cc`, commit `c43aa3c0`.
 
 ---
 
