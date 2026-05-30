@@ -575,6 +575,18 @@ No `--include` filter. No directory restriction. Zero hits required before commi
 
 ---
 
+### Scar 21: Read the Whole File Before Editing It
+
+**What happened:** The developer asked to "gut stale and outdated and unnecessary information from CLAUDE.md" — a 2290-line file. Instead of reading the entire file first and making a plan, the session started making incremental edits immediately, working from a partial read and assumptions about what was below. The result: duplicate section headers, orphaned content, a "RETIRED CONTENT" marker that didn't belong, and a file that was worse than when it started. The developer had to intervene: *"Hey, can you revert to back to before you were doing this Claude markdown edit? You suck right now. Try again, reading the entirety of Claude markdown file and being smart."*
+
+**Why this is a distinct failure mode:** The instinct was to start producing immediately — the help-shaped output problem from `help.md`, applied to editing. Reading 2290 lines feels slow. Making edits feels productive. But editing a file you haven't fully read is not productive — it is guessing with a text editor. Every "I'll just remove this section" decision made without seeing the full structure risks orphaning cross-references, creating duplicate headers, or cutting something that's load-bearing for a section you haven't read yet.
+
+**The rule:** Before editing any file longer than ~200 lines, read the entire file first. Not skim — read. Build the complete mental model of the structure before the first Edit call. For CLAUDE.md specifically: the file has cross-references between scars, between the Codex Standard and the scars it maps, between the version management section and the roadmap table, and between the document responsibility section and everything else. Cutting one section without knowing what references it is how you get orphaned "See Scar 12" pointers and duplicate headers.
+
+**The revert was the correct move.** `git checkout HEAD -- CLAUDE.md` and start over. A botched edit that creates new problems is worse than no edit. When the file is in a worse state than you found it, revert and try again — don't try to fix forward through the mess.
+
+---
+
 ## Development Philosophy
 
 *Inspired by "Reality 101: Instruction Manual for Dummies" by Charlie (Teacher Man). Originally lived in a separate `PHILOSOPHY.md`; folded in here so a session loads the operational principles alongside the operational rules.*
