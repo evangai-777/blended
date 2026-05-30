@@ -1437,6 +1437,10 @@ Assets the human developer is responsible for creating and committing. All commi
 
 - [x] ✓ **Done** — flat-vector orange blender appliance committed to `release/datafiles/blended_logo.svg` + `blended_logo.png`
 
+#### 1a. Logo artwork credit
+
+- [x] ✓ **Done** — `release/datafiles/license.txt` created (follows `studiolights/world/license.txt` pattern); `blended_logo.svg` `<metadata>` block updated with inline attribution: "Orange Blender clip art" by Michelle L., 03-09-2013, https://www.clker.com/clipart-orange-blender.html
+
 ---
 
 #### 2. Final accent hex
