@@ -126,6 +126,7 @@ BLI_listbase_clear(&bmain->linestyles);
 | `filelist.cc` | `file_is_blend_backup()`: hardcoded `.blend` scan in last 7-8 chars — must also detect `.blended` to recognize `.blended1`/`.blended2` backups. Without this fix, `do_history()` produces `.blended1` files that `FILE_TYPE_BLENDER_BACKUP` never sees | 1745-1769 |
 | `filelist.cc` | `ED_path_extension_type()`: `.blended` detection via `BKE_blendfile_extension_check` (fixed by blendfile.cc above), map to `FILE_TYPE_BLENDED` instead of `FILE_TYPE_BLENDER` | 1777-1778 |
 | `filelist.cc` | `BLI_strcasestr` for `.blend` detection — add `.blended` | 1762 |
+| `filelist.cc` | `FILE_TYPE_BLENDER` icon/preview/thumbnail classification — add `FILE_TYPE_BLENDED` | 319, 366, 549-556, 668, 1871 |
 | `filelist_sort.cc` | `.blend.gz` sorting — add `.blended.gz` | 229, 232 |
 | `filelist_sort.cc` | Sort priority: `FILE_TYPE_BLENDER | FILE_TYPE_BLENDER_BACKUP` — add `FILE_TYPE_BLENDED` | 99-104 |
 | `filelist_readjob_asset_library_remote.cc` | `.blend` assert — add `.blended` | 67 |
@@ -138,7 +139,9 @@ BLI_listbase_clear(&bmain->linestyles);
 | `asset_ops.cc` | `FILE_TYPE_BLENDER` filter in asset browser — add `FILE_TYPE_BLENDED` | 857 |
 | `wm_files.cc` | Open/browse dialogs: filter changes from `FILE_TYPE_BLENDER` to `FILE_TYPE_BLENDER | FILE_TYPE_BLENDED` | 3387, 3607, 4137, 4246 |
 | `wm_files.cc` | Save dialogs: filter uses `FILE_TYPE_BLENDED` only | same area |
-| `wm_files_link.cc` | Link/Append dialogs: `FILE_TYPE_BLENDER` — add `FILE_TYPE_BLENDED` | 1066, 1096 |
+| `wm_files_link.cc` | `WM_OT_link` + `WM_OT_append` filters: `FILE_TYPE_BLENDER | FILE_TYPE_BLENDERLIB` — add `FILE_TYPE_BLENDED` | 486-487, 510-511 |
+| `wm_files_link.cc` | `WM_OT_lib_relocate` + `WM_OT_lib_reload` filters: `FILE_TYPE_BLENDER` — add `FILE_TYPE_BLENDED` | 1066, 1096 |
+| `wm_files_link.cc` | Operator descriptions: `"Link from a Library .blend file"` / `"Append from a Library .blend file"` — update to `.blend`/`.blended` or format-neutral | 478, 502 |
 | `filesel.cc` | `filter_blender` RNA prop sets `FILE_TYPE_BLENDER` — needs to also set `FILE_TYPE_BLENDED` | 234 |
 | `file_handler_test.cc` | Test expectations for extension detection — add `.blended` | 45 |
 | `wm_dragdrop_test.cc` | Drag-drop tests with `FILE_TYPE_BLENDER` — add `FILE_TYPE_BLENDED` test cases | 39-88 |
@@ -178,7 +181,7 @@ BLI_listbase_clear(&bmain->linestyles);
 
 #### Totals
 
-~50 C/C++ sites across ~22 source files, ~10 Python sites across ~7 script files, ~5 platform/packaging files, ~5 UI string sites. ~70 total sites.
+~60 C/C++ sites across ~22 source files, ~10 Python sites across ~7 script files, ~5 platform/packaging files, ~5 UI string sites. ~80 total sites.
 
 #### 0.8.0 Implementation Checklist
 
@@ -731,7 +734,7 @@ Both purposes reinforce the same discipline: when a logical unit of work is done
 
 **What happened:** The 0.8.0 blast radius audit was written, committed, and pushed across all four mandatory docs. It covered ~50 sites across ~15 source files. It was thorough — per-file, per-line-number, organized by category. It felt complete. Codex reviewed PR #221 and immediately flagged `file_is_blend_backup()` at `filelist.cc:1745`: the function hardcodes a `.blend` scan in the last 7-8 characters of the filename, so `.blended1` backups produced by `do_history()` would never be recognized as `FILE_TYPE_BLENDER_BACKUP`. The audit had `do_history()` on the write side (produce `.blended1`) but not the read side (detect `.blended1`).
 
-That one catch triggered a deep sweep that found ~20 additional missed sites across 10 files: `BKE_blendfile_extension_check()` (the central extension validator, missing `.blended`), `file_draw.cc` (3 icon/draw sites), `filelist_filter.cc` (filter logic), `filelist_readjob_common.cc` (type assignment), `filelist_sort.cc` (sort priority), `screen_ops.cc` (file type dispatch), `wm_files_link.cc` (Link/Append dialogs), `wm_dragdrop_test.cc` (drag-drop tests), `filesel.cc` (filter property), `asset_ops.cc` (asset browser). Revised totals: ~70 sites across ~22 source files.
+That one catch triggered a deep sweep that found ~20 additional missed sites across 10 files: `BKE_blendfile_extension_check()` (the central extension validator, missing `.blended`), `file_draw.cc` (3 icon/draw sites), `filelist_filter.cc` (filter logic), `filelist_readjob_common.cc` (type assignment), `filelist_sort.cc` (sort priority), `screen_ops.cc` (file type dispatch), `wm_files_link.cc` (Link/Append dialogs), `wm_dragdrop_test.cc` (drag-drop tests), `filesel.cc` (filter property), `asset_ops.cc` (asset browser).
 
 **Why 20 sites were invisible to the initial audit:** The initial grep strategy searched for literal `".blend"` strings — extension strings in quotes, magic byte strings, path patterns. That catches write-path sites (where `.blend` appears as a string literal) but misses consumption sites where `FILE_TYPE_BLENDER` is used as a *constant* in bitwise checks. The file browser subsystem has ~15 files that check `FILE_TYPE_BLENDER` or `FILE_TYPE_BLENDER_BACKUP` in filter/draw/sort/dispatch logic. None of those files contain the string `".blend"` — they use the enum constant. A grep for `".blend"` finds zero of them. A grep for `FILE_TYPE_BLENDER` finds all of them.
 
@@ -745,6 +748,8 @@ That one catch triggered a deep sweep that found ~20 additional missed sites acr
 Grep for the format's enum constant (`FILE_TYPE_BLENDER`) is the classification-path search. Grep for the format's string literal (`".blend"`) is the write/read-path search. Both are required. The initial audit ran only the second.
 
 **Credit:** Codex caught the first missed site. The deep sweep that followed was triggered by that catch. This is the system working: Codex reviews mechanically, Claude investigates the implications. The embarrassing part is not that Codex found something — it's that the audit was described as complete when an entire axis of the blast radius was unsearched.
+
+**Compaction variant (PR #222):** Even after the deep sweep added `wm_files_link.cc` to the audit, the listed line numbers (1066, 1096) were wrong — those are `WM_OT_lib_relocate` and `WM_OT_lib_reload` (library relocate/reload file selectors), not the primary Link/Append operators. The actual `WM_OT_link` and `WM_OT_append` filters are at lines 486-487 and 510-511, using `FILE_TYPE_FOLDER | FILE_TYPE_BLENDER | FILE_TYPE_BLENDERLIB`. The operator description strings at lines 478 and 502 (`"Link from a Library .blend file"` / `"Append from a Library .blend file"`) were also missed. The audit found the right file but the wrong functions — the `FILE_TYPE_BLENDER` grep returned four hits in the file and only the bottom two were recorded. Codex caught it on PR #222. The root cause: when a grep returns multiple hits in the same file, every hit must be read in context, not just the first ones visible in the terminal. Revised totals: ~80 sites across ~22 source files.
 
 ---
 
