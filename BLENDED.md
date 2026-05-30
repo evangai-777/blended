@@ -1459,7 +1459,7 @@ Assets the human developer is responsible for creating and committing. All commi
 | Linux SVG | no constraint | Vector, scales |
 
 - **Commit to:**
-  - `release/windows/icons/winblender.ico` (replace in place — `winblender.rc` hardcodes this filename)
+  - `release/windows/icons/winblended.ico` (new file; also update `"winblender.ico"` → `"winblended.ico"` in `release/windows/icons/winblender.rc` line 12)
   - `release/freedesktop/icons/scalable/apps/blended.svg` (new file — no `hicolor/` prefix; also update `Icon=blender` → `Icon=blended` in `release/freedesktop/blender.desktop`)
 
 ---

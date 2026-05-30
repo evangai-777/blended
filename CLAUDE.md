@@ -102,7 +102,7 @@ BLI_listbase_clear(&bmain->linestyles);
 
 | Format | Sizes | Commit target |
 |--------|-------|---------------|
-| Windows ICO | 16, 32, 48, 64, 128, 256px (combined multi-size) | `release/windows/icons/winblender.ico` (replace in place — `winblender.rc` hardcodes this name) |
+| Windows ICO | 16, 32, 48, 64, 128, 256px (combined multi-size) | `release/windows/icons/winblended.ico` (new file; also update `"winblender.ico"` → `"winblended.ico"` in `release/windows/icons/winblender.rc` line 12) |
 | Linux SVG | scalable (no constraint) | `release/freedesktop/icons/scalable/apps/blended.svg` (new file; also update `Icon=blender` → `Icon=blended` in `release/freedesktop/blender.desktop` line 83) |
 
 - [ ] **[NEXT]** Splash screen visual design applied:
