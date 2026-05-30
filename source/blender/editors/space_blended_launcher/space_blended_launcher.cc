@@ -164,8 +164,8 @@ static constexpr float COL_SECTION[4] = {0.85f, 0.85f, 0.85f, 1.0f};
 static constexpr float COL_MODE[4] = {0.78f, 0.78f, 0.78f, 1.0f};
 static constexpr float COL_GROUP[4] = {0.45f, 0.45f, 0.45f, 1.0f};
 
-/* Phase 2 placeholder accent — derives from logo render (Blender orange in the interim). */
-static constexpr float COL_ACCENT[4] = {0xE8 / 255.0f, 0x7D / 255.0f, 0x0D / 255.0f, 1.0f};
+/* Definitive accent — #2596be. */
+static constexpr float COL_ACCENT[4] = {0x25 / 255.0f, 0x96 / 255.0f, 0xBE / 255.0f, 1.0f};
 
 /** \} */
 
