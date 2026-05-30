@@ -27,7 +27,7 @@ carries a one-liner status per active item.
 | 0.4.x | Datablock audit — fossil removals (Buckets 5 + 6): 9 ID types |
 | 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) |
 | 0.6.x | Evaluation model — depsgraph audit | ✓ CI-complete (build 82, commit `8f7dda22`) |
-| 0.7.x | App lenses — launcher as canonical workspace system + full product identity | Phase 1 + Phase 2 partial ✓ CI-complete (build 97, commit `aa6ec698`). Logo ✓ + accent ✓ + app icon ✓ (PR #216). Pending: splash visual |
+| 0.7.x | App lenses — launcher as canonical workspace system + full product identity | Phase 1 + Phase 2 partial ✓ CI-complete (build 97, commit `aa6ec698`). Logo ✓ + accent ✓ + app icon ✓ (PR #216) + splash ✓. Phase 2 design complete. |
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary |
 | 0.9.x | `.blend` import — seamless read with dropped-data manifest output |
 | 1.0.0 | Foundation complete; basic pipeline navigation working; GitHub Pages launch |
@@ -99,9 +99,9 @@ Each mode button opens the focused editor layout described in the corresponding 
 
 **Visual identity** ✓ — Logo originated: flat-vector orange blender appliance. Assets: `release/datafiles/blended_logo.svg` + `blended_logo.png`. Accent hex finalized: `#ff7f00` (logo orange, from SVG fill — corrected from `#2596be` which was a bad hex-picker read). Typeface: Inter (bundled) — permanent, decision closed.
 
-**App icon** — Platform icon assets derived from the visual identity. *(Pending.)*
+**App icon** ✓ — Platform icon assets derived from the visual identity. PR #216, commit `0bb9e585`.
 
-**Splash screen** — Visual design applied to the Phase 1 skeleton. *(Pending.)*
+**Splash screen** ✓ — Visual design applied to the Phase 1 skeleton. `release/datafiles/splash.png`, 1920×960, PNG-24.
 
 **Launcher aesthetics** ✓ — `COL_ACCENT` set to `#ff7f00` (logo orange) in `space_blended_launcher.cc`. Commit `c43aa3c0` set `#2596be` (bad hex-picker read); corrected to `#ff7f00` from SVG fill source.
 
@@ -184,12 +184,7 @@ Each mode button opens the focused editor layout described in the corresponding 
 | Windows ICO | 16, 32, 48, 64, 128, 256px combined | `release/windows/icons/winblended.ico` ✓ | `winblended.rc` ✓; `packaging.cmake` ✓; `source/creator/CMakeLists.txt` ✓ |
 | Linux SVG | scalable | `release/freedesktop/icons/scalable/apps/blended.svg` ✓ (`blender.svg` deleted ✓) | `blended.desktop` ✓; `windowmanager/CMakeLists.txt` ✓; `source/creator/CMakeLists.txt` ✓ |
 
-- [ ] **[NEXT]** Splash screen — visual identity applied to Phase 1 skeleton:
-  - **Dimensions:** 1920×960px (2:1 ratio) — code scales; this resolution covers HiDPI
-  - **File size:** ~725KB target — compiled into binary, not loaded from disk; keep lean
-  - **Do NOT include:** round corners (code: `wm_block_splash_image_roundcorners_add`) or version text (overlaid in code)
-  - **Preview:** `BLENDER_CUSTOM_SPLASH=/path/to/splash.png` (no recompile needed)
-  - **Commit to:** `release/datafiles/splash.png`
+- [x] Splash screen ✓ — `release/datafiles/splash.png`, 1920×960, PNG-24
 
 **CI-complete: Windows x64, build 97, commit `aa6ec698`.** Phase 1 skeleton + Phase 2 launcher chrome/cards/hover. 15 build runs to close the MSVC gap across the 0.7.0 migration commits (ID* cast patterns, LISTBASE_FOREACH unavailability, namespace collisions in EEVEE, uninitialized const arrays). PRs #201–#210.
 

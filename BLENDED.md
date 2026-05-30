@@ -1,7 +1,7 @@
 # BLENDED — Identity & Design Agreements
 
 **Developer/Publisher:** CHJ 3 Productions LLC (Indiana).
-**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.7.0-dev — CI-complete (Windows x64, build 97, commit `aa6ec698`). Phase 1 skeleton complete ✓ + Phase 2 partial CI-complete ✓. Phase 1: launcher ✓, 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome), format design ✓ (startup/userpref-as-blend removed, §5 Group 1 LOCKED), all 6 Bucket 3 permanent homes ✓ (VFont→filepath 502.24, Palette→Brush 502.25, LightProbe→Light 502.26, Mask→NodeTree 502.27/28, Lattice→LatticeModifierData 502.29, Brush→project-optional 502.30). Phase 2 CI-complete: launcher header chrome ✓ (RGN_TYPE_HEADER + LAUNCHER_HT_header Python class, wordmark + New Project + Open… + Open Recent), mode button rounded cards ✓ (8px radius, draw_rect_rounded GPU helper, COL_CARD_HOVER #323232 + accent border, PR #196, commit `a633d329`). Phase 2 design: logo ✓ (orange blender appliance, flat-vector, `release/datafiles/blended_logo.svg` + `.png`), accent hex ✓ (`#ff7f00` — final, definitive), app icon ✓ (`winblended.ico` + `blended.svg`, PR #216). Next step: splash visual. Typeface: Inter (Blender's bundled font) — permanent, decision closed.
+**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.7.0-dev — CI-complete (Windows x64, build 97, commit `aa6ec698`). Phase 1 skeleton complete ✓ + Phase 2 partial CI-complete ✓. Phase 1: launcher ✓, 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome), format design ✓ (startup/userpref-as-blend removed, §5 Group 1 LOCKED), all 6 Bucket 3 permanent homes ✓ (VFont→filepath 502.24, Palette→Brush 502.25, LightProbe→Light 502.26, Mask→NodeTree 502.27/28, Lattice→LatticeModifierData 502.29, Brush→project-optional 502.30). Phase 2 CI-complete: launcher header chrome ✓ (RGN_TYPE_HEADER + LAUNCHER_HT_header Python class, wordmark + New Project + Open… + Open Recent), mode button rounded cards ✓ (8px radius, draw_rect_rounded GPU helper, COL_CARD_HOVER #323232 + accent border, PR #196, commit `a633d329`). Phase 2 design: logo ✓ (orange blender appliance, flat-vector, `release/datafiles/blended_logo.svg` + `.png`), accent hex ✓ (`#ff7f00` — final, definitive), app icon ✓ (`winblended.ico` + `blended.svg`, PR #216), splash visual ✓ (`release/datafiles/splash.png`, 1920×960, PNG-24). Phase 2 design complete. Typeface: Inter (Blender's bundled font) — permanent, decision closed.
 **Purpose:** So any future session, contributor, or Claude instance can pick up without re-litigating what's already been decided. Read this first before proposing changes to scope, identity, or architecture.
 
 ---
@@ -1465,14 +1465,5 @@ Assets the human developer is responsible for creating and committing. All commi
 
 #### 4. Splash screen
 
-- [ ] Design the full splash composition — background art only
-- **Do NOT include:**
-  - Round corners — applied in code by `wm_block_splash_image_roundcorners_add`, not baked into the image
-  - Version text — overlaid in code, changes each release; leave that area clear
-- **Dimensions:** **1920×960px (2:1 ratio)**
-  - The splash width is computed dynamically as `style->widget.points * 45 * UI_SCALE_FAC`, capped at 70% of window width (~495px at 1x DPI, ~742px at 1.5x). The code scales the image down to fit using Box filter (`IMBScaleFilter::Box`). Aspect ratio is what is fixed; pixels are scaled. 1920×960 gives enough resolution to scale cleanly at any DPI.
-- **File size:** keep reasonable — the splash is **compiled directly into the binary** (`datatoc_splash_png`), not loaded from the filesystem at runtime. It bloats the executable if oversized. The existing Blender asset is ~725KB; stay in that range. Compress the PNG accordingly.
-- **Testing without recompiling:** set env var `BLENDER_CUSTOM_SPLASH=/path/to/your/splash.png` to preview the splash at runtime before committing. `BLENDER_CUSTOM_SPLASH_BANNER` overrides the secondary banner element within the splash.
-- **Commit to:** `release/datafiles/splash.png` — overwrites Blender's existing file in-place. This is the only splash file to touch.
-  - `release/datafiles/splash_template.xcf` is Blender's GIMP design source file for their splash. It is not referenced by any code. Delete it or leave it — does not matter.
+- [x] Design the full splash composition ✓ — `release/datafiles/splash.png`, 1920×960, PNG-24
 
