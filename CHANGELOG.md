@@ -27,7 +27,7 @@ carries a one-liner status per active item.
 | 0.4.x | Datablock audit — fossil removals (Buckets 5 + 6): 9 ID types |
 | 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) |
 | 0.6.x | Evaluation model — depsgraph audit | ✓ CI-complete (build 82, commit `8f7dda22`) |
-| 0.7.x | App lenses — launcher as canonical workspace system + full product identity | Phase 1 + Phase 2 partial ✓ CI-complete (build 97, commit `aa6ec698`). Logo ✓ + accent ✓ + app icon ✓ (PR #216) + splash ✓. Phase 2 design complete. |
+| 0.7.x | App lenses — launcher as canonical workspace system + full product identity | ✓ CI-complete (build 99, commit `2ddd1dd0`). Phase 1 + Phase 2 complete. Logo ✓ + accent ✓ (`#ff7f00`) + app icon ✓ + splash ✓. |
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary |
 | 0.9.x | `.blend` import — seamless read with dropped-data manifest output |
 | 1.0.0 | Foundation complete; basic pipeline navigation working; GitHub Pages launch |
@@ -62,7 +62,15 @@ carries a one-liner status per active item.
 
 ---
 
-## Unreleased — 0.7.0
+## Unreleased — 0.8.0
+
+**Design vision:** 0.7.0 completed the app lenses layer — launcher, 28 mode lenses, full product identity, format design. 0.8.x builds the file format: `.blended` is the project, import/export is the boundary.
+
+**Version bump:** `BLENDED_VERSION_MINOR` 7 → 8. First commit of 0.8.x dev cycle.
+
+---
+
+## 0.7.0 — 2026-05-30 — CI-complete (build 99, commit `2ddd1dd0`)
 
 **Design vision:** 0.6.0 made the evaluation and draw layers honest about the ~19-type data model. 0.7.x builds the first additive layer on top of that clean foundation: the launcher as canonical workspace system, all mode lenses per §12, full product identity per §16, and the `.blended` format design that unlocks 0.8.x.
 
@@ -186,14 +194,14 @@ Each mode button opens the focused editor layout described in the corresponding 
 
 - [x] Splash screen ✓ — `release/datafiles/splash.png`, 1920×960, PNG-24
 
-**CI-complete: Windows x64, build 97, commit `aa6ec698`.** Phase 1 skeleton + Phase 2 launcher chrome/cards/hover. 15 build runs to close the MSVC gap across the 0.7.0 migration commits (ID* cast patterns, LISTBASE_FOREACH unavailability, namespace collisions in EEVEE, uninitialized const arrays). PRs #201–#210.
+**CI-complete: Windows x64, build 99, commit `2ddd1dd0`.** Phase 1 skeleton + Phase 2 complete. 17 build runs total across the 0.7.0 cycle. Final fix: missing `BLI_string_utf8.h` include in `paint.cc` (PR #219, commit `2f5e2b1d`). Prior: 15 build runs to close the MSVC gap across the 0.7.0 migration commits (ID* cast patterns, LISTBASE_FOREACH unavailability, namespace collisions in EEVEE, uninitialized const arrays). PRs #201–#219.
 
-#### Mandatory docs update at each CI-complete patch
-- [ ] `BKE_blender_version.h` — PATCH bumped if needed
-- [ ] CLAUDE.md — current version line updated with build number + commit
-- [ ] CHANGELOG.md — CI-complete note added
-- [ ] BLENDED.md — Status line updated
-- [ ] `.github/README.md` — status sentence updated (`git add -f`)
+#### Mandatory docs update — 0.7.0 CI-complete
+- [x] `BKE_blender_version.h` — MINOR bumped 7 → 8 (start of 0.8.x cycle)
+- [x] CLAUDE.md — current version line updated; roadmap table updated
+- [x] CHANGELOG.md — CI-complete note added; version section closed
+- [x] BLENDED.md — Status line updated
+- [x] `.github/README.md` — status sentence updated (`git add -f`)
 
 ---
 
