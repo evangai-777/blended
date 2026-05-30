@@ -1,7 +1,7 @@
 # BLENDED — Identity & Design Agreements
 
 **Developer/Publisher:** CHJ 3 Productions LLC (Indiana).
-**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.7.0-dev — CI-complete (Windows x64, build 97, commit `aa6ec698`). Phase 1 skeleton complete ✓ + Phase 2 partial CI-complete ✓. Phase 1: launcher ✓, 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome), format design ✓ (startup/userpref-as-blend removed, §5 Group 1 LOCKED), all 6 Bucket 3 permanent homes ✓ (VFont→filepath 502.24, Palette→Brush 502.25, LightProbe→Light 502.26, Mask→NodeTree 502.27/28, Lattice→LatticeModifierData 502.29, Brush→project-optional 502.30). Phase 2 CI-complete: launcher header chrome ✓ (RGN_TYPE_HEADER + LAUNCHER_HT_header Python class, wordmark + New Project + Open… + Open Recent), mode button rounded cards ✓ (8px radius, draw_rect_rounded GPU helper, COL_CARD_HOVER #323232 + accent border, PR #196, commit `a633d329`). Phase 2 design: logo ✓ (orange blender appliance, flat-vector, `release/datafiles/blended_logo.svg` + `.png`), accent hex ✓ (`#ff7f00` — final, definitive). Next step: app icon (all platform sizes) + splash visual. Typeface: Inter (Blender's bundled font) — permanent, decision closed.
+**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.7.0-dev — CI-complete (Windows x64, build 97, commit `aa6ec698`). Phase 1 skeleton complete ✓ + Phase 2 partial CI-complete ✓. Phase 1: launcher ✓, 28 mode lenses ✓, product identity skeleton ✓ (CHJ 3 Productions LLC attribution, window chrome), format design ✓ (startup/userpref-as-blend removed, §5 Group 1 LOCKED), all 6 Bucket 3 permanent homes ✓ (VFont→filepath 502.24, Palette→Brush 502.25, LightProbe→Light 502.26, Mask→NodeTree 502.27/28, Lattice→LatticeModifierData 502.29, Brush→project-optional 502.30). Phase 2 CI-complete: launcher header chrome ✓ (RGN_TYPE_HEADER + LAUNCHER_HT_header Python class, wordmark + New Project + Open… + Open Recent), mode button rounded cards ✓ (8px radius, draw_rect_rounded GPU helper, COL_CARD_HOVER #323232 + accent border, PR #196, commit `a633d329`). Phase 2 design: logo ✓ (orange blender appliance, flat-vector, `release/datafiles/blended_logo.svg` + `.png`), accent hex ✓ (`#ff7f00` — final, definitive), app icon ✓ (`winblended.ico` + `blended.svg`, PR #216). Next step: splash visual. Typeface: Inter (Blender's bundled font) — permanent, decision closed.
 **Purpose:** So any future session, contributor, or Claude instance can pick up without re-litigating what's already been decided. Read this first before proposing changes to scope, identity, or architecture.
 
 ---
@@ -1451,22 +1451,14 @@ Assets the human developer is responsible for creating and committing. All commi
 
 #### 3. App icon
 
-- [ ] Create icon artwork (logo mark cropped/adapted for square format)
+- [x] ✓ **Done** — artwork committed, build system updated
 
-| Format | Size | Notes |
-|--------|------|-------|
-| Windows ICO | 16, 32, 48, 64, 128, 256px combined into one `.ico` | Multi-size ICO, all sizes in one file |
-| Linux SVG | no constraint | Vector, scales |
+| Format | Size | File |
+|--------|------|------|
+| Windows ICO | 16, 32, 48, 64, 128, 256px combined | `release/windows/icons/winblended.ico` ✓ |
+| Linux SVG | scalable | `release/freedesktop/icons/scalable/apps/blended.svg` ✓ (`blender.svg` deleted ✓) |
 
-- **Artwork files (pending):**
-  - `release/windows/icons/winblended.ico`
-  - `release/freedesktop/icons/scalable/apps/blended.svg` (also delete `blender.svg` once committed)
-- **Build system + config ✓ done (commit `0bb9e585`):**
-  - `winblender.rc` → `winblended.rc` ✓; line 12 updated
-  - `build_files/cmake/packaging.cmake` lines 92+98 ✓
-  - `source/creator/CMakeLists.txt` lines 168+348 ✓
-  - `blender.desktop` → `blended.desktop` ✓; `Icon=` updated
-  - `source/blender/windowmanager/CMakeLists.txt` line 135 ✓
+- Build system: `winblended.rc` ✓, `blended.desktop` ✓, `packaging.cmake` ✓, `windowmanager/CMakeLists.txt` ✓, `source/creator/CMakeLists.txt` ✓
   - `source/creator/CMakeLists.txt` lines 766+767+821+829 ✓
 
 ---

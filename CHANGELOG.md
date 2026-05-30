@@ -27,7 +27,7 @@ carries a one-liner status per active item.
 | 0.4.x | Datablock audit — fossil removals (Buckets 5 + 6): 9 ID types |
 | 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) |
 | 0.6.x | Evaluation model — depsgraph audit | ✓ CI-complete (build 82, commit `8f7dda22`) |
-| 0.7.x | App lenses — launcher as canonical workspace system + full product identity | Phase 1 + Phase 2 partial ✓ CI-complete (build 97, commit `aa6ec698`). Pending: graphic design assets |
+| 0.7.x | App lenses — launcher as canonical workspace system + full product identity | Phase 1 + Phase 2 partial ✓ CI-complete (build 97, commit `aa6ec698`). Logo ✓ + accent ✓ + app icon ✓ (PR #216). Pending: splash visual |
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary |
 | 0.9.x | `.blend` import — seamless read with dropped-data manifest output |
 | 1.0.0 | Foundation complete; basic pipeline navigation working; GitHub Pages launch |
@@ -177,12 +177,12 @@ Each mode button opens the focused editor layout described in the corresponding 
 - [x] Logo artwork credit ✓ (`release/datafiles/license.txt` + SVG `<metadata>` — "Orange Blender clip art" by Michelle L., clker.com, 03-09-2013)
 - [x] Final accent hex confirmed ✓ (`#ff7f00` — logo orange from SVG fill; `#2596be` was a bad hex-picker read, corrected)
 - [x] Launcher accent color finalized in code ✓ (`COL_ACCENT` = `#ff7f00` in `space_blended_launcher.cc`)
-- [ ] **[NEXT]** App icon assets generated (all platform sizes):
+- [x] App icon assets generated (all platform sizes) ✓
 
-| Format | Sizes | Artwork file (pending) | Build system (✓ done — commit `0bb9e585`) |
-|--------|-------|----------------------|------------------------------------------|
-| Windows ICO | 16, 32, 48, 64, 128, 256px combined | `release/windows/icons/winblended.ico` | `winblender.rc` → `winblended.rc` ✓; `packaging.cmake` lines 92+98 ✓; `source/creator/CMakeLists.txt` lines 168+348 ✓ |
-| Linux SVG | scalable | `release/freedesktop/icons/scalable/apps/blended.svg` (also delete `blender.svg`) | `blender.desktop` → `blended.desktop` ✓; `windowmanager/CMakeLists.txt` line 135 ✓; `source/creator/CMakeLists.txt` lines 766+767+821+829 ✓ |
+| Format | Sizes | Artwork file | Build system |
+|--------|-------|-------------|-------------|
+| Windows ICO | 16, 32, 48, 64, 128, 256px combined | `release/windows/icons/winblended.ico` ✓ | `winblended.rc` ✓; `packaging.cmake` ✓; `source/creator/CMakeLists.txt` ✓ |
+| Linux SVG | scalable | `release/freedesktop/icons/scalable/apps/blended.svg` ✓ (`blender.svg` deleted ✓) | `blended.desktop` ✓; `windowmanager/CMakeLists.txt` ✓; `source/creator/CMakeLists.txt` ✓ |
 
 - [ ] **[NEXT]** Splash screen — visual identity applied to Phase 1 skeleton:
   - **Dimensions:** 1920×960px (2:1 ratio) — code scales; this resolution covers HiDPI
@@ -227,6 +227,8 @@ Each mode button opens the focused editor layout described in the corresponding 
 **Claude AI contributor (2026-05-30, Phase 2 materials):** 0.7.0 Phase 2 visual identity — docs update, accent code swap, logo credit. Branch `claude/0-7-0-phase2-materials-9WEBB`. Commits `93f9489e` (docs), `c43aa3c0` (code), `382d4586` (credit). (1) **All four mandatory docs updated** — logo design section in BLENDED.md §16 rewritten to reflect final flat-vector orange blender appliance (scrap tornado/orbit-lines concept); accent hex `#2596be` marked final and definitive (replaces `#E87D0D` placeholder); Phase 2 checklist items 1+2 marked complete; CLAUDE.md current version line updated; CHANGELOG.md and README.md status lines updated. (2) **`COL_ACCENT` swap** — `space_blended_launcher.cc:168` updated from `#E87D0D` (Blender orange placeholder) to `#2596be` (definitive accent). Only one hardcoded accent site confirmed by grep; two remaining `#E87D0D` in repo are upstream Blender icon SVGs (`release/freedesktop`, `release/darwin`), not our accent. (3) **Logo artwork credit** — `release/datafiles/license.txt` created following `studiolights/world/license.txt` pattern; `blended_logo.svg` `<metadata>` block updated with inline attribution: "Orange Blender clip art" by Michelle L., 03-09-2013, https://www.clker.com/clipart-orange-blender.html. (4) **Codex checklist run** — Part 1: four doc inconsistencies found and fixed (accent swap checklist items still `[ ]` in CLAUDE.md, CHANGELOG.md ×2, BLENDED.md ×2 — all corrected in follow-up commit). Part 2: no chisel/fold-down code changes; accent swap is a single constant replacement with no scar-applicable patterns.
 
 **Claude AI contributor (2026-05-30, accent correction):** Corrected accent hex from `#2596be` (bad hex-picker read, blue) to `#ff7f00` (logo orange — authoritative source is `blended_logo.svg` fill, confirmed `grep -o 'fill="#[^"]*"'` returns `#ff7f00` ×9 as the only non-white fill). Updated `COL_ACCENT` in `space_blended_launcher.cc`, all four mandatory docs, and CHANGELOG forward-looking entries. Historical contributor note for `c43aa3c0` left accurate (it set `#2596be`); correction applied in follow-up commit on same branch.
+
+**Claude AI contributor (2026-05-30, app icon build system):** 0.7.0 Phase 2 — app icon build system renames. Branch `claude/0-7-0-phase2-materials-9WEBB`. Commit `0bb9e585` (PR #216). All platform icon references renamed for Blended identity: `winblender.rc` → `winblended.rc` (line 12: `"winblender.ico"` → `"winblended.ico"`); `blender.desktop` → `blended.desktop` (`Icon=blender` → `Icon=blended`); `build_files/cmake/packaging.cmake` lines 92+98 (`winblender.ico` → `winblended.ico`); `source/creator/CMakeLists.txt` all `.rc`, `.desktop`, `.svg` references updated; `source/blender/windowmanager/CMakeLists.txt` line 135 (`blender.svg` → `blended.svg`). Artwork files (`winblended.ico`, `blended.svg`) committed by developer separately; `winblender.ico` and `blender.svg` deleted. App icon checklist item complete.
 
 **Codex AI contributor (OpenAI) — active review partner:** Codex (OpenAI) has been contributing automated code review on pull requests throughout the 0.4.x–0.7.x development cycle. Key contributions: catching functional regressions in dopesheet filter rows (particles/textures toggles restored after incorrect removal), identifying the `rna_enum_metaelem_type_items` orphan array in `rna_object.cc` during ID_MB chisel (Scar 11), flagging `CASE_IDINDEX(SCR/WM)` in idtype.cc after the 0.3.0 chisel (Scar 4), catching `BLT_I18NCONTEXT_ID_CACHEFILE` borrowed by `NodesModifier` in `rna_modifier.cc` (Scar 13), and the versioning gap in `brush_stroke_method` during 0.5.0 work. Per-instance Codex review comments appear on PRs throughout; the most significant catches are documented in the CLAUDE.md Battle Scars section.
 
