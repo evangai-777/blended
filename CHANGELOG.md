@@ -95,15 +95,15 @@ Each mode button opens the focused editor layout described in the corresponding 
 
 **Launcher file management chrome** ✓ — `RGN_TYPE_HEADER` added to launcher space (same `ED_region_header_init` + `ED_region_header` pattern as space_info). `scripts/startup/blended_launcher.py` registers `LAUNCHER_HT_header`: wordmark label, [New Project] (`wm.read_homefile`), [Open…] (`wm.open_mainfile`), [Open Recent] (`TOPBAR_MT_file_open_recent` — same menu as splash screen). Top dropdown packaging per §11. PR #196, commit `a633d329`.
 
-**Launcher rounded cards + hover state** ✓ — `draw_rect_rounded()` triangle-fan approximation (4 corners × 6 segments, 8px radius). `draw_rect_rounded_border()` 2px accent outline. `launcher_main_region_cursor()` stores `mouse_x`/`mouse_y` in `SpaceBlendedLauncher` on every cursor event; `draw_pipeline_scroll()` selects `COL_CARD_HOVER` (`#323232`) fill + `COL_ACCENT` (`#E87D0D` placeholder) border for hovered button. `SpaceBlendedLauncher` DNA: `mouse_x`/`mouse_y` fields replace `_pad1[4]` (same size). PR #196, commit `a633d329`.
+**Launcher rounded cards + hover state** ✓ — `draw_rect_rounded()` triangle-fan approximation (4 corners × 6 segments, 8px radius). `draw_rect_rounded_border()` 2px accent outline. `launcher_main_region_cursor()` stores `mouse_x`/`mouse_y` in `SpaceBlendedLauncher` on every cursor event; `draw_pipeline_scroll()` selects `COL_CARD_HOVER` (`#323232`) fill + `COL_ACCENT` border for hovered button. `SpaceBlendedLauncher` DNA: `mouse_x`/`mouse_y` fields replace `_pad1[4]` (same size). PR #196, commit `a633d329`.
 
-**Visual identity** — Logo, color palette, typography originated and executed this cycle. CHJ 3 Productions LLC product identity fully realized per §16. Typeface: Inter (bundled) — permanent, decision closed. *(Pending human review — logo asset + final accent hex.)*
+**Visual identity** ✓ — Logo originated: flat-vector orange blender appliance. Assets: `release/datafiles/blended_logo.svg` + `blended_logo.png`. Accent hex finalized: `#2596be` (replaces `#E87D0D` placeholder). Typeface: Inter (bundled) — permanent, decision closed.
 
-**App icon** — Platform icon assets derived from the visual identity.
+**App icon** — Platform icon assets derived from the visual identity. *(Pending.)*
 
-**Splash screen** — Visual design applied to the Phase 1 skeleton.
+**Splash screen** — Visual design applied to the Phase 1 skeleton. *(Pending.)*
 
-**Launcher aesthetics** — Accent color finalized (swap `#E87D0D` placeholder once logo render lands). Typeface: Inter (bundled) — no embedding work needed.
+**Launcher aesthetics** — Accent color swap `#E87D0D` → `#2596be` in codebase. *(Pending — next code task.)*
 
 ### Implementation decisions (settled 2026-05-16)
 
@@ -173,11 +173,11 @@ Each mode button opens the focused editor layout described in the corresponding 
 #### Phase 2 — Aesthetic (begins after Phase 1 CI-complete)
 - [x] Launcher file management chrome — `RGN_TYPE_HEADER` + `LAUNCHER_HT_header` (wordmark, New Project, Open…, Open Recent) ✓ PR #196
 - [x] Mode button rounded corners (8px) + hover state (`#323232` + accent border) ✓ PR #196
-- [ ] **[NEXT — human design work]** Logo illustration originated
-- [ ] **[NEXT — human design work]** Final accent hex confirmed (placeholder `#E87D0D`)
-- [ ] **[NEXT — human design work]** App icon assets generated (all platform sizes)
-- [ ] **[NEXT — human design work]** Splash screen — visual identity applied to Phase 1 skeleton
-- [ ] Launcher accent color finalized in code (swap `#E87D0D` placeholder once logo render lands)
+- [x] Logo illustration originated ✓ (orange blender appliance, flat-vector — `blended_logo.svg` + `.png`)
+- [x] Final accent hex confirmed ✓ (`#2596be` — definitive, replaces `#E87D0D` placeholder)
+- [ ] **[NEXT]** App icon assets generated (all platform sizes)
+- [ ] **[NEXT]** Splash screen — visual identity applied to Phase 1 skeleton
+- [ ] Launcher accent color finalized in code (swap `#E87D0D` → `#2596be`)
 
 **CI-complete: Windows x64, build 97, commit `aa6ec698`.** Phase 1 skeleton + Phase 2 launcher chrome/cards/hover. 15 build runs to close the MSVC gap across the 0.7.0 migration commits (ID* cast patterns, LISTBASE_FOREACH unavailability, namespace collisions in EEVEE, uninitialized const arrays). PRs #201–#210.
 
