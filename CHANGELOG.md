@@ -181,9 +181,8 @@ Each mode button opens the focused editor layout described in the corresponding 
 
 | Format | Sizes | Commit target |
 |--------|-------|---------------|
-| Windows ICO | 16, 32, 48, 64, 128, 256px (combined multi-size) | `release/windows/icons/blended.ico` |
-| Linux SVG | scalable (no constraint) | `release/freedesktop/icons/hicolor/scalable/apps/blended.svg` |
-| Linux PNG | 16, 22, 24, 32, 48, 64, 128, 256px (one file per size) | `release/freedesktop/icons/hicolor/NxN/apps/blended.png` |
+| Windows ICO | 16, 32, 48, 64, 128, 256px (combined multi-size) | `release/windows/icons/winblender.ico` (replace in place — `.rc` hardcodes this name) |
+| Linux SVG | scalable (no constraint) | `release/freedesktop/icons/scalable/apps/blender.svg` (replace in place — no `hicolor/` prefix; no PNG size dirs in this repo) |
 
 - [ ] **[NEXT]** Splash screen — visual identity applied to Phase 1 skeleton:
   - **Dimensions:** 1920×960px (2:1 ratio) — code scales; this resolution covers HiDPI

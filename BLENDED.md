@@ -1457,19 +1457,10 @@ Assets the human developer is responsible for creating and committing. All commi
 |--------|------|-------|
 | Windows ICO | 16, 32, 48, 64, 128, 256px combined into one `.ico` | Multi-size ICO, all sizes in one file |
 | Linux SVG | no constraint | Vector, scales |
-| Linux PNG ×8 | 16, 22, 24, 32, 48, 64, 128, 256px | One file per size |
 
 - **Commit to:**
-  - `release/windows/icons/blended.ico`
-  - `release/freedesktop/icons/hicolor/scalable/apps/blended.svg`
-  - `release/freedesktop/icons/hicolor/16x16/apps/blended.png`
-  - `release/freedesktop/icons/hicolor/22x22/apps/blended.png`
-  - `release/freedesktop/icons/hicolor/24x24/apps/blended.png`
-  - `release/freedesktop/icons/hicolor/32x32/apps/blended.png`
-  - `release/freedesktop/icons/hicolor/48x48/apps/blended.png`
-  - `release/freedesktop/icons/hicolor/64x64/apps/blended.png`
-  - `release/freedesktop/icons/hicolor/128x128/apps/blended.png`
-  - `release/freedesktop/icons/hicolor/256x256/apps/blended.png`
+  - `release/windows/icons/winblender.ico` (replace in place — `winblender.rc` hardcodes this filename)
+  - `release/freedesktop/icons/scalable/apps/blender.svg` (replace in place — no `hicolor/` prefix; this repo ships SVG only, no PNG size dirs)
 
 ---
 
