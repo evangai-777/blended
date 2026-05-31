@@ -64,14 +64,15 @@ def cli_main(arguments_raw: argparse.Namespace) -> None:
     meta_json_path = arguments.repository / listing_common.ASSET_TOP_METADATA_FILENAME
     toplevel_meta = _toplevel_meta_read(meta_json_path)
 
-    # Find all .blend files.
+    # Find all blend/blended files.
     filepaths: list[Path] = []
     logger.info("Traversing %s", arguments.repository)
-    for filepath in arguments.repository.rglob("*.blend"):
-        filepaths.append(filepath)
+    for pattern in ("*.blend", "*.blended"):
+        for filepath in arguments.repository.rglob(pattern):
+            filepaths.append(filepath)
 
     files_total = len(filepaths)
-    logger.info(f"* {files_total} .blend files found.")
+    logger.info(f"* {files_total} blend/blended files found.")
 
     limit = _total_files_to_process(arguments, files_total)
 
