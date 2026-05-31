@@ -250,6 +250,11 @@ bool BLI_windows_register_blend_extension(const bool all_users)
     RegCloseKey(hkey);
   }
 
+  if (lresult != ERROR_SUCCESS) {
+    registry_error(root, "Unable to register Blender file type");
+    return false;
+  }
+
   /* Register .blended extension (native Blended project format). */
   lresult = RegCreateKeyEx(root,
                            ".blended",
