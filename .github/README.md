@@ -11,7 +11,7 @@ Blended
 
 Blended is a fork of [Blender](https://www.blender.org) being rebuilt from the foundation up around one stated identity: **free 2D and 3D software tools, with an explicit focus on the craft of animation.**
 
-Currently at 0.8.0-dev — 0.7.0 CI-complete (Windows x64, build 99, commit 2ddd1dd0). 0.7.0 delivered: launcher ✓, all 28 mode lenses ✓, full product identity ✓ (logo, accent #ff7f00, app icon, splash, typeface Inter), format design ✓ (startup/userpref-as-blend removed), all 6 Bucket 3 permanent homes ✓ (VFont 502.24, Palette 502.25, LightProbe 502.26, Mask 502.27/28, Lattice 502.29, Brush 502.30), launcher header chrome + rounded cards + hover state ✓ (PR #196), Phase 2 design complete. Next: 0.8.x — file format (`.blended` is the project, import/export is the boundary).
+Currently at 0.8.0-dev — 0.7.0 CI-complete (Windows x64, build 99, commit 2ddd1dd0). 0.8.x blast radius implementation complete (23 layers, ~80 sites): magic bytes `"BLENDED"`, `.blended` extension on all write paths, `FILE_TYPE_BLENDED` bit flag, platform integration (Windows registry, Linux MIME, macOS UTI), Python scripts, UI strings, tests. Pending CI.
 
 What Blended Is
 ---------------
