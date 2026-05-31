@@ -1609,7 +1609,7 @@ static std::string get_blend_file_header()
 
     /* New blend file header format. */
     std::stringstream ss;
-    ss << "BLENDER";
+    ss << "BLENDED";
     ss << header_size_in_bytes;
     ss << '-';
     ss << std::setfill('0') << std::setw(2) << BLEND_FILE_FORMAT_VERSION_1;
@@ -1626,7 +1626,7 @@ static std::string get_blend_file_header()
 
   /* Legacy blend file header format. */
   std::stringstream ss;
-  ss << "BLENDER";
+  ss << "BLENDED";
   ss << pointer_size_char;
   ss << endian_char;
   ss << BLENDER_FILE_VERSION;
