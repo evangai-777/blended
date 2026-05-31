@@ -75,6 +75,26 @@ TEST(wm_drag, wmDragPath)
     MEM_delete(path_data);
   }
   {
+    /** Test drag-drop with a .blended (native Blended project) file. */
+    Vector<const char *> paths = {"project.blended"};
+    wmDragPath *path_data = WM_drag_create_path_data(paths);
+    Vector<std::string> expected_file_paths = {"project.blended"};
+
+    EXPECT_EQ(path_data->paths.size(), 1);
+    EXPECT_EQ(path_data->paths, expected_file_paths);
+
+    wmDrag drag;
+    drag.type = WM_DRAG_PATH;
+    drag.poin = path_data;
+    EXPECT_STREQ(WM_drag_get_single_path(&drag), "project.blended");
+    EXPECT_EQ(WM_drag_get_path_file_type(&drag), FILE_TYPE_BLENDED);
+    EXPECT_STREQ(WM_drag_get_single_path(&drag, FILE_TYPE_BLENDED), "project.blended");
+    EXPECT_EQ(WM_drag_get_single_path(&drag, FILE_TYPE_BLENDER), nullptr);
+    EXPECT_TRUE(WM_drag_has_path_file_type(&drag, FILE_TYPE_BLENDED | FILE_TYPE_BLENDER));
+    EXPECT_FALSE(WM_drag_has_path_file_type(&drag, FILE_TYPE_BLENDER | FILE_TYPE_IMAGE));
+    MEM_delete(path_data);
+  }
+  {
     /** Test `wmDrag` path data getters when the drag type is different to `WM_DRAG_PATH`. */
     wmDrag drag;
     drag.type = WM_DRAG_COLOR;

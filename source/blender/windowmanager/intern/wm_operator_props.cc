@@ -135,13 +135,16 @@ void WM_operator_properties_filesel(wmOperatorType *ot,
                          "Check and warn on overwriting existing files");
   RNA_def_property_flag(prop, PROP_HIDDEN | PROP_SKIP_SAVE);
 
-  prop = RNA_def_boolean(
-      ot->srna, "filter_blender", (filter & FILE_TYPE_BLENDER) != 0, "Filter .blend files", "");
+  prop = RNA_def_boolean(ot->srna,
+                         "filter_blender",
+                         (filter & (FILE_TYPE_BLENDER | FILE_TYPE_BLENDED)) != 0,
+                         "Filter .blend and .blended files",
+                         "");
   RNA_def_property_flag(prop, PROP_HIDDEN | PROP_SKIP_SAVE);
   prop = RNA_def_boolean(ot->srna,
                          "filter_backup",
                          (filter & FILE_TYPE_BLENDER_BACKUP) != 0,
-                         "Filter backup .blend files",
+                         "Filter backup .blend and .blended files",
                          "");
   RNA_def_property_flag(prop, PROP_HIDDEN | PROP_SKIP_SAVE);
   prop = RNA_def_boolean(

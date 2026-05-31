@@ -7648,14 +7648,20 @@ static void rna_def_fileselect_params(BlenderRNA *brna)
 
   prop = RNA_def_property(srna, "use_filter_blender", PROP_BOOLEAN, PROP_NONE);
   RNA_def_property_boolean_sdna(prop, nullptr, "filter", FILE_TYPE_BLENDER);
-  RNA_def_property_ui_text(prop, "Filter Blender", "Show .blend files");
+  RNA_def_property_ui_text(prop, "Filter Blender", "Show .blend files (legacy import)");
+  RNA_def_property_ui_icon(prop, ICON_FILE_BLEND, 0);
+  RNA_def_property_update(prop, NC_SPACE | ND_SPACE_FILE_PARAMS, nullptr);
+
+  prop = RNA_def_property(srna, "use_filter_blended", PROP_BOOLEAN, PROP_NONE);
+  RNA_def_property_boolean_sdna(prop, nullptr, "filter", FILE_TYPE_BLENDED);
+  RNA_def_property_ui_text(prop, "Filter Blended", "Show .blended files");
   RNA_def_property_ui_icon(prop, ICON_FILE_BLEND, 0);
   RNA_def_property_update(prop, NC_SPACE | ND_SPACE_FILE_PARAMS, nullptr);
 
   prop = RNA_def_property(srna, "use_filter_backup", PROP_BOOLEAN, PROP_NONE);
   RNA_def_property_boolean_sdna(prop, nullptr, "filter", FILE_TYPE_BLENDER_BACKUP);
   RNA_def_property_ui_text(
-      prop, "Filter Blender Backup Files", "Show .blend1, .blend2, etc. files");
+      prop, "Filter Blender Backup Files", "Show .blended1, .blended2, .blend1, .blend2, etc. files");
   RNA_def_property_ui_icon(prop, ICON_FILE_BACKUP, 0);
   RNA_def_property_update(prop, NC_SPACE | ND_SPACE_FILE_PARAMS, nullptr);
 

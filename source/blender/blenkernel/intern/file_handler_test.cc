@@ -41,8 +41,8 @@ TEST(file_handler, add)
   file_handler_add_test(1,
                         "Test_FH_blender1",
                         "File Handler Test 1",
-                        ".blender;.blend;.ble",
-                        {".blender", ".blend", ".ble"});
+                        ".blender;.blend;.blended;.ble",
+                        {".blender", ".blend", ".blended", ".ble"});
   file_handler_add_test(2, "Test_FH_blender2", "File Handler Test 2", ".ble", {".ble"});
   file_handler_add_test(3, "Test_FH_blender3", "File Handler Test 3", ";;.ble", {".ble"});
   file_handler_add_test(4, "Test_FH_blender4", "File Handler Test 4", ";.ble;", {".ble"});
