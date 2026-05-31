@@ -84,6 +84,7 @@ carries a one-liner status per active item.
 
 - Scoping survey of all `.blend` format touchpoints across the codebase: magic bytes (writefile.cc, blo_core_blend_header), extension enforcement (wm_files.cc), file detection (filelist.cc, blendfile.cc, asset_library_service.cc), platform integration (winstuff.cc, blended.desktop, freedesktop.py, Info.plist), Python scripts, UI strings. Full audit committed to CLAUDE.md with per-file line numbers.
 - Socratic design dialogue locked three key decisions: one-way compatibility (hard boundary via magic bytes), `FILE_TYPE_BLENDED` as new bit flag (preserves `.blend` vs `.blended` distinction for 0.9.x import), bundled datafiles stay `.blend`.
+- Three successive Codex catches in `wm_files_link.cc` (PRs #221, #222, #223): `file_is_blend_backup()` missing `.blended` detection → deep sweep finding ~20 classification-path sites; wrong line numbers for Link/Append operators; missed `WM_OT_id_linked_relocate` at line 705. Each catch added to blast radius audit and documented as Scar 22 variants. Mechanical verification rule added: after editing audit for any file, re-run `grep -n "FILE_TYPE_BLENDER" <file>`, count hits vs. audit rows.
 
 ---
 
