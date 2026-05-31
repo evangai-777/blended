@@ -659,6 +659,8 @@ enum eFileSel_File_Types {
   FILE_TYPE_OBJECT_IO = (1 << 17),
   FILE_TYPE_USD = (1 << 18),
   FILE_TYPE_VOLUME = (1 << 19),
+  /** Native Blended project file (.blended). Distinct from #FILE_TYPE_BLENDER (.blend import). */
+  FILE_TYPE_BLENDED = (1 << 20),
 
   FILE_TYPE_ASSET = (1 << 28),
   /** Set together with #FILE_TYPE_ASSET when the asset is hosted online, not on disk. */
