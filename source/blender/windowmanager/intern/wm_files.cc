@@ -3385,7 +3385,7 @@ void WM_OT_open_mainfile(wmOperatorType *ot)
   /* Omit window poll so this can work in background mode. */
 
   WM_operator_properties_filesel(ot,
-                                 FILE_TYPE_FOLDER | FILE_TYPE_BLENDER,
+                                 FILE_TYPE_FOLDER | FILE_TYPE_BLENDER | FILE_TYPE_BLENDED,
                                  FILE_BLENDER,
                                  FILE_OPENFILE,
                                  WM_FILESEL_FILEPATH,
@@ -3605,7 +3605,7 @@ void WM_OT_recover_auto_save(wmOperatorType *ot)
   ot->exec = wm_recover_auto_save_exec;
 
   WM_operator_properties_filesel(ot,
-                                 FILE_TYPE_BLENDER,
+                                 FILE_TYPE_BLENDER | FILE_TYPE_BLENDED,
                                  FILE_BLENDER,
                                  FILE_OPENFILE,
                                  WM_FILESEL_FILEPATH,
@@ -4135,7 +4135,7 @@ void WM_OT_save_as_mainfile(wmOperatorType *ot)
   /* Omit window poll so this can work in background mode. */
 
   WM_operator_properties_filesel(ot,
-                                 FILE_TYPE_FOLDER | FILE_TYPE_BLENDER,
+                                 FILE_TYPE_FOLDER | FILE_TYPE_BLENDED,
                                  FILE_BLENDER,
                                  FILE_SAVE,
                                  WM_FILESEL_FILEPATH,
@@ -4244,7 +4244,7 @@ void WM_OT_save_mainfile(wmOperatorType *ot)
 
   PropertyRNA *prop;
   WM_operator_properties_filesel(ot,
-                                 FILE_TYPE_FOLDER | FILE_TYPE_BLENDER,
+                                 FILE_TYPE_FOLDER | FILE_TYPE_BLENDED,
                                  FILE_BLENDER,
                                  FILE_SAVE,
                                  WM_FILESEL_FILEPATH,
