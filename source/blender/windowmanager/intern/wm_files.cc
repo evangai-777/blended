@@ -2043,7 +2043,7 @@ bool write_crash_blend()
   char filepath[FILE_MAX];
 
   STRNCPY(filepath, BKE_main_blendfile_path_from_global());
-  BLI_path_extension_replace(filepath, sizeof(filepath), "_crash.blend");
+  BLI_path_extension_replace(filepath, sizeof(filepath), "_crash.blended");
   BlendFileWriteParams params{};
   const bool success = BLO_write_file(G_MAIN, filepath, G.fileflags, &params, nullptr);
   printf("%s: \"%s\"\n", success ? "written" : "failed", filepath);
@@ -2273,11 +2273,12 @@ static void wm_autosave_location(char filepath[FILE_MAX])
 
   if (blendfile_path && (blendfile_path[0] != '\0')) {
     const char *basename = BLI_path_basename(blendfile_path);
-    int len = strlen(basename) - 6;
-    SNPRINTF(filename, "%.*s_%d_autosave.blend", len, basename, pid);
+    const char *ext = BLI_path_extension(basename);
+    const int ext_len = ext ? int(strlen(ext)) : 0;
+    SNPRINTF(filename, "%.*s_%d_autosave.blended", int(strlen(basename)) - ext_len, basename, pid);
   }
   else {
-    SNPRINTF(filename, "%d_autosave.blend", pid);
+    SNPRINTF(filename, "%d_autosave.blended", pid);
   }
 
   const char *tempdir_base = BKE_tempdir_base();
@@ -3858,7 +3859,7 @@ static void wm_filepath_default(const Main *bmain, char *filepath)
   if (bmain->filepath[0] == '\0') {
     char filename_untitled[FILE_MAXFILE];
     /* While a filename need not be UTF8, at this point the constructed name should be UTF8. */
-    SNPRINTF_UTF8(filename_untitled, "%s.blend", DATA_("Untitled"));
+    SNPRINTF_UTF8(filename_untitled, "%s.blended", DATA_("Untitled"));
     BLI_path_filename_ensure(filepath, FILE_MAX, filename_untitled);
   }
 }
@@ -3903,7 +3904,7 @@ static void save_set_filepath(bContext *C, wmOperator *op)
      * there are further checks to prevent this entirely. */
     if (bmain->is_asset_edit_file && StringRef(filepath).endswith(BLENDER_ASSET_FILE_SUFFIX)) {
       filepath[strlen(filepath) - strlen(BLENDER_ASSET_FILE_SUFFIX)] = '\0';
-      BLI_path_extension_ensure(filepath, FILE_MAX, ".blend");
+      BLI_path_extension_ensure(filepath, FILE_MAX, ".blended");
     }
 
     wm_filepath_default(bmain, filepath);
@@ -4092,7 +4093,7 @@ static bool wm_save_mainfile_check(bContext * /*C*/, wmOperator *op)
     /* NOTE(@ideasman42): some users would prefer #BLI_path_extension_replace(),
      * we have had some nitpicking bug reports about this.
      * Always adding the extension as users may use '.' as part of the file-name. */
-    BLI_path_extension_ensure(filepath, FILE_MAX, ".blend");
+    BLI_path_extension_ensure(filepath, FILE_MAX, ".blended");
     RNA_string_set(op->ptr, "filepath", filepath);
     return true;
   }
@@ -4806,7 +4807,7 @@ static ui::Block *block_create_save_file_overwrite_dialog(bContext *C, ARegion *
   }
   else {
     /* While a filename need not be UTF8, at this point the constructed name should be UTF8. */
-    SNPRINTF_UTF8(filename, "%s.blend", DATA_("Untitled"));
+    SNPRINTF_UTF8(filename, "%s.blended", DATA_("Untitled"));
     /* Since this dialog should only be shown when re-saving an existing file, current filepath
      * should never be empty. */
     BLI_assert_unreachable();
@@ -5027,7 +5028,7 @@ static ui::Block *block_create__close_file_dialog(bContext *C, ARegion *region, 
   }
   else {
     /* While a filename need not be UTF8, at this point the constructed name should be UTF8. */
-    SNPRINTF_UTF8(filename, "%s.blend", DATA_("Untitled"));
+    SNPRINTF_UTF8(filename, "%s.blended", DATA_("Untitled"));
   }
   layout.label(filename, ICON_NONE);
 
