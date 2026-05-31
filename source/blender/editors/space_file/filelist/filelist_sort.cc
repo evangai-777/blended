@@ -96,12 +96,18 @@ static int compare_direntry_generic(const FileListInternEntry *entry1,
       else if (entry2->typeflag & FILE_TYPE_BLENDERLIB) {
         return -1;
       }
-      else if (entry1->typeflag & (FILE_TYPE_BLENDER | FILE_TYPE_BLENDER_BACKUP)) {
-        if (!(entry2->typeflag & (FILE_TYPE_BLENDER | FILE_TYPE_BLENDER_BACKUP))) {
+      else if (entry1->typeflag &
+               (FILE_TYPE_BLENDER | FILE_TYPE_BLENDED | FILE_TYPE_BLENDER_BACKUP))
+      {
+        if (!(entry2->typeflag &
+              (FILE_TYPE_BLENDER | FILE_TYPE_BLENDED | FILE_TYPE_BLENDER_BACKUP)))
+        {
           return 1;
         }
       }
-      else if (entry2->typeflag & (FILE_TYPE_BLENDER | FILE_TYPE_BLENDER_BACKUP)) {
+      else if (entry2->typeflag &
+               (FILE_TYPE_BLENDER | FILE_TYPE_BLENDED | FILE_TYPE_BLENDER_BACKUP))
+      {
         return -1;
       }
     }
@@ -226,10 +232,14 @@ static int compare_extension(void *user_data, const void *a1, const void *a2)
   else {
     const char *sufix1, *sufix2;
 
-    if (!(sufix1 = strstr(entry1->relpath, ".blend.gz"))) {
+    if (!(sufix1 = strstr(entry1->relpath, ".blended.gz")) &&
+        !(sufix1 = strstr(entry1->relpath, ".blend.gz")))
+    {
       sufix1 = strrchr(entry1->relpath, '.');
     }
-    if (!(sufix2 = strstr(entry2->relpath, ".blend.gz"))) {
+    if (!(sufix2 = strstr(entry2->relpath, ".blended.gz")) &&
+        !(sufix2 = strstr(entry2->relpath, ".blend.gz")))
+    {
       sufix2 = strrchr(entry2->relpath, '.');
     }
     if (!sufix1) {

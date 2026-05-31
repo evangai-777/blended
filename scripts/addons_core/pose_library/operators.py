@@ -144,7 +144,7 @@ class POSELIB_OT_copy_as_asset(PoseAssetCreator, Operator):
 
     def save_datablock(self, action: Action) -> Path:
         tempdir = Path(bpy.app.tempdir)
-        filepath = tempdir / "copied_asset.blend"
+        filepath = tempdir / "copied_asset.blended"
         bpy.data.libraries.write(
             str(filepath),
             datablocks={action},

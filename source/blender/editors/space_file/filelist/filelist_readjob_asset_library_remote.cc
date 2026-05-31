@@ -64,7 +64,7 @@ static void filelist_readjob_remote_asset_library_index_read(
     /* Skip assets that are already listed with the downloaded assets. */
     const StringRefNull asset_file = entry.online_info.asset_file();
     {
-      BLI_assert(asset_file.endswith(".blend"));
+      BLI_assert(asset_file.endswith(".blend") || asset_file.endswith(".blended"));
 
       /* Matches #asset_system::AssetRepresentation.library_relative_identifier(). */
       char asset_identifier[FILE_MAX_LIBEXTRA];

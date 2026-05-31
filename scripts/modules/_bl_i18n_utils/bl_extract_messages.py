@@ -946,6 +946,7 @@ def dump_preset_messages(msgs, reports, settings):
 def dump_template_messages(msgs, reports, settings):
     bfiles = [""]  # General template, no name needed.
     bfiles += glob.glob(settings.TEMPLATES_DIR + "/**/*.blend", recursive=True)
+    bfiles += glob.glob(settings.TEMPLATES_DIR + "/**/*.blended", recursive=True)
 
     workspace_names = {}
 
@@ -1065,7 +1066,8 @@ def dump_asset_messages(msgs, reports, settings):
     #      ]},
     # ]}
 
-    bfiles = glob.glob(assets_dir + "/**/*.blend", recursive=True)
+    bfiles = (glob.glob(assets_dir + "/**/*.blend", recursive=True) +
+              glob.glob(assets_dir + "/**/*.blended", recursive=True))
     for bfile in bfiles:
         basename = os.path.basename(bfile)
         bpy.ops.wm.open_mainfile(filepath=bfile)

@@ -9,6 +9,26 @@
 		<dict>
 			<key>CFBundleTypeExtensions</key>
 			<array>
+				<string>blended</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>Blender_Legacy_Document_Icon.icns</string>
+			<key>CFBundleTypeName</key>
+			<string>Blended Project</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSIsAppleDefaultForType</key>
+			<true/>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.chj3productions.blended.file</string>
+			</array>
+			<key>CFBundleTypeIconSystemGenerated</key>
+			<true/>
+		</dict>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
 				<string>blend</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
@@ -21,8 +41,6 @@
 			</array>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
-			<key>LSIsAppleDefaultForType</key>
-			<true/>
 			<key>LSItemContentTypes</key>
 			<array>
 				<string>org.blenderfoundation.blender.file</string>
@@ -67,6 +85,30 @@
 	<string>A Blender extension wants to capture your system audio.</string>
 	<key>UTExportedTypeDeclarations</key>
 	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeIdentifier</key>
+			<string>com.chj3productions.blended.file</string>
+			<key>UTTypeDescription</key>
+			<string>Blended Project</string>
+			<key>UTTypeIcons</key>
+			<dict>
+				<key>UTTypeIconName</key>
+				<string>Blended Project</string>
+				<key>UTTypeIconText</key>
+				<string>blended</string>
+			</dict>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>blended</string>
+				</array>
+			</dict>
+		</dict>
 		<dict>
 			<key>UTTypeConformsTo</key>
 			<array>

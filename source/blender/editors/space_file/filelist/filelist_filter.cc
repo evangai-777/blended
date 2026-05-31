@@ -98,8 +98,12 @@ static bool is_filtered_file_type(const FileListInternEntry *file, const FileLis
   /* We only check for types if some type are enabled in filtering. */
   if (filter->filter && (filter->flags & FLF_DO_FILTER)) {
     if (file->typeflag & FILE_TYPE_DIR) {
-      if (file->typeflag & (FILE_TYPE_BLENDERLIB | FILE_TYPE_BLENDER | FILE_TYPE_BLENDER_BACKUP)) {
-        if (!(filter->filter & (FILE_TYPE_BLENDER | FILE_TYPE_BLENDER_BACKUP))) {
+      if (file->typeflag &
+          (FILE_TYPE_BLENDERLIB | FILE_TYPE_BLENDER | FILE_TYPE_BLENDED | FILE_TYPE_BLENDER_BACKUP))
+      {
+        if (!(filter->filter &
+              (FILE_TYPE_BLENDER | FILE_TYPE_BLENDED | FILE_TYPE_BLENDER_BACKUP)))
+        {
           return false;
         }
       }

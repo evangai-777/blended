@@ -417,9 +417,13 @@ std::string AssetLibraryService::resolve_asset_weak_reference_to_library_path(
 
 int64_t AssetLibraryService::rfind_blendfile_extension(StringRef path)
 {
-  const std::vector<StringRefNull> blendfile_extensions = {".blend" SEP_STR,
+  const std::vector<StringRefNull> blendfile_extensions = {".blended" SEP_STR,
+                                                           ".blended.gz" SEP_STR,
+                                                           ".blend" SEP_STR,
                                                            ".blend.gz" SEP_STR,
                                                            ".ble" SEP_STR,
+                                                           ".blended" ALTSEP_STR,
+                                                           ".blended.gz" ALTSEP_STR,
                                                            ".blend" ALTSEP_STR,
                                                            ".blend.gz" ALTSEP_STR,
                                                            ".ble" ALTSEP_STR};

@@ -316,7 +316,7 @@ static int filelist_geticon_file_type_ex(const FileList *filelist,
     if (typeflag & FILE_TYPE_BUNDLE) {
       return ICON_UGLYPACKAGE;
     }
-    if (typeflag & FILE_TYPE_BLENDER) {
+    if (typeflag & (FILE_TYPE_BLENDER | FILE_TYPE_BLENDED)) {
       return ICON_FILE_BLEND;
     }
     if (is_main) {
@@ -363,7 +363,7 @@ static int filelist_geticon_file_type_ex(const FileList *filelist,
     }
   }
 
-  if (typeflag & FILE_TYPE_BLENDER) {
+  if (typeflag & (FILE_TYPE_BLENDER | FILE_TYPE_BLENDED)) {
     return (is_main || file->preview_icon_id) ? ICON_FILE_BLEND : ICON_BLENDER;
   }
   if (typeflag & FILE_TYPE_BLENDER_BACKUP) {
@@ -547,13 +547,15 @@ static void filelist_cache_preview_runf(TaskPool *__restrict pool, void *taskdat
   //  printf("%s: %d - %s - %p\n", __func__, preview->index, preview->path, preview->img);
   BLI_assert(preview->flags &
              (FILE_TYPE_IMAGE | FILE_TYPE_MOVIE | FILE_TYPE_FTFONT | FILE_TYPE_BLENDER |
-              FILE_TYPE_OBJECT_IO | FILE_TYPE_BLENDER_BACKUP | FILE_TYPE_BLENDERLIB));
+              FILE_TYPE_BLENDED | FILE_TYPE_OBJECT_IO | FILE_TYPE_BLENDER_BACKUP |
+              FILE_TYPE_BLENDERLIB));
   BLI_assert((preview->flags & FILE_TYPE_ASSET_ONLINE) == 0);
 
   if (preview->flags & FILE_TYPE_IMAGE) {
     source = THB_SOURCE_IMAGE;
   }
-  else if (preview->flags & (FILE_TYPE_BLENDER | FILE_TYPE_BLENDER_BACKUP | FILE_TYPE_BLENDERLIB))
+  else if (preview->flags &
+           (FILE_TYPE_BLENDER | FILE_TYPE_BLENDED | FILE_TYPE_BLENDER_BACKUP | FILE_TYPE_BLENDERLIB))
   {
     source = THB_SOURCE_BLEND;
   }
@@ -665,7 +667,7 @@ static bool filelist_file_preview_load_poll(const FileDirEntry *entry)
 
   if (!(entry->typeflag &
         (FILE_TYPE_IMAGE | FILE_TYPE_MOVIE | FILE_TYPE_FTFONT | FILE_TYPE_OBJECT_IO |
-         FILE_TYPE_BLENDER | FILE_TYPE_BLENDER_BACKUP | FILE_TYPE_BLENDERLIB)))
+         FILE_TYPE_BLENDER | FILE_TYPE_BLENDED | FILE_TYPE_BLENDER_BACKUP | FILE_TYPE_BLENDERLIB)))
   {
     return false;
   }
@@ -1741,32 +1743,32 @@ bool filelist_cache_previews_done(FileList *filelist)
          (cache->previews_todo_count == 0);
 }
 
-/* would recognize .blend as well */
+/* Would recognize .blend and .blended backups. */
 static bool file_is_blend_backup(const char *str)
 {
   const size_t a = strlen(str);
-  size_t b = 7;
-  bool retval = false;
 
-  if (a == 0 || b >= a) {
-    /* pass */
+  if (a == 0) {
+    return false;
   }
-  else {
-    const char *loc;
 
-    if (a > b + 1) {
-      b++;
-    }
-
-    /* allow .blend1 .blend2 .blend32 */
-    loc = BLI_strcasestr(str + a - b, ".blend");
-
-    if (loc) {
-      retval = true;
+  /* .blendN / .blendNN: suffix is 7-8 chars, look back up to 8 chars. */
+  if (a > 7) {
+    const size_t b = (a > 8) ? 8 : 7;
+    if (BLI_strcasestr(str + a - b, ".blend")) {
+      return true;
     }
   }
 
-  return retval;
+  /* .blendedN / .blendedNN: suffix is 9-10 chars, look back up to 10 chars. */
+  if (a > 9) {
+    const size_t b = (a > 10) ? 10 : 9;
+    if (BLI_strcasestr(str + a - b, ".blended")) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 int ED_path_extension_type(const char *path)
@@ -1774,6 +1776,10 @@ int ED_path_extension_type(const char *path)
   /* ATTENTION: Never return OR'ed bit-flags here, always return a single enum value! Some code
    * using this may do `ELEM()`-like checks. */
 
+  /* Check .blended before the generic BKE_blendfile_extension_check which accepts both. */
+  if (BLI_path_extension_check_n(path, ".blended", ".blended.gz", nullptr)) {
+    return FILE_TYPE_BLENDED;
+  }
   if (BKE_blendfile_extension_check(path)) {
     return FILE_TYPE_BLENDER;
   }
@@ -1868,6 +1874,7 @@ int ED_file_extension_icon(const char *path)
   const int type = ED_path_extension_type(path);
 
   switch (type) {
+    case FILE_TYPE_BLENDED:
     case FILE_TYPE_BLENDER:
       return ICON_FILE_BLEND;
     case FILE_TYPE_BLENDER_BACKUP:

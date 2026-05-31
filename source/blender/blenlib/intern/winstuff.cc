@@ -217,6 +217,7 @@ bool BLI_windows_register_blend_extension(const bool all_users)
     return false;
   }
 
+  /* Register .blend extension (kept for import compatibility). */
   lresult = RegCreateKeyEx(
       root, ".blend", 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, nullptr, &hkey, &dwd);
   if (lresult == ERROR_SUCCESS) {
@@ -242,6 +243,48 @@ bool BLI_windows_register_blend_extension(const bool all_users)
 
     if (lresult != ERROR_SUCCESS) {
       registry_error(root, "Unable to register Blender file type");
+      RegCloseKey(hkey);
+      return false;
+    }
+    lresult = RegSetValueEx(hkey, prog_id, 0, REG_NONE, nullptr, 0);
+    RegCloseKey(hkey);
+  }
+
+  if (lresult != ERROR_SUCCESS) {
+    registry_error(root, "Unable to register Blender file type");
+    return false;
+  }
+
+  /* Register .blended extension (native Blended project format). */
+  lresult = RegCreateKeyEx(root,
+                           ".blended",
+                           0,
+                           nullptr,
+                           REG_OPTION_NON_VOLATILE,
+                           KEY_ALL_ACCESS,
+                           nullptr,
+                           &hkey,
+                           &dwd);
+  if (lresult == ERROR_SUCCESS) {
+    lresult = RegSetValueEx(hkey, nullptr, 0, REG_SZ, (BYTE *)prog_id, strlen(prog_id) + 1);
+    if (lresult != ERROR_SUCCESS) {
+      registry_error(root, "Unable to register Blended file type");
+      RegCloseKey(hkey);
+      return false;
+    }
+    RegCloseKey(hkey);
+
+    lresult = RegCreateKeyEx(root,
+                             ".blended\\OpenWithProgids",
+                             0,
+                             nullptr,
+                             REG_OPTION_NON_VOLATILE,
+                             KEY_ALL_ACCESS,
+                             nullptr,
+                             &hkey,
+                             &dwd);
+    if (lresult != ERROR_SUCCESS) {
+      registry_error(root, "Unable to register Blended file type");
       RegCloseKey(hkey);
       return false;
     }
@@ -300,6 +343,9 @@ bool BLI_windows_unregister_blend_extension(const bool all_users)
   /* Don't stop on failure. We want to allow unregister after unregister. */
 
   RegDeleteTree(root, BLENDER_WIN_APPID);
+
+  /* Clean up .blended registry entries. */
+  RegDeleteTree(root, ".blended");
 
   lresult = RegOpenKeyEx(root, ".blend", 0, KEY_ALL_ACCESS, &hkey);
   if (lresult == ERROR_SUCCESS) {

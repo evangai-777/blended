@@ -854,7 +854,7 @@ static void ASSET_OT_bundle_install(wmOperatorType *ot)
   RNA_def_enum_funcs(ot->prop, rna_asset_library_reference_itemf);
 
   WM_operator_properties_filesel(ot,
-                                 FILE_TYPE_FOLDER | FILE_TYPE_BLENDER,
+                                 FILE_TYPE_FOLDER | FILE_TYPE_BLENDER | FILE_TYPE_BLENDED,
                                  FILE_BLENDER,
                                  FILE_SAVE,
                                  WM_FILESEL_FILEPATH,

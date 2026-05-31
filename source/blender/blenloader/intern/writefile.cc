@@ -1609,7 +1609,7 @@ static std::string get_blend_file_header()
 
     /* New blend file header format. */
     std::stringstream ss;
-    ss << "BLENDER";
+    ss << "BLENDED";
     ss << header_size_in_bytes;
     ss << '-';
     ss << std::setfill('0') << std::setw(2) << BLEND_FILE_FORMAT_VERSION_1;
@@ -1626,7 +1626,7 @@ static std::string get_blend_file_header()
 
   /* Legacy blend file header format. */
   std::stringstream ss;
-  ss << "BLENDER";
+  ss << "BLENDED";
   ss << pointer_size_char;
   ss << endian_char;
   ss << BLENDER_FILE_VERSION;
@@ -1867,7 +1867,7 @@ static bool write_file_handle(Main *mainvar,
 }
 
 /**
- * Do reverse file history: `.blend1` -> `.blend2`, `.blend` -> `.blend1` ... etc.
+ * Do reverse file history: `.blended1` -> `.blended2`, `.blended` -> `.blended1` ... etc.
  * \return True on success.
  */
 static bool do_history(const char *filepath, ReportList *reports)
@@ -2105,7 +2105,7 @@ static bool BLO_write_file_impl(Main *mainvar,
   }
 
   /* File save to temporary file was successful, now do reverse file history
-   * (move `.blend1` -> `.blend2`, `.blend` -> `.blend1` .. etc). */
+   * (move `.blended1` -> `.blended2`, `.blended` -> `.blended1` .. etc). */
   if (use_save_versions) {
     if (!do_history(filepath, reports)) {
       BKE_report(reports, RPT_ERROR, "Version backup failed (file saved with @)");

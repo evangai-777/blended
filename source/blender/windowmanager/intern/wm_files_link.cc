@@ -475,7 +475,7 @@ void WM_OT_link(wmOperatorType *ot)
 {
   ot->name = "Link";
   ot->idname = "WM_OT_link";
-  ot->description = "Link from a Library .blend file";
+  ot->description = "Link from a Library blend file (.blend or .blended)";
 
   ot->invoke = wm_link_append_invoke;
   ot->exec = wm_link_append_exec;
@@ -483,12 +483,13 @@ void WM_OT_link(wmOperatorType *ot)
 
   ot->flag = OPTYPE_UNDO;
 
-  WM_operator_properties_filesel(ot,
-                                 FILE_TYPE_FOLDER | FILE_TYPE_BLENDER | FILE_TYPE_BLENDERLIB,
-                                 FILE_LOADLIB,
-                                 FILE_OPENFILE,
-                                 WM_FILESEL_FILEPATH | WM_FILESEL_DIRECTORY | WM_FILESEL_FILENAME |
-                                     WM_FILESEL_RELPATH | WM_FILESEL_FILES | WM_FILESEL_SHOW_PROPS,
+  WM_operator_properties_filesel(
+      ot,
+      FILE_TYPE_FOLDER | FILE_TYPE_BLENDER | FILE_TYPE_BLENDED | FILE_TYPE_BLENDERLIB,
+      FILE_LOADLIB,
+      FILE_OPENFILE,
+      WM_FILESEL_FILEPATH | WM_FILESEL_DIRECTORY | WM_FILESEL_FILENAME | WM_FILESEL_RELPATH |
+          WM_FILESEL_FILES | WM_FILESEL_SHOW_PROPS,
                                  FILE_DEFAULTDISPLAY,
                                  FILE_SORT_DEFAULT);
 
@@ -499,7 +500,7 @@ void WM_OT_append(wmOperatorType *ot)
 {
   ot->name = "Append";
   ot->idname = "WM_OT_append";
-  ot->description = "Append from a Library .blend file";
+  ot->description = "Append from a Library blend file (.blend or .blended)";
 
   ot->invoke = wm_link_append_invoke;
   ot->exec = wm_link_append_exec;
@@ -507,12 +508,13 @@ void WM_OT_append(wmOperatorType *ot)
 
   ot->flag = OPTYPE_UNDO;
 
-  WM_operator_properties_filesel(ot,
-                                 FILE_TYPE_FOLDER | FILE_TYPE_BLENDER | FILE_TYPE_BLENDERLIB,
-                                 FILE_LOADLIB,
-                                 FILE_OPENFILE,
-                                 WM_FILESEL_FILEPATH | WM_FILESEL_DIRECTORY | WM_FILESEL_FILENAME |
-                                     WM_FILESEL_FILES | WM_FILESEL_SHOW_PROPS,
+  WM_operator_properties_filesel(
+      ot,
+      FILE_TYPE_FOLDER | FILE_TYPE_BLENDER | FILE_TYPE_BLENDED | FILE_TYPE_BLENDERLIB,
+      FILE_LOADLIB,
+      FILE_OPENFILE,
+      WM_FILESEL_FILEPATH | WM_FILESEL_DIRECTORY | WM_FILESEL_FILENAME | WM_FILESEL_FILES |
+          WM_FILESEL_SHOW_PROPS,
                                  FILE_DEFAULTDISPLAY,
                                  FILE_SORT_DEFAULT);
 
@@ -701,12 +703,13 @@ void WM_OT_id_linked_relocate(wmOperatorType *ot)
                                   INT_MAX);
   RNA_def_property_flag(prop, PROP_HIDDEN);
 
-  WM_operator_properties_filesel(ot,
-                                 FILE_TYPE_FOLDER | FILE_TYPE_BLENDER | FILE_TYPE_BLENDERLIB,
-                                 FILE_LOADLIB,
-                                 FILE_OPENFILE,
-                                 WM_FILESEL_FILEPATH | WM_FILESEL_DIRECTORY | WM_FILESEL_FILENAME |
-                                     WM_FILESEL_RELPATH | WM_FILESEL_SHOW_PROPS,
+  WM_operator_properties_filesel(
+      ot,
+      FILE_TYPE_FOLDER | FILE_TYPE_BLENDER | FILE_TYPE_BLENDED | FILE_TYPE_BLENDERLIB,
+      FILE_LOADLIB,
+      FILE_OPENFILE,
+      WM_FILESEL_FILEPATH | WM_FILESEL_DIRECTORY | WM_FILESEL_FILENAME | WM_FILESEL_RELPATH |
+          WM_FILESEL_SHOW_PROPS,
                                  FILE_DEFAULTDISPLAY,
                                  FILE_SORT_DEFAULT);
 
@@ -1063,7 +1066,7 @@ void WM_OT_lib_relocate(wmOperatorType *ot)
   RNA_def_property_flag(prop, PROP_HIDDEN);
 
   WM_operator_properties_filesel(ot,
-                                 FILE_TYPE_FOLDER | FILE_TYPE_BLENDER,
+                                 FILE_TYPE_FOLDER | FILE_TYPE_BLENDER | FILE_TYPE_BLENDED,
                                  FILE_BLENDER,
                                  FILE_OPENFILE,
                                  WM_FILESEL_FILEPATH | WM_FILESEL_DIRECTORY | WM_FILESEL_FILENAME |
@@ -1093,7 +1096,7 @@ void WM_OT_lib_reload(wmOperatorType *ot)
   RNA_def_property_flag(prop, PROP_HIDDEN);
 
   WM_operator_properties_filesel(ot,
-                                 FILE_TYPE_FOLDER | FILE_TYPE_BLENDER,
+                                 FILE_TYPE_FOLDER | FILE_TYPE_BLENDER | FILE_TYPE_BLENDED,
                                  FILE_BLENDER,
                                  FILE_OPENFILE,
                                  WM_FILESEL_FILEPATH | WM_FILESEL_DIRECTORY | WM_FILESEL_FILENAME |

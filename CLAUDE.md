@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.8.0-dev — 0.7.0 base: CI-complete (Windows x64, build 99, commit `2ddd1dd0`). 0.7.0 delivered: launcher + 28 mode lenses ✓, full product identity ✓ (logo, accent `#ff7f00`, app icon, splash, typeface Inter), format design ✓ (startup-as-blend + userpref-as-blend removed, BLENDED.md §5 Group 1 LOCKED), all 6 Bucket 3 permanent homes ✓ (VFont 502.24, Palette 502.25, LightProbe 502.26, Mask 502.27/28, Lattice 502.29, Brush 502.30), launcher header chrome + rounded cards + hover state ✓ (PR #196), Phase 2 design complete. 0.8.x: file format — `.blended` is the project, import/export is the boundary.
+**Current version:** Blended 0.8.0-dev — 0.7.0 base: CI-complete (Windows x64, build 99, commit `2ddd1dd0`). 0.7.0 delivered: launcher + 28 mode lenses ✓, full product identity ✓ (logo, accent `#ff7f00`, app icon, splash, typeface Inter), format design ✓ (startup-as-blend + userpref-as-blend removed, BLENDED.md §5 Group 1 LOCKED), all 6 Bucket 3 permanent homes ✓ (VFont 502.24, Palette 502.25, LightProbe 502.26, Mask 502.27/28, Lattice 502.29, Brush 502.30), launcher header chrome + rounded cards + hover state ✓ (PR #196), Phase 2 design complete. 0.8.x: file format — `.blended` is the project, import/export is the boundary. Blast radius implementation complete (all 23 layers, ~80 sites, branch `claude/0.8.0-blast-radius-audit-Sa2tB`); pending CI.
 
 ---
 
@@ -79,7 +79,7 @@ BLI_listbase_clear(&bmain->linestyles);
 | 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) | ✓ CI-complete (build 81, commit `d6ee8478`) |
 | 0.6.x | Evaluation model — close seam between declared ~19-type world and depsgraph/draw/editor dispatch; ~95 hits audited: ~71 live fold-down dispatch (stays), 5 OOB guards (confirm permanent), 2 EEVEE →true workarounds (resolve), 5 dead-code refs (remove) | ✓ CI-complete (build 82, commit `8f7dda22`) |
 | 0.7.x | App lenses — launcher (§11), all 28 mode lenses (§12), full product identity (§16), `.blended` format design. Two phases: skeleton first, aesthetic second. | ✓ CI-complete (build 99, commit `2ddd1dd0`). Phase 1 + Phase 2 complete. Logo ✓ + accent ✓ (`#ff7f00`) + app icon ✓ + splash ✓. |
-| 0.8.x | File format — `.blended` is the project, import/export is the boundary | In progress |
+| 0.8.x | File format — `.blended` is the project, import/export is the boundary | Blast radius implemented (23 layers, ~80 sites); pending CI |
 | 0.9.x | `.blend` import — seamless read with dropped-data manifest output | Pending |
 | 1.0.0 | Foundation complete; basic pipeline navigation working. Two concurrent workstreams: (1) 1.0.0-dev runtime audit — developer runs the build, works through Known Runtime Artifacts + deferred debt checklists, reports findings to Claude for triage and fix; (2) GitHub Pages launch — landing, marketing, tech demo. Release tag when both clear. | Pending |
 

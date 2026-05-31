@@ -46,7 +46,10 @@ FileReader *BLO_file_reader_uncompressed(FileReader *rawfile)
   }
   /* Rewind to the start of the file. */
   rawfile->seek(rawfile, 0, SEEK_SET);
-  if (memcmp(first_bytes, "BLENDER", sizeof(first_bytes)) == 0) {
+  /* Accept both "BLENDED" (native Blended format) and "BLENDER" (upstream .blend import compat). */
+  if (memcmp(first_bytes, "BLENDED", sizeof(first_bytes)) == 0 ||
+      memcmp(first_bytes, "BLENDER", sizeof(first_bytes)) == 0)
+  {
     /* The file is uncompressed. */
     return rawfile;
   }
