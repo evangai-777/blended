@@ -68,8 +68,10 @@ BLENDER_THUMBNAILER_FILENAME = "blender-thumbnailer"
 # -----------------------------------------------------------------------------
 # Other Constants
 
-# The mime type Blender users.
+# The mime type Blender users (kept for .blend import compat).
 BLENDER_MIME = "application/x-blender"
+# The mime type for native Blended project files (.blended).
+BLENDED_MIME = "application/x-blended"
 # Use `/usr/local` because this is not managed by the systems package manager.
 SYSTEM_PREFIX = "/usr/local"
 
@@ -248,7 +250,7 @@ def handle_thumbnailer(do_register: bool, all_users: bool) -> str | None:
         fh.write("[Thumbnailer Entry]\n")
         fh.write("TryExec={:s}\n".format(command))
         fh.write("Exec={:s} %i %o\n".format(command))
-        fh.write("MimeType={:s};\n".format(BLENDER_MIME))
+        fh.write("MimeType={:s};{:s};\n".format(BLENDED_MIME, BLENDER_MIME))
     return None
 
 
@@ -304,6 +306,12 @@ def handle_mime_association_xml(do_register: bool, all_users: bool) -> str | Non
         with open(package_xml_src, mode="w", encoding="utf-8") as fh:
             fh.write("""<?xml version="1.0" encoding="UTF-8"?>\n""")
             fh.write("""<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">\n""")
+            # Native Blended project format.
+            fh.write("""  <mime-type type="{:s}">\n""".format(BLENDED_MIME))
+            fh.write("""    <comment>Blended project</comment>\n""")
+            fh.write("""    <glob pattern="*.blended"/>\n""")
+            fh.write("""  </mime-type>\n""")
+            # Upstream .blend format kept for import compatibility.
             fh.write("""  <mime-type type="{:s}">\n""".format(BLENDER_MIME))
             # NOTE: not using a trailing full-stop seems to be the convention here.
             fh.write("""    <comment>Blender scene</comment>\n""")

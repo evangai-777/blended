@@ -85,5 +85,5 @@ Terminal=false
 Type=Application
 PrefersNonDefaultGPU=true
 Categories=Graphics;3DGraphics;
-MimeType=application/x-blender;
+MimeType=application/x-blended;application/x-blender;
 StartupWMClass=Blended
