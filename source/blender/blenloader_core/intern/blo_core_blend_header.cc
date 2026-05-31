@@ -35,12 +35,13 @@ BlenderHeaderVariant BLO_readfile_blender_header_decode(FileReader *file)
   if (readsize != MIN_SIZEOFBLENDERHEADER) {
     return BlenderHeaderInvalid{};
   }
-  if (!STREQLEN(header_bytes, "BLENDER", 7)) {
+  /* Accept both "BLENDED" (native Blended format) and "BLENDER" (upstream .blend import compat). */
+  if (!STREQLEN(header_bytes, "BLENDED", 7) && !STREQLEN(header_bytes, "BLENDER", 7)) {
     return BlenderHeaderInvalid{};
   }
-  /* If the first 7 bytes are BLENDER, it is very likely that this is a newer version of the
-   * blend-file format. If the rest of the decode fails, we can still report that this was a
-   * Blender file of a potentially future version. */
+  /* If the first 7 bytes are BLENDED or BLENDER, it is very likely that this is a newer version
+   * of the blend-file format. If the rest of the decode fails, we can still report that this was
+   * a Blender file of a potentially future version. */
 
   BlenderHeader header;
   /* In the old header format, the next bytes indicate the pointer size. In the new format a
