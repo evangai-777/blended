@@ -202,7 +202,7 @@ static void file_draw_tooltip_custom_func(bContext & /*C*/,
                              ui::TIP_LC_ALERT);
     }
 
-    if (file->typeflag & (FILE_TYPE_BLENDER | FILE_TYPE_BLENDER_BACKUP)) {
+    if (file->typeflag & (FILE_TYPE_BLENDER | FILE_TYPE_BLENDED | FILE_TYPE_BLENDER_BACKUP)) {
       char version_str[128] = {0};
       if (!thumb) {
         /* Load the thumbnail from cache if existing, but don't create if not. */
@@ -784,7 +784,8 @@ static void file_draw_preview(const FileDirEntry *file,
                                 document_img_col);
 
   const bool show_outline = (file->typeflag & (FILE_TYPE_IMAGE | FILE_TYPE_OBJECT_IO |
-                                               FILE_TYPE_MOVIE | FILE_TYPE_BLENDER));
+                                               FILE_TYPE_MOVIE | FILE_TYPE_BLENDER |
+                                               FILE_TYPE_BLENDED));
   /* Contrasting outline around some preview types. */
   if (show_outline) {
     GPU_blend(GPU_BLEND_ALPHA);
@@ -1247,7 +1248,7 @@ static const char *filelist_get_details_column_string(
       }
       break;
     case COLUMN_SIZE:
-      if ((file->typeflag & (FILE_TYPE_BLENDER | FILE_TYPE_BLENDER_BACKUP)) ||
+      if ((file->typeflag & (FILE_TYPE_BLENDER | FILE_TYPE_BLENDED | FILE_TYPE_BLENDER_BACKUP)) ||
           !(file->typeflag & (FILE_TYPE_DIR | FILE_TYPE_BLENDERLIB)))
       {
         if (file->draw_data.size_str[0] == '\0' || update_stat_strings) {

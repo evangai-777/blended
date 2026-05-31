@@ -318,8 +318,13 @@ static int filelist_readjob_list_dir(FileListReadJob *job_params,
 
       if (!(entry->typeflag & FILE_TYPE_DIR)) {
         if (do_lib && BKE_blendfile_extension_check(target)) {
-          /* If we are considering .blend files as libraries, promote them to directory status. */
-          entry->typeflag = FILE_TYPE_BLENDER;
+          /* Promote blend/blended files to directory status when treating them as libraries. */
+          if (BLI_path_extension_check_n(target, ".blended", ".blended.gz", nullptr)) {
+            entry->typeflag = FILE_TYPE_BLENDED;
+          }
+          else {
+            entry->typeflag = FILE_TYPE_BLENDER;
+          }
           /* prevent current file being used as acceptable dir */
           if (BLI_path_cmp(main_filepath, target) != 0) {
             entry->typeflag |= FILE_TYPE_DIR;
@@ -660,7 +665,7 @@ static bool filelist_readjob_should_recurse_into_entry(const int max_recursion,
   /* Show entries when recursion is set to `Blend file` even when `current_recursion_level`
    * exceeds `max_recursion`. */
   if (!is_lib && (current_recursion_level >= max_recursion) &&
-      ((entry->typeflag & (FILE_TYPE_BLENDER | FILE_TYPE_BLENDER_BACKUP)) == 0))
+      ((entry->typeflag & (FILE_TYPE_BLENDER | FILE_TYPE_BLENDED | FILE_TYPE_BLENDER_BACKUP)) == 0))
   {
     return false;
   }
