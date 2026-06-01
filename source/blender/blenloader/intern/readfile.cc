@@ -4006,8 +4006,8 @@ static void after_liblink_merged_bmain_process(Main *bmain, BlendFileReadReport 
 
   /* Dropped-data manifest (0.9.0): count legacy fossil data and write a Text block so the user
    * knows what was dropped when importing a .blend file. Only written when there is something to
-   * report. bmain->linestyles is counted before its drain below. ID_PA and ID_TE are not drained
-   * here (they are drained by BKE_main_clear), so they are still populated and countable. */
+   * report. All four Scar 2 listbases (LS, PA, TE, CU) are drained by BKE_main_clear (Layer 2)
+   * after all scenes/view layers are freed — countable here, none drained here. */
   {
     const int ls_count = BLI_listbase_count(&bmain->linestyles);
     const int pa_count = BLI_listbase_count(&bmain->particles);
@@ -4035,18 +4035,6 @@ static void after_liblink_merged_bmain_process(Main *bmain, BlendFileReadReport 
     }
   }
 
-  /* Drain bmain->linestyles (ID_LS). FreestyleLineStyle has no live runtime consumers —
-   * Freestyle evaluation is compiled out (WITH_FREESTYLE=OFF). Safe to drain post-read.
-   * ID_PA, ID_TE, and ID_CU_LEGACY are NOT drained here — their listbases have live Object
-   * pointers (ParticleSystem::part, modifier Tex *, ob->data). Those are drained by
-   * BKE_main_clear (Layer 2) after all Objects are freed. */
-  for (ID *id = static_cast<ID *>(bmain->linestyles.first), *id_next;
-       id != nullptr;
-       id = id_next) {
-    id_next = static_cast<ID *>(id->next);
-    BKE_id_free(bmain, id);
-  }
-  BLI_listbase_clear(&bmain->linestyles);
 }
 
 /** \} */

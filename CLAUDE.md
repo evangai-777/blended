@@ -14,7 +14,7 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 
 ### Known Deferred Debt (compile-green but runtime-broken or leak-prone)
 
-1. **ID_LS latent memory leak** — Opening a legacy `.blend` file with Freestyle data in a `WITH_FREESTYLE=OFF` build populates `bmain->linestyles` via the kept `which_libbase` routing, but that listbase is not in `BKE_main_lists_get`, so `BKE_main_free` does not free those blocks. **Fixed in 0.9.x Layer 3** (post-read drain in `readfile.cc`) and **Layer 2** (`BKE_main_clear` Scar 2 drain in `main.cc`).
+1. **ID_LS latent memory leak** — Opening a legacy `.blend` file with Freestyle data in a `WITH_FREESTYLE=OFF` build populates `bmain->linestyles` via the kept `which_libbase` routing, but that listbase is not in `BKE_main_lists_get`, so `BKE_main_free` does not free those blocks. **Fixed in 0.9.x Layer 2** (`BKE_main_clear` Scar 2 drain in `main.cc`). Post-read drain (Layer 3) was initially added but removed — `FreestyleLineSet::linestyle` pointers in `ViewLayer` are live consumers (Codex catch, PR #229).
 
 2. **`BKE_screen_blend_read_data` kept but not called** — Defined in `screen.cc`, not called by the ID system. Retained for possible future format work. **Fixed in 0.9.x Layer 4** (delete from `screen.cc`).
 
@@ -49,7 +49,7 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 
 | Trigger | Leak scope | Introduced | Fix when needed |
 |---------|-----------|------------|-----------------|
-| Load legacy `.blend` with Freestyle LineStyle data (`WITH_FREESTYLE=OFF`) | `bmain->linestyles` populated, not freed by `BKE_main_free`. Blocks accumulate per file load, freed on process exit. | 0.4.0 (ID_LS) | ✓ **Fixed in 0.9.x Layer 3** (post-read drain) + **Layer 2** (`BKE_main_clear`) |
+| Load legacy `.blend` with Freestyle LineStyle data (`WITH_FREESTYLE=OFF`) | `bmain->linestyles` populated, not freed by `BKE_main_free`. Blocks accumulate per file load, freed on process exit. | 0.4.0 (ID_LS) | ✓ **Fixed in 0.9.x Layer 2** (`BKE_main_clear` only — `FreestyleLineSet::linestyle` pointers in ViewLayer are live consumers: `scene.cc:919-921` traverses them in foreach_id, `freestyle.cc:55-57` dereferences them in view-layer cleanup. Post-read drain is unsafe. Codex catch, PR #229.) |
 | Load legacy `.blend` with ParticleSettings data | `bmain->particles` populated (Scar 2), not in `BKE_main_lists_get`. `ParticleSystem::part` is a live `ParticleSettings *` on objects with particle systems — post-read drain would be use-after-free. | 0.4.0 (ID_PA) | ✓ **Fixed in 0.9.x Layer 2** (`BKE_main_clear` only — live `psys->part` pointers; same constraint as ID_CU_LEGACY) |
 | Load legacy `.blend` with Blender Internal texture data | `bmain->textures` populated (Scar 2), not in `BKE_main_lists_get`. Modifier DNA structs (`DisplaceModifierData`, `WarpModifierData`, etc.) carry live `Tex *` fields — post-read drain would be use-after-free. | 0.4.0 (ID_TE) | ✓ **Fixed in 0.9.x Layer 2** (`BKE_main_clear` only — live modifier `Tex *` pointers; same constraint as ID_CU_LEGACY) |
 | Load legacy `.blend` with Curve data, OR import NURBS via Alembic/OBJ | `bmain->curves` populated (Scar 2), not in `BKE_main_lists_get`. `BKE_curve_add` is called at runtime by Alembic NURBS reader, OBJ NURBS importer, and all text/curve object creation (`OB_FONT`, `OB_CURVES_LEGACY`, `OB_SURF`). | 0.4.0 (ID_CU_LEGACY) | ✓ **Fixed in 0.9.x Layer 2** (`BKE_main_clear` only — post-read drain unsafe; live objects reference `bmain->curves`) |
@@ -66,7 +66,7 @@ for (ID *id = static_cast<ID *>(bmain->linestyles.first), *id_next;
 }
 BLI_listbase_clear(&bmain->linestyles);
 ```
-`BKE_id_free` skips the `IDTypeInfo::id_free` callback when the type is unregistered (INIT_TYPE removed) but still frees the memory block and animation data. **ID_LS post-read drain is safe** — Freestyle evaluation is compiled out (`WITH_FREESTYLE=OFF`), and `FreestyleLineStyle` has no live runtime consumers that access its data after file load. **ID_PA, ID_TE, and ID_CU_LEGACY use `BKE_main_clear` drain instead** (Layer 2): `ParticleSystem::part` holds live `ParticleSettings *` pointers; modifier DNA structs hold live `Tex *` pointers; `OB_FONT`/`OB_CURVES_LEGACY`/`OB_SURF` objects hold `ob->data` into `bmain->curves`. All three have live consumers that would use-after-free if drained post-read. The Main-clear drain runs after all Objects are freed and is safe for all four. Do NOT use `BKE_id_multi_tagged_delete` — that API operates on tagged blocks within the main indexed list and will not reach Scar 2 unindexed listbases.
+`BKE_id_free` skips the `IDTypeInfo::id_free` callback when the type is unregistered (INIT_TYPE removed) but still frees the memory block and animation data. **All four Scar 2 types (ID_LS, ID_PA, ID_TE, ID_CU_LEGACY) use `BKE_main_clear` drain only** — none are safe to drain post-read. ID_LS was believed safe (`WITH_FREESTYLE=OFF` disables Freestyle evaluation) but `FreestyleLineSet::linestyle` pointers in `ViewLayer` are live consumers regardless of whether evaluation is compiled out: `scene.cc:919-921` traverses them in scene `foreach_id`, and `freestyle.cc:55-57` dereferences them in view-layer cleanup. Post-read drain leaves dangling pointers. ID_PA: `ParticleSystem::part` holds live `ParticleSettings *`. ID_TE: modifier DNA structs hold live `Tex *`. ID_CU_LEGACY: `OB_FONT`/`OB_CURVES_LEGACY`/`OB_SURF` hold `ob->data` into `bmain->curves`. The Main-clear drain runs after all ID types (scenes, objects) are freed and is safe for all four. Do NOT use `BKE_id_multi_tagged_delete` — that API operates on tagged blocks within the main indexed list and will not reach Scar 2 unindexed listbases.
 
 #### Category D — Fixed crashes (caught at runtime audit)
 
@@ -124,15 +124,11 @@ OB_MBALL numeric value: 5. Hardcode with comment, same pattern as OB_SPEAKER at 
 
 After the `BKE_main_lists_get` indexed ID loop (after `BLI_listbase_clear(lb)` at ~line 163), add a drain block for all four non-indexed Scar 2 listbases: `bmain.linestyles`, `bmain.particles`, `bmain.textures`, `bmain.curves`. Use `BKE_id_free_ex` with the same flags as the indexed loop (`LIB_ID_FREE_NO_MAIN | LIB_ID_FREE_NO_UI_USER | LIB_ID_FREE_NO_USER_REFCOUNT | LIB_ID_FREE_NO_DEG_TAG`).
 
-This is the **only** safe drain for ID_PA, ID_TE, and ID_CU_LEGACY. `ParticleSystem::part` holds live `ParticleSettings *` pointers on any object with a particle system. Modifier DNA structs (`DisplaceModifierData`, `WarpModifierData`, etc.) carry live `Tex *` fields. `OB_FONT`, `OB_CURVES_LEGACY`, and `OB_SURF` objects hold `ob->data` into `bmain->curves`. All three would use-after-free if drained post-read. By the time the indexed loop completes (all Objects freed), it is safe to drain. This also fixes NURBS importer session accumulation at the Main-clear level.
+This is the **only** safe drain for all four Scar 2 types (ID_LS, ID_PA, ID_TE, ID_CU_LEGACY). ID_PA: `ParticleSystem::part` holds live `ParticleSettings *`. ID_TE: modifier DNA structs hold live `Tex *`. ID_CU_LEGACY: `OB_FONT`/`OB_CURVES_LEGACY`/`OB_SURF` hold `ob->data` into `bmain->curves`. ID_LS: `FreestyleLineSet::linestyle` in `ViewLayer` is followed by `scene.cc:919-921` (scene foreach_id) and dereferenced by `freestyle.cc:55-57` (view-layer cleanup) — `WITH_FREESTYLE=OFF` disables rendering but not DNA traversal. By the time the indexed loop completes (all Scenes and Objects freed), it is safe to drain all four. This also fixes NURBS importer session accumulation at the Main-clear level.
 
-#### Layer 3 — Post-read drain for LS only
+#### Layer 3 — ~~Post-read drain for LS only~~ (removed — Layer 2 only)
 
-**File:** `readfile.cc`.
-
-After the existing drain block (after `BKE_brush_drain_transient` at ~line 4004), add drain call for ID_LS using the drain template in Category C above. **ID_PA, ID_TE, and ID_CU_LEGACY are excluded** — all handled by Layer 2 only.
-
-ID_LS is safe to drain post-read: Freestyle evaluation is compiled out (`WITH_FREESTYLE=OFF`) and `FreestyleLineStyle` has no live runtime consumers. ID_PA and ID_TE are not safe: `ParticleSystem::part` and modifier `Tex *` fields are live pointers that objects hold for the duration of the session — draining post-read would leave dangling pointers and crash on any subsequent particle or modifier eval (Codex catch, PR #227).
+Layer 3 was initially implemented as a post-read drain for `bmain->linestyles` in `after_liblink_merged_bmain_process`. **Removed by Codex catch (PR #229):** `FreestyleLineSet::linestyle` pointers in `ViewLayer` are live consumers even with `WITH_FREESTYLE=OFF`. Scene `foreach_id` (`scene.cc:919-921`) traverses them; view-layer cleanup (`freestyle.cc:55-57`) dereferences them. Post-read drain leaves dangling pointers. ID_LS now handled by Layer 2 only, same as ID_PA/ID_TE/ID_CU_LEGACY. Layer 3 exists only as the dropped-data manifest count (which runs before any drain and is safe).
 
 #### Layer 4 — Delete BKE_screen_blend_read_data
 
