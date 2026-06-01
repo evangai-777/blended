@@ -14,11 +14,11 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 
 ### Known Deferred Debt (compile-green but runtime-broken or leak-prone)
 
-1. **ID_LS latent memory leak** — Opening a legacy `.blend` file with Freestyle data in a `WITH_FREESTYLE=OFF` build populates `bmain->linestyles` via the kept `which_libbase` routing, but that listbase is not in `BKE_main_lists_get`, so `BKE_main_free` does not free those blocks. **Fix when:** a legacy `.blend` with Freestyle LineStyle data is added to CI fixtures, or a user reports memory growth across repeated file loads. **Fix:** a blenloader post-read pass that drains `bmain->linestyles` — see drain template in Category C below.
+1. **ID_LS latent memory leak** — Opening a legacy `.blend` file with Freestyle data in a `WITH_FREESTYLE=OFF` build populates `bmain->linestyles` via the kept `which_libbase` routing, but that listbase is not in `BKE_main_lists_get`, so `BKE_main_free` does not free those blocks. **Fixed in 0.9.x Layer 3** (post-read drain in `readfile.cc`) and **Layer 2** (`BKE_main_clear` Scar 2 drain in `main.cc`).
 
-2. **`BKE_screen_blend_read_data` kept but not called** — Defined in `screen.cc`, not called by the ID system. Retained for possible future format work. **Fix when:** 0.8.x `.blended` format work begins — wire it into the format reader or delete it.
+2. **`BKE_screen_blend_read_data` kept but not called** — Defined in `screen.cc`, not called by the ID system. Retained for possible future format work. **Fixed in 0.9.x Layer 4** (delete from `screen.cc`).
 
-3. **Scar 2 listbase memory leaks (ID_PA, ID_TE, ID_CU_LEGACY)** — `bmain->particles`, `bmain->textures`, and `bmain->curves` are kept as non-indexed listbases for versioning-pass compatibility, but are NOT in `BKE_main_lists_get`. `BKE_main_free` does not free those ID blocks. Same root cause as item 1. **Fix when:** memory profiling shows measurable growth across file loads in a session, or a user reports the issue. **Fix:** post-read drain pass — see Category C and drain template below. **ID_CU_LEGACY is more active** than ID_PA/ID_TE: `BKE_curve_add` is called at runtime by the Alembic NURBS reader and OBJ NURBS importer, so `bmain->curves` accumulates on every NURBS import, not just legacy file loads.
+3. **Scar 2 listbase memory leaks (ID_PA, ID_TE, ID_CU_LEGACY)** — `bmain->particles`, `bmain->textures`, and `bmain->curves` are kept as non-indexed listbases for versioning-pass compatibility, but are NOT in `BKE_main_lists_get`. `BKE_main_free` does not free those ID blocks. Same root cause as item 1. **Fixed in 0.9.x** — ID_PA and ID_TE: Layer 3 post-read drain + Layer 2 `BKE_main_clear` drain. **ID_CU_LEGACY: Layer 2 only** — cannot post-read drain because live `OB_FONT`, `OB_CURVES_LEGACY`, and `OB_SURF` objects hold `ob->data` pointers into `bmain->curves`; draining post-read would free their data mid-session. The `BKE_main_clear` drain runs after all Objects are freed and is safe. Session-scoped accumulation from NURBS importers is bounded and resolved at Main-clear time.
 
 ---
 
@@ -42,27 +42,27 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 
 | Trigger | Expected failure mode | Introduced | Status |
 |---------|-----------------------|------------|--------|
-| Legacy file containing MetaBall (`OB_MBALL`) objects | `bmain->metaballs` fully removed — no Scar 2 rescue. MetaBall data can't be allocated; no `which_libbase` routing. Objects will load with `ob->type == OB_MBALL` and `ob->data == nullptr`. Any draw or eval code that dereferences `ob->data` without a null check → null deref crash. `BLI_assert_unreachable()` sites in dispatch switches → debug assert. **No versioning pass converts these to another type** (unlike OB_SPEAKER). | 0.4.0 (ID_MB) | Needs versioning pass: convert `OB_MBALL` → `OB_EMPTY` on file load, same pattern as OB_SPEAKER → OB_EMPTY (versioning pass 502.23) |
+| Legacy file containing MetaBall (`OB_MBALL`) objects | `bmain->metaballs` fully removed — no Scar 2 rescue. MetaBall data can't be allocated; no `which_libbase` routing. Objects will load with `ob->type == OB_MBALL` and `ob->data == nullptr`. Any draw or eval code that dereferences `ob->data` without a null check → null deref crash. `BLI_assert_unreachable()` sites in dispatch switches → debug assert. | 0.4.0 (ID_MB) | ✓ **Fixed in 0.9.x Layer 1** — versioning pass 502.31 in `versioning_520.cc` converts `OB_MBALL → OB_EMPTY`, same pattern as OB_SPEAKER → OB_EMPTY (502.23). |
 | Legacy file with particle systems on objects | `ParticleSettings` IDs load into `bmain->particles` (Scar 2). `build_particle_systems()` is still called for any object with `object->particlesystem.first != nullptr`. `build_particle_settings(particle->part)` runs and calls `add_id_node()`. The OOB-index crash (`BKE_idtype_idcode_to_index(ID_PA)` → -1) is **guarded**: `depsgraph.cc` has `if (id_type_index >= 0)` before writing `id_type_exist[]`, applied during the ID_CU_LEGACY chisel. Particle systems in legacy files load and evaluate without crashing. Memory leak: `bmain->particles` not in `BKE_main_lists_get` (Category C). | 0.4.0 (ID_PA) | ✓ OOB guard in place. Remaining: Category C memory leak only. |
 
 #### Category C — Memory leaks (session-scoped; fix when needed — see Deferred Debt items 1 and 3 for triggers)
 
 | Trigger | Leak scope | Introduced | Fix when needed |
 |---------|-----------|------------|-----------------|
-| Load legacy `.blend` with Freestyle LineStyle data (`WITH_FREESTYLE=OFF`) | `bmain->linestyles` populated, not freed by `BKE_main_free`. Blocks accumulate per file load, freed on process exit. | 0.4.0 (ID_LS) | Post-read drain pass on `bmain->linestyles` |
-| Load legacy `.blend` with ParticleSettings data | `bmain->particles` populated (Scar 2), not in `BKE_main_lists_get`. Same leak shape as ID_LS. | 0.4.0 (ID_PA) | Post-read drain pass on `bmain->particles` |
-| Load legacy `.blend` with Blender Internal texture data | `bmain->textures` populated (Scar 2), not in `BKE_main_lists_get`. Same leak shape. | 0.4.0 (ID_TE) | Post-read drain pass on `bmain->textures` |
-| Load legacy `.blend` with Curve data, OR import NURBS via Alembic/OBJ | `bmain->curves` populated (Scar 2), not in `BKE_main_lists_get`. More active than other Scar 2 leaks: `BKE_curve_add` is called at runtime by Alembic NURBS reader and OBJ NURBS importer, so curves accumulate not just on legacy file load but on every NURBS import. | 0.4.0 (ID_CU_LEGACY) | Post-read/post-import drain pass on `bmain->curves` |
+| Load legacy `.blend` with Freestyle LineStyle data (`WITH_FREESTYLE=OFF`) | `bmain->linestyles` populated, not freed by `BKE_main_free`. Blocks accumulate per file load, freed on process exit. | 0.4.0 (ID_LS) | ✓ **Fixed in 0.9.x Layer 3** (post-read drain) + **Layer 2** (`BKE_main_clear`) |
+| Load legacy `.blend` with ParticleSettings data | `bmain->particles` populated (Scar 2), not in `BKE_main_lists_get`. Same leak shape as ID_LS. | 0.4.0 (ID_PA) | ✓ **Fixed in 0.9.x Layer 3** (post-read drain) + **Layer 2** (`BKE_main_clear`) |
+| Load legacy `.blend` with Blender Internal texture data | `bmain->textures` populated (Scar 2), not in `BKE_main_lists_get`. Same leak shape. | 0.4.0 (ID_TE) | ✓ **Fixed in 0.9.x Layer 3** (post-read drain) + **Layer 2** (`BKE_main_clear`) |
+| Load legacy `.blend` with Curve data, OR import NURBS via Alembic/OBJ | `bmain->curves` populated (Scar 2), not in `BKE_main_lists_get`. `BKE_curve_add` is called at runtime by Alembic NURBS reader, OBJ NURBS importer, and all text/curve object creation (`OB_FONT`, `OB_CURVES_LEGACY`, `OB_SURF`). | 0.4.0 (ID_CU_LEGACY) | ✓ **Fixed in 0.9.x Layer 2** (`BKE_main_clear` only — post-read drain unsafe; live objects reference `bmain->curves`) |
 
-**When a post-read drain pass is needed (template):** In `blenloader/intern/readfile.cc` or a post-read callback, after `BKE_blendfile_read()` completes, iterate and free the relevant non-indexed listbase:
+**Post-read drain template (for LS/PA/TE — NOT for ID_CU_LEGACY):** In `blenloader/intern/readfile.cc`, after `BKE_blendfile_read()` completes, iterate and free the relevant non-indexed listbase:
 ```cpp
-// Example: drain bmain->linestyles after file load when WITH_FREESTYLE=OFF
+// Example: drain bmain->linestyles after file load
 LISTBASE_FOREACH_MUTABLE(ID *, id, &bmain->linestyles) {
   BKE_id_free(bmain, id);
 }
 BLI_listbase_clear(&bmain->linestyles);
 ```
-`BKE_id_free` skips the `IDTypeInfo::id_free` callback when the type is unregistered (INIT_TYPE removed) but still frees the memory block and animation data. Before using this pattern, audit the original `IDTypeInfo::id_free` implementation to confirm nothing non-trivial was being cleaned up there (e.g., GPU resources, runtime caches). For ID_LS, ID_PA, ID_TE, and ID_CU_LEGACY the callbacks were simple struct-internal frees with no GPU state — the drain is safe. Do NOT use `BKE_id_multi_tagged_delete` — that API operates on tagged blocks within the main indexed list and will not reach Scar 2 unindexed listbases.
+`BKE_id_free` skips the `IDTypeInfo::id_free` callback when the type is unregistered (INIT_TYPE removed) but still frees the memory block and animation data. For ID_LS, ID_PA, and ID_TE the callbacks were simple struct-internal frees with no GPU state — the post-read drain is safe. **ID_CU_LEGACY uses `BKE_main_clear` drain instead** (Layer 2): live `OB_FONT`/`OB_CURVES_LEGACY`/`OB_SURF` objects hold `ob->data` into `bmain->curves` for the life of the session; the Main-clear drain is called after all Objects are freed and is safe. Do NOT use `BKE_id_multi_tagged_delete` — that API operates on tagged blocks within the main indexed list and will not reach Scar 2 unindexed listbases.
 
 #### Category D — Fixed crashes (caught at runtime audit)
 
@@ -80,140 +80,71 @@ BLI_listbase_clear(&bmain->linestyles);
 | 0.6.x | Evaluation model — close seam between declared ~19-type world and depsgraph/draw/editor dispatch; ~95 hits audited: ~71 live fold-down dispatch (stays), 5 OOB guards (confirm permanent), 2 EEVEE →true workarounds (resolve), 5 dead-code refs (remove) | ✓ CI-complete (build 82, commit `8f7dda22`) |
 | 0.7.x | App lenses — launcher (§11), all 28 mode lenses (§12), full product identity (§16), `.blended` format design. Two phases: skeleton first, aesthetic second. | ✓ CI-complete (build 99, commit `2ddd1dd0`). Phase 1 + Phase 2 complete. Logo ✓ + accent ✓ (`#ff7f00`) + app icon ✓ + splash ✓. |
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary | ✓ CI-complete (build 100, commit `99e20b96`). First try. Magic bytes `"BLENDED"`, 23 layers, ~80 sites, platform integration, all tests green. |
-| 0.9.x | `.blend` import — seamless read with dropped-data manifest output | Pending |
+| 0.9.x | `.blend` import — seamless read with dropped-data manifest output | Plan complete (2026-06-01); implementation pending |
 | 1.0.0 | Foundation complete; basic pipeline navigation working. Two concurrent workstreams: (1) 1.0.0-dev runtime audit — developer runs the build, works through Known Runtime Artifacts + deferred debt checklists, reports findings to Claude for triage and fix; (2) GitHub Pages launch — landing, marketing, tech demo. Release tag when both clear. | Pending |
 
 ---
 
-### 0.8.0 Blast Radius Audit
+### 0.8.0 — Complete
 
-**Design decisions locked (Socratic dialogue, 2026-05-30):**
-- Magic bytes: write `"BLENDED"`, read accepts both `"BLENDER"` and `"BLENDED"`. One-way compatibility — Blended reads `.blend` files, upstream Blender cannot read `.blended` files.
-- File extension: `.blended` on all write paths (save, autosave, crash recovery, backups).
-- `FILE_TYPE_BLENDED`: new bit flag in `DNA_space_enums.h`. `FILE_TYPE_BLENDER` stays for `.blend` import compat. Open dialogs OR both; save dialogs use `BLENDED` only.
-- Bundled upstream datafiles (e.g. `compositing_nodes_essentials.blend`, `procedural_hair_node_assets.blend`) stay `.blend` — they are upstream assets, not Blended project files.
+Magic bytes `"BLENDED"`, `.blended` extension on all write paths, `FILE_TYPE_BLENDED` bit flag (`1 << 20`), 23 implementation layers (~80 sites), platform integration (Windows registry, Linux MIME, macOS UTI), Python scripts, UI strings, tests. CI-complete build 100, commit `99e20b96`. Site-by-site tables and implementation notes in CHANGELOG.md `## 0.8.0` section and PR #225.
 
-#### Write path — `"BLENDED"` magic, `.blended` extension
+**Key architectural decisions carried forward:**
+- Open/browse dialogs: `FILE_TYPE_BLENDER | FILE_TYPE_BLENDED`. Save dialogs: `FILE_TYPE_BLENDED` only.
+- `filter_blender` and `filter_blended` are **separate** operator properties in `wm_operator_props.cc` — collapsing them into one causes `filesel.cc` to re-expand `.blended`-only save dialogs to include `.blend` (Codex catch, PR #225).
+- Bundled upstream datafiles (e.g. `compositing_nodes_essentials.blend`) stay `.blend`.
 
-| File | What to change | Sites |
-|------|---------------|-------|
-| `blenloader/intern/writefile.cc` | `"BLENDER"` → `"BLENDED"` in `get_blend_file_header()` (both v0 and v1 format branches) | 1612, 1629 |
-| `wm_files.cc` | `".blend"` → `".blended"` in `BLI_path_extension_ensure` on save | 3906, 4095 |
-| `wm_files.cc` | `"Untitled.blend"` → `"Untitled.blended"` | 3861, 4809, 5030 |
-| `wm_files.cc` | `"_crash.blend"` → `"_crash.blended"` | 2046 |
-| `wm_files.cc` | `"_autosave.blend"` → `"_autosave.blended"` | 2277, 2280 |
-| `writefile.cc` | `do_history()` backup rotation — `.blend1` → `.blended1` etc. | 1870, 2108 |
+---
 
-#### Read path — accept both `"BLENDER"` and `"BLENDED"`
+### 0.9.0 Implementation Plan
 
-| File | What to change | Sites |
-|------|---------------|-------|
-| `blenloader_core/intern/blo_core_blend_header.cc` | `STREQLEN(header_bytes, "BLENDER", 7)` — add `"BLENDED"` as second valid magic | 38 |
-| `blenloader_core/intern/blo_core_file_reader.cc` | `memcmp(first_bytes, "BLENDER", ...)` — accept both | 49 |
-| `blenloader_core/BLO_core_blend_header.hh` | Header constants/comments — document dual-magic read | throughout |
+**Goal:** Read any `.blend` file with no crashes, no leaks, no silent truncation. For everything removed or restructured, produce a dropped-data manifest. One-way: `.blend` → `.blended`.
 
-#### File type constants
+**Versioning audit (2026-06-01):** Passes run through 502.30 (Brush permanent home). All Bucket 3 fold-down types have both a versioning pass and a post-read drain in `readfile.cc`. OB_MBALL is the **only gap** — no versioning pass. Everything else is handled.
 
-| File | What to change | Sites |
-|------|---------------|-------|
-| `DNA_space_enums.h` | Add `FILE_TYPE_BLENDED` as new bit flag, next available bit. Keep `FILE_TYPE_BLENDER` at `(1 << 2)` and `FILE_TYPE_BLENDER_BACKUP` at `(1 << 3)` | near 641 |
+#### Layer 1 — OB_MBALL versioning pass
 
-#### File detection & browser
+**File:** `versioning_520.cc`. **Subversion:** 502.31.
 
-| File | What to change | Sites |
-|------|---------------|-------|
-| `blendfile.cc` | `BKE_blendfile_extension_check()`: add `".blended"` and `".blended.gz"` to ext_test array, keep `".blend"` for import compat | 90 |
-| `filelist.cc` | `file_is_blend_backup()`: hardcoded `.blend` scan in last 7-8 chars — must also detect `.blended` to recognize `.blended1`/`.blended2` backups. Without this fix, `do_history()` produces `.blended1` files that `FILE_TYPE_BLENDER_BACKUP` never sees | 1745-1769 |
-| `filelist.cc` | `ED_path_extension_type()`: `.blended` detection via `BKE_blendfile_extension_check` (fixed by blendfile.cc above), map to `FILE_TYPE_BLENDED` instead of `FILE_TYPE_BLENDER` | 1777-1778 |
-| `filelist.cc` | `BLI_strcasestr` for `.blend` detection — add `.blended` | 1762 |
-| `filelist.cc` | `FILE_TYPE_BLENDER` icon/preview/thumbnail classification — add `FILE_TYPE_BLENDED` | 319, 366, 549-556, 668, 1871 |
-| `filelist_sort.cc` | `.blend.gz` sorting — add `.blended.gz` | 229, 232 |
-| `filelist_sort.cc` | Sort priority: `FILE_TYPE_BLENDER | FILE_TYPE_BLENDER_BACKUP` — add `FILE_TYPE_BLENDED` | 99-104 |
-| `filelist_readjob_asset_library_remote.cc` | `.blend` assert — add `.blended` | 67 |
-| `filelist_readjob_common.cc` | `entry->typeflag = FILE_TYPE_BLENDER` — needs to distinguish `.blended` vs `.blend` | 322 |
-| `filelist_readjob_common.cc` | `FILE_TYPE_BLENDER | FILE_TYPE_BLENDER_BACKUP` filter check — add `FILE_TYPE_BLENDED` | 663 |
-| `filelist_filter.cc` | `FILE_TYPE_BLENDERLIB | FILE_TYPE_BLENDER | FILE_TYPE_BLENDER_BACKUP` filter — add `FILE_TYPE_BLENDED` | 101-102 |
-| `asset_library_service.cc` | `.blend` / `.blend.gz` / `.ble` path matching — add `.blended` / `.blended.gz` variants | 420-425 |
-| `file_draw.cc` | `FILE_TYPE_BLENDER | FILE_TYPE_BLENDER_BACKUP` icon/draw checks — add `FILE_TYPE_BLENDED` | 205, 787, 1250 |
-| `screen_ops.cc` | `ELEM(file_type, FILE_TYPE_BLENDER, FILE_TYPE_BLENDER_BACKUP)` — add `FILE_TYPE_BLENDED` | 7524 |
-| `asset_ops.cc` | `FILE_TYPE_BLENDER` filter in asset browser — add `FILE_TYPE_BLENDED` | 857 |
-| `wm_files.cc` | Open/browse dialogs: filter changes from `FILE_TYPE_BLENDER` to `FILE_TYPE_BLENDER | FILE_TYPE_BLENDED` | 3387, 3607, 4137, 4246 |
-| `wm_files.cc` | Save dialogs: filter uses `FILE_TYPE_BLENDED` only | same area |
-| `wm_files_link.cc` | `WM_OT_link` + `WM_OT_append` filters: `FILE_TYPE_BLENDER | FILE_TYPE_BLENDERLIB` — add `FILE_TYPE_BLENDED` | 486-487, 510-511 |
-| `wm_files_link.cc` | `WM_OT_id_linked_relocate` filter: `FILE_TYPE_BLENDER | FILE_TYPE_BLENDERLIB` — add `FILE_TYPE_BLENDED` | 705 |
-| `wm_files_link.cc` | `WM_OT_lib_relocate` + `WM_OT_lib_reload` filters: `FILE_TYPE_BLENDER` — add `FILE_TYPE_BLENDED` | 1066, 1096 |
-| `wm_files_link.cc` | Operator descriptions: `"Link from a Library .blend file"` / `"Append from a Library .blend file"` — update to `.blend`/`.blended` or format-neutral | 478, 502 |
-| `filesel.cc` | `filter_blender` RNA prop sets `FILE_TYPE_BLENDER` — needs to also set `FILE_TYPE_BLENDED` | 234 |
-| `file_handler_test.cc` | Test expectations for extension detection — add `.blended` | 45 |
-| `wm_dragdrop_test.cc` | Drag-drop tests with `FILE_TYPE_BLENDER` — add `FILE_TYPE_BLENDED` test cases | 39-88 |
+Add `if (!MAIN_VERSION_FILE_ATLEAST(bmain, 502, 31))` pass: iterate `bmain->objects`, for each `object.type == 5 /* OB_MBALL */` set `object.type = OB_EMPTY`, `object.data = nullptr`. `bmain->metaballs` was fully removed (no Scar 2 rescue) — `ob->data` is already null on any MetaBall object from a legacy file. The conversion prevents null-deref crashes in draw/eval dispatch.
 
-#### Platform integration
+Bump `BLENDER_FILE_SUBVERSION` to 31 in `BKE_blender_version.h`.
 
-| File | What to change | Sites |
-|------|---------------|-------|
-| `winstuff.cc` | Windows registry: add `.blended` file association alongside `.blend` | 221, 304 |
-| `blended.desktop` | `MimeType=application/x-blended;application/x-blender;` | 88 |
-| `freedesktop.py` | Add `application/x-blended` MIME type, add `*.blended` glob pattern, keep `application/x-blender` and `*.blend` for read compat | 72, 256-329, 310 |
-| `Info.plist` (macOS) | Add `.blended` UTI alongside existing `.blend` UTI | multiple |
-| `org.blender.Blender.metainfo.xml` | Add `.blended` extension reference | — |
+OB_MBALL numeric value: 5. Hardcode with comment, same pattern as OB_SPEAKER at 502.23 (`12 /* OB_SPEAKER */`).
 
-#### Python/scripts
+#### Layer 2 — BKE_main_clear Scar 2 drain
 
-| File | What to change | Sites |
-|------|---------------|-------|
-| `cli_listing_generator.py` | `*.blend` glob — add `*.blended` | 70 |
-| `listing_downloader.py` | `.blend` in examples/docs — update to `.blended` where describing native format | 115 |
-| `bl_extract_messages.py` | `*.blend` globs — add `*.blended` | 948, 1068 |
-| `space_node.py` | `compositing_nodes_essentials.blend` — bundled datafile, stays `.blend` (upstream asset) | 1199 |
-| `userpref.py` | `userpref.blend` — already removed from startup path in 0.7.0, verify dead code | 166-167 |
-| `object_quick_effects.py` | `procedural_hair_node_assets.blend` — bundled datafile, stays `.blend` (upstream asset) | 110 |
-| `assets.py` | `.asset.blend` check — add `.asset.blended` | 96 |
-| `pose_library/operators.py` | `copied_asset.blend` temp file — change to `.blended` (write path) | 147 |
+**File:** `main.cc`.
 
-#### UI strings
+After the `BKE_main_lists_get` indexed ID loop (after `BLI_listbase_clear(lb)` at ~line 163), add a drain block for all four non-indexed Scar 2 listbases: `bmain.linestyles`, `bmain.particles`, `bmain.textures`, `bmain.curves`. Use `BKE_id_free_ex` with the same flags as the indexed loop (`LIB_ID_FREE_NO_MAIN | LIB_ID_FREE_NO_UI_USER | LIB_ID_FREE_NO_USER_REFCOUNT | LIB_ID_FREE_NO_DEG_TAG`).
 
-| File | What to change | Sites |
-|------|---------------|-------|
-| `rna_space.cc` | "Show .blend1, .blend2, etc." → "Show .blended1, .blended2, etc." for new backup filter; keep `.blend1` description on legacy backup filter | 7658 |
-| `rna_space.cc` | `use_filter_blender` property with `FILE_TYPE_BLENDER` SDNA — add `FILE_TYPE_BLENDED` equivalent or OR | 7649-7650 |
-| `rna_space.cc` | Add RNA description for `FILE_TYPE_BLENDED` filter flag | near 7658 |
-| `wm_operator_props.cc` | `"filter_blender"` RNA property def — OR `FILE_TYPE_BLENDED` into the default, update "Filter .blend files" description | 139 |
-| `wm_operator_props.cc` | "Filter backup .blend files" → update or add parallel description for `.blended` backups | 144 |
+This is the **only** safe drain for ID_CU_LEGACY. Live `OB_FONT`, `OB_CURVES_LEGACY`, and `OB_SURF` objects hold `ob->data` pointers into `bmain->curves` for the life of the session. By the time the indexed loop completes (Objects freed), it is safe to drain. This also fixes NURBS importer session accumulation at the Main-clear level.
 
-#### Totals
+#### Layer 3 — Post-read drains for LS/PA/TE
 
-~60 C/C++ sites across ~22 source files, ~10 Python sites across ~7 script files, ~5 platform/packaging files, ~5 UI string sites. ~80 total sites.
+**File:** `readfile.cc`.
 
-#### 0.8.0 Implementation Checklist
+After the existing drain block (after `BKE_brush_drain_transient` at ~line 4004), add drain calls for ID_LS, ID_PA, and ID_TE using the drain template in Category C above. **ID_CU_LEGACY is excluded** — handled by Layer 2 only.
 
-```
-□ Layer 1 — Magic bytes: write "BLENDED" in get_blend_file_header() (v0 and v1)
-□ Layer 2 — Read path: accept both "BLENDER" and "BLENDED" magic in header decode and format detection
-□ Layer 3 — Extension enforcement: save path writes .blended via BLI_path_extension_ensure
-□ Layer 4 — Default filenames: Untitled.blended, _crash.blended, _autosave.blended
-□ Layer 5 — Backup rotation: do_history() produces .blended1, .blended2, etc.
-□ Layer 6 — FILE_TYPE_BLENDED: new bit flag in DNA_space_enums.h
-□ Layer 7 — File detection: filelist.cc maps .blended → FILE_TYPE_BLENDED, .blend → FILE_TYPE_BLENDER
-□ Layer 8 — File browser filters: open dialogs OR both flags, save dialogs use BLENDED only
-□ Layer 9 — Asset system: asset_library_service.cc accepts .blended and .blended.gz paths
-□ Layer 10 — blendfile.cc extension test array: add .blended, keep .blend for import
-□ Layer 11 — Backup classification: file_is_blend_backup() detects .blended backups
-□ Layer 12 — File browser draw: file_draw.cc FILE_TYPE_BLENDED in icon/preview checks
-□ Layer 13 — File browser filter: filelist_filter.cc, filesel.cc add FILE_TYPE_BLENDED to filter logic
-□ Layer 14 — File browser sort: filelist_sort.cc FILE_TYPE_BLENDED in sort priority
-□ Layer 15 — Link/Append: wm_files_link.cc FILE_TYPE_BLENDED in dialog filters
-□ Layer 16 — Screen ops: screen_ops.cc FILE_TYPE_BLENDED in file type dispatch
-□ Layer 17 — Asset ops: asset_ops.cc FILE_TYPE_BLENDED in asset browser filter
-□ Layer 18 — Platform — Windows: add .blended registry association
-□ Layer 19 — Platform — Linux: update blended.desktop MIME, freedesktop.py MIME + glob
-□ Layer 20 — Platform — macOS: add .blended UTI to Info.plist
-□ Layer 21 — Python scripts: update globs and extension checks (write paths → .blended, read paths → accept both)
-□ Layer 22 — UI strings: update RNA descriptions and operator tooltips
-□ Layer 23 — Tests: update file_handler_test.cc, wm_dragdrop_test.cc expectations
-□ Scar 20 verification grep: zero hits for stale .blend-only references in write paths
-□ Codex Standard checklist before each commit
-□ Five mandatory docs updated
-```
+These three have no live runtime consumers. Any blocks remaining after versioning are orphaned fossils from legacy `.blend` load.
+
+#### Layer 4 — Delete BKE_screen_blend_read_data
+
+**File:** `screen.cc` (function body + declaration in header).
+
+Deferred debt item 2 closure. The format work it was retained for (0.8.x) is complete. Function is defined but never called.
+
+#### Layer 5 — Dropped-data manifest
+
+**File:** `readfile.cc`.
+
+Before the Layer 3 drains, count items in each Scar 2 listbase (LS/PA/TE). OB_MBALL conversions require a pre-versioning-pass count — capture count of `ob->type == 5` objects before `BKE_blendfile_read()` is called, or write a counter during the versioning pass.
+
+If any dropped data: create a `Text` ID named `"Blended Import Manifest"` in the project. `ID_TXT` is a Bucket 2 keeper — zero new UI infrastructure, surfaces in the text editor, persists in the saved `.blended`.
+
+Manifest content: per-type count and disposition — e.g. "3 MetaBall objects converted to Empty; 7 ParticleSettings datablocks dropped; 2 FreestyleLineStyle datablocks dropped".
+
+Only created for files with `"BLENDER"` magic (legacy `.blend` imports), not native `.blended` files.
 
 ---
 

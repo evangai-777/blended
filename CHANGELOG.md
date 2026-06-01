@@ -68,6 +68,45 @@ carries a one-liner status per active item.
 
 **Version bump:** `BLENDED_VERSION_MINOR` 8 → 9. First commit of 0.9.x dev cycle.
 
+### Implementation plan (2026-06-01)
+
+Five layers. All Scar 2 listbase infrastructure preserved throughout 0.2–0.8 is the read pipeline this milestone audits and closes.
+
+**Layer 1 — OB_MBALL versioning pass** (`versioning_520.cc`)
+- Subversion bump: `BLENDER_FILE_SUBVERSION` 30 → 31 in `BKE_blender_version.h`
+- Pass 502.31: for each object with `type == 5 /* OB_MBALL */`: set `type = OB_EMPTY`, `data = nullptr`
+- Pattern: OB_SPEAKER → OB_EMPTY at 502.23 (lines 523-532) is the exact template
+- Closes Category B crash path: `bmain->metaballs` fully removed, no Scar 2 rescue; without this pass `ob->data` dereferences null in draw/eval code
+
+**Layer 2 — `BKE_main_clear` Scar 2 drain** (`main.cc`)
+- Location: after `BLI_listbase_clear(lb)` at ~line 163, before the relations/id_map/name_maps cleanup
+- Drain all four non-indexed listbases: `bmain.linestyles`, `bmain.particles`, `bmain.textures`, `bmain.curves`
+- Use `BKE_id_free_ex` with same flags as indexed loop: `LIB_ID_FREE_NO_MAIN | LIB_ID_FREE_NO_UI_USER | LIB_ID_FREE_NO_USER_REFCOUNT | LIB_ID_FREE_NO_DEG_TAG`
+- This is the ONLY safe drain location for `ID_CU_LEGACY`: `OB_FONT`, `OB_CURVES_LEGACY`, and `OB_SURF` all call `BKE_curve_add` at runtime, storing `ob->data` into `bmain->curves`. A post-read drain would free data that live Objects are pointing to. `BKE_main_clear` runs after all indexed IDs (Objects) are freed.
+
+**Layer 3 — Post-read drains for LS/PA/TE** (`readfile.cc`)
+- Location: after `BKE_brush_drain_transient(bmain)` at ~line 4004
+- Drain `bmain->linestyles`, `bmain->particles`, `bmain->textures` — LS/PA/TE only
+- ID_CU_LEGACY excluded (Layer 2 only — see above)
+- Pattern matches existing Bucket 3 drains above line 4004
+
+**Layer 4 — Delete `BKE_screen_blend_read_data`** (`screen.cc`)
+- Function body in `screen.cc` + declaration in header
+- Retained since 0.3.0 as "kept for possible future format work" — 0.8.x is complete, format work is done, call is never made. Dead code.
+
+**Layer 5 — Dropped-data manifest** (`readfile.cc`)
+- Count Scar 2 listbase contents before drains (LS, PA, TE counts; CU count before Layer 2)
+- If any non-zero: create `Text` ID (`ID_TXT`, Bucket 2 keeper) named `"Blended Import Manifest"` in the project
+- Format: per-type dropped count, e.g. `LineStyle: 2 dropped (Freestyle removed in 0.4.0)`
+- Only for files with `"BLENDER"` magic (legacy `.blend` files) — not for native `.blended` projects
+- Zero new UI infrastructure: surfaces in the text editor, persists in the saved `.blended`
+
+### Claude AI contributor notes
+
+- Versioning pass audit: all passes through 502.30 audited. OB_MBALL is the only missing pass — `bmain->metaballs` fully removed with no Scar 2 rescue, Category B crash path. All Bucket 3 fold-downs (VFont, Palette, LightProbe, Mask, Lattice, Brush) have both versioning passes and post-read drains confirmed in place.
+- ID_CU_LEGACY drain constraint: confirmed via `object.cc` lines 2168-2183 that `OB_CURVES_LEGACY`, `OB_SURF`, and `OB_FONT` all call `BKE_curve_add`, storing data in `bmain->curves`. Post-read drain is unsafe; `BKE_main_clear` drain is the correct location.
+- Manifest as `Text` ID: zero new UI infrastructure. Dropped data surfaces in text editor, persists in saved `.blended`, no in-app notification or panel required.
+
 ---
 
 ## 0.8.0 — 2026-06-01 — CI-complete (build 100, commit `99e20b96`)
@@ -88,7 +127,7 @@ carries a one-liner status per active item.
 
 ### Scope
 
-~80 total sites: ~60 C/C++ across ~22 source files, ~10 Python across ~7 script files, ~5 platform/packaging files, ~5 UI string sites. Full blast radius audit in CLAUDE.md `### 0.8.0 Blast Radius Audit`.
+~80 total sites: ~60 C/C++ across ~22 source files, ~10 Python across ~7 script files, ~5 platform/packaging files, ~5 UI string sites. Full blast radius audit and site-by-site tables documented in PR #225 and git log.
 
 ### Claude AI contributor notes
 
