@@ -1,7 +1,7 @@
 # BLENDED — Identity & Design Agreements
 
 **Developer/Publisher:** CHJ 3 Productions LLC (Indiana).
-**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.9.0-dev — 0.8.0 CI-complete (Windows x64, build 100, commit `99e20b96`). First try. 0.8.0 delivered: `.blended` native format ✓ (magic bytes `"BLENDED"`, 23 layers, ~80 sites, one-way compat, `FILE_TYPE_BLENDED`, platform integration, tests). 0.9.x in progress: `.blend` import — five-layer implementation committed (2026-06-01, commit `fe95e326`, branch `claude/0-9-0-regression-LU6mH`): OB_MBALL versioning pass (502.31), BKE_main_clear Scar 2 drain (PA/TE/CU/LS), post-read LS drain, BKE_screen_blend_read_data deletion, dropped-data manifest Text block. CI pending.
+**Status:** Living document. Working agreements from the rebuild conversation. Current build: 1.0.0-dev — 0.9.0 CI-complete (Windows x64, build 101, commit `c8e87078`). Third first-try on the project. 0.9.0 delivered: `.blend` import ✓ — OB_MBALL versioning pass (502.31), BKE_main_clear Scar 2 drain (PA/TE/CU/LS), BKE_screen_blend_read_data deletion, dropped-data manifest Text block. Layer 3 post-read LS drain removed — Codex catch PR #229. 1.0.x: foundation complete — runtime audit + GitHub Pages launch workstreams in progress.
 **Purpose:** So any future session, contributor, or Claude instance can pick up without re-litigating what's already been decided. Read this first before proposing changes to scope, identity, or architecture.
 
 ---
@@ -110,8 +110,8 @@ Blended embraces C's *breadth* while rejecting those three failure modes. The su
 UI is a projection of a data model. If the model is wrong, UI either papers over it (complexity) or fights it (workarounds). Both are the Blender disease. So the build order is:
 
 1. **Project file format** — what a Blended project *is*. [Principles locked, per-format decisions OPEN]
-2. **Datablocks** — what primitives live inside a project. [OPEN, in progress — 0.2.x through 0.5.x]
-3. **Evaluation model** — depsgraph, how primitives evaluate when things change. 0.6.x closes the seam between the declared ~19-type data model (0.5.0) and what the depsgraph/viewport layers still reflect — propagating the ID system surgery through the evaluation and draw subsystems. [OPEN, in progress — 0.6.x]
+2. **Datablocks** — what primitives live inside a project. [LOCKED — 39 → ~19 ID types, CI-complete through 0.5.x]
+3. **Evaluation model** — depsgraph, how primitives evaluate when things change. 0.6.x closes the seam between the declared ~19-type data model (0.5.0) and what the depsgraph/viewport layers still reflect — propagating the ID system surgery through the evaluation and draw subsystems. [LOCKED — CI-complete (build 82, commit `8f7dda22`)]
 4. **App lenses** — how a launcher door is technically a filtered view of the model. [OPEN]
 5. **UI** — only after 1–4 are honest. [OPEN, later]
 
@@ -201,9 +201,9 @@ Next in the foundation chain:
 4. **Project-mode flag.** One `.blended` file that can hold 3D-primary, 2D-primary, or mixed projects — or enforce single-mode per file?
 5. **Per-format final decisions** in §5 Groups 2–6.
 6. **Detailed launcher UI** — deferred until foundation is solid.
-7. **`.blend` import pipeline (0.9.x).** Full investigation into reading upstream Blender `.blend` files seamlessly. Direction: one-way (`.blend` → `.blended`). Goal: read any `.blend` file with no crashes, no silent truncation, no errors — read what Blended can represent, and for everything that was removed or restructured, produce a **dropped-data manifest** (plain text file or in-app notification panel) listing exactly what didn't come through and why. Users open their existing Blender projects in Blended, get a working file, and receive an honest accounting of what they're missing. The blenloader versioning infrastructure preserved throughout 0.2–0.8 via Scar 2 listbases is the read pipeline this milestone audits and completes. **Implementation plan complete (2026-06-01):** five layers — see CLAUDE.md `### 0.9.0 Implementation Plan` and CHANGELOG.md `## Unreleased — 0.9.0` for full details.
-8. **Runtime audit — developer-driven triage loop (1.0.0-dev).** The first time in the project where the developer runs the actual Blended build hands-on. Checklist-driven: Known Runtime Artifacts (Categories A/B/C in CLAUDE.md), all deferred debt accumulated across 0.2–0.9, plus anything new that surfaces through actual use. Collaboration mode flips: developer runs and reports, Claude triages and fixes, developer re-tests. Release tag gated on checklist completion — all triaged issues either fixed or explicitly accepted. No silent unknowns at ship.
-9. **GitHub Pages (1.0.0).** Resurrect GitHub Pages on the fork as the public face of Blended: landing page, marketing copy, and a tech demo page — what was removed, what remains, what the data model looks like now. CI artifacts live on GitHub Releases; Pages is the last missing piece of a coherent public identity. Concurrent with the runtime audit; the release tag ships when both are done.
+7. **`.blend` import pipeline (0.9.x).** ✓ CI-complete (build 101, commit `c8e87078`, 2026-06-01). Read any `.blend` file with no crashes, no leaks, no silent truncation. One-way: `.blend` → `.blended`. Five layers delivered: OB_MBALL versioning pass 502.31, `BKE_main_clear` Scar 2 drain (PA/TE/CU/LS), `BKE_screen_blend_read_data` deletion, dropped-data manifest Text block. Layer 3 post-read LS drain removed — Codex catch PR #229. See CHANGELOG.md `## 0.9.0` for full detail.
+8. **Runtime audit — Phase 1 of 1.0.0 release (developer-driven triage loop).** The first time in the project where the developer runs the actual Blended build hands-on. Ground zero as of 2026-06-01 except Category D (BKE_palette_add crash, build 97, fixed PR #214). Checklist: Known Runtime Artifacts (Categories A–D) — see §17 for full tables. Collaboration mode flips: developer runs and reports, Claude triages and fixes, developer re-tests. Phase 1 gates Phase 2. See CLAUDE.md `### 1.0.0-dev Runtime Audit Protocol` for operational detail.
+9. **GitHub Pages — Phase 2 of 1.0.0 release.** Polished public-facing site for Blended: marketing landing page + tech demo (screenshots, data model visuals, what was removed and why, what remains). Multiple tabs. Primary deliverable is a static site; no dependency on WebAssembly. Stretch goal: WASM interactive demo — Blended's reduced footprint (39 → ~19 ID types) may clear the browser memory wall that blocks full Blender from running in-browser; this is worth an attempt but does not block Phase 2 shipping. Old Pages site (Emscripten build, deployed March 2026) was wiped in the rebase — greenfield. Tech stack TBD. Phase 2 starts after Phase 1 clears; both gate the 1.0.0 release tag. See §17 for full plan.
 
 ---
 
@@ -1466,4 +1466,71 @@ Assets the human developer is responsible for creating and committing. All commi
 #### 4. Splash screen
 
 - [x] Design the full splash composition ✓ — `release/datafiles/splash.png`, 1920×960, PNG-24
+
+---
+
+## 17. 1.0.0 Release Plan [IN PROGRESS]
+
+1.0.0 ships when two sequential phases clear. Phase 1 gates Phase 2; Phase 2 gates the release tag. No silent unknowns at ship — every audit item must be either **fixed** (code change, committed, CI-confirmed) or **explicitly accepted** (documented with a named trigger and expected behavior).
+
+---
+
+### Phase 1 — Runtime Audit
+
+The first time in the project where the developer runs the actual Blended build hands-on. All sessions through 0.9.x had Claude operating on the codebase while the developer watched from outside. The direction of information flow reverses here: developer runs and reports, Claude triages and fixes, developer re-tests. See CLAUDE.md `### 1.0.0-dev Runtime Audit Protocol` for the per-session operational protocol.
+
+**Starting state (2026-06-01):** Ground zero except Category D (BKE_palette_add crash, build 97, fixed PR #214 before the audit formally began). Categories A, B, C — all entries unverified at runtime.
+
+#### Category A — Expected behavior changes (by design, won't fix)
+
+| Trigger | What happens | Introduced |
+|---------|-------------|------------|
+| Object with `PFIELD_TEXTURE` force field in legacy file | Texture displacement silently dead. `build_texture()` is a no-op — Tex IDNodes never enter the depsgraph. Force field evaluates but ignores the texture parameter entirely. | 0.4.0 (ID_TE) |
+| Object with particle system that has texture slots (legacy file) | Texture slots silently ignored. Particle system otherwise evaluates (geometry nodes path). | 0.4.0 (ID_TE) |
+| Node with `SOCK_TEXTURE` socket and a `Tex *` default value (legacy file) | Socket's texture not depsgraph-tracked; texture changes don't trigger node re-evaluation. | 0.4.0 (ID_TE) |
+| Brush with `paint_curve` assigned in legacy file | `Brush::paint_curve` field no longer exists in DNA; SDNA remapping skips it on load. Brush uses default stroke shape. No crash. | 0.4.0 (ID_PC) |
+| Python script calling `bpy.ops.object.particle_system_add()` or `_remove()` | "Operator not found" error. Operators removed in 0.4.0 cleanup. | 0.4.0 (ID_PA) |
+| Scene with NLA sound strip created via old `NLA_OT_soundclip_add` operator | Operator removed. Existing sound strips in NLA from legacy files: no speaker evaluation, no 3D positional audio. VSE timeline audio unaffected. | 0.4.0 (ID_SPK) |
+| File with GD_LEGACY grease pencil objects or annotations | OB_GPENCIL_LEGACY objects and annotation data fully functional — depsgraph evaluation kept intentionally. Listed here for completeness, not a failure. | 0.4.0 (ID_GD_LEGACY) |
+
+#### Category B — Uncertain/crash paths — all resolved in 0.9.x
+
+| Trigger | Resolution | Status |
+|---------|------------|--------|
+| Legacy file containing MetaBall (`OB_MBALL`) objects | Versioning pass 502.31 in `versioning_520.cc` converts `OB_MBALL → OB_EMPTY` on load. No null-deref. | ✓ Fixed 0.9.x Layer 1 |
+| Legacy file with particle systems on objects | OOB-index guard (`if (id_type_index >= 0)`) in `depsgraph.cc` prevents crash. Particle systems load and evaluate. Memory leak resolved by Category C fix. | ✓ OOB guard in place |
+
+#### Category C — Memory leaks — all resolved in 0.9.x (Layer 2: `BKE_main_clear` Scar 2 drain)
+
+| Trigger | Leak scope | Status |
+|---------|-----------|--------|
+| Load legacy `.blend` with Freestyle LineStyle data | `bmain->linestyles` populated, freed at Main-clear. Post-read drain unsafe — `FreestyleLineSet::linestyle` in ViewLayer is a live consumer. Codex catch PR #229. | ✓ Fixed 0.9.x Layer 2 |
+| Load legacy `.blend` with ParticleSettings data | `bmain->particles` populated, freed at Main-clear. `ParticleSystem::part` is a live pointer — post-read drain would be use-after-free. | ✓ Fixed 0.9.x Layer 2 |
+| Load legacy `.blend` with Blender Internal texture data | `bmain->textures` populated, freed at Main-clear. Modifier DNA structs hold live `Tex *` fields. | ✓ Fixed 0.9.x Layer 2 |
+| Load legacy `.blend` with Curve data, or import NURBS | `bmain->curves` populated, freed at Main-clear. Live objects hold `ob->data` into `bmain->curves`. | ✓ Fixed 0.9.x Layer 2 |
+
+#### Category D — Fixed crashes (caught at runtime audit)
+
+| Trigger | Failure | Fixed |
+|---------|---------|-------|
+| Any startup — fresh install or default file | `BKE_palette_add` crashed via `BKE_gpencil_palette_ensure`. Root cause: Scar 10 allocator called `BKE_id_new_name_validate` for deregistered `ID_PAL`; namemap index returns -1; accessing `maps[-1]` yields garbage address → crash. Fix: bypass namemap, use `BLI_strncpy_utf8` + `BLI_uniquename` directly on the Scar 2 listbase. | PR #214, commit `25f59735` |
+
+**Audit gate:** Every Category A entry verified as silent at runtime (no console errors, no crashes). Categories B and C verified as behaving per documentation. All new findings either fixed or explicitly accepted into Category A/D.
+
+---
+
+### Phase 2 — GitHub Pages
+
+Polished public-facing site for Blended. Starts after Phase 1 clears.
+
+**Deliverables:**
+- Marketing landing page — what Blended is, who it's for, the identity
+- Tech demo — what was removed and why, what remains, what the data model looks like now; told through visuals (screenshots, data model diagrams, before/after comparisons)
+- Multiple tabs covering different angles; design quality is a first-class goal — should not look like a default GitHub Pages template
+
+**Primary implementation:** Static site, tech stack TBD. Images, code snippets, and visual explanations are the medium. No WebAssembly dependency.
+
+**Stretch goal — WASM interactive demo:** The original Blended Pages site (March 2026, wiped in rebase) used an Emscripten build deployed to GitHub Pages. Full Blender hits browser memory limits and isn't viable as a WASM demo. Blended's datablock audit (39 → ~19 ID types, significant binary reduction) may bring it within range. Worth an attempt as a parallel investigation; does not block Phase 2 shipping. If it works, it goes in. If it doesn't, the static site ships without it.
+
+**Phase 2 gate:** Site live, polished, covering all planned tabs. WASM either shipped or explicitly accepted as out of scope.
 

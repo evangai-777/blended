@@ -11,7 +11,7 @@ Blended
 
 Blended is a fork of [Blender](https://www.blender.org) being rebuilt from the foundation up around one stated identity: **free 2D and 3D software tools, with an explicit focus on the craft of animation.**
 
-Currently at 0.9.0-dev — 0.8.0 CI-complete (Windows x64, build 100, commit 99e20b96). First try. 0.8.0 delivered: `.blended` native format ✓ — magic bytes `"BLENDED"`, `.blended` on all write paths, `FILE_TYPE_BLENDED` bit flag, platform integration (Windows registry, Linux MIME, macOS UTI), Python scripts, UI strings, tests. 0.9.x: `.blend` import — five-layer implementation committed (commit `fe95e326`), CI pending.
+Currently at 1.0.0-dev — 0.9.0 CI-complete (Windows x64, build 101, commit `c8e87078`). Third first-try on the project. 0.9.0 delivered: `.blend` import ✓ — OB_MBALL versioning pass 502.31, `BKE_main_clear` Scar 2 drain (PA/TE/CU/LS), `BKE_screen_blend_read_data` deletion, dropped-data manifest Text block. 1.0.x: foundation complete — runtime audit + GitHub Pages launch in progress. Release tag when both clear.
 
 What Blended Is
 ---------------
@@ -28,15 +28,28 @@ What's Different
 ----------------
 
 - **Branding** — "Blended X.Y.Z" in window titles, splash, and about dialog. Tagline: *Blender, simplified.*
+- **Simplified data model** — 39 → ~19 ID types. Fossils, UI-state types, and upstream deprecations removed through the datablock audit (0.2.x–0.5.x). Remaining types have a permanent home in the data model, not just tolerance.
+- **`.blended` project format** — magic bytes `"BLENDED"`, `.blended` extension, `FILE_TYPE_BLENDED` flag, platform integration (Windows registry, Linux MIME, macOS UTI). Import from `.blend` is one-way with a dropped-data manifest.
 - **Pre-5.0 rig compatibility** — `blended_rig_compat.py` restores `action.fcurves` for pre-Blender-5.0 Rigify rigs.
 - **Update notifications** — Background GitHub Releases check at startup with top-bar notification when an update is available.
 - **CI** — Windows x64 portable builds via GitHub Actions. Branch pushes: lite compile check. Tags: full release artifact.
-- **Datablock audit** — Complete: 39 → ~19 ID types. Removed through 0.4.0: `ID_WS`, `ID_SCR`, `ID_WM`, `ID_PC`, `ID_SPK`, `ID_PA`, `ID_GD_LEGACY`, `ID_LS`, `ID_MB`, `ID_TE`, `ID_CU_LEGACY`, `ID_CF`. 0.5.0 Bucket 3 fold-downs: `ID_LP` ✓, `ID_PAL` ✓, `ID_LT` ✓, `ID_MSK` ✓, `ID_VF` ✓, `ID_BR` ✓. Audit closed.
 
-On the Horizon
---------------
+Foundation Layers
+-----------------
 
-Six foundation layers — one minor version each, 1.0 when all six are honest. **0.6.x:** ✓ CI-complete (build 82) — depsgraph/draw/editor seam closure. **0.7.x:** ✓ CI-complete (build 99, commit `2ddd1dd0`) — launcher as canonical workspace system + all 28 mode lenses + full product identity (logo, accent `#ff7f00`, app icon, splash, typeface Inter) + `.blended` format design + all 6 Bucket 3 permanent homes + launcher header chrome + rounded mode button cards + hover state. Phase 2 design complete. **0.8.x:** ✓ CI-complete (build 100, commit `99e20b96`) — file format identity complete: magic bytes `"BLENDED"`, `.blended` extension on all write paths, one-way compat, `FILE_TYPE_BLENDED` bit flag, ~80 sites across ~22 source files + scripts + platform integration. **0.9.x:** implementation committed (commit `fe95e326`) — `.blend` import: OB_MBALL versioning pass 502.31, `BKE_main_clear` Scar 2 drain (PA/TE/CU/LS), post-read LS drain, `BKE_screen_blend_read_data` deletion, dropped-data manifest Text block. CI pending. **1.0.0:** foundation complete, two concurrent workstreams — runtime audit (developer runs the build, checklists, triage loop with Claude) and GitHub Pages launch (landing page, marketing, tech demo). Release tag when both clear. Full roadmap in [`CHANGELOG.md`](../CHANGELOG.md).
+Six foundation layers — one minor version each, 1.0 when all six are honest.
+
+| Version | Layer | Status |
+|---------|-------|--------|
+| 0.4.x | Datablock audit — 9 fossil removals (Bucket 5+6) | ✓ CI-complete (build 70) |
+| 0.5.x | Datablock audit — Bucket 3 fold-downs complete; 39 → ~19 ID types | ✓ CI-complete (build 81) |
+| 0.6.x | Evaluation model — depsgraph/draw/editor seam closure | ✓ CI-complete (build 82, commit `8f7dda22`) |
+| 0.7.x | App lenses — launcher + all 28 mode lenses + full product identity | ✓ CI-complete (build 99, commit `2ddd1dd0`) |
+| 0.8.x | File format — `.blended` magic, extension, platform integration | ✓ CI-complete (build 100, commit `99e20b96`) |
+| 0.9.x | `.blend` import — seamless read, dropped-data manifest | ✓ CI-complete (build 101, commit `c8e87078`) |
+| 1.0.0 | Foundation complete — Phase 1: runtime audit → Phase 2: GitHub Pages launch | In progress |
+
+Full version history in [`CHANGELOG.md`](../CHANGELOG.md).
 
 Building from Source
 --------------------
@@ -62,7 +75,7 @@ Contributors
 
 Blended is developed and published by **CHJ 3 Productions LLC** (Indiana).
 
-Developed with [Claude](https://anthropic.com) (Anthropic) as primary implementation partner across the full rebuild — version identity, CI pipeline, rig compatibility, update checker, and all datablock audit and 0.7.x Phase 1 skeleton work. [Codex](https://openai.com) (OpenAI) contributes automated code review on pull requests, catching regressions and missed sites throughout 0.4.x–0.7.x. Per-release detail in [`CHANGELOG.md`](../CHANGELOG.md).
+Developed with [Claude](https://anthropic.com) (Anthropic) as primary implementation partner across the full rebuild — version identity, CI pipeline, rig compatibility, update checker, datablock audit (0.2.x–0.5.x), evaluation model seam closure (0.6.x), launcher and full product identity (0.7.x), file format (0.8.x), and `.blend` import (0.9.x). [Codex](https://openai.com) (OpenAI) contributes automated code review on pull requests, catching regressions and missed sites throughout 0.4.x–0.9.x. Per-release detail in [`CHANGELOG.md`](../CHANGELOG.md).
 
 Upstream Blender Resources
 --------------------------

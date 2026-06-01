@@ -29,42 +29,24 @@ carries a one-liner status per active item.
 | 0.6.x | Evaluation model — depsgraph audit | ✓ CI-complete (build 82, commit `8f7dda22`) |
 | 0.7.x | App lenses — launcher as canonical workspace system + full product identity | ✓ CI-complete (build 99, commit `2ddd1dd0`). Phase 1 + Phase 2 complete. Logo ✓ + accent ✓ (`#ff7f00`) + app icon ✓ + splash ✓. |
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary | ✓ CI-complete (build 100, commit `99e20b96`) |
-| 0.9.x | `.blend` import — seamless read with dropped-data manifest output |
-| 1.0.0 | Foundation complete; basic pipeline navigation working; GitHub Pages launch |
+| 0.9.x | `.blend` import — seamless read with dropped-data manifest output | ✓ CI-complete (build 101, commit `c8e87078`). Third first-try. |
+| 1.0.0 | Foundation complete; runtime audit + GitHub Pages launch | In progress |
 
 ---
 
-## 0.3.0 — 2026-04-29
+## Unreleased — 1.0.0
 
-`ID_SCR` and `ID_WM` removed from the ID type system (Bucket 4 completions). Both are now runtime-only window state — not project data, not stored in .blended files. CI green (Windows x64, build 49).
+**Design vision:** Foundation complete. Two sequential phases gate the release tag. Phase 1 — runtime audit: developer runs the build, works through Known Runtime Artifacts checklist (Categories A–D in CLAUDE.md and BLENDED.md §17), reports findings to Claude for triage and fix. All items must be fixed or explicitly accepted before Phase 2 begins. Phase 2 — GitHub Pages: polished marketing + tech demo site covering what Blended is, what was removed, what remains. Primary deliverable is a static site; WASM interactive demo (Blended's reduced footprint may clear the browser memory wall that blocks full Blender) is a stretch goal that does not block Phase 2 shipping.
 
-### ID_SCR / ID_WM Removal
-
-| Layer | Files touched | Status |
-|-------|--------------|--------|
-| `makesdna` | `DNA_ID_enums.h` (enum entries removed; `ID_SCR_LEGACY`/`ID_WM_LEGACY` `#define` added), `DNA_ID.h` (FILTER/INDEX macros), `DNA_screen_types.h`, `DNA_windowmanager_types.h` (id_type constexpr removed) | ✓ |
-| `blenkernel` | `idtype.cc`, `BKE_idtype.hh` (extern/INIT_TYPE removed); `BKE_main.hh` (screens kept as non-indexed runtime listbase); `main.cc` (which_libbase routes ID_SCR_LEGACY/ID_WM_LEGACY; removed from BKE_main_lists_get); `screen.cc` (IDTypeInfo removed, lifecycle made public); `lib_id.cc`, `lib_override.cc`, `lib_query.cc`; `blendfile.cc` (screen swap removed, WM swap via direct std::swap); `grease_pencil_convert_legacy.cc`, `layer.cc`, `sound.cc`, `image.cc` (bmain->screens iteration fixed) | ✓ |
-| `blenloader` | `readfile.cc` (skip ID_SCR_LEGACY/ID_SCRN blocks on read); `versioning_270/300/410/440.cc` (dead screen loops deleted — readfile skips these blocks) | ✓ |
-| `makesrna` | `rna_ID.cc`, `rna_main_api.cc` (tag functions re-added for runtime lists), `rna_action.cc`, `rna_image.cc`, `rna_movieclip.cc`, `rna_space.cc`, `rna_wm.cc`, `rna_xr.cc` (GS() checks → _LEGACY defines) | ✓ |
-| `editors` | `interface.cc`, `interface_handlers.cc`, `interface_icons.cc`, `interface_template_id.cc`, `interface_templates.cc`, `render_opengl.cc`, `outliner_draw.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc`, `ed_util_ops.cc`; runtime loops converted to window iteration: `ed_util.cc`, `render_update.cc`, `render_preview.cc`, `screen_edit.cc`, `screen_ops.cc`, `workspace_layout_edit.cc`, `armature_naming.cc`, `asset_shelf.cc`, `gizmo_library_utils.cc`, `outliner_sync.cc`, `view3d_view.cc` | ✓ |
-| `depsgraph` | `deg_builder_nodes.cc`, `deg_builder_relations.cc` | ✓ |
-| `python` | `bpy_rna.cc` (GS() check → _LEGACY), `bpy_rna_context.cc` | ✓ |
-| `windowmanager` | `wm.cc` (IDTypeInfo removed; wm_add_default uses BKE_libblock_alloc(ID_WM_LEGACY)); `wm_operators.cc` (case → ID_SCR_LEGACY) | ✓ |
-| `asset_system` | `asset_library.cc` (screen loop → window iteration) | ✓ |
-| `tests` | `blendfile_loading_base_test.cc` (BKE_id_new template removed; uses BKE_libblock_alloc directly) | ✓ |
-
-**Key design decisions:**
-- `bmain->screens` and `bmain->wm` kept as non-indexed runtime listbases — same pattern for both. Removing them from Main caused ~200 compile errors (Scar note added to CLAUDE.md).
-- `which_libbase(ID_SCR_LEGACY)` and `which_libbase(ID_WM_LEGACY)` still route to their listbases so `BKE_libblock_alloc` works; they are NOT in `BKE_main_lists_get` so the ID iteration system ignores them.
-- `screen_add` uses `BKE_libblock_alloc(bmain, ID_SCR_LEGACY, ...)` since `bScreen::id_type` constexpr was removed.
-
-**Deferred runtime debt:** Screens still have `BKE_screen_blend_read_data` defined (not dead, kept for future format work). Runtime behavior of window-based screen iteration vs full-list iteration may expose edge cases in multi-window scenarios.
+**Version bump:** `BLENDED_VERSION_MAJOR` 0 → 1, `BLENDED_VERSION_MINOR` 9 → 0. First commit of 1.0.0-dev cycle (version bump commit, 2026-06-01).
 
 ---
 
-## Unreleased — 0.9.0
+## 0.9.0 — 2026-06-01 — CI-complete (build 101, commit `c8e87078`)
 
 **Design vision:** 0.8.0 delivered the file format layer — `.blended` is the native project format. 0.9.x builds `.blend` import: seamless read with dropped-data manifest output.
+
+**CI-complete:** Windows x64, build 101, commit `c8e87078`. Third first-try on the entire project.
 
 **Version bump:** `BLENDED_VERSION_MINOR` 8 → 9. First commit of 0.9.x dev cycle.
 
@@ -933,6 +915,34 @@ blentranslation (1 file): `BLT_translation.hh` (BLT_I18NCONTEXT_ID_CACHEFILE).
 
 ---
 
+## 0.3.0 — 2026-04-29
+
+`ID_SCR` and `ID_WM` removed from the ID type system (Bucket 4 completions). Both are now runtime-only window state — not project data, not stored in .blended files. CI green (Windows x64, build 49).
+
+### ID_SCR / ID_WM Removal
+
+| Layer | Files touched | Status |
+|-------|--------------|--------|
+| `makesdna` | `DNA_ID_enums.h` (enum entries removed; `ID_SCR_LEGACY`/`ID_WM_LEGACY` `#define` added), `DNA_ID.h` (FILTER/INDEX macros), `DNA_screen_types.h`, `DNA_windowmanager_types.h` (id_type constexpr removed) | ✓ |
+| `blenkernel` | `idtype.cc`, `BKE_idtype.hh` (extern/INIT_TYPE removed); `BKE_main.hh` (screens kept as non-indexed runtime listbase); `main.cc` (which_libbase routes ID_SCR_LEGACY/ID_WM_LEGACY; removed from BKE_main_lists_get); `screen.cc` (IDTypeInfo removed, lifecycle made public); `lib_id.cc`, `lib_override.cc`, `lib_query.cc`; `blendfile.cc` (screen swap removed, WM swap via direct std::swap); `grease_pencil_convert_legacy.cc`, `layer.cc`, `sound.cc`, `image.cc` (bmain->screens iteration fixed) | ✓ |
+| `blenloader` | `readfile.cc` (skip ID_SCR_LEGACY/ID_SCRN blocks on read); `versioning_270/300/410/440.cc` (dead screen loops deleted — readfile skips these blocks) | ✓ |
+| `makesrna` | `rna_ID.cc`, `rna_main_api.cc` (tag functions re-added for runtime lists), `rna_action.cc`, `rna_image.cc`, `rna_movieclip.cc`, `rna_space.cc`, `rna_wm.cc`, `rna_xr.cc` (GS() checks → _LEGACY defines) | ✓ |
+| `editors` | `interface.cc`, `interface_handlers.cc`, `interface_icons.cc`, `interface_template_id.cc`, `interface_templates.cc`, `render_opengl.cc`, `outliner_draw.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc`, `ed_util_ops.cc`; runtime loops converted to window iteration: `ed_util.cc`, `render_update.cc`, `render_preview.cc`, `screen_edit.cc`, `screen_ops.cc`, `workspace_layout_edit.cc`, `armature_naming.cc`, `asset_shelf.cc`, `gizmo_library_utils.cc`, `outliner_sync.cc`, `view3d_view.cc` | ✓ |
+| `depsgraph` | `deg_builder_nodes.cc`, `deg_builder_relations.cc` | ✓ |
+| `python` | `bpy_rna.cc` (GS() check → _LEGACY), `bpy_rna_context.cc` | ✓ |
+| `windowmanager` | `wm.cc` (IDTypeInfo removed; wm_add_default uses BKE_libblock_alloc(ID_WM_LEGACY)); `wm_operators.cc` (case → ID_SCR_LEGACY) | ✓ |
+| `asset_system` | `asset_library.cc` (screen loop → window iteration) | ✓ |
+| `tests` | `blendfile_loading_base_test.cc` (BKE_id_new template removed; uses BKE_libblock_alloc directly) | ✓ |
+
+**Key design decisions:**
+- `bmain->screens` and `bmain->wm` kept as non-indexed runtime listbases — same pattern for both. Removing them from Main caused ~200 compile errors (Scar note added to CLAUDE.md).
+- `which_libbase(ID_SCR_LEGACY)` and `which_libbase(ID_WM_LEGACY)` still route to their listbases so `BKE_libblock_alloc` works; they are NOT in `BKE_main_lists_get` so the ID iteration system ignores them.
+- `screen_add` uses `BKE_libblock_alloc(bmain, ID_SCR_LEGACY, ...)` since `bScreen::id_type` constexpr was removed.
+
+**Deferred runtime debt:** Screens still have `BKE_screen_blend_read_data` defined (not dead, kept for future format work). Runtime behavior of window-based screen iteration vs full-list iteration may expose edge cases in multi-window scenarios.
+
+---
+
 ## 0.2.0 — 2026-04-28
 
 `ID_WS` (WorkSpace) fully removed from every compilation unit. First concrete
@@ -1092,45 +1102,34 @@ Not "feature-complete." Scope is wide; 1.0 is the point where the shape of the
 rebuild is true. Post-1.0 work fills in pipeline sections, adds modes, and
 follows the community where Blended's scope takes it.
 
-**1.0.0-dev runs two concurrent workstreams to the release tag.**
+**1.0.0-dev runs two sequential phases to the release tag. Phase 1 gates Phase 2; Phase 2 gates the tag.**
 
-**Workstream A — Runtime audit and developer-driven triage loop.**
+**Phase 1 — Runtime audit and developer-driven triage loop.**
 Everything through 0.9.x has been code surgery from the outside in — grep,
 compile, fix, push, CI confirms. 1.0.0-dev flips the direction: the developer
 runs the actual Blended build hands-on, doing real debugging and prototype
 testing inside the application. This is the first time in the project where the
-developer is the test subject.
+developer is the test subject. Ground zero as of 2026-06-01 except Category D
+(BKE_palette_add crash, build 97, fixed PR #214 before the audit formally began).
 
-The audit is checklist-driven. Starting skeletons come from existing
-documentation: the Known Runtime Artifacts table in CLAUDE.md (Category A
-expected behavior changes, Category B uncertain/crash paths, Category C memory
-leaks), all deferred debt items accumulated across 0.2–0.9, and the runtime
-consequences of every chisel and fold-down documented in session notes. These
-are the things we know are broken or unverified. The developer works through
-them systematically, plus anything new that surfaces through actual use.
+The audit is checklist-driven. Starting skeletons: Known Runtime Artifacts
+(Categories A–D in CLAUDE.md and BLENDED.md §17), all deferred debt accumulated
+across 0.2–0.9, plus anything new that surfaces through actual use. Collaboration
+mode: developer runs Blended, reports findings; Claude triages and fixes;
+developer re-tests. Loop until the checklist is clear. All triaged issues must be
+either fixed or explicitly accepted. No silent unknowns at ship.
 
-Collaboration mode: developer runs Blended, finds something, reports back to
-Claude with findings. Claude triages — is this known debt, a new regression, or
-expected post-removal behavior? — and either produces a fix, documents it as
-accepted, or escalates it to a design question. Developer re-tests. Loop repeats
-until the checklist is clear. This is qualitatively different from the prior
-sessions: the developer is reporter and verifier; Claude is analyst and fix
-applier. Neither can do the other's half.
+**Phase 2 — GitHub Pages launch.**
+Polished public-facing site for Blended: marketing landing page and tech demo
+(screenshots, data model visuals, what was removed and why, what remains).
+Multiple tabs. Design quality is a first-class goal — not a default Pages
+template. Primary deliverable is a static site. Stretch goal: WASM interactive
+demo — Blended's datablock audit (39 → ~19 ID types) reduced the binary
+significantly; worth attempting where full Blender hits browser memory limits.
+WASM does not block Phase 2 shipping. Previous Emscripten build (deployed
+March 2026) was wiped in the rebase; Phase 2 is greenfield. Tech stack TBD.
 
-The 1.0.0 release tag is gated on the checklist, not on a build number. All
-triaged issues must be either fixed or explicitly accepted (documented as
-intended post-removal behavior or deferred with a named trigger). No silent
-unknowns at ship.
-
-**Workstream B — GitHub Pages launch.**
-Resurrect GitHub Pages on the fork as the public face of Blended: landing page,
-marketing copy, and a tech demo page showing the rebuild in action — what was
-removed, what remains, what the data model looks like now. The fork's own repo
-as the distribution point; CI artifacts already live on GitHub Releases, so
-Pages is the last missing piece of a coherent public identity.
-
-The two workstreams are genuinely concurrent — Pages work does not gate on the
-runtime audit and vice versa. The release tag ships when both are done.
+The release tag ships when both phases clear.
 
 ---
 
