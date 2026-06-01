@@ -47,7 +47,7 @@ Six foundation layers — one minor version each, 1.0 when all six are honest.
 | 0.7.x | App lenses — launcher + all 28 mode lenses + full product identity | ✓ CI-complete (build 99, commit `2ddd1dd0`) |
 | 0.8.x | File format — `.blended` magic, extension, platform integration | ✓ CI-complete (build 100, commit `99e20b96`) |
 | 0.9.x | `.blend` import — seamless read, dropped-data manifest | ✓ CI-complete (build 101, commit `c8e87078`) |
-| 1.0.0 | Foundation complete — runtime audit + GitHub Pages launch | In progress |
+| 1.0.0 | Foundation complete — Phase 1: runtime audit → Phase 2: GitHub Pages launch | In progress |
 
 Full version history in [`CHANGELOG.md`](../CHANGELOG.md).
 

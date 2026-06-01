@@ -36,7 +36,7 @@ carries a one-liner status per active item.
 
 ## Unreleased — 1.0.0
 
-**Design vision:** Foundation complete. Two concurrent workstreams: (1) runtime audit — developer runs the build, works through Known Runtime Artifacts + deferred debt checklists, reports findings to Claude for triage and fix; (2) GitHub Pages launch — landing page, marketing, tech demo. Release tag when both workstreams clear.
+**Design vision:** Foundation complete. Two sequential phases gate the release tag. Phase 1 — runtime audit: developer runs the build, works through Known Runtime Artifacts checklist (Categories A–D in CLAUDE.md and BLENDED.md §17), reports findings to Claude for triage and fix. All items must be fixed or explicitly accepted before Phase 2 begins. Phase 2 — GitHub Pages: polished marketing + tech demo site covering what Blended is, what was removed, what remains. Primary deliverable is a static site; WASM interactive demo (Blended's reduced footprint may clear the browser memory wall that blocks full Blender) is a stretch goal that does not block Phase 2 shipping.
 
 **Version bump:** `BLENDED_VERSION_MAJOR` 0 → 1, `BLENDED_VERSION_MINOR` 9 → 0. First commit of 1.0.0-dev cycle (version bump commit, 2026-06-01).
 
@@ -1102,45 +1102,34 @@ Not "feature-complete." Scope is wide; 1.0 is the point where the shape of the
 rebuild is true. Post-1.0 work fills in pipeline sections, adds modes, and
 follows the community where Blended's scope takes it.
 
-**1.0.0-dev runs two concurrent workstreams to the release tag.**
+**1.0.0-dev runs two sequential phases to the release tag. Phase 1 gates Phase 2; Phase 2 gates the tag.**
 
-**Workstream A — Runtime audit and developer-driven triage loop.**
+**Phase 1 — Runtime audit and developer-driven triage loop.**
 Everything through 0.9.x has been code surgery from the outside in — grep,
 compile, fix, push, CI confirms. 1.0.0-dev flips the direction: the developer
 runs the actual Blended build hands-on, doing real debugging and prototype
 testing inside the application. This is the first time in the project where the
-developer is the test subject.
+developer is the test subject. Ground zero as of 2026-06-01 except Category D
+(BKE_palette_add crash, build 97, fixed PR #214 before the audit formally began).
 
-The audit is checklist-driven. Starting skeletons come from existing
-documentation: the Known Runtime Artifacts table in CLAUDE.md (Category A
-expected behavior changes, Category B uncertain/crash paths, Category C memory
-leaks), all deferred debt items accumulated across 0.2–0.9, and the runtime
-consequences of every chisel and fold-down documented in session notes. These
-are the things we know are broken or unverified. The developer works through
-them systematically, plus anything new that surfaces through actual use.
+The audit is checklist-driven. Starting skeletons: Known Runtime Artifacts
+(Categories A–D in CLAUDE.md and BLENDED.md §17), all deferred debt accumulated
+across 0.2–0.9, plus anything new that surfaces through actual use. Collaboration
+mode: developer runs Blended, reports findings; Claude triages and fixes;
+developer re-tests. Loop until the checklist is clear. All triaged issues must be
+either fixed or explicitly accepted. No silent unknowns at ship.
 
-Collaboration mode: developer runs Blended, finds something, reports back to
-Claude with findings. Claude triages — is this known debt, a new regression, or
-expected post-removal behavior? — and either produces a fix, documents it as
-accepted, or escalates it to a design question. Developer re-tests. Loop repeats
-until the checklist is clear. This is qualitatively different from the prior
-sessions: the developer is reporter and verifier; Claude is analyst and fix
-applier. Neither can do the other's half.
+**Phase 2 — GitHub Pages launch.**
+Polished public-facing site for Blended: marketing landing page and tech demo
+(screenshots, data model visuals, what was removed and why, what remains).
+Multiple tabs. Design quality is a first-class goal — not a default Pages
+template. Primary deliverable is a static site. Stretch goal: WASM interactive
+demo — Blended's datablock audit (39 → ~19 ID types) reduced the binary
+significantly; worth attempting where full Blender hits browser memory limits.
+WASM does not block Phase 2 shipping. Previous Emscripten build (deployed
+March 2026) was wiped in the rebase; Phase 2 is greenfield. Tech stack TBD.
 
-The 1.0.0 release tag is gated on the checklist, not on a build number. All
-triaged issues must be either fixed or explicitly accepted (documented as
-intended post-removal behavior or deferred with a named trigger). No silent
-unknowns at ship.
-
-**Workstream B — GitHub Pages launch.**
-Resurrect GitHub Pages on the fork as the public face of Blended: landing page,
-marketing copy, and a tech demo page showing the rebuild in action — what was
-removed, what remains, what the data model looks like now. The fork's own repo
-as the distribution point; CI artifacts already live on GitHub Releases, so
-Pages is the last missing piece of a coherent public identity.
-
-The two workstreams are genuinely concurrent — Pages work does not gate on the
-runtime audit and vice versa. The release tag ships when both are done.
+The release tag ships when both phases clear.
 
 ---
 
