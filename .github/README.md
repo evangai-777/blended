@@ -11,7 +11,7 @@ Blended
 
 Blended is a fork of [Blender](https://www.blender.org) being rebuilt from the foundation up around one stated identity: **free 2D and 3D software tools, with an explicit focus on the craft of animation.**
 
-Currently at 0.8.0-dev — 0.7.0 CI-complete (Windows x64, build 99, commit 2ddd1dd0). 0.8.x blast radius implementation complete (23 layers, ~80 sites): magic bytes `"BLENDED"`, `.blended` extension on all write paths, `FILE_TYPE_BLENDED` bit flag, platform integration (Windows registry, Linux MIME, macOS UTI), Python scripts, UI strings, tests. Pending CI.
+Currently at 0.9.0-dev — 0.8.0 CI-complete (Windows x64, build 100, commit 99e20b96). First try. 0.8.0 delivered: `.blended` native format ✓ — magic bytes `"BLENDED"`, `.blended` on all write paths, `FILE_TYPE_BLENDED` bit flag, platform integration (Windows registry, Linux MIME, macOS UTI), Python scripts, UI strings, tests. 0.9.x: `.blend` import — seamless read with dropped-data manifest output.
 
 What Blended Is
 ---------------

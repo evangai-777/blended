@@ -1,7 +1,7 @@
 # BLENDED — Identity & Design Agreements
 
 **Developer/Publisher:** CHJ 3 Productions LLC (Indiana).
-**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.8.0-dev — 0.7.0 CI-complete (Windows x64, build 99, commit `2ddd1dd0`). 0.7.0 delivered: launcher ✓, 28 mode lenses ✓, full product identity ✓ (logo, accent `#ff7f00`, app icon, splash, typeface Inter), format design ✓ (startup/userpref-as-blend removed, §5 Group 1 LOCKED), all 6 Bucket 3 permanent homes ✓ (VFont→filepath 502.24, Palette→Brush 502.25, LightProbe→Light 502.26, Mask→NodeTree 502.27/28, Lattice→LatticeModifierData 502.29, Brush→project-optional 502.30), launcher header chrome + rounded cards + hover state ✓ (PR #196), Phase 2 design complete. 0.8.x in progress: file format — `.blended` is the project, import/export is the boundary. Blast radius implementation complete (all 23 layers, ~80 sites, branch `claude/0.8.0-blast-radius-audit-Sa2tB`); pending CI.
+**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.9.0-dev — 0.8.0 CI-complete (Windows x64, build 100, commit `99e20b96`). First try. 0.8.0 delivered: `.blended` native format ✓ (magic bytes `"BLENDED"`, 23 layers, ~80 sites, one-way compat, `FILE_TYPE_BLENDED`, platform integration, tests). 0.9.x in progress: `.blend` import — seamless read with dropped-data manifest output.
 **Purpose:** So any future session, contributor, or Claude instance can pick up without re-litigating what's already been decided. Read this first before proposing changes to scope, identity, or architecture.
 
 ---
