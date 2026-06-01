@@ -19,6 +19,7 @@
 #include "BLI_listbase.h"
 #include "BLI_rect.h"
 #include "BLI_string_utf8.h"
+#include "BLI_string_utils.hh"
 #include "BLI_utildefines.h"
 
 #include "BKE_context.hh"
@@ -194,7 +195,26 @@ ScrArea *area_split(const wmWindow *win,
 
 bScreen *screen_add(Main *bmain, const char *name, const rcti *rect)
 {
-  bScreen *screen = static_cast<bScreen *>(BKE_libblock_alloc(bmain, ID_SCR_LEGACY, name, 0));
+  /* ID_SCR_LEGACY is a deregistered Scar 2 type — use Scar 10 manual allocation pattern. */
+  bScreen *screen = MEM_new<bScreen>("bScreen");
+  BKE_libblock_runtime_ensure(screen->id);
+  *(reinterpret_cast<short *>(screen->id.name)) = ID_SCR_LEGACY;
+  screen->id.us = 1;
+  {
+    ListBaseT<ID> *lb = which_libbase(bmain, ID_SCR_LEGACY);
+    BKE_main_lock(bmain);
+    BLI_addtail(lb, screen);
+    BLI_strncpy_utf8(screen->id.name + 2, name, sizeof(screen->id.name) - 2);
+    BLI_uniquename(reinterpret_cast<const ListBase *>(lb),
+                   screen,
+                   name,
+                   '.',
+                   offsetof(ID, name) + 2,
+                   sizeof(screen->id.name) - 2);
+    bmain->is_memfile_undo_written = false;
+    BKE_main_unlock(bmain);
+  }
+  BKE_lib_libblock_session_uid_ensure(&screen->id);
 
   ScrVert *sv1 = screen_geom_vertex_add(screen, rect->xmin, rect->ymin);
   ScrVert *sv2 = screen_geom_vertex_add(screen, rect->xmin, rect->ymax - 1);

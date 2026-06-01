@@ -24,6 +24,8 @@
 
 #include "BLI_listbase.h"
 #include "BLI_path_utils.hh"
+#include "BLI_string_utf8.h"
+#include "BLI_string_utils.hh"
 #include "BLI_threads.h"
 
 #include "BLO_readfile.hh"
@@ -80,9 +82,27 @@ void BlendfileLoadingBaseTest::SetUpTestCase()
 
   /* Allocate a dummy window manager. The real window manager will try and load Python scripts from
    * the release directory, which it won't be able to find. */
+  /* ID_WM_LEGACY is a deregistered Scar 2 type — use Scar 10 manual allocation pattern. */
   ASSERT_EQ(G.main->wm.first, nullptr);
-  wmWindowManager *wm = static_cast<wmWindowManager *>(
-      BKE_libblock_alloc(G.main, ID_WM_LEGACY, "WMdummy", 0));
+  wmWindowManager *wm = MEM_new<wmWindowManager>("WMdummy");
+  BKE_libblock_runtime_ensure(wm->id);
+  *(reinterpret_cast<short *>(wm->id.name)) = ID_WM_LEGACY;
+  wm->id.us = 1;
+  {
+    ListBaseT<ID> *lb = which_libbase(G.main, ID_WM_LEGACY);
+    BKE_main_lock(G.main);
+    BLI_addtail(lb, wm);
+    BLI_strncpy_utf8(wm->id.name + 2, "WMdummy", sizeof(wm->id.name) - 2);
+    BLI_uniquename(reinterpret_cast<const ListBase *>(lb),
+                   wm,
+                   "WMdummy",
+                   '.',
+                   offsetof(ID, name) + 2,
+                   sizeof(wm->id.name) - 2);
+    G.main->is_memfile_undo_written = false;
+    BKE_main_unlock(G.main);
+  }
+  BKE_lib_libblock_session_uid_ensure(&wm->id);
   wm->runtime = MEM_new<bke::WindowManagerRuntime>(__func__);
 }
 

@@ -42,6 +42,17 @@ carries a one-liner status per active item.
 
 **Claude AI contributor (2026-06-01 — 1.0.0-dev doc pass):** Four-doc milestone update: stale 0.9.x planning content removed, phase model corrected from concurrent to sequential, BLENDED.md §17 added (full runtime audit checklist with Categories A–D), PR #230. Two new wtf.md entries added to CLAUDE.md: `1.0.0.md` (build 101 as a real deployable binary; CHJ 3 Productions LLC has a product) and `codex.md` (the Codex pre-audit trick — writing implementation plans in CLAUDE.md at implementation resolution causes Codex to audit the plan as real code before any source is written; canonical example is PR #229 catching the LS post-read use-after-free from the plan text alone; explains why 0.8.0 and 0.9.0 were first-try CI successes).
 
+**Phase 1 runtime audit — first findings (2026-06-01):**
+
+*Crash fix — `wm_add_default` Scar 10 pattern (Category D):*
+`wm_add_default` in `wm.cc` called `BKE_libblock_alloc(bmain, ID_WM_LEGACY, "WinMan", 0)`. Since `ID_WM_LEGACY` is a deregistered Scar 2 type (no `IDTypeInfo`), `BKE_libblock_get_alloc_info` returns size 0, `BKE_libblock_alloc_notest` returns nullptr, and `BKE_libblock_runtime_ensure(*id)` dereferences nullptr at offset `0x190` (the `runtime` field in `ID`) — `EXCEPTION_ACCESS_VIOLATION 0xc0000005`. Same root cause as the palette crash fixed in PR #214/build 97 (Scar 10), different site. Fix: Scar 10 manual allocation pattern — `MEM_new<wmWindowManager>` + `BKE_libblock_runtime_ensure` + `BLI_strncpy_utf8`/`BLI_uniquename` on `bmain->wm`. Added `BLI_string_utils.hh` include to `wm.cc`.
+
+*Scar 10 sweep — two additional sites (screen_edit.cc, blendfile_loading_base_test.cc):*
+Full-codebase audit of all `BKE_libblock_alloc` calls with deregistered type IDs. Found two more crash sites: `screen_add` in `screen_edit.cc:197` (`ID_SCR_LEGACY`, same null-deref pattern) and the test helper `blendfile_loading_base_test.cc:85` (`ID_WM_LEGACY`, parallel to the production fix). Both patched with the Scar 10 manual allocation pattern. `BLI_string_utils.hh` added to both files.
+
+*Binary naming fix — Windows executable branding gap:*
+The 0.7.0 identity pass set `OUTPUT_NAME Blender` only inside `elseif(APPLE)` in `source/creator/CMakeLists.txt` — Windows was never updated. The released Windows binary ships as `blender.exe` instead of `Blended.exe`. Fix: added `set_target_properties(blender PROPERTIES OUTPUT_NAME Blended)` in the `WIN32 AND NOT WITH_PYTHON_MODULE` block; updated `BLENDER_BIN` from `blender.exe` → `Blended.exe`; added `RENAME Blended.exe.manifest` to the external-manifest install rule; updated `blender_launcher_win32.c` to launch `Blended.exe` instead of `blender.exe`.
+
 ---
 
 ## 0.9.0 — 2026-06-01 — CI-complete (build 101, commit `c8e87078`)
