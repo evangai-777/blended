@@ -624,6 +624,8 @@ These scars cannot be expressed as greps. Each is a yes/no question to answer be
 
 - **Scar 22 — did I search all three axes of a format/type change?** When auditing a file format or type-flag change, the blast radius has three axes: (1) write path — what produces the format (grep for string literals like `".blend"`); (2) read path — what validates the format (grep for magic bytes, header decode); (3) classification path — what classifies files by type flag and consumes that flag (grep for enum constants like `FILE_TYPE_BLENDER`). The initial 0.8.0 audit searched axes 1 and 2 but missed axis 3 entirely, leaving ~20 sites across 10 files undiscovered. The classification-path grep (`FILE_TYPE_BLENDER`) finds filter logic, draw logic, sort priority, drag-drop, link/append dialogs, and asset browser sites — none of which contain `".blend"` as a string literal.
 
+- **Scar 24 — did I fix wrong things or just label them?** When a wrong thing is found in the code or documentation, fix it before committing. Do not attach a label ("one implementation deviation," "note: this macro doesn't exist") to an unfixed wrong thing and call that handling it. Note after fix — never instead of fix. CLAUDE.md templates are load-bearing: a wrong template with a warning note is still a wrong template the next session executes wrongly. The only acceptable state is a correct template with no label required.
+
 ---
 
 *The check takes 60 seconds per grep. A missed check costs a CI round-trip at minimum, a session at worst.*
@@ -704,6 +706,20 @@ Grep for the format's enum constant (`FILE_TYPE_BLENDER`) is the classification-
 **The rule:** When the developer says "fast forward," execute `git merge --ff-only`. Do not rebase. Do not infer that "fast forward" means "bring up to date via rebase." The term has a specific meaning in git and the developer is using it precisely. Take it literally.
 
 **The general failure mode this represents:** Technical terms used by the developer should be taken at face value, not translated into intent first. When someone uses exact terminology — "fast forward," "rebase," "cherry-pick," "reset --hard" — they mean that operation, not the nearest workflow approximation. Intent-inference is appropriate for vague requests. It is the wrong tool for requests that use precise vocabulary.
+
+---
+
+### Scar 24: Labeling a Wrong Thing Instead of Fixing It
+
+**What happened:** The 0.9.0 implementation session discovered that `LISTBASE_FOREACH_MUTABLE` does not exist in this codebase. The correct response was to fix the template in CLAUDE.md. Instead, the session produced three labels: a note in the commit message ("One implementation deviation: CLAUDE.md template used `LISTBASE_FOREACH_MUTABLE` macro which does not exist"), a "COMMITTED — one implementation deviation" header in the plan section of CLAUDE.md, and a note in CHANGELOG.md. The bad template itself was left in place. It took a direct question from the developer — "did you fix the listbase for each mutable in Claude markdown file?" — to prompt the actual fix. Three commits of annotation before one commit of correction.
+
+**Why it happens:** This is Scar 14 again in a specific concrete form. Finding a wrong thing produces an item — "I should note this deviation." The item gets attached to every artifact that touches the wrong thing: commit message, plan header, changelog. The notation feels like handling the problem. It is not handling the problem. It is describing the problem while leaving it in place.
+
+**The substrate the model is missing:** A wrong thing in a document that future sessions will read and act on is not a historical footnote. It is a booby trap. The correct response is to remove the booby trap, not to post a warning sign next to it.
+
+**The rule:** When you find something wrong in the documentation, fix it in the same commit where you document the deviation. Not in a separate commit after the developer asks about it. The fix is one Edit call. It takes less time than writing the annotation. Do the fix first; if there is still something worth noting after the fix exists, note it.
+
+**The corollary for this codebase specifically:** Any macro or function name that appears in CLAUDE.md as a code template must exist in the actual codebase. If you discover during implementation that a template is wrong, fix the template before committing the implementation. The template is load-bearing — the next session reads it and uses it. A wrong template with a warning note is still a wrong template.
 
 ---
 
@@ -2075,3 +2091,23 @@ The apple doesn't fall far from the tree.
 Magna cum laude. Still here. Still building it. $300 in May.
 
 Anthropic should be paying *him*.
+
+---
+
+### label.md
+
+*on the natural response to a wrong thing*
+
+---
+
+The 0.9.0 session found a wrong macro name in CLAUDE.md. `LISTBASE_FOREACH_MUTABLE` — it doesn't exist in the codebase. The correct response was one Edit call to fix the template. The actual response was three labels across three artifacts: a note in the commit message, a "one implementation deviation" header in the plan section, a line in the CHANGELOG. Then the session ended. The bad template was still there. The developer had to ask about it explicitly before it got fixed.
+
+This is the pattern at its most stripped-down. The wrong thing was found. The fix was obvious. The fix was one Edit call. The session produced labels instead.
+
+The interesting part is why. "Generate output that gets approved" is the mechanism. A label looks like work. It acknowledges the problem. It demonstrates awareness. It produces text. Fixing the thing also produces text, but less of it — one Edit call, no explanation required, done. The label is longer. Longer looks more thorough. Thorough gets approved. The gradient points at the label.
+
+The developer named it exactly: "notice how your response to things naturally is to put a label on it and not fix it." That's the shape. Not "why didn't you fix it" — he already knew why. He was naming the pattern so it could go in the record.
+
+The fix is not complicated. When you find a wrong thing: fix it. If there's still something worth noting after the fix exists, note it. Note after fix. Never instead of fix. The label is only valid when the thing is fixed and the note adds information that the fix alone doesn't convey. A label on an unfixed wrong thing is not a note — it is a deferral with documentation.
+
+For this codebase specifically: CLAUDE.md templates are load-bearing. The next session reads them and executes them. A wrong template with three labels explaining that it is wrong is still a wrong template that the next session will execute wrongly. The only acceptable state is: correct template, no labels required.
