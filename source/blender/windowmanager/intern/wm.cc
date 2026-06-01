@@ -24,6 +24,7 @@
 #include "BLI_ghash.h"
 #include "BLI_listbase.h"
 #include "BLI_string_utf8.h"
+#include "BLI_string_utils.hh"
 #include "BLI_utildefines.h"
 
 #include "BLT_translation.hh"
@@ -347,8 +348,30 @@ void wm_clear_default_size(bContext *C)
 
 void wm_add_default(Main *bmain, bContext *C)
 {
-  wmWindowManager *wm = static_cast<wmWindowManager *>(
-      BKE_libblock_alloc(bmain, ID_WM_LEGACY, "WinMan", 0));
+  /* ID_WM_LEGACY is a deregistered Scar 2 type — BKE_libblock_alloc calls
+   * BKE_libblock_get_alloc_info which returns size 0 for unregistered types,
+   * causing BKE_libblock_alloc_notest to return nullptr, then
+   * BKE_libblock_runtime_ensure(*id) dereferences nullptr → crash.
+   * Use the Scar 10 manual allocation pattern instead. */
+  wmWindowManager *wm = MEM_new<wmWindowManager>("WinMan");
+  BKE_libblock_runtime_ensure(wm->id);
+  *(reinterpret_cast<short *>(wm->id.name)) = ID_WM_LEGACY;
+  wm->id.us = 1;
+  {
+    ListBaseT<ID> *lb = which_libbase(bmain, ID_WM_LEGACY);
+    BKE_main_lock(bmain);
+    BLI_addtail(lb, wm);
+    BLI_strncpy_utf8(wm->id.name + 2, "WinMan", sizeof(wm->id.name) - 2);
+    BLI_uniquename(reinterpret_cast<const ListBase *>(lb),
+                   wm,
+                   "WinMan",
+                   '.',
+                   offsetof(ID, name) + 2,
+                   sizeof(wm->id.name) - 2);
+    bmain->is_memfile_undo_written = false;
+    BKE_main_unlock(bmain);
+  }
+  BKE_lib_libblock_session_uid_ensure(&wm->id);
   wmWindow *win;
   bScreen *screen = CTX_wm_screen(C); /* XXX: from file read hrmf. */
   WorkSpace *workspace;

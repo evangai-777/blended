@@ -1036,6 +1036,7 @@ elseif(WIN32)
     install(
       FILES ${CMAKE_BINARY_DIR}/blender.exe.manifest
       DESTINATION "."
+      RENAME Blended.exe.manifest
     )
     install(
       FILES ${CMAKE_BINARY_DIR}/blender.exe.manifest
@@ -2071,7 +2072,8 @@ endif()
 # Setup launcher
 
 if(WIN32 AND NOT WITH_PYTHON_MODULE)
-  set(BLENDER_BIN "blender.exe")
+  set_target_properties(blender PROPERTIES OUTPUT_NAME Blended)
+  set(BLENDER_BIN "Blended.exe")
   install(
     TARGETS blender blender-launcher
     COMPONENT Blender
