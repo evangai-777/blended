@@ -29,8 +29,8 @@ carries a one-liner status per active item.
 | 0.6.x | Evaluation model — depsgraph audit | ✓ CI-complete (build 82, commit `8f7dda22`) |
 | 0.7.x | App lenses — launcher as canonical workspace system + full product identity | ✓ CI-complete (build 99, commit `2ddd1dd0`). Phase 1 + Phase 2 complete. Logo ✓ + accent ✓ (`#ff7f00`) + app icon ✓ + splash ✓. |
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary | ✓ CI-complete (build 100, commit `99e20b96`) |
-| 0.9.x | `.blend` import — seamless read with dropped-data manifest output |
-| 1.0.0 | Foundation complete; basic pipeline navigation working; GitHub Pages launch |
+| 0.9.x | `.blend` import — seamless read with dropped-data manifest output | ✓ CI-complete (build 101, commit `c8e87078`). Third first-try. |
+| 1.0.0 | Foundation complete; runtime audit + GitHub Pages launch | In progress |
 
 ---
 
@@ -62,9 +62,19 @@ carries a one-liner status per active item.
 
 ---
 
-## Unreleased — 0.9.0
+## Unreleased — 1.0.0
+
+**Design vision:** Foundation complete. Two concurrent workstreams: (1) runtime audit — developer runs the build, works through Known Runtime Artifacts + deferred debt checklists, reports findings to Claude for triage and fix; (2) GitHub Pages launch — landing page, marketing, tech demo. Release tag when both workstreams clear.
+
+**Version bump:** `BLENDED_VERSION_MAJOR` 0 → 1, `BLENDED_VERSION_MINOR` 9 → 0. First commit of 1.0.0-dev cycle (version bump commit, 2026-06-01).
+
+---
+
+## 0.9.0 — 2026-06-01 — CI-complete (build 101, commit `c8e87078`)
 
 **Design vision:** 0.8.0 delivered the file format layer — `.blended` is the native project format. 0.9.x builds `.blend` import: seamless read with dropped-data manifest output.
+
+**CI-complete:** Windows x64, build 101, commit `c8e87078`. Third first-try on the entire project.
 
 **Version bump:** `BLENDED_VERSION_MINOR` 8 → 9. First commit of 0.9.x dev cycle.
 
