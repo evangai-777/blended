@@ -57,7 +57,11 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 **Post-read drain template (for LS only — NOT for ID_PA, ID_TE, or ID_CU_LEGACY):** In `blenloader/intern/readfile.cc`, after `BKE_blendfile_read()` completes, iterate and free the relevant non-indexed listbase:
 ```cpp
 // Example: drain bmain->linestyles after file load
-LISTBASE_FOREACH_MUTABLE(ID *, id, &bmain->linestyles) {
+// NOTE: LISTBASE_FOREACH_MUTABLE does not exist in this codebase — use explicit next-pointer loop:
+for (ID *id = static_cast<ID *>(bmain->linestyles.first), *id_next;
+     id != nullptr;
+     id = id_next) {
+  id_next = static_cast<ID *>(id->next);
   BKE_id_free(bmain, id);
 }
 BLI_listbase_clear(&bmain->linestyles);
