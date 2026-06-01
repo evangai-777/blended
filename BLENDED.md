@@ -117,6 +117,10 @@ UI is a projection of a data model. If the model is wrong, UI either papers over
 
 Prior attempts started at UI and failed because the underlying model was still Blender's. This is why this time is different.
 
+### Codex pre-audit
+
+Implementation plans written into CLAUDE.md at implementation resolution — file paths, function names, invariants, edge cases — are audited by Codex as if they were real code, because Codex reviews PR diffs and does not distinguish between source files and documentation files. Errors in the plan are caught before any source is written. Canonical example: PR #229 caught the LS post-read use-after-free from the CLAUDE.md plan text alone, before the implementation commit existed. This is why 0.8.0 (23 layers, ~80 sites) and 0.9.0 shipped CI-green on the first push. Rule: write plans at implementation resolution. "Update the extension to `.blended`" is not auditable. "`source/blender/blenlib/BLI_fileops.h:245` — add `FILE_TYPE_BLENDED` to `BLI_file_extension_is_blend()`" is.
+
 ### Dogfooding
 
 The project's author is currently using Blended for real animation coursework. The previous prototype passed for Blender with their animation professor (professor did not notice). **Animation coursework is Blended's Open-Movies-equivalent.** Every design decision must survive use in actual animation work.
