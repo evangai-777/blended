@@ -57,7 +57,9 @@ All pre-1.0.0 deferred debt resolved in 0.9.x. See CHANGELOG.md `## 0.9.0` for f
 | Trigger | Failure | Introduced | Fixed |
 |---------|---------|------------|-------|
 | Any startup — fresh install or default file | `BKE_palette_add` crashed immediately via `BKE_gpencil_palette_ensure` → `BLO_update_defaults_startup_blend`. Root cause: the Scar 10 allocator called `BKE_id_new_name_validate`, which routes into `BKE_main_namemap_get_unique_name` → `namemap_get_name`. The namemap is indexed by `BKE_idtype_idcode_to_index(ID_PAL)`, which returns -1 for the deregistered Scar 2 type. Accessing `maps[-1]` (an 8-byte pointer array) yields address `0xFFFFFFFFFFFFFFF8` — reading garbage as a `Map<string>` object, crashing in the string slot destructor. Build 97 (the first 0.7.0 release artifact) crashed on launch for all users. Fix: bypass `BKE_id_new_name_validate`; instead assign the name via `BLI_strncpy_utf8` then call `BLI_uniquename(reinterpret_cast<const ListBase *>(lb), palette, name, '.', offsetof(ID, name) + 2, sizeof(palette->id.name) - 2)`. `BLI_uniquename` walks the listbase directly and appends `.001`/`.002`/… without touching the namemap — preserving uniqueness for `PALETTE_OT_join` name lookups. **General rule for all future Scar 10 allocators:** never call `BKE_id_new_name_validate` for a deregistered type; use `BLI_strncpy_utf8` + `BLI_uniquename` on the Scar 2 listbase instead. | 0.5.0 (ID_PAL Scar 10 allocator) | PR #214, commit `25f59735` (`paint.cc`) |
-| Any startup — all 0.9.0 builds | `wm_add_default` crashed at startup via `BKE_libblock_alloc(bmain, ID_WM_LEGACY, "WinMan", 0)`. `ID_WM_LEGACY` has no `IDTypeInfo` — `BKE_libblock_get_alloc_info` returns size 0, `BKE_libblock_alloc_notest` returns nullptr, `BKE_libblock_alloc_in_lib` calls `BKE_libblock_runtime_ensure(*id)` which dereferences nullptr at offset `0x190` (the `runtime` field in `ID`) → `EXCEPTION_ACCESS_VIOLATION 0xc0000005`. Same Scar 10 pattern as ID_PAL, different call site: `wm.cc` `wm_add_default`. Caught during Phase 1 runtime audit on build 101. Fix: Scar 10 manual allocation pattern — `MEM_new<wmWindowManager>` + `BKE_libblock_runtime_ensure` + `BLI_strncpy_utf8`/`BLI_uniquename` on `which_libbase(bmain, ID_WM_LEGACY)`. Added `BLI_string_utils.hh` include. | 0.3.0 (ID_WM deregistration) | 1.0.0-dev, this PR (`wm.cc`) |
+| Any startup — all 0.9.0 builds | `wm_add_default` crashed at startup via `BKE_libblock_alloc(bmain, ID_WM_LEGACY, "WinMan", 0)`. `ID_WM_LEGACY` has no `IDTypeInfo` — `BKE_libblock_get_alloc_info` returns size 0, `BKE_libblock_alloc_notest` returns nullptr, `BKE_libblock_alloc_in_lib` calls `BKE_libblock_runtime_ensure(*id)` which dereferences nullptr at offset `0x190` (the `runtime` field in `ID`) → `EXCEPTION_ACCESS_VIOLATION 0xc0000005`. Same Scar 10 pattern as ID_PAL, different call site: `wm.cc` `wm_add_default`. Caught during Phase 1 runtime audit on build 101. Fix: Scar 10 manual allocation pattern — `MEM_new<wmWindowManager>` + `BKE_libblock_runtime_ensure` + `BLI_strncpy_utf8`/`BLI_uniquename` on `which_libbase(bmain, ID_WM_LEGACY)`. Added `BLI_string_utils.hh` include. | 0.3.0 (ID_WM deregistration) | 1.0.0-dev (`wm.cc`) |
+| Any new workspace, screen split, or screen creation | `screen_add` in `screen_edit.cc:197` called `BKE_libblock_alloc(bmain, ID_SCR_LEGACY, name, 0)`. Same null-deref crash — `ID_SCR_LEGACY` has no `IDTypeInfo`. Would crash any time a new screen was created at runtime, not just startup. Found by full Scar 10 sweep during Phase 1 audit (Scar 25). Fix: same Scar 10 manual pattern with `MEM_new<bScreen>`. | 0.3.0 (ID_SCR deregistration) | 1.0.0-dev (`screen_edit.cc`) |
+| Running blend-loading test suite | `blendfile_loading_base_test.cc:85` test helper called `BKE_libblock_alloc(G.main, ID_WM_LEGACY, "WMdummy", 0)` — same null-deref crash, test path. Found by Scar 10 sweep. Fix: same Scar 10 manual pattern. | 0.3.0 (ID_WM deregistration) | 1.0.0-dev (`blendfile_loading_base_test.cc`) |
 
 
 ### Foundation Layer Roadmap
@@ -446,6 +448,12 @@ grep -rn "BKE_libblock_alloc.*ID_XX" source/ --include="*.cc" --include="*.c"
 ```
 Every hit is a potential crash. Each allocation function must be patched to the manual pattern above, or the caller must be removed entirely if the path is truly dead.
 
+**Retroactivity note (Scar 25):** When this rule was first written (0.5.0), it was framed as going forward — run it after each future INIT_TYPE removal. It was not run retroactively against all previously deregistered types. `ID_WM_LEGACY` and `ID_SCR_LEGACY` were deregistered in 0.3.0; their `BKE_libblock_alloc` callers (`wm_add_default`, `screen_add`, test helper) shipped crashing in every build from 0.3.0 through 0.9.0. The Phase 1 audit found all three. **When this rule is first added (or re-read for the first time in a new session), run the full sweep now:**
+```bash
+grep -rn "BKE_libblock_alloc\b" source/ --include="*.cc" --include="*.c" | grep -v "alloc_notest\|get_alloc_info\|alloc_in_lib" | grep "ID_"
+```
+Cross-reference every `ID_XX` in the output against the `IDTypeInfo` registry. Any call using a deregistered type is a crash waiting to happen.
+
 ---
 
 ### Scar 14: Common Sense Is Upstream of the Rules
@@ -563,6 +571,10 @@ These scars cannot be expressed as greps. Each is a yes/no question to answer be
 
 - **Scar 24 — did I fix wrong things or just label them?** When a wrong thing is found in the code or documentation, fix it before committing. Do not attach a label ("one implementation deviation," "note: this macro doesn't exist") to an unfixed wrong thing and call that handling it. Note after fix — never instead of fix. CLAUDE.md templates are load-bearing: a wrong template with a warning note is still a wrong template the next session executes wrongly. The only acceptable state is a correct template with no label required.
 
+- **Scar 25 — if I just added a new checklist rule, did I run it retroactively against the full codebase?** New rules cover future work and silently miss existing violations. When Scar 10's "mandatory post-chisel grep" was written (0.5.0), it was never run against ID_WM and ID_SCR which had been deregistered since 0.3.0. Three crashing `BKE_libblock_alloc` calls shipped in every build for two years. The rule: when adding any new checklist item, run it against the entire codebase before closing the session. The debt audit is part of the work of writing the rule.
+
+- **Scar 26 — after any identity/branding pass, did I audit binary artifact names alongside UI strings?** The 0.7.0 identity pass changed window titles, splash text, app icon, and accent color. It did not set `OUTPUT_NAME` for the Windows executable — that line was macOS-only (`elseif(APPLE)` block in `source/creator/CMakeLists.txt`). The binary shipped as `blender.exe` through all of 0.7.x–0.9.x. Runtime strings (what you see when the app runs) and artifact names (what you see in the file system before it runs) are different axes. An identity audit must cover both. Check: `grep -rn "OUTPUT_NAME" source/creator/CMakeLists.txt` — verify it's set for every target platform, not just the one you're building on.
+
 ---
 
 *The check takes 60 seconds per grep. A missed check costs a CI round-trip at minimum, a session at worst.*
@@ -657,6 +669,50 @@ Grep for the format's enum constant (`FILE_TYPE_BLENDER`) is the classification-
 **The rule:** When you find something wrong in the documentation, fix it in the same commit where you document the deviation. Not in a separate commit after the developer asks about it. The fix is one Edit call. It takes less time than writing the annotation. Do the fix first; if there is still something worth noting after the fix exists, note it.
 
 **The corollary for this codebase specifically:** Any macro or function name that appears in CLAUDE.md as a code template must exist in the actual codebase. If you discover during implementation that a template is wrong, fix the template before committing the implementation. The template is load-bearing — the next session reads it and uses it. A wrong template with a warning note is still a wrong template.
+
+---
+
+### Scar 25: New Checklist Rules Must Be Run Retroactively
+
+**What happened:** Scar 10's "mandatory post-chisel grep" was written in 0.5.0 after the ID_PA/ID_GD_LEGACY/ID_LS allocation crashes. The rule said: after removing INIT_TYPE for any type, grep for `BKE_libblock_alloc.*ID_XX` and patch every hit. This was framed as a going-forward rule. Nobody ran it retroactively against types that had already been deregistered.
+
+`ID_WM_LEGACY` and `ID_SCR_LEGACY` were deregistered in 0.3.0 — two years before Scar 10 was written. Their allocation call sites (`wm_add_default` in `wm.cc`, `screen_add` in `screen_edit.cc`, and the test helper in `blendfile_loading_base_test.cc`) were never patched. They shipped crashing in every build from 0.3.0 through 0.9.0. The Phase 1 runtime audit for 1.0.0 found all three — the developer ran the app, hit the startup crash, reported it, and a full sweep caught the other two.
+
+**Why it happens:** A new rule feels like it belongs to the session that generated it — it's the lesson from this failure, applied to future failures of this type. The retroactive application doesn't feel like "the work right now." But it is the work right now. Writing the rule without running it is writing a map without checking whether you're already in the territory it describes.
+
+**The failure shape is the same as every other scar here:** an item gets added to the list (the rule), and the item feels handled. The item is not handled. The codebase still has violations of the rule that the rule was written to prevent. The rule documents the lesson; the sweep applies it.
+
+**The rule:** When any new checklist item is added to the Codex Standard — either in this session or when re-reading the document for the first time — run it immediately against the full existing codebase before closing the session. Every new rule creates a debt audit. The debt audit is not optional and is not deferred. It happens in the same session the rule is written.
+
+**For Scar 10 specifically — the full retroactive sweep:**
+```bash
+grep -rn "BKE_libblock_alloc\b" source/ --include="*.cc" --include="*.c" \
+  | grep -v "alloc_notest\|get_alloc_info\|alloc_in_lib" \
+  | grep "ID_"
+```
+Cross-reference every `ID_XX` in the output against the IDTypeInfo registry (`idtype.cc` `INIT_TYPE` calls). Any call using a type with no `INIT_TYPE` registration is a crash.
+
+**The count when swept during Phase 1:** 8 total hits. 3 were registered types (safe). 2 were already fixed (linestyle.cc, gpencil_legacy.cc). 3 were unpatched crashes (wm.cc, screen_edit.cc, blendfile_loading_base_test.cc). All three shipped since 0.3.0.
+
+---
+
+### Scar 26: Identity Work Must Cover Binary Artifact Names, Not Just UI Strings
+
+**What happened:** The 0.7.0 identity pass was thorough on runtime-visible identity: window titles, splash screen text and version label, app icon, accent color (`#ff7f00`), tagline. CLAUDE.md records it as "Phase 1 + Phase 2 complete. Logo ✓ + accent ✓ + app icon ✓ + splash ✓."
+
+The Windows executable shipped as `blender.exe` through 0.7.x, 0.8.x, and 0.9.0. The 0.7.0 pass never set `OUTPUT_NAME` for Windows.
+
+The reason it was missed: `source/creator/CMakeLists.txt` has `set_target_properties(blender PROPERTIES OUTPUT_NAME Blender)` — but that line is inside `elseif(APPLE)`. It looks like the binary rename is done. It is done for macOS. The Windows block (`if(WIN32 AND NOT WITH_PYTHON_MODULE)`) had no `OUTPUT_NAME` setting. A scan for "OUTPUT_NAME" returns a hit; the hit is real; the Windows case is invisible unless you check which `if` block the hit lives in.
+
+**The failure shape:** Identity work gets targeted at what you SEE when the app is running. The binary filename is what you see in the file system before the app runs. It's on a different axis — not a string in the executable, a property of the build system artifact — and that axis wasn't included in the 0.7.0 audit scope.
+
+**The rule:** Any identity/branding pass must explicitly include binary artifact names as a named audit target. The check:
+```bash
+grep -n "OUTPUT_NAME" source/creator/CMakeLists.txt
+```
+For each hit, identify which `if(WIN32)` / `elseif(APPLE)` / `elseif(UNIX)` block it lives in. Verify every target platform has the correct name set. "There's an OUTPUT_NAME in the file" is not the check. "OUTPUT_NAME is set correctly for all platforms" is the check.
+
+**What was changed:** Added `set_target_properties(blender PROPERTIES OUTPUT_NAME Blended)` in the `if(WIN32 AND NOT WITH_PYTHON_MODULE)` block; updated `BLENDER_BIN` to `Blended.exe`; added `RENAME Blended.exe.manifest` to the external manifest install rule; updated `blender_launcher_win32.c` to launch `Blended.exe`.
 
 ---
 

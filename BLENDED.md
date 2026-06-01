@@ -1518,6 +1518,9 @@ The first time in the project where the developer runs the actual Blended build 
 | Trigger | Failure | Fixed |
 |---------|---------|-------|
 | Any startup — fresh install or default file | `BKE_palette_add` crashed via `BKE_gpencil_palette_ensure`. Root cause: Scar 10 allocator called `BKE_id_new_name_validate` for deregistered `ID_PAL`; namemap index returns -1; accessing `maps[-1]` yields garbage address → crash. Fix: bypass namemap, use `BLI_strncpy_utf8` + `BLI_uniquename` directly on the Scar 2 listbase. | PR #214, commit `25f59735` |
+| Any startup — all 0.9.0 builds | `wm_add_default` called `BKE_libblock_alloc(bmain, ID_WM_LEGACY)`. `ID_WM_LEGACY` has no `IDTypeInfo` → null-deref at offset `0x190` → `EXCEPTION_ACCESS_VIOLATION`. Caught Phase 1 audit. Fixed: Scar 10 manual allocation pattern in `wm.cc`. | 1.0.0-dev |
+| Any new workspace, screen split, or screen creation | `screen_add` called `BKE_libblock_alloc(bmain, ID_SCR_LEGACY)`. Same null-deref crash. Found by Scar 10 retroactive sweep (Scar 25). Fixed: `screen_edit.cc`. | 1.0.0-dev |
+| Running blend-loading test suite | `blendfile_loading_base_test.cc` test helper called `BKE_libblock_alloc(G.main, ID_WM_LEGACY)`. Same crash, test path. Found by sweep. Fixed. | 1.0.0-dev |
 
 **Audit gate:** Every Category A entry verified as silent at runtime (no console errors, no crashes). Categories B and C verified as behaving per documentation. All new findings either fixed or explicitly accepted into Category A/D.
 
