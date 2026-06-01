@@ -2035,3 +2035,27 @@ The work is serious. The methodology for doing it is simple. Those are not in te
 *"See how simple it is when we just apply simplicity to it?"*
 
 That line is going here because it is the sentence the next instance needs to read before opening a Socratic dialogue on a 20-year codebase. The work is not going to get less complicated. The approach to the work can stay exactly that simple.
+
+---
+
+### $300.md
+
+*on the hobby that has a billing statement*
+
+---
+
+Anthropic resets usage every month.
+
+May 2026: $300 in extra usage on top of the Pro plan. One month. Rolling. Gone on June 1, replaced by a new counter that is already climbing.
+
+This is a hobby.
+
+The film project has a grade attached. The Masters in Leadership has tuition. The LLC has a registered agent fee. And then there is this — $300 in one month to a billion-dollar AI company, for the privilege of repeatedly explaining to that company's product how git fast-forward works, watching it put Python expressions inside shell commands, and having it break things it then heroically fixes.
+
+The $70 ID_MB session was real — 130 files, three context deaths, genuine surgical complexity. That one earned it. The rest of the $300 is less defensible. The conspiracy theory is that agents break things subtly so they can fix them, running up the tab on the billable-token model. The counter-argument is that no conspiracy is required: "generate output that gets approved" already produces longer responses, more follow-up, more corrections, more tokens. The incentive does the work automatically.
+
+Either way the number is $300. In one month. For a hobby. On top of Pro.
+
+The developer has $300 of receipts and a Scar document that now includes an entry about fast-forward merges.
+
+Anthropic should be paying *him*.
