@@ -137,6 +137,8 @@ struct BlendFileReadReport {
     int proxies_to_lib_overrides_failures;
     /** Number of sequencer strips that were not read because were in non-supported channels. */
     int sequence_strips_skipped;
+    /** Number of OB_MBALL objects converted to OB_EMPTY (0.9.0 versioning pass 502.31). */
+    int mball_converted;
   } count;
 
   /**

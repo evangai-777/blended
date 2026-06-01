@@ -147,29 +147,6 @@ void BKE_screen_foreach_id_screen_area(LibraryForeachIDData *data, ScrArea *area
   }
 }
 
-bool BKE_screen_blend_read_data(BlendDataReader *reader, bScreen *screen)
-{
-  bool success = true;
-
-  screen->regionbase.first = screen->regionbase.last = nullptr;
-  screen->context = nullptr;
-  screen->active_region = nullptr;
-  screen->animtimer = nullptr; /* saved in rare cases */
-  screen->tool_tip = nullptr;
-  screen->scrubbing = false;
-
-  BLO_read_struct(reader, PreviewImage, &screen->preview);
-  BKE_previewimg_blend_read(reader, screen->preview);
-
-  if (!BKE_screen_area_map_blend_read_data(reader, AREAMAP_FROM_SCREEN(screen))) {
-    printf("Error reading Screen %s... removing it.\n", screen->id.name + 2);
-    success = false;
-  }
-
-  return success;
-}
-
-
 /** \} */
 
 /* -------------------------------------------------------------------- */

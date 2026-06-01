@@ -969,9 +969,4 @@ void BKE_screen_view3d_do_versions_250(View3D *v3d, ListBaseT<ARegion> *regions)
 void BKE_screen_area_blend_read_after_liblink(BlendLibReader *reader,
                                               ID *parent_id,
                                               ScrArea *area);
-/**
- * Cannot use #IDTypeInfo callback yet, because of the return value.
- */
-bool BKE_screen_blend_read_data(BlendDataReader *reader, bScreen *screen);
-
 }  // namespace blender

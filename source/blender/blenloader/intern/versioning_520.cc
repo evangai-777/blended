@@ -332,7 +332,7 @@ void do_versions_after_linking_520(FileData *fd, Main *bmain)
    */
 }
 
-void blo_do_versions_520(FileData * /*fd*/, Library * /*lib*/, Main *bmain)
+void blo_do_versions_520(FileData *fd, Library * /*lib*/, Main *bmain)
 {
   if (!MAIN_VERSION_FILE_ATLEAST(bmain, 502, 1)) {
     for (Scene &scene : bmain->scenes) {
@@ -769,6 +769,24 @@ void blo_do_versions_520(FileData * /*fd*/, Library * /*lib*/, Main *bmain)
      * so we preserve that by setting the flag unconditionally here. */
     for (Brush &brush : bmain->brushes) {
       brush.flag2 |= BRUSH_PROJECT_LOCAL;
+    }
+  }
+
+  if (!MAIN_VERSION_FILE_ATLEAST(bmain, 502, 31)) {
+    /* OB_MBALL (value 5) was removed in Blended 0.4.0 when ID_MB was cut.
+     * bmain->metaballs was fully removed — no Scar 2 rescue — so ob->data is already
+     * nullptr on any MetaBall object from a legacy file. Convert to OB_EMPTY to prevent
+     * null-deref crashes in draw/eval dispatch. */
+    int mball_count = 0;
+    for (Object &object : bmain->objects) {
+      if (object.type == 5 /* OB_MBALL */) {
+        object.type = OB_EMPTY;
+        object.data = nullptr;
+        mball_count++;
+      }
+    }
+    if (mball_count > 0 && fd && fd->reports) {
+      fd->reports->count.mball_converted += mball_count;
     }
   }
 
