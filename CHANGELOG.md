@@ -28,7 +28,7 @@ carries a one-liner status per active item.
 | 0.5.x | Datablock audit — complete (Bucket 3 fold-downs; 39 → ~19 ID types) |
 | 0.6.x | Evaluation model — depsgraph audit | ✓ CI-complete (build 82, commit `8f7dda22`) |
 | 0.7.x | App lenses — launcher as canonical workspace system + full product identity | ✓ CI-complete (build 99, commit `2ddd1dd0`). Phase 1 + Phase 2 complete. Logo ✓ + accent ✓ (`#ff7f00`) + app icon ✓ + splash ✓. |
-| 0.8.x | File format — `.blended` is the project, import/export is the boundary |
+| 0.8.x | File format — `.blended` is the project, import/export is the boundary | ✓ CI-complete (build 100, commit `99e20b96`) |
 | 0.9.x | `.blend` import — seamless read with dropped-data manifest output |
 | 1.0.0 | Foundation complete; basic pipeline navigation working; GitHub Pages launch |
 
@@ -62,9 +62,19 @@ carries a one-liner status per active item.
 
 ---
 
-## Unreleased — 0.8.0
+## Unreleased — 0.9.0
+
+**Design vision:** 0.8.0 delivered the file format layer — `.blended` is the native project format. 0.9.x builds `.blend` import: seamless read with dropped-data manifest output.
+
+**Version bump:** `BLENDED_VERSION_MINOR` 8 → 9. First commit of 0.9.x dev cycle.
+
+---
+
+## 0.8.0 — 2026-06-01 — CI-complete (build 100, commit `99e20b96`)
 
 **Design vision:** 0.7.0 completed the app lenses layer — launcher, 28 mode lenses, full product identity, format design. 0.8.x builds the file format: `.blended` is the project, import/export is the boundary.
+
+**CI-complete:** Windows x64, build 100, commit `99e20b96`. First try — second first-try green on the entire Blended project.
 
 **Version bump:** `BLENDED_VERSION_MINOR` 7 → 8. First commit of 0.8.x dev cycle.
 
