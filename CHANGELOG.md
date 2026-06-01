@@ -82,12 +82,12 @@ Five layers. All Scar 2 listbase infrastructure preserved throughout 0.2–0.8 i
 - Location: after `BLI_listbase_clear(lb)` at ~line 163, before the relations/id_map/name_maps cleanup
 - Drain all four non-indexed listbases: `bmain.linestyles`, `bmain.particles`, `bmain.textures`, `bmain.curves`
 - Use `BKE_id_free_ex` with same flags as indexed loop: `LIB_ID_FREE_NO_MAIN | LIB_ID_FREE_NO_UI_USER | LIB_ID_FREE_NO_USER_REFCOUNT | LIB_ID_FREE_NO_DEG_TAG`
-- This is the ONLY safe drain location for `ID_CU_LEGACY`: `OB_FONT`, `OB_CURVES_LEGACY`, and `OB_SURF` all call `BKE_curve_add` at runtime, storing `ob->data` into `bmain->curves`. A post-read drain would free data that live Objects are pointing to. `BKE_main_clear` runs after all indexed IDs (Objects) are freed.
+- ONLY safe drain for ID_PA, ID_TE, and ID_CU_LEGACY: `ParticleSystem::part` holds live `ParticleSettings *`; modifier DNA structs hold live `Tex *`; `OB_FONT`/`OB_CURVES_LEGACY`/`OB_SURF` hold `ob->data` into `bmain->curves`. Post-read drain on any of these → use-after-free (Codex catch, PR #227). `BKE_main_clear` runs after all Objects are freed.
 
-**Layer 3 — Post-read drains for LS/PA/TE** (`readfile.cc`)
+**Layer 3 — Post-read drain for LS only** (`readfile.cc`)
 - Location: after `BKE_brush_drain_transient(bmain)` at ~line 4004
-- Drain `bmain->linestyles`, `bmain->particles`, `bmain->textures` — LS/PA/TE only
-- ID_CU_LEGACY excluded (Layer 2 only — see above)
+- Drain `bmain->linestyles` only — ID_PA, ID_TE, and ID_CU_LEGACY excluded (all Layer 2 only)
+- ID_LS is safe to drain post-read: Freestyle evaluation compiled out (`WITH_FREESTYLE=OFF`), no live runtime consumers
 - Pattern matches existing Bucket 3 drains above line 4004
 
 **Layer 4 — Delete `BKE_screen_blend_read_data`** (`screen.cc`)
@@ -106,6 +106,7 @@ Five layers. All Scar 2 listbase infrastructure preserved throughout 0.2–0.8 i
 - Versioning pass audit: all passes through 502.30 audited. OB_MBALL is the only missing pass — `bmain->metaballs` fully removed with no Scar 2 rescue, Category B crash path. All Bucket 3 fold-downs (VFont, Palette, LightProbe, Mask, Lattice, Brush) have both versioning passes and post-read drains confirmed in place.
 - ID_CU_LEGACY drain constraint: confirmed via `object.cc` lines 2168-2183 that `OB_CURVES_LEGACY`, `OB_SURF`, and `OB_FONT` all call `BKE_curve_add`, storing data in `bmain->curves`. Post-read drain is unsafe; `BKE_main_clear` drain is the correct location.
 - Manifest as `Text` ID: zero new UI infrastructure. Dropped data surfaces in text editor, persists in saved `.blended`, no in-app notification or panel required.
+- **Codex catch (PR #227):** Initial plan had ID_PA and ID_TE in Layer 3 (post-read drain). Codex correctly flagged that `ParticleSystem::part` is a live `ParticleSettings *` on objects with particle systems, and modifier DNA structs carry live `Tex *` fields — post-read drain on either leaves dangling pointers and crashes on subsequent particle or modifier eval. Both moved to Layer 2 (`BKE_main_clear`) only. Layer 3 is now ID_LS only.
 
 ---
 

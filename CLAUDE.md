@@ -18,7 +18,7 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 
 2. **`BKE_screen_blend_read_data` kept but not called** — Defined in `screen.cc`, not called by the ID system. Retained for possible future format work. **Fixed in 0.9.x Layer 4** (delete from `screen.cc`).
 
-3. **Scar 2 listbase memory leaks (ID_PA, ID_TE, ID_CU_LEGACY)** — `bmain->particles`, `bmain->textures`, and `bmain->curves` are kept as non-indexed listbases for versioning-pass compatibility, but are NOT in `BKE_main_lists_get`. `BKE_main_free` does not free those ID blocks. Same root cause as item 1. **Fixed in 0.9.x** — ID_PA and ID_TE: Layer 3 post-read drain + Layer 2 `BKE_main_clear` drain. **ID_CU_LEGACY: Layer 2 only** — cannot post-read drain because live `OB_FONT`, `OB_CURVES_LEGACY`, and `OB_SURF` objects hold `ob->data` pointers into `bmain->curves`; draining post-read would free their data mid-session. The `BKE_main_clear` drain runs after all Objects are freed and is safe. Session-scoped accumulation from NURBS importers is bounded and resolved at Main-clear time.
+3. **Scar 2 listbase memory leaks (ID_PA, ID_TE, ID_CU_LEGACY)** — `bmain->particles`, `bmain->textures`, and `bmain->curves` are kept as non-indexed listbases for versioning-pass compatibility, but are NOT in `BKE_main_lists_get`. `BKE_main_free` does not free those ID blocks. Same root cause as item 1. **Fixed in 0.9.x — all three: Layer 2 `BKE_main_clear` drain only.** ID_PA: `ParticleSystem::part` is a live `ParticleSettings *` on any object with a particle system — post-read drain frees data that live objects are still pointing to. ID_TE: modifier DNA structs (`DisplaceModifierData`, `WarpModifierData`, etc.) carry live `Tex *` fields read at runtime — same use-after-free if drained post-read. ID_CU_LEGACY: live `OB_FONT`/`OB_CURVES_LEGACY`/`OB_SURF` objects hold `ob->data` into `bmain->curves`. All three must wait for Main-clear, which runs after all Objects are freed. Session-scoped accumulation is bounded and resolved at Main-clear time.
 
 ---
 
@@ -50,11 +50,11 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 | Trigger | Leak scope | Introduced | Fix when needed |
 |---------|-----------|------------|-----------------|
 | Load legacy `.blend` with Freestyle LineStyle data (`WITH_FREESTYLE=OFF`) | `bmain->linestyles` populated, not freed by `BKE_main_free`. Blocks accumulate per file load, freed on process exit. | 0.4.0 (ID_LS) | ✓ **Fixed in 0.9.x Layer 3** (post-read drain) + **Layer 2** (`BKE_main_clear`) |
-| Load legacy `.blend` with ParticleSettings data | `bmain->particles` populated (Scar 2), not in `BKE_main_lists_get`. Same leak shape as ID_LS. | 0.4.0 (ID_PA) | ✓ **Fixed in 0.9.x Layer 3** (post-read drain) + **Layer 2** (`BKE_main_clear`) |
-| Load legacy `.blend` with Blender Internal texture data | `bmain->textures` populated (Scar 2), not in `BKE_main_lists_get`. Same leak shape. | 0.4.0 (ID_TE) | ✓ **Fixed in 0.9.x Layer 3** (post-read drain) + **Layer 2** (`BKE_main_clear`) |
+| Load legacy `.blend` with ParticleSettings data | `bmain->particles` populated (Scar 2), not in `BKE_main_lists_get`. `ParticleSystem::part` is a live `ParticleSettings *` on objects with particle systems — post-read drain would be use-after-free. | 0.4.0 (ID_PA) | ✓ **Fixed in 0.9.x Layer 2** (`BKE_main_clear` only — live `psys->part` pointers; same constraint as ID_CU_LEGACY) |
+| Load legacy `.blend` with Blender Internal texture data | `bmain->textures` populated (Scar 2), not in `BKE_main_lists_get`. Modifier DNA structs (`DisplaceModifierData`, `WarpModifierData`, etc.) carry live `Tex *` fields — post-read drain would be use-after-free. | 0.4.0 (ID_TE) | ✓ **Fixed in 0.9.x Layer 2** (`BKE_main_clear` only — live modifier `Tex *` pointers; same constraint as ID_CU_LEGACY) |
 | Load legacy `.blend` with Curve data, OR import NURBS via Alembic/OBJ | `bmain->curves` populated (Scar 2), not in `BKE_main_lists_get`. `BKE_curve_add` is called at runtime by Alembic NURBS reader, OBJ NURBS importer, and all text/curve object creation (`OB_FONT`, `OB_CURVES_LEGACY`, `OB_SURF`). | 0.4.0 (ID_CU_LEGACY) | ✓ **Fixed in 0.9.x Layer 2** (`BKE_main_clear` only — post-read drain unsafe; live objects reference `bmain->curves`) |
 
-**Post-read drain template (for LS/PA/TE — NOT for ID_CU_LEGACY):** In `blenloader/intern/readfile.cc`, after `BKE_blendfile_read()` completes, iterate and free the relevant non-indexed listbase:
+**Post-read drain template (for LS only — NOT for ID_PA, ID_TE, or ID_CU_LEGACY):** In `blenloader/intern/readfile.cc`, after `BKE_blendfile_read()` completes, iterate and free the relevant non-indexed listbase:
 ```cpp
 // Example: drain bmain->linestyles after file load
 LISTBASE_FOREACH_MUTABLE(ID *, id, &bmain->linestyles) {
@@ -62,7 +62,7 @@ LISTBASE_FOREACH_MUTABLE(ID *, id, &bmain->linestyles) {
 }
 BLI_listbase_clear(&bmain->linestyles);
 ```
-`BKE_id_free` skips the `IDTypeInfo::id_free` callback when the type is unregistered (INIT_TYPE removed) but still frees the memory block and animation data. For ID_LS, ID_PA, and ID_TE the callbacks were simple struct-internal frees with no GPU state — the post-read drain is safe. **ID_CU_LEGACY uses `BKE_main_clear` drain instead** (Layer 2): live `OB_FONT`/`OB_CURVES_LEGACY`/`OB_SURF` objects hold `ob->data` into `bmain->curves` for the life of the session; the Main-clear drain is called after all Objects are freed and is safe. Do NOT use `BKE_id_multi_tagged_delete` — that API operates on tagged blocks within the main indexed list and will not reach Scar 2 unindexed listbases.
+`BKE_id_free` skips the `IDTypeInfo::id_free` callback when the type is unregistered (INIT_TYPE removed) but still frees the memory block and animation data. **ID_LS post-read drain is safe** — Freestyle evaluation is compiled out (`WITH_FREESTYLE=OFF`), and `FreestyleLineStyle` has no live runtime consumers that access its data after file load. **ID_PA, ID_TE, and ID_CU_LEGACY use `BKE_main_clear` drain instead** (Layer 2): `ParticleSystem::part` holds live `ParticleSettings *` pointers; modifier DNA structs hold live `Tex *` pointers; `OB_FONT`/`OB_CURVES_LEGACY`/`OB_SURF` objects hold `ob->data` into `bmain->curves`. All three have live consumers that would use-after-free if drained post-read. The Main-clear drain runs after all Objects are freed and is safe for all four. Do NOT use `BKE_id_multi_tagged_delete` — that API operates on tagged blocks within the main indexed list and will not reach Scar 2 unindexed listbases.
 
 #### Category D — Fixed crashes (caught at runtime audit)
 
@@ -118,15 +118,15 @@ OB_MBALL numeric value: 5. Hardcode with comment, same pattern as OB_SPEAKER at 
 
 After the `BKE_main_lists_get` indexed ID loop (after `BLI_listbase_clear(lb)` at ~line 163), add a drain block for all four non-indexed Scar 2 listbases: `bmain.linestyles`, `bmain.particles`, `bmain.textures`, `bmain.curves`. Use `BKE_id_free_ex` with the same flags as the indexed loop (`LIB_ID_FREE_NO_MAIN | LIB_ID_FREE_NO_UI_USER | LIB_ID_FREE_NO_USER_REFCOUNT | LIB_ID_FREE_NO_DEG_TAG`).
 
-This is the **only** safe drain for ID_CU_LEGACY. Live `OB_FONT`, `OB_CURVES_LEGACY`, and `OB_SURF` objects hold `ob->data` pointers into `bmain->curves` for the life of the session. By the time the indexed loop completes (Objects freed), it is safe to drain. This also fixes NURBS importer session accumulation at the Main-clear level.
+This is the **only** safe drain for ID_PA, ID_TE, and ID_CU_LEGACY. `ParticleSystem::part` holds live `ParticleSettings *` pointers on any object with a particle system. Modifier DNA structs (`DisplaceModifierData`, `WarpModifierData`, etc.) carry live `Tex *` fields. `OB_FONT`, `OB_CURVES_LEGACY`, and `OB_SURF` objects hold `ob->data` into `bmain->curves`. All three would use-after-free if drained post-read. By the time the indexed loop completes (all Objects freed), it is safe to drain. This also fixes NURBS importer session accumulation at the Main-clear level.
 
-#### Layer 3 — Post-read drains for LS/PA/TE
+#### Layer 3 — Post-read drain for LS only
 
 **File:** `readfile.cc`.
 
-After the existing drain block (after `BKE_brush_drain_transient` at ~line 4004), add drain calls for ID_LS, ID_PA, and ID_TE using the drain template in Category C above. **ID_CU_LEGACY is excluded** — handled by Layer 2 only.
+After the existing drain block (after `BKE_brush_drain_transient` at ~line 4004), add drain call for ID_LS using the drain template in Category C above. **ID_PA, ID_TE, and ID_CU_LEGACY are excluded** — all handled by Layer 2 only.
 
-These three have no live runtime consumers. Any blocks remaining after versioning are orphaned fossils from legacy `.blend` load.
+ID_LS is safe to drain post-read: Freestyle evaluation is compiled out (`WITH_FREESTYLE=OFF`) and `FreestyleLineStyle` has no live runtime consumers. ID_PA and ID_TE are not safe: `ParticleSystem::part` and modifier `Tex *` fields are live pointers that objects hold for the duration of the session — draining post-read would leave dangling pointers and crash on any subsequent particle or modifier eval (Codex catch, PR #227).
 
 #### Layer 4 — Delete BKE_screen_blend_read_data
 
@@ -138,7 +138,7 @@ Deferred debt item 2 closure. The format work it was retained for (0.8.x) is com
 
 **File:** `readfile.cc`.
 
-Before the Layer 3 drains, count items in each Scar 2 listbase (LS/PA/TE). OB_MBALL conversions require a pre-versioning-pass count — capture count of `ob->type == 5` objects before `BKE_blendfile_read()` is called, or write a counter during the versioning pass.
+At post-read time, count items in all Scar 2 listbases (LS, PA, TE — before the Layer 3 LS drain; PA and TE are still populated at this point, drained later by Layer 2). OB_MBALL conversions require a pre-versioning-pass count — capture count of `ob->type == 5` objects before `BKE_blendfile_read()` is called, or write a counter during the versioning pass.
 
 If any dropped data: create a `Text` ID named `"Blended Import Manifest"` in the project. `ID_TXT` is a Bucket 2 keeper — zero new UI infrastructure, surfaces in the text editor, persists in the saved `.blended`.
 
