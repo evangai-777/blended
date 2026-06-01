@@ -1,7 +1,7 @@
 # BLENDED — Identity & Design Agreements
 
 **Developer/Publisher:** CHJ 3 Productions LLC (Indiana).
-**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.9.0-dev — 0.8.0 CI-complete (Windows x64, build 100, commit `99e20b96`). First try. 0.8.0 delivered: `.blended` native format ✓ (magic bytes `"BLENDED"`, 23 layers, ~80 sites, one-way compat, `FILE_TYPE_BLENDED`, platform integration, tests). 0.9.x in progress: `.blend` import — seamless read with dropped-data manifest output. Implementation plan complete (2026-06-01): five layers — see CLAUDE.md `### 0.9.0 Implementation Plan`.
+**Status:** Living document. Working agreements from the rebuild conversation. Current build: 0.9.0-dev — 0.8.0 CI-complete (Windows x64, build 100, commit `99e20b96`). First try. 0.8.0 delivered: `.blended` native format ✓ (magic bytes `"BLENDED"`, 23 layers, ~80 sites, one-way compat, `FILE_TYPE_BLENDED`, platform integration, tests). 0.9.x in progress: `.blend` import — five-layer implementation committed (2026-06-01, commit `fe95e326`, branch `claude/0-9-0-regression-LU6mH`): OB_MBALL versioning pass (502.31), BKE_main_clear Scar 2 drain (PA/TE/CU/LS), post-read LS drain, BKE_screen_blend_read_data deletion, dropped-data manifest Text block. CI pending.
 **Purpose:** So any future session, contributor, or Claude instance can pick up without re-litigating what's already been decided. Read this first before proposing changes to scope, identity, or architecture.
 
 ---
