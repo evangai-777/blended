@@ -12,13 +12,9 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.md.
 
-### Known Deferred Debt (compile-green but runtime-broken or leak-prone)
+### Known Deferred Debt
 
-1. **ID_LS latent memory leak** — Opening a legacy `.blend` file with Freestyle data in a `WITH_FREESTYLE=OFF` build populates `bmain->linestyles` via the kept `which_libbase` routing, but that listbase is not in `BKE_main_lists_get`, so `BKE_main_free` does not free those blocks. **Fixed in 0.9.x Layer 2** (`BKE_main_clear` Scar 2 drain in `main.cc`). Post-read drain (Layer 3) was initially added but removed — `FreestyleLineSet::linestyle` pointers in `ViewLayer` are live consumers (Codex catch, PR #229).
-
-2. **`BKE_screen_blend_read_data` kept but not called** — Defined in `screen.cc`, not called by the ID system. Retained for possible future format work. **Fixed in 0.9.x Layer 4** (delete from `screen.cc`).
-
-3. **Scar 2 listbase memory leaks (ID_PA, ID_TE, ID_CU_LEGACY)** — `bmain->particles`, `bmain->textures`, and `bmain->curves` are kept as non-indexed listbases for versioning-pass compatibility, but are NOT in `BKE_main_lists_get`. `BKE_main_free` does not free those ID blocks. Same root cause as item 1. **Fixed in 0.9.x — all three: Layer 2 `BKE_main_clear` drain only.** ID_PA: `ParticleSystem::part` is a live `ParticleSettings *` on any object with a particle system — post-read drain frees data that live objects are still pointing to. ID_TE: modifier DNA structs (`DisplaceModifierData`, `WarpModifierData`, etc.) carry live `Tex *` fields read at runtime — same use-after-free if drained post-read. ID_CU_LEGACY: live `OB_FONT`/`OB_CURVES_LEGACY`/`OB_SURF` objects hold `ob->data` into `bmain->curves`. All three must wait for Main-clear, which runs after all Objects are freed. Session-scoped accumulation is bounded and resolved at Main-clear time.
+All pre-1.0.0 deferred debt resolved in 0.9.x. See CHANGELOG.md `## 0.9.0` for full detail.
 
 ---
 
@@ -38,14 +34,14 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 | Scene with NLA sound strip created via old `NLA_OT_soundclip_add` operator | Operator removed. Existing sound strips in NLA from legacy files: no speaker evaluation, no 3D positional audio. VSE timeline audio unaffected. | 0.4.0 (ID_SPK) |
 | File with GD_LEGACY grease pencil objects or annotations | OB_GPENCIL_LEGACY objects and annotation data fully functional — depsgraph evaluation kept intentionally. This is **not** a failure; listed here for completeness. | 0.4.0 (ID_GD_LEGACY) |
 
-#### Category B — Uncertain/crash paths (legacy files only, needs investigation)
+#### Category B — Uncertain/crash paths — all resolved in 0.9.x
 
 | Trigger | Expected failure mode | Introduced | Status |
 |---------|-----------------------|------------|--------|
 | Legacy file containing MetaBall (`OB_MBALL`) objects | `bmain->metaballs` fully removed — no Scar 2 rescue. MetaBall data can't be allocated; no `which_libbase` routing. Objects will load with `ob->type == OB_MBALL` and `ob->data == nullptr`. Any draw or eval code that dereferences `ob->data` without a null check → null deref crash. `BLI_assert_unreachable()` sites in dispatch switches → debug assert. | 0.4.0 (ID_MB) | ✓ **Fixed in 0.9.x Layer 1** — versioning pass 502.31 in `versioning_520.cc` converts `OB_MBALL → OB_EMPTY`, same pattern as OB_SPEAKER → OB_EMPTY (502.23). |
 | Legacy file with particle systems on objects | `ParticleSettings` IDs load into `bmain->particles` (Scar 2). `build_particle_systems()` is still called for any object with `object->particlesystem.first != nullptr`. `build_particle_settings(particle->part)` runs and calls `add_id_node()`. The OOB-index crash (`BKE_idtype_idcode_to_index(ID_PA)` → -1) is **guarded**: `depsgraph.cc` has `if (id_type_index >= 0)` before writing `id_type_exist[]`, applied during the ID_CU_LEGACY chisel. Particle systems in legacy files load and evaluate without crashing. Memory leak: `bmain->particles` not in `BKE_main_lists_get` (Category C). | 0.4.0 (ID_PA) | ✓ OOB guard in place. Remaining: Category C memory leak only. |
 
-#### Category C — Memory leaks (session-scoped; fix when needed — see Deferred Debt items 1 and 3 for triggers)
+#### Category C — Memory leaks — all resolved in 0.9.x (Layer 2: `BKE_main_clear` Scar 2 drain)
 
 | Trigger | Leak scope | Introduced | Fix when needed |
 |---------|-----------|------------|-----------------|
@@ -54,19 +50,7 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 | Load legacy `.blend` with Blender Internal texture data | `bmain->textures` populated (Scar 2), not in `BKE_main_lists_get`. Modifier DNA structs (`DisplaceModifierData`, `WarpModifierData`, etc.) carry live `Tex *` fields — post-read drain would be use-after-free. | 0.4.0 (ID_TE) | ✓ **Fixed in 0.9.x Layer 2** (`BKE_main_clear` only — live modifier `Tex *` pointers; same constraint as ID_CU_LEGACY) |
 | Load legacy `.blend` with Curve data, OR import NURBS via Alembic/OBJ | `bmain->curves` populated (Scar 2), not in `BKE_main_lists_get`. `BKE_curve_add` is called at runtime by Alembic NURBS reader, OBJ NURBS importer, and all text/curve object creation (`OB_FONT`, `OB_CURVES_LEGACY`, `OB_SURF`). | 0.4.0 (ID_CU_LEGACY) | ✓ **Fixed in 0.9.x Layer 2** (`BKE_main_clear` only — post-read drain unsafe; live objects reference `bmain->curves`) |
 
-**Post-read drain template (for LS only — NOT for ID_PA, ID_TE, or ID_CU_LEGACY):** In `blenloader/intern/readfile.cc`, after `BKE_blendfile_read()` completes, iterate and free the relevant non-indexed listbase:
-```cpp
-// Example: drain bmain->linestyles after file load
-// NOTE: LISTBASE_FOREACH_MUTABLE does not exist in this codebase — use explicit next-pointer loop:
-for (ID *id = static_cast<ID *>(bmain->linestyles.first), *id_next;
-     id != nullptr;
-     id = id_next) {
-  id_next = static_cast<ID *>(id->next);
-  BKE_id_free(bmain, id);
-}
-BLI_listbase_clear(&bmain->linestyles);
-```
-`BKE_id_free` skips the `IDTypeInfo::id_free` callback when the type is unregistered (INIT_TYPE removed) but still frees the memory block and animation data. **All four Scar 2 types (ID_LS, ID_PA, ID_TE, ID_CU_LEGACY) use `BKE_main_clear` drain only** — none are safe to drain post-read. ID_LS was believed safe (`WITH_FREESTYLE=OFF` disables Freestyle evaluation) but `FreestyleLineSet::linestyle` pointers in `ViewLayer` are live consumers regardless of whether evaluation is compiled out: `scene.cc:919-921` traverses them in scene `foreach_id`, and `freestyle.cc:55-57` dereferences them in view-layer cleanup. Post-read drain leaves dangling pointers. ID_PA: `ParticleSystem::part` holds live `ParticleSettings *`. ID_TE: modifier DNA structs hold live `Tex *`. ID_CU_LEGACY: `OB_FONT`/`OB_CURVES_LEGACY`/`OB_SURF` hold `ob->data` into `bmain->curves`. The Main-clear drain runs after all ID types (scenes, objects) are freed and is safe for all four. Do NOT use `BKE_id_multi_tagged_delete` — that API operates on tagged blocks within the main indexed list and will not reach Scar 2 unindexed listbases.
+**Scar 2 drain architecture (for future reference):** All four non-indexed Scar 2 listbases (`bmain->linestyles`, `bmain->particles`, `bmain->textures`, `bmain->curves`) drain only in `BKE_main_clear` (`main.cc`), after the indexed ID loop completes. None are safe to drain post-read: `FreestyleLineSet::linestyle` in `ViewLayer` is traversed by scene `foreach_id` (`scene.cc:919-921`) and dereferenced by view-layer cleanup (`freestyle.cc:55-57`); `ParticleSystem::part` holds live `ParticleSettings *`; modifier DNA structs hold live `Tex *`; `OB_FONT`/`OB_CURVES_LEGACY`/`OB_SURF` hold `ob->data` into `bmain->curves`. The Main-clear drain runs after all Scenes and Objects are freed and is safe for all four. Do NOT use `BKE_id_multi_tagged_delete` — that API operates on the main indexed list and will not reach Scar 2 listbases.
 
 #### Category D — Fixed crashes (caught at runtime audit)
 
@@ -100,53 +84,9 @@ Magic bytes `"BLENDED"`, `.blended` extension on all write paths, `FILE_TYPE_BLE
 
 ---
 
-### 0.9.0 Implementation Plan
+### 0.9.0 — Complete
 
-**Status: CI-COMPLETE** — build 101, commit `c8e87078`, 2026-06-01. Third first-try on the project. Five layers implemented (commit `fe95e326`); Layer 3 post-read LS drain removed by Codex catch PR #229 (commit `826a0fbf`). See CHANGELOG.md `## 0.9.0` for full implementation notes.
-
-**Goal:** Read any `.blend` file with no crashes, no leaks, no silent truncation. For everything removed or restructured, produce a dropped-data manifest. One-way: `.blend` → `.blended`.
-
-**Versioning audit (2026-06-01):** Passes run through 502.30 (Brush permanent home). All Bucket 3 fold-down types have both a versioning pass and a post-read drain in `readfile.cc`. OB_MBALL is the **only gap** — no versioning pass. Everything else is handled.
-
-#### Layer 1 — OB_MBALL versioning pass
-
-**File:** `versioning_520.cc`. **Subversion:** 502.31.
-
-Add `if (!MAIN_VERSION_FILE_ATLEAST(bmain, 502, 31))` pass: iterate `bmain->objects`, for each `object.type == 5 /* OB_MBALL */` set `object.type = OB_EMPTY`, `object.data = nullptr`. `bmain->metaballs` was fully removed (no Scar 2 rescue) — `ob->data` is already null on any MetaBall object from a legacy file. The conversion prevents null-deref crashes in draw/eval dispatch.
-
-Bump `BLENDER_FILE_SUBVERSION` to 31 in `BKE_blender_version.h`.
-
-OB_MBALL numeric value: 5. Hardcode with comment, same pattern as OB_SPEAKER at 502.23 (`12 /* OB_SPEAKER */`).
-
-#### Layer 2 — BKE_main_clear Scar 2 drain
-
-**File:** `main.cc`.
-
-After the `BKE_main_lists_get` indexed ID loop (after `BLI_listbase_clear(lb)` at ~line 163), add a drain block for all four non-indexed Scar 2 listbases: `bmain.linestyles`, `bmain.particles`, `bmain.textures`, `bmain.curves`. Use `BKE_id_free_ex` with the same flags as the indexed loop (`LIB_ID_FREE_NO_MAIN | LIB_ID_FREE_NO_UI_USER | LIB_ID_FREE_NO_USER_REFCOUNT | LIB_ID_FREE_NO_DEG_TAG`).
-
-This is the **only** safe drain for all four Scar 2 types (ID_LS, ID_PA, ID_TE, ID_CU_LEGACY). ID_PA: `ParticleSystem::part` holds live `ParticleSettings *`. ID_TE: modifier DNA structs hold live `Tex *`. ID_CU_LEGACY: `OB_FONT`/`OB_CURVES_LEGACY`/`OB_SURF` hold `ob->data` into `bmain->curves`. ID_LS: `FreestyleLineSet::linestyle` in `ViewLayer` is followed by `scene.cc:919-921` (scene foreach_id) and dereferenced by `freestyle.cc:55-57` (view-layer cleanup) — `WITH_FREESTYLE=OFF` disables rendering but not DNA traversal. By the time the indexed loop completes (all Scenes and Objects freed), it is safe to drain all four. This also fixes NURBS importer session accumulation at the Main-clear level.
-
-#### Layer 3 — ~~Post-read drain for LS only~~ (removed — Layer 2 only)
-
-Layer 3 was initially implemented as a post-read drain for `bmain->linestyles` in `after_liblink_merged_bmain_process`. **Removed by Codex catch (PR #229):** `FreestyleLineSet::linestyle` pointers in `ViewLayer` are live consumers even with `WITH_FREESTYLE=OFF`. Scene `foreach_id` (`scene.cc:919-921`) traverses them; view-layer cleanup (`freestyle.cc:55-57`) dereferences them. Post-read drain leaves dangling pointers. ID_LS now handled by Layer 2 only, same as ID_PA/ID_TE/ID_CU_LEGACY. Layer 3 exists only as the dropped-data manifest count (which runs before any drain and is safe).
-
-#### Layer 4 — Delete BKE_screen_blend_read_data
-
-**File:** `screen.cc` (function body + declaration in header).
-
-Deferred debt item 2 closure. The format work it was retained for (0.8.x) is complete. Function is defined but never called.
-
-#### Layer 5 — Dropped-data manifest
-
-**File:** `readfile.cc`.
-
-At post-read time, count items in all Scar 2 listbases (LS, PA, TE — before the Layer 3 LS drain; PA and TE are still populated at this point, drained later by Layer 2). OB_MBALL conversions require a pre-versioning-pass count — capture count of `ob->type == 5` objects before `BKE_blendfile_read()` is called, or write a counter during the versioning pass.
-
-If any dropped data: create a `Text` ID named `"Blended Import Manifest"` in the project. `ID_TXT` is a Bucket 2 keeper — zero new UI infrastructure, surfaces in the text editor, persists in the saved `.blended`.
-
-Manifest content: per-type count and disposition — e.g. "3 MetaBall objects converted to Empty; 7 ParticleSettings datablocks dropped; 2 FreestyleLineStyle datablocks dropped".
-
-Only created for files with `"BLENDER"` magic (legacy `.blend` imports), not native `.blended` files.
+✓ CI-complete (build 101, commit `c8e87078`, 2026-06-01). Third first-try on the project. Five layers: OB_MBALL versioning pass 502.31, `BKE_main_clear` Scar 2 drain (PA/TE/CU/LS), `BKE_screen_blend_read_data` deletion, dropped-data manifest Text block. Layer 3 post-read LS drain removed by Codex catch (PR #229). See CHANGELOG.md `## 0.9.0` for full implementation notes and site-by-site detail.
 
 ---
 
@@ -167,8 +107,8 @@ Every session through 0.9.x has been Claude operating on the codebase while the 
 The Known Runtime Artifacts table in this file (Categories A, B, C) is the starting point — these are the things we already know are broken or unverified at runtime. Every deferred debt item from sessions across 0.2–0.9 feeds in. Beyond the documented debt, any behavior that seems wrong during hands-on use is fair game.
 
 - **Category A** (expected behavior changes — verify they are actually silent and don't crash or produce confusing errors)
-- **Category B** (uncertain/crash paths — needs investigation; OB_MBALL null-deref and particle system load paths documented here)
-- **Category C** (memory leaks — confirm they are session-scoped and bounded, not accumulating in unexpected ways)
+- **Category B** (all entries resolved in 0.9.x — verify OB_MBALL conversion and particle load behave as documented)
+- **Category C** (all leaks fixed in 0.9.x Layer 2 — verify no unexpected accumulation in edge cases)
 - **Undocumented** — anything new that surfaces through actual use that isn't in the Known Runtime Artifacts table
 
 **Gate condition for the release tag:**
@@ -278,9 +218,9 @@ make check_mypy     # Python type checking
 
 **The single source of truth:** `source/blender/blenkernel/BKE_blender_version.h` — three defines:
 ```c
-#define BLENDED_VERSION_MAJOR 0
-#define BLENDED_VERSION_MINOR N   // ← bump this for each completed foundation layer
-#define BLENDED_VERSION_PATCH 0   // ← bump this for patch releases within a layer
+#define BLENDED_VERSION_MAJOR 1
+#define BLENDED_VERSION_MINOR N   // ← bump for new features (post-1.0.0 semantic versioning)
+#define BLENDED_VERSION_PATCH 0   // ← bump for bug fixes and CI repairs within a layer
 ```
 The CI workflow reads these at build time. Packaged artifact name (`Blended-X.Y.Z-windows-x64`) derives entirely from these defines — no other file needs to be changed for the package label to update.
 

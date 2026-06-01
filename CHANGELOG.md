@@ -34,34 +34,6 @@ carries a one-liner status per active item.
 
 ---
 
-## 0.3.0 — 2026-04-29
-
-`ID_SCR` and `ID_WM` removed from the ID type system (Bucket 4 completions). Both are now runtime-only window state — not project data, not stored in .blended files. CI green (Windows x64, build 49).
-
-### ID_SCR / ID_WM Removal
-
-| Layer | Files touched | Status |
-|-------|--------------|--------|
-| `makesdna` | `DNA_ID_enums.h` (enum entries removed; `ID_SCR_LEGACY`/`ID_WM_LEGACY` `#define` added), `DNA_ID.h` (FILTER/INDEX macros), `DNA_screen_types.h`, `DNA_windowmanager_types.h` (id_type constexpr removed) | ✓ |
-| `blenkernel` | `idtype.cc`, `BKE_idtype.hh` (extern/INIT_TYPE removed); `BKE_main.hh` (screens kept as non-indexed runtime listbase); `main.cc` (which_libbase routes ID_SCR_LEGACY/ID_WM_LEGACY; removed from BKE_main_lists_get); `screen.cc` (IDTypeInfo removed, lifecycle made public); `lib_id.cc`, `lib_override.cc`, `lib_query.cc`; `blendfile.cc` (screen swap removed, WM swap via direct std::swap); `grease_pencil_convert_legacy.cc`, `layer.cc`, `sound.cc`, `image.cc` (bmain->screens iteration fixed) | ✓ |
-| `blenloader` | `readfile.cc` (skip ID_SCR_LEGACY/ID_SCRN blocks on read); `versioning_270/300/410/440.cc` (dead screen loops deleted — readfile skips these blocks) | ✓ |
-| `makesrna` | `rna_ID.cc`, `rna_main_api.cc` (tag functions re-added for runtime lists), `rna_action.cc`, `rna_image.cc`, `rna_movieclip.cc`, `rna_space.cc`, `rna_wm.cc`, `rna_xr.cc` (GS() checks → _LEGACY defines) | ✓ |
-| `editors` | `interface.cc`, `interface_handlers.cc`, `interface_icons.cc`, `interface_template_id.cc`, `interface_templates.cc`, `render_opengl.cc`, `outliner_draw.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc`, `ed_util_ops.cc`; runtime loops converted to window iteration: `ed_util.cc`, `render_update.cc`, `render_preview.cc`, `screen_edit.cc`, `screen_ops.cc`, `workspace_layout_edit.cc`, `armature_naming.cc`, `asset_shelf.cc`, `gizmo_library_utils.cc`, `outliner_sync.cc`, `view3d_view.cc` | ✓ |
-| `depsgraph` | `deg_builder_nodes.cc`, `deg_builder_relations.cc` | ✓ |
-| `python` | `bpy_rna.cc` (GS() check → _LEGACY), `bpy_rna_context.cc` | ✓ |
-| `windowmanager` | `wm.cc` (IDTypeInfo removed; wm_add_default uses BKE_libblock_alloc(ID_WM_LEGACY)); `wm_operators.cc` (case → ID_SCR_LEGACY) | ✓ |
-| `asset_system` | `asset_library.cc` (screen loop → window iteration) | ✓ |
-| `tests` | `blendfile_loading_base_test.cc` (BKE_id_new template removed; uses BKE_libblock_alloc directly) | ✓ |
-
-**Key design decisions:**
-- `bmain->screens` and `bmain->wm` kept as non-indexed runtime listbases — same pattern for both. Removing them from Main caused ~200 compile errors (Scar note added to CLAUDE.md).
-- `which_libbase(ID_SCR_LEGACY)` and `which_libbase(ID_WM_LEGACY)` still route to their listbases so `BKE_libblock_alloc` works; they are NOT in `BKE_main_lists_get` so the ID iteration system ignores them.
-- `screen_add` uses `BKE_libblock_alloc(bmain, ID_SCR_LEGACY, ...)` since `bScreen::id_type` constexpr was removed.
-
-**Deferred runtime debt:** Screens still have `BKE_screen_blend_read_data` defined (not dead, kept for future format work). Runtime behavior of window-based screen iteration vs full-list iteration may expose edge cases in multi-window scenarios.
-
----
-
 ## Unreleased — 1.0.0
 
 **Design vision:** Foundation complete. Two concurrent workstreams: (1) runtime audit — developer runs the build, works through Known Runtime Artifacts + deferred debt checklists, reports findings to Claude for triage and fix; (2) GitHub Pages launch — landing page, marketing, tech demo. Release tag when both workstreams clear.
@@ -940,6 +912,34 @@ blentranslation (1 file): `BLT_translation.hh` (BLT_I18NCONTEXT_ID_CACHEFILE).
 | `depsgraph` | `deg_builder_nodes.cc`, `deg_builder_nodes.h`, `deg_builder_nodes_view_layer.cc`, `deg_builder_relations.cc`, `deg_builder_relations.h`, `deg_builder_relations_view_layer.cc`, `depsgraph_build.cc`, `DEG_depsgraph_build.hh` | ✓ |
 | `makesrna` | `rna_cachefile.cc` (deleted), `makesrna.cc`, `rna_ID.cc`, `rna_main.cc`, `rna_main_api.cc`, `rna_internal.hh`, `rna_constraint.cc`, `rna_modifier.cc`, `rna_scene.cc`, `rna_space.cc`, `rna_action.cc`, `rna_ui_api.cc` | ✓ |
 | `blenloader` | `versioning_290.cc` — removed velocity_unit loop iterating `bmain->cachefiles` | ✓ |
+
+---
+
+## 0.3.0 — 2026-04-29
+
+`ID_SCR` and `ID_WM` removed from the ID type system (Bucket 4 completions). Both are now runtime-only window state — not project data, not stored in .blended files. CI green (Windows x64, build 49).
+
+### ID_SCR / ID_WM Removal
+
+| Layer | Files touched | Status |
+|-------|--------------|--------|
+| `makesdna` | `DNA_ID_enums.h` (enum entries removed; `ID_SCR_LEGACY`/`ID_WM_LEGACY` `#define` added), `DNA_ID.h` (FILTER/INDEX macros), `DNA_screen_types.h`, `DNA_windowmanager_types.h` (id_type constexpr removed) | ✓ |
+| `blenkernel` | `idtype.cc`, `BKE_idtype.hh` (extern/INIT_TYPE removed); `BKE_main.hh` (screens kept as non-indexed runtime listbase); `main.cc` (which_libbase routes ID_SCR_LEGACY/ID_WM_LEGACY; removed from BKE_main_lists_get); `screen.cc` (IDTypeInfo removed, lifecycle made public); `lib_id.cc`, `lib_override.cc`, `lib_query.cc`; `blendfile.cc` (screen swap removed, WM swap via direct std::swap); `grease_pencil_convert_legacy.cc`, `layer.cc`, `sound.cc`, `image.cc` (bmain->screens iteration fixed) | ✓ |
+| `blenloader` | `readfile.cc` (skip ID_SCR_LEGACY/ID_SCRN blocks on read); `versioning_270/300/410/440.cc` (dead screen loops deleted — readfile skips these blocks) | ✓ |
+| `makesrna` | `rna_ID.cc`, `rna_main_api.cc` (tag functions re-added for runtime lists), `rna_action.cc`, `rna_image.cc`, `rna_movieclip.cc`, `rna_space.cc`, `rna_wm.cc`, `rna_xr.cc` (GS() checks → _LEGACY defines) | ✓ |
+| `editors` | `interface.cc`, `interface_handlers.cc`, `interface_icons.cc`, `interface_template_id.cc`, `interface_templates.cc`, `render_opengl.cc`, `outliner_draw.cc`, `outliner_intern.hh`, `outliner_tools.cc`, `tree_element_id.cc`, `ed_util_ops.cc`; runtime loops converted to window iteration: `ed_util.cc`, `render_update.cc`, `render_preview.cc`, `screen_edit.cc`, `screen_ops.cc`, `workspace_layout_edit.cc`, `armature_naming.cc`, `asset_shelf.cc`, `gizmo_library_utils.cc`, `outliner_sync.cc`, `view3d_view.cc` | ✓ |
+| `depsgraph` | `deg_builder_nodes.cc`, `deg_builder_relations.cc` | ✓ |
+| `python` | `bpy_rna.cc` (GS() check → _LEGACY), `bpy_rna_context.cc` | ✓ |
+| `windowmanager` | `wm.cc` (IDTypeInfo removed; wm_add_default uses BKE_libblock_alloc(ID_WM_LEGACY)); `wm_operators.cc` (case → ID_SCR_LEGACY) | ✓ |
+| `asset_system` | `asset_library.cc` (screen loop → window iteration) | ✓ |
+| `tests` | `blendfile_loading_base_test.cc` (BKE_id_new template removed; uses BKE_libblock_alloc directly) | ✓ |
+
+**Key design decisions:**
+- `bmain->screens` and `bmain->wm` kept as non-indexed runtime listbases — same pattern for both. Removing them from Main caused ~200 compile errors (Scar note added to CLAUDE.md).
+- `which_libbase(ID_SCR_LEGACY)` and `which_libbase(ID_WM_LEGACY)` still route to their listbases so `BKE_libblock_alloc` works; they are NOT in `BKE_main_lists_get` so the ID iteration system ignores them.
+- `screen_add` uses `BKE_libblock_alloc(bmain, ID_SCR_LEGACY, ...)` since `bScreen::id_type` constexpr was removed.
+
+**Deferred runtime debt:** Screens still have `BKE_screen_blend_read_data` defined (not dead, kept for future format work). Runtime behavior of window-based screen iteration vs full-list iteration may expose edge cases in multi-window scenarios.
 
 ---
 
