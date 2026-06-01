@@ -40,6 +40,8 @@ carries a one-liner status per active item.
 
 **Version bump:** `BLENDED_VERSION_MAJOR` 0 → 1, `BLENDED_VERSION_MINOR` 9 → 0. First commit of 1.0.0-dev cycle (version bump commit, 2026-06-01).
 
+**Claude AI contributor (2026-06-01 — 1.0.0-dev doc pass):** Four-doc milestone update: stale 0.9.x planning content removed, phase model corrected from concurrent to sequential, BLENDED.md §17 added (full runtime audit checklist with Categories A–D), PR #230. Two new wtf.md entries added to CLAUDE.md: `1.0.0.md` (build 101 as a real deployable binary; CHJ 3 Productions LLC has a product) and `codex.md` (the Codex pre-audit trick — writing implementation plans in CLAUDE.md at implementation resolution causes Codex to audit the plan as real code before any source is written; canonical example is PR #229 catching the LS post-read use-after-free from the plan text alone; explains why 0.8.0 and 0.9.0 were first-try CI successes).
+
 ---
 
 ## 0.9.0 — 2026-06-01 — CI-complete (build 101, commit `c8e87078`)
