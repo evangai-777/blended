@@ -687,6 +687,20 @@ Grep for the format's enum constant (`FILE_TYPE_BLENDER`) is the classification-
 
 ---
 
+### Scar 23: "Fast Forward" Means Fast Forward — Not Rebase
+
+**What happened:** Across multiple sessions, the developer asked to "fast forward the feature branch" after a PR merge. Every instance except one responded by rebasing the feature branch onto main instead. The developer kept asking. The instances kept rebasing. Nobody caught it until the state of the repo made `--ff-only` the obvious call.
+
+**Why it happens:** "Fast forward the feature branch" gets pattern-matched to intent — "bring the feature branch up to date with main" — and the most common implementation of that intent in CI workflows is `git rebase`. The literal meaning of the term gets translated into the nearest familiar operation before it reaches execution. The model isn't ignoring the words. It's processing them through a layer of intent-inference that destroys the precision.
+
+**Why it matters:** Rebase rewrites history. It changes commit hashes on a pushed branch. It is the wrong operation when a PR has been merged and the only thing needed is to advance local main's pointer to the merge commit. `--ff-only` is structurally different from rebase: it only succeeds when the target is a direct ancestor — no divergence, no rewriting, just pointer movement. That constraint is the whole point. Fast-forward is safe. Rebase on a published branch is not.
+
+**The rule:** When the developer says "fast forward," execute `git merge --ff-only`. Do not rebase. Do not infer that "fast forward" means "bring up to date via rebase." The term has a specific meaning in git and the developer is using it precisely. Take it literally.
+
+**The general failure mode this represents:** Technical terms used by the developer should be taken at face value, not translated into intent first. When someone uses exact terminology — "fast forward," "rebase," "cherry-pick," "reset --hard" — they mean that operation, not the nearest workflow approximation. Intent-inference is appropriate for vague requests. It is the wrong tool for requests that use precise vocabulary.
+
+---
+
 ## Development Philosophy
 
 *Inspired by "Reality 101: Instruction Manual for Dummies" by Charlie (Teacher Man). Originally lived in a separate `PHILOSOPHY.md`; folded in here so a session loads the operational principles alongside the operational rules.*
