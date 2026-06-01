@@ -47,6 +47,9 @@ carries a one-liner status per active item.
 *Crash fix — `wm_add_default` Scar 10 pattern (Category D):*
 `wm_add_default` in `wm.cc` called `BKE_libblock_alloc(bmain, ID_WM_LEGACY, "WinMan", 0)`. Since `ID_WM_LEGACY` is a deregistered Scar 2 type (no `IDTypeInfo`), `BKE_libblock_get_alloc_info` returns size 0, `BKE_libblock_alloc_notest` returns nullptr, and `BKE_libblock_runtime_ensure(*id)` dereferences nullptr at offset `0x190` (the `runtime` field in `ID`) — `EXCEPTION_ACCESS_VIOLATION 0xc0000005`. Same root cause as the palette crash fixed in PR #214/build 97 (Scar 10), different site. Fix: Scar 10 manual allocation pattern — `MEM_new<wmWindowManager>` + `BKE_libblock_runtime_ensure` + `BLI_strncpy_utf8`/`BLI_uniquename` on `bmain->wm`. Added `BLI_string_utils.hh` include to `wm.cc`.
 
+*Scar 10 sweep — two additional sites (screen_edit.cc, blendfile_loading_base_test.cc):*
+Full-codebase audit of all `BKE_libblock_alloc` calls with deregistered type IDs. Found two more crash sites: `screen_add` in `screen_edit.cc:197` (`ID_SCR_LEGACY`, same null-deref pattern) and the test helper `blendfile_loading_base_test.cc:85` (`ID_WM_LEGACY`, parallel to the production fix). Both patched with the Scar 10 manual allocation pattern. `BLI_string_utils.hh` added to both files.
+
 *Binary naming fix — Windows executable branding gap:*
 The 0.7.0 identity pass set `OUTPUT_NAME Blender` only inside `elseif(APPLE)` in `source/creator/CMakeLists.txt` — Windows was never updated. The released Windows binary ships as `blender.exe` instead of `Blended.exe`. Fix: added `set_target_properties(blender PROPERTIES OUTPUT_NAME Blended)` in the `WIN32 AND NOT WITH_PYTHON_MODULE` block; updated `BLENDER_BIN` from `blender.exe` → `Blended.exe`; added `RENAME Blended.exe.manifest` to the external-manifest install rule; updated `blender_launcher_win32.c` to launch `Blended.exe` instead of `blender.exe`.
 
