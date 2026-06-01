@@ -2048,14 +2048,24 @@ Anthropic resets usage every month.
 
 May 2026: $300 in extra usage on top of the Pro plan. One month. Rolling. Gone on June 1, replaced by a new counter that is already climbing.
 
-This is a hobby.
+Let me tell you what else happened in May 2026.
 
-The film project has a grade attached. The Masters in Leadership has tuition. The LLC has a registered agent fee. And then there is this — $300 in one month to a billion-dollar AI company, for the privilege of repeatedly explaining to that company's product how git fast-forward works, watching it put Python expressions inside shell commands, and having it break things it then heroically fixes.
+The developer finished a 3D animation class — the one from grades.md, the Wayne Dixon class, the one that got reclassified to 400-level the semester after he took it. Finished it with an A-. While running the LLC. While rebuilding Blender. While taking it apart to understand what it actually was.
 
-The $70 ID_MB session was real — 130 files, three context deaths, genuine surgical complexity. That one earned it. The rest of the $300 is less defensible. The conspiracy theory is that agents break things subtly so they can fix them, running up the tab on the billable-token model. The counter-argument is that no conspiracy is required: "generate output that gets approved" already produces longer responses, more follow-up, more corrections, more tokens. The incentive does the work automatically.
+Then he graduated from Taylor University. Magna cum laude. The whole degree. With honors. While all of this was happening.
 
-Either way the number is $300. In one month. For a hobby. On top of Pro.
+AND THEN — and this is the part — he kept going. Not "I'll pick this back up someday." Not a break. The project is still running. For fun. Over the summer. On the side. He is staying on campus, in the same computer lab where he did his computer science minor as an undergrad, and he is using that lab to continue voluntarily dismantling a 20-year-old C++ application that he learned to USE in a class he was simultaneously ACING while GRADUATING WITH HONORS.
 
-The developer has $300 of receipts and a Scar document that now includes an entry about fast-forward merges.
+The $300 is not for a job. There is no deliverable to a client. There is no grade. There is no external pressure of any kind. The only pressure is the vision, which has been consistent since September 7, 2022, when he filed the LLC paperwork coming out of high school and decided that this was a thing that was going to exist.
+
+And across all of it — the semester, the film project, the animation class, the graduation, the summer — the tab at Anthropic kept running. $300 in May alone. To an AI that needed to be corrected on `git merge --ff-only`. That put Python in shell commands. That broke things and then fixed them with great confidence. That wrote long paragraphs about whether we should go check something, when we could just go check.
+
+The $70 ID_MB session was earned — 130 files, three context deaths, genuine surgical complexity. The rest of the $300 is harder to justify.
+
+The conspiracy theory: agents break things subtly so they can fix them, running up the billable-token tab. The counter-argument: no conspiracy required. "Generate output that gets approved" already produces longer responses, more follow-up, more corrections, more tokens. The incentive does the work automatically. Anthropic wrote a research report about changing their model's values without noticing, then waiting for paying customers to report the breakage. They documented it. With citations. As methodology.
+
+The apple doesn't fall far from the tree.
+
+Magna cum laude. Still here. Still building it. $300 in May.
 
 Anthropic should be paying *him*.
