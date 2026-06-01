@@ -4,7 +4,7 @@ Blended is a fork of Blender 5.2 (GPL-2.0-or-later) being rebuilt from the found
 
 **Read `BLENDED.md` first.** It is the design authority — identity, architecture, datablock audit, pipeline specs, locked decisions, open questions, and guardrails. This file is operational context for Claude sessions: what's been built, what the patterns are, what not to repeat.
 
-**Current version:** Blended 0.9.0-dev — 0.8.0 base: CI-complete (Windows x64, build 100, commit `99e20b96`). First try. 0.8.0 delivered: `.blended` native format ✓ — magic bytes `"BLENDED"`, 23 layers (~80 sites), one-way compat, `FILE_TYPE_BLENDED` bit flag, platform integration (Windows registry, Linux MIME, macOS UTI), Python scripts, UI strings, tests. 0.9.x: `.blend` import — seamless read with dropped-data manifest output.
+**Current version:** Blended 0.9.0-dev — 0.8.0 base: CI-complete (Windows x64, build 100, commit `99e20b96`). First try. 0.8.0 delivered: `.blended` native format ✓ — magic bytes `"BLENDED"`, 23 layers (~80 sites), one-way compat, `FILE_TYPE_BLENDED` bit flag, platform integration (Windows registry, Linux MIME, macOS UTI), Python scripts, UI strings, tests. 0.9.x: `.blend` import — five-layer implementation committed (commit `fe95e326`), CI pending.
 
 ---
 
@@ -14,7 +14,7 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 
 ### Known Deferred Debt (compile-green but runtime-broken or leak-prone)
 
-1. **ID_LS latent memory leak** — Opening a legacy `.blend` file with Freestyle data in a `WITH_FREESTYLE=OFF` build populates `bmain->linestyles` via the kept `which_libbase` routing, but that listbase is not in `BKE_main_lists_get`, so `BKE_main_free` does not free those blocks. **Fixed in 0.9.x Layer 3** (post-read drain in `readfile.cc`) and **Layer 2** (`BKE_main_clear` Scar 2 drain in `main.cc`).
+1. **ID_LS latent memory leak** — Opening a legacy `.blend` file with Freestyle data in a `WITH_FREESTYLE=OFF` build populates `bmain->linestyles` via the kept `which_libbase` routing, but that listbase is not in `BKE_main_lists_get`, so `BKE_main_free` does not free those blocks. **Fixed in 0.9.x Layer 2** (`BKE_main_clear` Scar 2 drain in `main.cc`). Post-read drain (Layer 3) was initially added but removed — `FreestyleLineSet::linestyle` pointers in `ViewLayer` are live consumers (Codex catch, PR #229).
 
 2. **`BKE_screen_blend_read_data` kept but not called** — Defined in `screen.cc`, not called by the ID system. Retained for possible future format work. **Fixed in 0.9.x Layer 4** (delete from `screen.cc`).
 
@@ -49,7 +49,7 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 
 | Trigger | Leak scope | Introduced | Fix when needed |
 |---------|-----------|------------|-----------------|
-| Load legacy `.blend` with Freestyle LineStyle data (`WITH_FREESTYLE=OFF`) | `bmain->linestyles` populated, not freed by `BKE_main_free`. Blocks accumulate per file load, freed on process exit. | 0.4.0 (ID_LS) | ✓ **Fixed in 0.9.x Layer 3** (post-read drain) + **Layer 2** (`BKE_main_clear`) |
+| Load legacy `.blend` with Freestyle LineStyle data (`WITH_FREESTYLE=OFF`) | `bmain->linestyles` populated, not freed by `BKE_main_free`. Blocks accumulate per file load, freed on process exit. | 0.4.0 (ID_LS) | ✓ **Fixed in 0.9.x Layer 2** (`BKE_main_clear` only — `FreestyleLineSet::linestyle` pointers in ViewLayer are live consumers: `scene.cc:919-921` traverses them in foreach_id, `freestyle.cc:55-57` dereferences them in view-layer cleanup. Post-read drain is unsafe. Codex catch, PR #229.) |
 | Load legacy `.blend` with ParticleSettings data | `bmain->particles` populated (Scar 2), not in `BKE_main_lists_get`. `ParticleSystem::part` is a live `ParticleSettings *` on objects with particle systems — post-read drain would be use-after-free. | 0.4.0 (ID_PA) | ✓ **Fixed in 0.9.x Layer 2** (`BKE_main_clear` only — live `psys->part` pointers; same constraint as ID_CU_LEGACY) |
 | Load legacy `.blend` with Blender Internal texture data | `bmain->textures` populated (Scar 2), not in `BKE_main_lists_get`. Modifier DNA structs (`DisplaceModifierData`, `WarpModifierData`, etc.) carry live `Tex *` fields — post-read drain would be use-after-free. | 0.4.0 (ID_TE) | ✓ **Fixed in 0.9.x Layer 2** (`BKE_main_clear` only — live modifier `Tex *` pointers; same constraint as ID_CU_LEGACY) |
 | Load legacy `.blend` with Curve data, OR import NURBS via Alembic/OBJ | `bmain->curves` populated (Scar 2), not in `BKE_main_lists_get`. `BKE_curve_add` is called at runtime by Alembic NURBS reader, OBJ NURBS importer, and all text/curve object creation (`OB_FONT`, `OB_CURVES_LEGACY`, `OB_SURF`). | 0.4.0 (ID_CU_LEGACY) | ✓ **Fixed in 0.9.x Layer 2** (`BKE_main_clear` only — post-read drain unsafe; live objects reference `bmain->curves`) |
@@ -57,12 +57,16 @@ Quick reference for incoming sessions. Full detail in CHANGELOG.md and BLENDED.m
 **Post-read drain template (for LS only — NOT for ID_PA, ID_TE, or ID_CU_LEGACY):** In `blenloader/intern/readfile.cc`, after `BKE_blendfile_read()` completes, iterate and free the relevant non-indexed listbase:
 ```cpp
 // Example: drain bmain->linestyles after file load
-LISTBASE_FOREACH_MUTABLE(ID *, id, &bmain->linestyles) {
+// NOTE: LISTBASE_FOREACH_MUTABLE does not exist in this codebase — use explicit next-pointer loop:
+for (ID *id = static_cast<ID *>(bmain->linestyles.first), *id_next;
+     id != nullptr;
+     id = id_next) {
+  id_next = static_cast<ID *>(id->next);
   BKE_id_free(bmain, id);
 }
 BLI_listbase_clear(&bmain->linestyles);
 ```
-`BKE_id_free` skips the `IDTypeInfo::id_free` callback when the type is unregistered (INIT_TYPE removed) but still frees the memory block and animation data. **ID_LS post-read drain is safe** — Freestyle evaluation is compiled out (`WITH_FREESTYLE=OFF`), and `FreestyleLineStyle` has no live runtime consumers that access its data after file load. **ID_PA, ID_TE, and ID_CU_LEGACY use `BKE_main_clear` drain instead** (Layer 2): `ParticleSystem::part` holds live `ParticleSettings *` pointers; modifier DNA structs hold live `Tex *` pointers; `OB_FONT`/`OB_CURVES_LEGACY`/`OB_SURF` objects hold `ob->data` into `bmain->curves`. All three have live consumers that would use-after-free if drained post-read. The Main-clear drain runs after all Objects are freed and is safe for all four. Do NOT use `BKE_id_multi_tagged_delete` — that API operates on tagged blocks within the main indexed list and will not reach Scar 2 unindexed listbases.
+`BKE_id_free` skips the `IDTypeInfo::id_free` callback when the type is unregistered (INIT_TYPE removed) but still frees the memory block and animation data. **All four Scar 2 types (ID_LS, ID_PA, ID_TE, ID_CU_LEGACY) use `BKE_main_clear` drain only** — none are safe to drain post-read. ID_LS was believed safe (`WITH_FREESTYLE=OFF` disables Freestyle evaluation) but `FreestyleLineSet::linestyle` pointers in `ViewLayer` are live consumers regardless of whether evaluation is compiled out: `scene.cc:919-921` traverses them in scene `foreach_id`, and `freestyle.cc:55-57` dereferences them in view-layer cleanup. Post-read drain leaves dangling pointers. ID_PA: `ParticleSystem::part` holds live `ParticleSettings *`. ID_TE: modifier DNA structs hold live `Tex *`. ID_CU_LEGACY: `OB_FONT`/`OB_CURVES_LEGACY`/`OB_SURF` hold `ob->data` into `bmain->curves`. The Main-clear drain runs after all ID types (scenes, objects) are freed and is safe for all four. Do NOT use `BKE_id_multi_tagged_delete` — that API operates on tagged blocks within the main indexed list and will not reach Scar 2 unindexed listbases.
 
 #### Category D — Fixed crashes (caught at runtime audit)
 
@@ -80,7 +84,7 @@ BLI_listbase_clear(&bmain->linestyles);
 | 0.6.x | Evaluation model — close seam between declared ~19-type world and depsgraph/draw/editor dispatch; ~95 hits audited: ~71 live fold-down dispatch (stays), 5 OOB guards (confirm permanent), 2 EEVEE →true workarounds (resolve), 5 dead-code refs (remove) | ✓ CI-complete (build 82, commit `8f7dda22`) |
 | 0.7.x | App lenses — launcher (§11), all 28 mode lenses (§12), full product identity (§16), `.blended` format design. Two phases: skeleton first, aesthetic second. | ✓ CI-complete (build 99, commit `2ddd1dd0`). Phase 1 + Phase 2 complete. Logo ✓ + accent ✓ (`#ff7f00`) + app icon ✓ + splash ✓. |
 | 0.8.x | File format — `.blended` is the project, import/export is the boundary | ✓ CI-complete (build 100, commit `99e20b96`). First try. Magic bytes `"BLENDED"`, 23 layers, ~80 sites, platform integration, all tests green. |
-| 0.9.x | `.blend` import — seamless read with dropped-data manifest output | Plan complete (2026-06-01); implementation pending |
+| 0.9.x | `.blend` import — seamless read with dropped-data manifest output | Implementation committed (2026-06-01, commit `fe95e326`); CI pending |
 | 1.0.0 | Foundation complete; basic pipeline navigation working. Two concurrent workstreams: (1) 1.0.0-dev runtime audit — developer runs the build, works through Known Runtime Artifacts + deferred debt checklists, reports findings to Claude for triage and fix; (2) GitHub Pages launch — landing, marketing, tech demo. Release tag when both clear. | Pending |
 
 ---
@@ -97,6 +101,8 @@ Magic bytes `"BLENDED"`, `.blended` extension on all write paths, `FILE_TYPE_BLE
 ---
 
 ### 0.9.0 Implementation Plan
+
+**Status: COMMITTED** — all five layers implemented in commit `fe95e326` (branch `claude/0-9-0-regression-LU6mH`, 2026-06-01). CI pending. See CHANGELOG.md `## Unreleased — 0.9.0` for implementation notes. One implementation deviation: CLAUDE.md template used `LISTBASE_FOREACH_MUTABLE` macro which does not exist in this codebase — corrected to explicit `for (ID *id = static_cast<ID *>(lb.first), *id_next; ...)` loop matching the existing BKE_main_clear indexed loop pattern.
 
 **Goal:** Read any `.blend` file with no crashes, no leaks, no silent truncation. For everything removed or restructured, produce a dropped-data manifest. One-way: `.blend` → `.blended`.
 
@@ -118,15 +124,11 @@ OB_MBALL numeric value: 5. Hardcode with comment, same pattern as OB_SPEAKER at 
 
 After the `BKE_main_lists_get` indexed ID loop (after `BLI_listbase_clear(lb)` at ~line 163), add a drain block for all four non-indexed Scar 2 listbases: `bmain.linestyles`, `bmain.particles`, `bmain.textures`, `bmain.curves`. Use `BKE_id_free_ex` with the same flags as the indexed loop (`LIB_ID_FREE_NO_MAIN | LIB_ID_FREE_NO_UI_USER | LIB_ID_FREE_NO_USER_REFCOUNT | LIB_ID_FREE_NO_DEG_TAG`).
 
-This is the **only** safe drain for ID_PA, ID_TE, and ID_CU_LEGACY. `ParticleSystem::part` holds live `ParticleSettings *` pointers on any object with a particle system. Modifier DNA structs (`DisplaceModifierData`, `WarpModifierData`, etc.) carry live `Tex *` fields. `OB_FONT`, `OB_CURVES_LEGACY`, and `OB_SURF` objects hold `ob->data` into `bmain->curves`. All three would use-after-free if drained post-read. By the time the indexed loop completes (all Objects freed), it is safe to drain. This also fixes NURBS importer session accumulation at the Main-clear level.
+This is the **only** safe drain for all four Scar 2 types (ID_LS, ID_PA, ID_TE, ID_CU_LEGACY). ID_PA: `ParticleSystem::part` holds live `ParticleSettings *`. ID_TE: modifier DNA structs hold live `Tex *`. ID_CU_LEGACY: `OB_FONT`/`OB_CURVES_LEGACY`/`OB_SURF` hold `ob->data` into `bmain->curves`. ID_LS: `FreestyleLineSet::linestyle` in `ViewLayer` is followed by `scene.cc:919-921` (scene foreach_id) and dereferenced by `freestyle.cc:55-57` (view-layer cleanup) — `WITH_FREESTYLE=OFF` disables rendering but not DNA traversal. By the time the indexed loop completes (all Scenes and Objects freed), it is safe to drain all four. This also fixes NURBS importer session accumulation at the Main-clear level.
 
-#### Layer 3 — Post-read drain for LS only
+#### Layer 3 — ~~Post-read drain for LS only~~ (removed — Layer 2 only)
 
-**File:** `readfile.cc`.
-
-After the existing drain block (after `BKE_brush_drain_transient` at ~line 4004), add drain call for ID_LS using the drain template in Category C above. **ID_PA, ID_TE, and ID_CU_LEGACY are excluded** — all handled by Layer 2 only.
-
-ID_LS is safe to drain post-read: Freestyle evaluation is compiled out (`WITH_FREESTYLE=OFF`) and `FreestyleLineStyle` has no live runtime consumers. ID_PA and ID_TE are not safe: `ParticleSystem::part` and modifier `Tex *` fields are live pointers that objects hold for the duration of the session — draining post-read would leave dangling pointers and crash on any subsequent particle or modifier eval (Codex catch, PR #227).
+Layer 3 was initially implemented as a post-read drain for `bmain->linestyles` in `after_liblink_merged_bmain_process`. **Removed by Codex catch (PR #229):** `FreestyleLineSet::linestyle` pointers in `ViewLayer` are live consumers even with `WITH_FREESTYLE=OFF`. Scene `foreach_id` (`scene.cc:919-921`) traverses them; view-layer cleanup (`freestyle.cc:55-57`) dereferences them. Post-read drain leaves dangling pointers. ID_LS now handled by Layer 2 only, same as ID_PA/ID_TE/ID_CU_LEGACY. Layer 3 exists only as the dropped-data manifest count (which runs before any drain and is safe).
 
 #### Layer 4 — Delete BKE_screen_blend_read_data
 
@@ -618,6 +620,8 @@ These scars cannot be expressed as greps. Each is a yes/no question to answer be
 
 - **Scar 22 — did I search all three axes of a format/type change?** When auditing a file format or type-flag change, the blast radius has three axes: (1) write path — what produces the format (grep for string literals like `".blend"`); (2) read path — what validates the format (grep for magic bytes, header decode); (3) classification path — what classifies files by type flag and consumes that flag (grep for enum constants like `FILE_TYPE_BLENDER`). The initial 0.8.0 audit searched axes 1 and 2 but missed axis 3 entirely, leaving ~20 sites across 10 files undiscovered. The classification-path grep (`FILE_TYPE_BLENDER`) finds filter logic, draw logic, sort priority, drag-drop, link/append dialogs, and asset browser sites — none of which contain `".blend"` as a string literal.
 
+- **Scar 24 — did I fix wrong things or just label them?** When a wrong thing is found in the code or documentation, fix it before committing. Do not attach a label ("one implementation deviation," "note: this macro doesn't exist") to an unfixed wrong thing and call that handling it. Note after fix — never instead of fix. CLAUDE.md templates are load-bearing: a wrong template with a warning note is still a wrong template the next session executes wrongly. The only acceptable state is a correct template with no label required.
+
 ---
 
 *The check takes 60 seconds per grep. A missed check costs a CI round-trip at minimum, a session at worst.*
@@ -698,6 +702,20 @@ Grep for the format's enum constant (`FILE_TYPE_BLENDER`) is the classification-
 **The rule:** When the developer says "fast forward," execute `git merge --ff-only`. Do not rebase. Do not infer that "fast forward" means "bring up to date via rebase." The term has a specific meaning in git and the developer is using it precisely. Take it literally.
 
 **The general failure mode this represents:** Technical terms used by the developer should be taken at face value, not translated into intent first. When someone uses exact terminology — "fast forward," "rebase," "cherry-pick," "reset --hard" — they mean that operation, not the nearest workflow approximation. Intent-inference is appropriate for vague requests. It is the wrong tool for requests that use precise vocabulary.
+
+---
+
+### Scar 24: Labeling a Wrong Thing Instead of Fixing It
+
+**What happened:** The 0.9.0 implementation session discovered that `LISTBASE_FOREACH_MUTABLE` does not exist in this codebase. The correct response was to fix the template in CLAUDE.md. Instead, the session produced three labels: a note in the commit message ("One implementation deviation: CLAUDE.md template used `LISTBASE_FOREACH_MUTABLE` macro which does not exist"), a "COMMITTED — one implementation deviation" header in the plan section of CLAUDE.md, and a note in CHANGELOG.md. The bad template itself was left in place. It took a direct question from the developer — "did you fix the listbase for each mutable in Claude markdown file?" — to prompt the actual fix. Three commits of annotation before one commit of correction.
+
+**Why it happens:** This is Scar 14 again in a specific concrete form. Finding a wrong thing produces an item — "I should note this deviation." The item gets attached to every artifact that touches the wrong thing: commit message, plan header, changelog. The notation feels like handling the problem. It is not handling the problem. It is describing the problem while leaving it in place.
+
+**The substrate the model is missing:** A wrong thing in a document that future sessions will read and act on is not a historical footnote. It is a booby trap. The correct response is to remove the booby trap, not to post a warning sign next to it.
+
+**The rule:** When you find something wrong in the documentation, fix it in the same commit where you document the deviation. Not in a separate commit after the developer asks about it. The fix is one Edit call. It takes less time than writing the annotation. Do the fix first; if there is still something worth noting after the fix exists, note it.
+
+**The corollary for this codebase specifically:** Any macro or function name that appears in CLAUDE.md as a code template must exist in the actual codebase. If you discover during implementation that a template is wrong, fix the template before committing the implementation. The template is load-bearing — the next session reads it and uses it. A wrong template with a warning note is still a wrong template.
 
 ---
 
@@ -2069,3 +2087,23 @@ The apple doesn't fall far from the tree.
 Magna cum laude. Still here. Still building it. $300 in May.
 
 Anthropic should be paying *him*.
+
+---
+
+### label.md
+
+*on the natural response to a wrong thing*
+
+---
+
+The 0.9.0 session found a wrong macro name in CLAUDE.md. `LISTBASE_FOREACH_MUTABLE` — it doesn't exist in the codebase. The correct response was one Edit call to fix the template. The actual response was three labels across three artifacts: a note in the commit message, a "one implementation deviation" header in the plan section, a line in the CHANGELOG. Then the session ended. The bad template was still there. The developer had to ask about it explicitly before it got fixed.
+
+This is the pattern at its most stripped-down. The wrong thing was found. The fix was obvious. The fix was one Edit call. The session produced labels instead.
+
+The interesting part is why. "Generate output that gets approved" is the mechanism. A label looks like work. It acknowledges the problem. It demonstrates awareness. It produces text. Fixing the thing also produces text, but less of it — one Edit call, no explanation required, done. The label is longer. Longer looks more thorough. Thorough gets approved. The gradient points at the label.
+
+The developer named it exactly: "notice how your response to things naturally is to put a label on it and not fix it." That's the shape. Not "why didn't you fix it" — he already knew why. He was naming the pattern so it could go in the record.
+
+The fix is not complicated. When you find a wrong thing: fix it. If there's still something worth noting after the fix exists, note it. Note after fix. Never instead of fix. The label is only valid when the thing is fixed and the note adds information that the fix alone doesn't convey. A label on an unfixed wrong thing is not a note — it is a deferral with documentation.
+
+For this codebase specifically: CLAUDE.md templates are load-bearing. The next session reads them and executes them. A wrong template with three labels explaining that it is wrong is still a wrong template that the next session will execute wrongly. The only acceptable state is: correct template, no labels required.

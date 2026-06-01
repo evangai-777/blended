@@ -99,6 +99,7 @@
 #include "BKE_screen.hh"
 #include "BKE_brush.hh"
 #include "BKE_lattice.hh"
+#include "BKE_text.h"
 #include "BKE_lightprobe.h"
 #include "BKE_mask.hh"
 #include "BKE_paint.hh"
@@ -4002,6 +4003,38 @@ static void after_liblink_merged_bmain_process(Main *bmain, BlendFileReadReport 
    * For legacy files (pre-502.30), versioning pass 502.30 has set BRUSH_PROJECT_LOCAL on all
    * existing brushes, so no brushes are drained from those files. */
   BKE_brush_drain_transient(bmain);
+
+  /* Dropped-data manifest (0.9.0): count legacy fossil data and write a Text block so the user
+   * knows what was dropped when importing a .blend file. Only written when there is something to
+   * report. All four Scar 2 listbases (LS, PA, TE, CU) are drained by BKE_main_clear (Layer 2)
+   * after all scenes/view layers are freed — countable here, none drained here. */
+  {
+    const int ls_count = BLI_listbase_count(&bmain->linestyles);
+    const int pa_count = BLI_listbase_count(&bmain->particles);
+    const int te_count = BLI_listbase_count(&bmain->textures);
+    const int mb_count = reports ? reports->count.mball_converted : 0;
+    if (ls_count > 0 || pa_count > 0 || te_count > 0 || mb_count > 0) {
+      Text *manifest = BKE_text_add(bmain, "Blended Import Manifest");
+      char line[256];
+      if (mb_count > 0) {
+        SNPRINTF(line, "%d MetaBall object(s) converted to Empty\n", mb_count);
+        BKE_text_write(manifest, line, strlen(line));
+      }
+      if (pa_count > 0) {
+        SNPRINTF(line, "%d ParticleSettings datablock(s) dropped\n", pa_count);
+        BKE_text_write(manifest, line, strlen(line));
+      }
+      if (te_count > 0) {
+        SNPRINTF(line, "%d Texture (Blender Internal) datablock(s) dropped\n", te_count);
+        BKE_text_write(manifest, line, strlen(line));
+      }
+      if (ls_count > 0) {
+        SNPRINTF(line, "%d FreestyleLineStyle datablock(s) dropped\n", ls_count);
+        BKE_text_write(manifest, line, strlen(line));
+      }
+    }
+  }
+
 }
 
 /** \} */

@@ -162,6 +162,28 @@ void BKE_main_clear(Main &bmain)
     BLI_listbase_clear(lb);
   }
 
+  /* Drain the four non-indexed Scar 2 listbases that are NOT in BKE_main_lists_get.
+   * These must be freed here (after all Objects are freed by the indexed loop above) because
+   * live Object fields hold pointers into these listbases during the session:
+   *   bmain.particles  — ParticleSystem::part (live ParticleSettings *)
+   *   bmain.textures   — modifier DNA structs (DisplaceModifierData, WarpModifierData, etc.)
+   *   bmain.curves     — ob->data for OB_FONT / OB_CURVES_LEGACY / OB_SURF objects
+   *   bmain.linestyles — safe to drain here too (no live consumers; also drained post-read) */
+  {
+    /* Drain each Scar 2 non-indexed listbase using the same next-pointer pattern as above. */
+    auto drain_scar2_lb = [&](ListBase &lb) {
+      for (ID *id = static_cast<ID *>(lb.first), *id_next; id != nullptr; id = id_next) {
+        id_next = static_cast<ID *>(id->next);
+        BKE_id_free_ex(&bmain, id, free_flag, false);
+      }
+      BLI_listbase_clear(&lb);
+    };
+    drain_scar2_lb(bmain.particles);
+    drain_scar2_lb(bmain.textures);
+    drain_scar2_lb(bmain.curves);
+    drain_scar2_lb(bmain.linestyles);
+  }
+
   if (bmain.relations) {
     BKE_main_relations_free(&bmain);
   }

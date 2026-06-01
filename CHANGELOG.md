@@ -84,18 +84,17 @@ Five layers. All Scar 2 listbase infrastructure preserved throughout 0.2–0.8 i
 - Use `BKE_id_free_ex` with same flags as indexed loop: `LIB_ID_FREE_NO_MAIN | LIB_ID_FREE_NO_UI_USER | LIB_ID_FREE_NO_USER_REFCOUNT | LIB_ID_FREE_NO_DEG_TAG`
 - ONLY safe drain for ID_PA, ID_TE, and ID_CU_LEGACY: `ParticleSystem::part` holds live `ParticleSettings *`; modifier DNA structs hold live `Tex *`; `OB_FONT`/`OB_CURVES_LEGACY`/`OB_SURF` hold `ob->data` into `bmain->curves`. Post-read drain on any of these → use-after-free (Codex catch, PR #227). `BKE_main_clear` runs after all Objects are freed.
 
-**Layer 3 — Post-read drain for LS only** (`readfile.cc`)
-- Location: after `BKE_brush_drain_transient(bmain)` at ~line 4004
-- Drain `bmain->linestyles` only — ID_PA, ID_TE, and ID_CU_LEGACY excluded (all Layer 2 only)
-- ID_LS is safe to drain post-read: Freestyle evaluation compiled out (`WITH_FREESTYLE=OFF`), no live runtime consumers
-- Pattern matches existing Bucket 3 drains above line 4004
+**Layer 3 — ~~Post-read drain for LS only~~ (removed — Layer 2 only)** (`readfile.cc`)
+- **Removed by Codex catch (PR #229):** `FreestyleLineSet::linestyle` pointers in `ViewLayer` are live consumers even with `WITH_FREESTYLE=OFF`. `scene.cc:919-921` traverses them in scene `foreach_id`; `freestyle.cc:55-57` dereferences them in view-layer cleanup. Post-read drain leaves dangling pointers and crashes on subsequent scene operation.
+- ID_LS now handled by Layer 2 (`BKE_main_clear`) only — same constraint as ID_PA/ID_TE/ID_CU_LEGACY.
+- Layer 3 exists only as the dropped-data manifest count (runs before any drain, reads listbase length only — safe).
 
 **Layer 4 — Delete `BKE_screen_blend_read_data`** (`screen.cc`)
 - Function body in `screen.cc` + declaration in header
 - Retained since 0.3.0 as "kept for possible future format work" — 0.8.x is complete, format work is done, call is never made. Dead code.
 
 **Layer 5 — Dropped-data manifest** (`readfile.cc`)
-- Count Scar 2 listbase contents before drains (LS, PA, TE counts; CU count before Layer 2)
+- Count Scar 2 listbase contents before any drains (LS, PA, TE counts — all four drained by Layer 2 only)
 - If any non-zero: create `Text` ID (`ID_TXT`, Bucket 2 keeper) named `"Blended Import Manifest"` in the project
 - Format: per-type dropped count, e.g. `LineStyle: 2 dropped (Freestyle removed in 0.4.0)`
 - Only for files with `"BLENDER"` magic (legacy `.blend` files) — not for native `.blended` projects
@@ -106,7 +105,10 @@ Five layers. All Scar 2 listbase infrastructure preserved throughout 0.2–0.8 i
 - Versioning pass audit: all passes through 502.30 audited. OB_MBALL is the only missing pass — `bmain->metaballs` fully removed with no Scar 2 rescue, Category B crash path. All Bucket 3 fold-downs (VFont, Palette, LightProbe, Mask, Lattice, Brush) have both versioning passes and post-read drains confirmed in place.
 - ID_CU_LEGACY drain constraint: confirmed via `object.cc` lines 2168-2183 that `OB_CURVES_LEGACY`, `OB_SURF`, and `OB_FONT` all call `BKE_curve_add`, storing data in `bmain->curves`. Post-read drain is unsafe; `BKE_main_clear` drain is the correct location.
 - Manifest as `Text` ID: zero new UI infrastructure. Dropped data surfaces in text editor, persists in saved `.blended`, no in-app notification or panel required.
-- **Codex catch (PR #227):** Initial plan had ID_PA and ID_TE in Layer 3 (post-read drain). Codex correctly flagged that `ParticleSystem::part` is a live `ParticleSettings *` on objects with particle systems, and modifier DNA structs carry live `Tex *` fields — post-read drain on either leaves dangling pointers and crashes on subsequent particle or modifier eval. Both moved to Layer 2 (`BKE_main_clear`) only. Layer 3 is now ID_LS only.
+- **Codex catch (PR #227):** Initial plan had ID_PA and ID_TE in Layer 3 (post-read drain). Codex correctly flagged that `ParticleSystem::part` is a live `ParticleSettings *` on objects with particle systems, and modifier DNA structs carry live `Tex *` fields — post-read drain on either leaves dangling pointers and crashes on subsequent particle or modifier eval. Both moved to Layer 2 (`BKE_main_clear`) only. Layer 3 was ID_LS only after this fix.
+- **Codex catch (PR #229):** Layer 3 ID_LS post-read drain also removed. `FreestyleLineSet::linestyle` pointers in `ViewLayer` are live consumers regardless of `WITH_FREESTYLE=OFF`: `scene.cc:919-921` traverses them in scene `foreach_id`, `freestyle.cc:55-57` dereferences them in view-layer cleanup. Post-read drain leaves dangling pointers — same class of bug as PR #227. ID_LS moved to Layer 2 only. All four Scar 2 types now drain exclusively in `BKE_main_clear`. Layer 3 no longer exists as an implementation layer — only as the dropped-data manifest count that runs before Layer 2.
+
+**Claude AI contributor (2026-06-01 — 0.9.0 implementation):** All five layers implemented in commit `fe95e326`, branch `claude/0-9-0-regression-LU6mH`. Layer 1: versioning_520.cc — subversion 502.31 block converting OB_MBALL (value 5) to OB_EMPTY, populating `fd->reports->count.mball_converted`; bumped `BLENDER_FILE_SUBVERSION` to 31. Layer 2: main.cc — `BKE_main_clear` Scar 2 drain for all four non-indexed listbases (particles, textures, curves, linestyles) via lambda with explicit next-pointer iteration. Layer 3 (as implemented): readfile.cc — post-read drain for `bmain->linestyles`. **Layer 3 subsequently removed (commit `826a0fbf`) — Codex catch PR #229:** `FreestyleLineSet::linestyle` in `ViewLayer` is a live consumer regardless of `WITH_FREESTYLE=OFF`; post-read drain leaves dangling pointers. ID_LS moved to Layer 2 only. Layer 3 now exists only as the dropped-data manifest count. Layer 4: screen.cc + BKE_screen.hh — deleted `BKE_screen_blend_read_data` (defined but never called, deferred debt item 2). Layer 5: readfile.cc + BLO_readfile.hh — `mball_converted` counter in `BlendFileReadReport::count`; manifest `Text` ID created via `BKE_text_add` + `BKE_text_write` when any fossil data detected. Also: Scar 24 added to CLAUDE.md (labeling a wrong thing instead of fixing it — LISTBASE_FOREACH_MUTABLE template sat in CLAUDE.md with annotations about being wrong across three commits before being corrected in `19f2d11c`); label.md added to wtf.md section.
 
 ---
 
