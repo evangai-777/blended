@@ -1,0 +1,21 @@
+@echo off
+echo Starting Blended with GPU debugging and glitch workaround options, log files
+echo will be created in your temp folder, windows explorer will open after you
+echo close Blended to help you find them.
+echo.
+echo If you report a bug on https://github.com/EvangAI-777/Blended/issues you can attach these files
+echo by dragging them into the text area of your bug report, please include both
+echo blended_debug_output.txt and blended_system_info.txt in your report.
+echo.
+pause
+echo.
+echo Starting Blended and waiting for it to exit....
+setlocal
+
+set PYTHONPATH=
+set DEBUGLOGS="%temp%\blended\debug_logs"
+set VK_LOADER_DEBUG=all
+mkdir "%DEBUGLOGS%" > NUL 2>&1
+
+"%~dp0\Blended" --debug --debug-gpu --debug-gpu-force-workarounds --python-expr "import bpy; bpy.context.preferences.filepaths.temporary_directory=r'%DEBUGLOGS%'; bpy.ops.wm.sysinfo(filepath=r'%DEBUGLOGS%\blended_system_info.txt')" > "%DEBUGLOGS%\blended_debug_output.txt" 2>&1 < %0
+explorer "%DEBUGLOGS%"
