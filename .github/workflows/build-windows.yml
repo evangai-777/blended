@@ -160,9 +160,10 @@ jobs:
         Rename-Item $installDir $name
         Compress-Archive -Path "$env:BUILD_DIR\$name" -DestinationPath "$env:BUILD_DIR\$zip"
 
-        "PACKAGE_NAME=$zip"              | Out-File -Append $env:GITHUB_ENV
-        "PACKAGE_PATH=$env:BUILD_DIR\$zip" | Out-File -Append $env:GITHUB_ENV
-        "VERSION=$version"               | Out-File -Append $env:GITHUB_ENV
+        "PACKAGE_NAME=$zip"                       | Out-File -Append $env:GITHUB_ENV
+        "PACKAGE_PATH=$env:BUILD_DIR\$zip"         | Out-File -Append $env:GITHUB_ENV
+        "PACKAGE_DIR=$env:BUILD_DIR\$name"         | Out-File -Append $env:GITHUB_ENV
+        "VERSION=$version"                        | Out-File -Append $env:GITHUB_ENV
 
         Write-Host "Packaged: $zip"
 
@@ -170,10 +171,10 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.PACKAGE_NAME }}
-        path: ${{ env.PACKAGE_PATH }}
+        name: Blended-${{ env.VERSION }}-windows-x64
+        path: ${{ env.PACKAGE_DIR }}
         retention-days: 90
-        compression-level: 0  # already a .zip
+        compression-level: 0
 
     # ── GitHub Release (tags only) ────────────────────────────
     - name: Create GitHub Release
