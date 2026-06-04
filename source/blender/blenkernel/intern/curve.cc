@@ -26,6 +26,7 @@
 #include "BLI_math_vector_types.hh"
 #include "BLI_string.h"
 #include "BLI_string_utf8.h"
+#include "BLI_string_utils.hh"
 #include "BLI_utildefines.h"
 #include "BLT_translation.hh"
 
@@ -393,7 +394,23 @@ Curve *BKE_curve_add(Main *bmain, const char *name, int type)
     ListBaseT<ID> *lb = which_libbase(bmain, ID_CU_LEGACY);
     BKE_main_lock(bmain);
     BLI_addtail(lb, cu);
-    BKE_id_new_name_validate(*bmain, *lb, cu->id, name, IDNewNameMode::RenameExistingNever, true);
+    /* ID_CU_LEGACY is deregistered — BKE_id_new_name_validate indexes namemap at -1 → crash. */
+    BLI_strncpy_utf8(cu->id.name + 2, name, sizeof(cu->id.name) - 2);
+    BLI_uniquename_cb(
+        [&](const StringRef check_name) {
+          LISTBASE_FOREACH (const ID *, id_iter, reinterpret_cast<const ListBase *>(lb)) {
+            if (id_iter != &cu->id && id_iter->lib == cu->id.lib &&
+                check_name == (id_iter->name + 2)) {
+              return true;
+            }
+          }
+          return false;
+        },
+        name,
+        '.',
+        cu->id.name + 2,
+        sizeof(cu->id.name) - 2);
+    id_sort_by_name(lb, &cu->id, nullptr);
     bmain->is_memfile_undo_written = false;
     BKE_main_unlock(bmain);
   }

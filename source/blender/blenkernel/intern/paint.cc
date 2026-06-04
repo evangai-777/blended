@@ -1244,12 +1244,21 @@ Palette *BKE_palette_add(Main *bmain, const char *name)
      * name directly then walk the listbase to guarantee uniqueness (prevents
      * duplicate names that make PALETTE_OT_join lookups ambiguous). */
     BLI_strncpy_utf8(palette->id.name + 2, name, sizeof(palette->id.name) - 2);
-    BLI_uniquename(reinterpret_cast<const ListBase *>(lb),
-                   palette,
-                   name,
-                   '.',
-                   offsetof(ID, name) + 2,
-                   sizeof(palette->id.name) - 2);
+    BLI_uniquename_cb(
+        [&](const StringRef check_name) {
+          LISTBASE_FOREACH (const ID *, id_iter, reinterpret_cast<const ListBase *>(lb)) {
+            if (id_iter != &palette->id && id_iter->lib == palette->id.lib &&
+                check_name == (id_iter->name + 2)) {
+              return true;
+            }
+          }
+          return false;
+        },
+        name,
+        '.',
+        palette->id.name + 2,
+        sizeof(palette->id.name) - 2);
+    id_sort_by_name(lb, &palette->id, nullptr);
     bmain->is_memfile_undo_written = false;
     BKE_main_unlock(bmain);
   }

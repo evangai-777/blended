@@ -43,6 +43,7 @@
 #include "BLI_math_vector.h"
 #include "BLI_rand.h"
 #include "BLI_string_utf8.h"
+#include "BLI_string_utils.hh"
 #include "BLI_task.h"
 #include "BLI_threads.h"
 #include "BLI_utildefines.h"
@@ -3784,8 +3785,23 @@ ParticleSettings *BKE_particlesettings_add(Main *bmain, const char *name)
   ListBaseT<ID> *lb = which_libbase(bmain, ID_PA);
   BKE_main_lock(bmain);
   BLI_addtail(lb, part);
-  BKE_id_new_name_validate(
-      *bmain, *lb, part->id, name, IDNewNameMode::RenameExistingNever, true);
+  /* ID_PA is deregistered — BKE_id_new_name_validate indexes namemap at -1 → crash. */
+  BLI_strncpy_utf8(part->id.name + 2, name, sizeof(part->id.name) - 2);
+  BLI_uniquename_cb(
+      [&](const StringRef check_name) {
+        LISTBASE_FOREACH (const ID *, id_iter, reinterpret_cast<const ListBase *>(lb)) {
+          if (id_iter != &part->id && id_iter->lib == part->id.lib &&
+              check_name == (id_iter->name + 2)) {
+            return true;
+          }
+        }
+        return false;
+      },
+      name,
+      '.',
+      part->id.name + 2,
+      sizeof(part->id.name) - 2);
+  id_sort_by_name(lb, &part->id, nullptr);
   bmain->is_memfile_undo_written = false;
   BKE_main_unlock(bmain);
   BKE_lib_libblock_session_uid_ensure(&part->id);
