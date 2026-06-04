@@ -18,6 +18,7 @@
 #include "BLI_math_vector.h"
 #include "BLI_string.h"
 #include "BLI_string_utf8.h"
+#include "BLI_string_utils.hh"
 #include "BLI_utildefines.h"
 
 #include "BLT_translation.hh"
@@ -362,7 +363,23 @@ Lattice *BKE_lattice_add(Main *bmain, const char *name)
     ListBaseT<ID> *lb = which_libbase(bmain, ID_LT);
     BKE_main_lock(bmain);
     BLI_addtail(lb, lt);
-    BKE_id_new_name_validate(*bmain, *lb, lt->id, name, IDNewNameMode::RenameExistingNever, true);
+    /* ID_LT is deregistered — BKE_id_new_name_validate indexes namemap at -1 → crash. */
+    BLI_strncpy_utf8(lt->id.name + 2, name, sizeof(lt->id.name) - 2);
+    BLI_uniquename_cb(
+        [&](const StringRef check_name) {
+          LISTBASE_FOREACH (const ID *, id_iter, reinterpret_cast<const ListBase *>(lb)) {
+            if (id_iter != &lt->id && id_iter->lib == lt->id.lib &&
+                check_name == (id_iter->name + 2)) {
+              return true;
+            }
+          }
+          return false;
+        },
+        name,
+        '.',
+        lt->id.name + 2,
+        sizeof(lt->id.name) - 2);
+    id_sort_by_name(lb, &lt->id, nullptr);
     bmain->is_memfile_undo_written = false;
     BKE_main_unlock(bmain);
   }

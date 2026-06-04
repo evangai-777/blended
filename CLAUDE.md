@@ -56,7 +56,8 @@ All pre-1.0.0 deferred debt resolved in 0.9.x. See CHANGELOG.md `## 0.9.0` for f
 
 | Trigger | Failure | Introduced | Fixed |
 |---------|---------|------------|-------|
-| Any startup — fresh install or default file | `BKE_palette_add` crashed immediately via `BKE_gpencil_palette_ensure` → `BLO_update_defaults_startup_blend`. Root cause: the Scar 10 allocator called `BKE_id_new_name_validate`, which routes into `BKE_main_namemap_get_unique_name` → `namemap_get_name`. The namemap is indexed by `BKE_idtype_idcode_to_index(ID_PAL)`, which returns -1 for the deregistered Scar 2 type. Accessing `maps[-1]` (an 8-byte pointer array) yields address `0xFFFFFFFFFFFFFFF8` — reading garbage as a `Map<string>` object, crashing in the string slot destructor. Build 97 (the first 0.7.0 release artifact) crashed on launch for all users. Fix: bypass `BKE_id_new_name_validate`; instead assign the name via `BLI_strncpy_utf8` then call `BLI_uniquename(reinterpret_cast<const ListBase *>(lb), palette, name, '.', offsetof(ID, name) + 2, sizeof(palette->id.name) - 2)`. `BLI_uniquename` walks the listbase directly and appends `.001`/`.002`/… without touching the namemap — preserving uniqueness for `PALETTE_OT_join` name lookups. **General rule for all future Scar 10 allocators:** never call `BKE_id_new_name_validate` for a deregistered type; use `BLI_strncpy_utf8` + `BLI_uniquename` on the Scar 2 listbase instead. | 0.5.0 (ID_PAL Scar 10 allocator) | PR #214, commit `25f59735` (`paint.cc`) |
+| Any startup — fresh install or default file | `BKE_palette_add` crashed immediately via `BKE_gpencil_palette_ensure` → `BLO_update_defaults_startup_blend`. Root cause: the Scar 10 allocator called `BKE_id_new_name_validate`, which routes into `BKE_main_namemap_get_unique_name` → `namemap_get_name`. The namemap is indexed by `BKE_idtype_idcode_to_index(ID_PAL)`, which returns -1 for the deregistered Scar 2 type. Accessing `maps[-1]` (an 8-byte pointer array) yields address `0xFFFFFFFFFFFFFFF8` — reading garbage as a `Map<string>` object, crashing in the string slot destructor. Build 97 (the first 0.7.0 release artifact) crashed on launch for all users. Initial fix (PR #214): bypass `BKE_id_new_name_validate`; instead assign the name via `BLI_strncpy_utf8` then call `BLI_uniquename` on the Scar 2 listbase. Later corrected in PR #235 (see build 103 row): `BLI_uniquename` has two gaps — it doesn't sort the listbase and doesn't scope uniqueness to the same library. **General rule for all Scar 10 allocators:** never call `BKE_id_new_name_validate` for a deregistered type; use `BLI_strncpy_utf8` + `BLI_uniquename_cb` (lib-scoped lambda) + `id_sort_by_name` on the Scar 2 listbase instead. See Scar 10 for the correct template. | 0.5.0 (ID_PAL Scar 10 allocator) | PR #214 commit `25f59735`, corrected PR #235 (`paint.cc`) |
+| Any startup — all 1.0.0-dev builds (build 103) | `BKE_brush_add` and 8 other deregistered-type allocators called `BKE_id_new_name_validate` after the Scar 10 `BKE_libblock_alloc` fix. Same namemap crash chain: index = -1, `maps[-1]` = `0xFFFFFFFFFFFFFFF8` → AV. Root cause: the Scar 10 code template in CLAUDE.md showed `BKE_id_new_name_validate` in the fix pattern — which is itself a crash for deregistered types. Every allocator patched per Scar 10 inherited the second-generation bug from the wrong template. Affected: `BKE_brush_add` (ID_BR), `BKE_curve_add` (ID_CU_LEGACY), `BKE_lattice_add` (ID_LT), `BKE_lightprobe_add` (ID_LP), VFont loader (ID_VF), `BKE_particlesettings_add` (ID_PA), `BKE_linestyle_new` (ID_LS), `BKE_gpencil_data_addnew` (ID_GD_LEGACY), `mask_alloc` (ID_MSK), plus `BKE_palette_add` (ID_PAL) and `screen_add` (ID_SCR_LEGACY) from earlier sessions — 11 allocators total. Fix: replace `BKE_id_new_name_validate` with `BLI_strncpy_utf8` + `BLI_uniquename_cb` (lib-scoped lambda filtering `id_iter->lib == obj->id.lib`) + `id_sort_by_name`. Two Codex catches on PR #235: (1) missing `id_sort_by_name` — `BLI_uniquename` doesn't keep listbase sorted; (2) missing library scope — `BLI_uniquename` checks all IDs regardless of `id.lib`, causing false `.001` suffix when a linked library has the same name. Scar 10 template updated with correct pattern. | Various (ID_BR: 0.7.0; others 0.4.0–0.5.0) | PR #235, commits `bd00e157` / `5cad0bac` / `f52b74bf` (11 files) |
 | Any startup — all 0.9.0 builds | `wm_add_default` crashed at startup via `BKE_libblock_alloc(bmain, ID_WM_LEGACY, "WinMan", 0)`. `ID_WM_LEGACY` has no `IDTypeInfo` — `BKE_libblock_get_alloc_info` returns size 0, `BKE_libblock_alloc_notest` returns nullptr, `BKE_libblock_alloc_in_lib` calls `BKE_libblock_runtime_ensure(*id)` which dereferences nullptr at offset `0x190` (the `runtime` field in `ID`) → `EXCEPTION_ACCESS_VIOLATION 0xc0000005`. Same Scar 10 pattern as ID_PAL, different call site: `wm.cc` `wm_add_default`. Caught during Phase 1 runtime audit on build 101. Fix: Scar 10 manual allocation pattern — `MEM_new<wmWindowManager>` + `BKE_libblock_runtime_ensure` + `BLI_strncpy_utf8`/`BLI_uniquename` on `which_libbase(bmain, ID_WM_LEGACY)`. Added `BLI_string_utils.hh` include. | 0.3.0 (ID_WM deregistration) | 1.0.0-dev (`wm.cc`) |
 | Any new workspace, screen split, or screen creation | `screen_add` in `screen_edit.cc:197` called `BKE_libblock_alloc(bmain, ID_SCR_LEGACY, name, 0)`. Same null-deref crash — `ID_SCR_LEGACY` has no `IDTypeInfo`. Would crash any time a new screen was created at runtime, not just startup. Found by full Scar 10 sweep during Phase 1 audit (Scar 25). Fix: same Scar 10 manual pattern with `MEM_new<bScreen>`. | 0.3.0 (ID_SCR deregistration) | 1.0.0-dev (`screen_edit.cc`) |
 | Running blend-loading test suite | `blendfile_loading_base_test.cc:85` test helper called `BKE_libblock_alloc(G.main, ID_WM_LEGACY, "WMdummy", 0)` — same null-deref crash, test path. Found by Scar 10 sweep. Fix: same Scar 10 manual pattern. | 0.3.0 (ID_WM deregistration) | 1.0.0-dev (`blendfile_loading_base_test.cc`) |
@@ -420,13 +421,29 @@ obj->id.us = 1;
   ListBaseT<ID> *lb = which_libbase(bmain, ID_XX);  /* Scar 2 routing still intact */
   BKE_main_lock(bmain);
   BLI_addtail(lb, obj);
-  BKE_id_new_name_validate(*bmain, *lb, obj->id, name, IDNewNameMode::RenameExistingNever, true);
+  BLI_strncpy_utf8(obj->id.name + 2, name, sizeof(obj->id.name) - 2);
+  BLI_uniquename_cb(
+      [&](const StringRef check_name) {
+        LISTBASE_FOREACH (const ID *, id_iter, reinterpret_cast<const ListBase *>(lb)) {
+          if (id_iter != &obj->id && id_iter->lib == obj->id.lib &&
+              check_name == (id_iter->name + 2)) {
+            return true;
+          }
+        }
+        return false;
+      },
+      name, '.', obj->id.name + 2, sizeof(obj->id.name) - 2);
+  id_sort_by_name(lb, &obj->id, nullptr);
   bmain->is_memfile_undo_written = false;
   BKE_main_unlock(bmain);
 }
 BKE_lib_libblock_session_uid_ensure(&obj->id);
 ```
-Requires `BKE_lib_id.hh` (for `BKE_libblock_runtime_ensure`, `BKE_lib_libblock_session_uid_ensure`, `BKE_id_new_name_validate`, `IDNewNameMode`) and `BKE_main.hh` (for `which_libbase`, `BKE_main_lock/unlock`).
+Requires `BKE_lib_id.hh` (for `BKE_libblock_runtime_ensure`, `BKE_lib_libblock_session_uid_ensure`, `id_sort_by_name`), `BKE_main.hh` (for `which_libbase`, `BKE_main_lock/unlock`), `BLI_string_utf8.h` (for `BLI_strncpy_utf8`), and `BLI_string_utils.hh` (for `BLI_uniquename_cb`).
+
+**Why not `BKE_id_new_name_validate`:** This function routes into `BKE_main_namemap_get_unique_name` → `namemap_get_name`, which indexes `maps[BKE_idtype_idcode_to_index(type)]`. For deregistered types, `BKE_idtype_idcode_to_index` returns -1, and `maps[-1]` is `0xFFFFFFFFFFFFFFF8` — reading garbage as a `Map<string>`, crashing in the string slot destructor. **Never call `BKE_id_new_name_validate` for a deregistered type.**
+
+**Why `BLI_uniquename_cb` over `BLI_uniquename`:** `BLI_uniquename` has two gaps: (1) it doesn't call `id_sort_by_name` — the listbase is left unsorted; (2) it checks all IDs regardless of `id.lib` — a local "Foo" incorrectly gets renamed "Foo.001" if a linked library also has "Foo". `BKE_id_new_name_validate` scopes to `id.lib`; the lambda above preserves that behavior.
 
 **Cannot restore INIT_TYPE as the fix:** `INDEX_ID_XX` was also removed from the `IDIndex` enum. `MainListsArray` is `std::array<ListBaseT<ID>*, INDEX_ID_MAX - 1>` — `BKE_main_free` dereferences every slot. An unset `lb[INDEX_ID_XX]` nullptr crashes there. Restoring `INDEX_ID_PA` would require also restoring `lb[INDEX_ID_PA]` in `BKE_main_lists_get`, which fully restores the type to the indexed system — undoing the chisel.
 
@@ -442,17 +459,26 @@ The rule that would have caught #2 immediately: **read the struct before choosin
 - Non-trivial T (any in-class initializer, `DNA_DEFINE_CXX_METHODS`, std:: members): `MEM_new<T>` (runs constructor)
 - Never `MEM_callocN` for C++ types with constructors
 
-**Mandatory post-chisel grep (run after removing INIT_TYPE for any type):**
+**Mandatory post-chisel greps (run after removing INIT_TYPE for any type):**
+
+Grep 1 — catch `BKE_libblock_alloc` calls for the deregistered type:
 ```bash
 grep -rn "BKE_libblock_alloc.*ID_XX" source/ --include="*.cc" --include="*.c"
 ```
 Every hit is a potential crash. Each allocation function must be patched to the manual pattern above, or the caller must be removed entirely if the path is truly dead.
 
-**Retroactivity note (Scar 25):** When this rule was first written (0.5.0), it was framed as going forward — run it after each future INIT_TYPE removal. It was not run retroactively against all previously deregistered types. `ID_WM_LEGACY` and `ID_SCR_LEGACY` were deregistered in 0.3.0; their `BKE_libblock_alloc` callers (`wm_add_default`, `screen_add`, test helper) shipped crashing in every build from 0.3.0 through 0.9.0. The Phase 1 audit found all three. **When this rule is first added (or re-read for the first time in a new session), run the full sweep now:**
+Grep 2 — catch `BKE_id_new_name_validate` calls in the same allocators:
+```bash
+grep -rn "BKE_id_new_name_validate" source/ --include="*.cc" --include="*.c"
+```
+Every hit in a deregistered-type allocator is a second-generation namemap crash. The Scar 10 template formerly showed `BKE_id_new_name_validate` as the correct fix — it is not. All calls in Scar 10 allocators must be replaced with the `BLI_strncpy_utf8` + `BLI_uniquename_cb` + `id_sort_by_name` pattern above.
+
+**Retroactivity note (Scar 25):** When this rule was first written (0.5.0), it was framed as going forward — run it after each future INIT_TYPE removal. It was not run retroactively against all previously deregistered types. `ID_WM_LEGACY` and `ID_SCR_LEGACY` were deregistered in 0.3.0; their `BKE_libblock_alloc` callers (`wm_add_default`, `screen_add`, test helper) shipped crashing in every build from 0.3.0 through 0.9.0. The Phase 1 audit found all three. **When this rule is first added (or re-read for the first time in a new session), run both full sweeps now:**
 ```bash
 grep -rn "BKE_libblock_alloc\b" source/ --include="*.cc" --include="*.c" | grep -v "alloc_notest\|get_alloc_info\|alloc_in_lib" | grep "ID_"
+grep -rn "BKE_id_new_name_validate" source/ --include="*.cc" --include="*.c"
 ```
-Cross-reference every `ID_XX` in the output against the `IDTypeInfo` registry. Any call using a deregistered type is a crash waiting to happen.
+Cross-reference every `ID_XX` in the first output against the `IDTypeInfo` registry. Any call using a deregistered type is a crash waiting to happen. For the second grep: any hit in a deregistered-type allocator (check against the registry) must be replaced with the correct pattern.
 
 ---
 
