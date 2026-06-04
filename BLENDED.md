@@ -1485,6 +1485,8 @@ The first time in the project where the developer runs the actual Blended build 
 
 **Starting state (2026-06-01):** Ground zero except Category D (BKE_palette_add crash, build 97, fixed PR #214 before the audit formally began). Categories A, B, C — all entries unverified at runtime.
 
+**Current state (2026-06-04):** Four Category D crashes fixed across two audit sessions. `wm_add_default` null-deref (build 101, `wm.cc`), `screen_add` null-deref (`screen_edit.cc`), test helper null-deref (`blendfile_loading_base_test.cc`), and build 103 startup crash — second-generation Scar 10 namemap bug in 11 deregistered-type allocators (PR #235). Categories A, B, C runtime verification still pending.
+
 #### Category A — Expected behavior changes (by design, won't fix)
 
 | Trigger | What happens | Introduced |
