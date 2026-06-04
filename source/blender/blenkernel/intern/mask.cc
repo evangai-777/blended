@@ -975,6 +975,7 @@ static Mask *mask_alloc(Main *bmain, const char *name)
                    '.',
                    offsetof(ID, name) + 2,
                    sizeof(mask->id.name) - 2);
+    id_sort_by_name(lb, &mask->id, nullptr);
     bmain->is_memfile_undo_written = false;
     BKE_main_unlock(bmain);
   }

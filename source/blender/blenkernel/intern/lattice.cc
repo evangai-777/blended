@@ -371,6 +371,7 @@ Lattice *BKE_lattice_add(Main *bmain, const char *name)
                    '.',
                    offsetof(ID, name) + 2,
                    sizeof(lt->id.name) - 2);
+    id_sort_by_name(lb, &lt->id, nullptr);
     bmain->is_memfile_undo_written = false;
     BKE_main_unlock(bmain);
   }

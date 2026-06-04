@@ -318,6 +318,7 @@ VFont *BKE_vfont_load(Main *bmain, const char *filepath)
                        '.',
                        offsetof(ID, name) + 2,
                        sizeof(vfont->id.name) - 2);
+        id_sort_by_name(lb, &vfont->id, nullptr);
         bmain->is_memfile_undo_written = false;
         BKE_main_unlock(bmain);
       }

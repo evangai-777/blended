@@ -1250,6 +1250,7 @@ Palette *BKE_palette_add(Main *bmain, const char *name)
                    '.',
                    offsetof(ID, name) + 2,
                    sizeof(palette->id.name) - 2);
+    id_sort_by_name(lb, &palette->id, nullptr);
     bmain->is_memfile_undo_written = false;
     BKE_main_unlock(bmain);
   }

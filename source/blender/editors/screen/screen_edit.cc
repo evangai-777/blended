@@ -211,6 +211,7 @@ bScreen *screen_add(Main *bmain, const char *name, const rcti *rect)
                    '.',
                    offsetof(ID, name) + 2,
                    sizeof(screen->id.name) - 2);
+    id_sort_by_name(lb, &screen->id, nullptr);
     bmain->is_memfile_undo_written = false;
     BKE_main_unlock(bmain);
   }

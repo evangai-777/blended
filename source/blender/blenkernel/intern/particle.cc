@@ -3793,6 +3793,7 @@ ParticleSettings *BKE_particlesettings_add(Main *bmain, const char *name)
                  '.',
                  offsetof(ID, name) + 2,
                  sizeof(part->id.name) - 2);
+  id_sort_by_name(lb, &part->id, nullptr);
   bmain->is_memfile_undo_written = false;
   BKE_main_unlock(bmain);
   BKE_lib_libblock_session_uid_ensure(&part->id);

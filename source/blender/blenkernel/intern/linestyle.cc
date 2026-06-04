@@ -727,6 +727,7 @@ FreestyleLineStyle *BKE_linestyle_new(Main *bmain, const char *name)
                    '.',
                    offsetof(ID, name) + 2,
                    sizeof(linestyle->id.name) - 2);
+    id_sort_by_name(lb, &linestyle->id, nullptr);
     bmain->is_memfile_undo_written = false;
     BKE_main_unlock(bmain);
   }

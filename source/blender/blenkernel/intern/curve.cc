@@ -402,6 +402,7 @@ Curve *BKE_curve_add(Main *bmain, const char *name, int type)
                    '.',
                    offsetof(ID, name) + 2,
                    sizeof(cu->id.name) - 2);
+    id_sort_by_name(lb, &cu->id, nullptr);
     bmain->is_memfile_undo_written = false;
     BKE_main_unlock(bmain);
   }

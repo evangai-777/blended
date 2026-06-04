@@ -656,6 +656,7 @@ Brush *BKE_brush_add(Main *bmain, const char *name, const eObjectMode ob_mode)
                    '.',
                    offsetof(ID, name) + 2,
                    sizeof(brush->id.name) - 2);
+    id_sort_by_name(lb, &brush->id, nullptr);
     bmain->is_memfile_undo_written = false;
     BKE_main_unlock(bmain);
   }
