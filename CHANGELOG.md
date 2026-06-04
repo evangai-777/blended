@@ -53,6 +53,17 @@ Full-codebase audit of all `BKE_libblock_alloc` calls with deregistered type IDs
 *Binary naming fix — Windows executable branding gap:*
 The 0.7.0 identity pass set `OUTPUT_NAME Blender` only inside `elseif(APPLE)` in `source/creator/CMakeLists.txt` — Windows was never updated. The released Windows binary ships as `blender.exe` instead of `Blended.exe`. Fix: added `set_target_properties(blender PROPERTIES OUTPUT_NAME Blended)` in the `WIN32 AND NOT WITH_PYTHON_MODULE` block; updated `BLENDER_BIN` from `blender.exe` → `Blended.exe`; added `RENAME Blended.exe.manifest` to the external-manifest install rule; updated `blender_launcher_win32.c` to launch `Blended.exe` instead of `blender.exe`.
 
+**Phase 1 runtime audit — second findings (2026-06-04):**
+
+*Build 103 startup crash — second-generation Scar 10 namemap bug (Category D):*
+`BKE_brush_add` (ID_BR) and 8 other deregistered-type allocators called `BKE_id_new_name_validate` after their Scar 10 `BKE_libblock_alloc` fix was applied. `BKE_id_new_name_validate` routes into `BKE_main_namemap_get_unique_name` → `namemap_get_name`, which indexes `maps[BKE_idtype_idcode_to_index(type)]`. For deregistered types, the index is -1, and `maps[-1]` is `0xFFFFFFFFFFFFFFF8` — reading garbage as a `Map<string>` object → AV crash on startup. Root cause: the Scar 10 code template in CLAUDE.md showed `BKE_id_new_name_validate` as the correct fix pattern, so every allocator patched per Scar 10 inherited the second-generation crash.
+
+Affected allocators (11 total): `BKE_brush_add` (ID_BR, `brush.cc`), `BKE_curve_add` (ID_CU_LEGACY, `curve.cc`), `BKE_lattice_add` (ID_LT, `lattice.cc`), `BKE_lightprobe_add` (ID_LP, `lightprobe.cc`), VFont loader (ID_VF, `vfont.cc`), `BKE_particlesettings_add` (ID_PA, `particle.cc`), `BKE_linestyle_new` (ID_LS, `linestyle.cc`), `BKE_gpencil_data_addnew` (ID_GD_LEGACY, `gpencil_legacy.cc`), `mask_alloc` (ID_MSK, `mask.cc`), `BKE_palette_add` (ID_PAL, `paint.cc` — corrected from PR #214), `screen_add` (ID_SCR_LEGACY, `screen_edit.cc` — corrected from 1.0.0-dev).
+
+Fix: replace `BKE_id_new_name_validate` with `BLI_strncpy_utf8` + `BLI_uniquename_cb` (lib-scoped lambda filtering `id_iter->lib == obj->id.lib`) + `id_sort_by_name`. Two Codex catches on PR #235: (1) commit `5cad0bac` — `BLI_uniquename` (initial replacement) doesn't call `id_sort_by_name`, leaving the listbase unsorted; (2) commit `f52b74bf` — `BLI_uniquename` checks all IDs regardless of `id.lib`, causing false `.001` suffix when a linked library has the same name. Final correct pattern documented in Scar 10 template in CLAUDE.md. PR #235, commits `bd00e157` / `5cad0bac` / `f52b74bf`.
+
+**Claude AI contributor (2026-06-04 — 1.0.0-dev Phase 1 second findings):** Build 103 startup crash triage, sweep, and fix. Identified second-generation Scar 10 namemap crash in `BKE_brush_add`; swept all deregistered-type allocators with the same bug (11 total); fixed all 11 with `BLI_strncpy_utf8` + `BLI_uniquename_cb` + `id_sort_by_name`; two Codex catches on PR #235 (missing `id_sort_by_name`, missing library scope) resolved in follow-up commits. Scar 10 template in CLAUDE.md updated with the correct pattern and a second mandatory post-chisel grep for `BKE_id_new_name_validate`. Category D table updated in CLAUDE.md and BLENDED.md.
+
 ---
 
 ## 0.9.0 — 2026-06-01 — CI-complete (build 101, commit `c8e87078`)
