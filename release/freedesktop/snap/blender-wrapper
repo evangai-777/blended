@@ -17,5 +17,5 @@ if [ -n "$XDG_RUNTIME_DIR" ]; then
     fi
 fi
 
-# Run Blender
-exec $SNAP/blender-launcher "$@"
+# Run Blended
+exec $SNAP/blended-launcher "$@"

@@ -71,7 +71,7 @@ ALLOWED_LIBS = [
     'libxcb.so',
 ]
 
-IGNORE_FILES = ("blender-launcher", "blender-softwaregl", )
+IGNORE_FILES = ("blended-launcher", "blender-softwaregl", )
 IGNORE_EXTENSION = (".sh", ".py", )
 
 

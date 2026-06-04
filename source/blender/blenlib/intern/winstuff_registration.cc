@@ -31,7 +31,7 @@ namespace blender {
 /**
  * Pinning: Windows allows people to pin an application to their taskbar, when a user pins
  * blender, the data we set in `GHOST_WindowWin32::registerWindowAppUserModelProperties` is used
- * which includes the path to the `blender-launcher.exe`. Now once that shortcut is created on
+ * which includes the path to the `blended-launcher.exe`. Now once that shortcut is created on
  * the taskbar, this will never be updated, if people remove blender and install it again to a
  * different path (happens often when using nightly builds) this leads to the situation where the
  * shortcut on the taskbar points to a no longer existing blender installation. Now you may think,
