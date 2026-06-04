@@ -969,12 +969,20 @@ static Mask *mask_alloc(Main *bmain, const char *name)
     BLI_addtail(lb, mask);
     /* ID_MSK is deregistered — BKE_id_new_name_validate indexes namemap at -1 → crash. */
     BLI_strncpy_utf8(mask->id.name + 2, name, sizeof(mask->id.name) - 2);
-    BLI_uniquename(reinterpret_cast<const ListBase *>(lb),
-                   mask,
-                   name,
-                   '.',
-                   offsetof(ID, name) + 2,
-                   sizeof(mask->id.name) - 2);
+    BLI_uniquename_cb(
+        [&](const StringRef check_name) {
+          LISTBASE_FOREACH (const ID *, id_iter, reinterpret_cast<const ListBase *>(lb)) {
+            if (id_iter != &mask->id && id_iter->lib == mask->id.lib &&
+                check_name == (id_iter->name + 2)) {
+              return true;
+            }
+          }
+          return false;
+        },
+        name,
+        '.',
+        mask->id.name + 2,
+        sizeof(mask->id.name) - 2);
     id_sort_by_name(lb, &mask->id, nullptr);
     bmain->is_memfile_undo_written = false;
     BKE_main_unlock(bmain);

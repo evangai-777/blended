@@ -67,12 +67,20 @@ LightProbe *BKE_lightprobe_add(Main *bmain, const char *name)
     BLI_addtail(lb, probe);
     /* ID_LP is deregistered — BKE_id_new_name_validate indexes namemap at -1 → crash. */
     BLI_strncpy_utf8(probe->id.name + 2, name, sizeof(probe->id.name) - 2);
-    BLI_uniquename(reinterpret_cast<const ListBase *>(lb),
-                   probe,
-                   name,
-                   '.',
-                   offsetof(ID, name) + 2,
-                   sizeof(probe->id.name) - 2);
+    BLI_uniquename_cb(
+        [&](const StringRef check_name) {
+          LISTBASE_FOREACH (const ID *, id_iter, reinterpret_cast<const ListBase *>(lb)) {
+            if (id_iter != &probe->id && id_iter->lib == probe->id.lib &&
+                check_name == (id_iter->name + 2)) {
+              return true;
+            }
+          }
+          return false;
+        },
+        name,
+        '.',
+        probe->id.name + 2,
+        sizeof(probe->id.name) - 2);
     id_sort_by_name(lb, &probe->id, nullptr);
     bmain->is_memfile_undo_written = false;
     BKE_main_unlock(bmain);

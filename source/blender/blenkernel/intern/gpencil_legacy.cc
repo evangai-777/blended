@@ -630,12 +630,20 @@ bGPdata *BKE_gpencil_data_addnew(Main *bmain, const char name[])
     BLI_addtail(lb, gpd);
     /* ID_GD_LEGACY is deregistered — BKE_id_new_name_validate indexes namemap at -1 → crash. */
     BLI_strncpy_utf8(gpd->id.name + 2, name, sizeof(gpd->id.name) - 2);
-    BLI_uniquename(reinterpret_cast<const ListBase *>(lb),
-                   gpd,
-                   name,
-                   '.',
-                   offsetof(ID, name) + 2,
-                   sizeof(gpd->id.name) - 2);
+    BLI_uniquename_cb(
+        [&](const StringRef check_name) {
+          LISTBASE_FOREACH (const ID *, id_iter, reinterpret_cast<const ListBase *>(lb)) {
+            if (id_iter != &gpd->id && id_iter->lib == gpd->id.lib &&
+                check_name == (id_iter->name + 2)) {
+              return true;
+            }
+          }
+          return false;
+        },
+        name,
+        '.',
+        gpd->id.name + 2,
+        sizeof(gpd->id.name) - 2);
     id_sort_by_name(lb, &gpd->id, nullptr);
     bmain->is_memfile_undo_written = false;
     BKE_main_unlock(bmain);
