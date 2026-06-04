@@ -263,11 +263,11 @@ void BKE_blender_globals_crash_path_get(char filepath[FILE_MAX])
    * de-referencing. */
 
   if (!(G_MAIN && G_MAIN->filepath[0])) {
-    BLI_path_join(filepath, FILE_MAX, BKE_tempdir_base(), "blender.crash.txt");
+    BLI_path_join(filepath, FILE_MAX, BKE_tempdir_base(), "blended_crash.txt");
   }
   else {
     BLI_path_join(filepath, FILE_MAX, BKE_tempdir_base(), BLI_path_basename(G_MAIN->filepath));
-    BLI_path_extension_replace(filepath, FILE_MAX, ".crash.txt");
+    BLI_path_extension_replace(filepath, FILE_MAX, "_crash.txt");
   }
 }
 

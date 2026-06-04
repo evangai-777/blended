@@ -1245,7 +1245,7 @@ void GHOST_WindowWin32::registerWindowAppUserModelProperties()
 
   /* Set the launcher as the shell command so the console window will not flash.
    * when people pin blender to the taskbar. */
-  strcpy(blender_app, "blender-launcher.exe");
+  strcpy(blender_app, "blended-launcher.exe");
   wsprintfW(shell_command, L"\"%S\"", blender_path);
   UTF16_ENCODE(BLENDER_WIN_APPID);
   UTF16_ENCODE(BLENDER_WIN_APPID_FRIENDLY_NAME);
