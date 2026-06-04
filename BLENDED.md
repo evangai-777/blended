@@ -1485,6 +1485,8 @@ The first time in the project where the developer runs the actual Blended build 
 
 **Starting state (2026-06-01):** Ground zero except Category D (BKE_palette_add crash, build 97, fixed PR #214 before the audit formally began). Categories A, B, C — all entries unverified at runtime.
 
+**Current state (2026-06-04):** Four Category D crashes fixed across two audit sessions. `wm_add_default` null-deref (build 101, `wm.cc`), `screen_add` null-deref (`screen_edit.cc`), test helper null-deref (`blendfile_loading_base_test.cc`), and build 103 startup crash — second-generation Scar 10 namemap bug in 11 deregistered-type allocators (PR #235). Categories A, B, C runtime verification still pending.
+
 #### Category A — Expected behavior changes (by design, won't fix)
 
 | Trigger | What happens | Introduced |
@@ -1517,10 +1519,11 @@ The first time in the project where the developer runs the actual Blended build 
 
 | Trigger | Failure | Fixed |
 |---------|---------|-------|
-| Any startup — fresh install or default file | `BKE_palette_add` crashed via `BKE_gpencil_palette_ensure`. Root cause: Scar 10 allocator called `BKE_id_new_name_validate` for deregistered `ID_PAL`; namemap index returns -1; accessing `maps[-1]` yields garbage address → crash. Fix: bypass namemap, use `BLI_strncpy_utf8` + `BLI_uniquename` directly on the Scar 2 listbase. | PR #214, commit `25f59735` |
+| Any startup — fresh install or default file | `BKE_palette_add` crashed via `BKE_gpencil_palette_ensure`. Root cause: Scar 10 allocator called `BKE_id_new_name_validate` for deregistered `ID_PAL`; namemap index returns -1; accessing `maps[-1]` yields garbage address → crash. Initial fix (PR #214): bypass namemap with `BLI_strncpy_utf8` + `BLI_uniquename`. Later corrected in PR #235: `BLI_uniquename` missing `id_sort_by_name` and library scope (see build 103 row). | PR #214 commit `25f59735`, corrected PR #235 |
 | Any startup — all 0.9.0 builds | `wm_add_default` called `BKE_libblock_alloc(bmain, ID_WM_LEGACY)`. `ID_WM_LEGACY` has no `IDTypeInfo` → null-deref at offset `0x190` → `EXCEPTION_ACCESS_VIOLATION`. Caught Phase 1 audit. Fixed: Scar 10 manual allocation pattern in `wm.cc`. | 1.0.0-dev |
 | Any new workspace, screen split, or screen creation | `screen_add` called `BKE_libblock_alloc(bmain, ID_SCR_LEGACY)`. Same null-deref crash. Found by Scar 10 retroactive sweep (Scar 25). Fixed: `screen_edit.cc`. | 1.0.0-dev |
 | Running blend-loading test suite | `blendfile_loading_base_test.cc` test helper called `BKE_libblock_alloc(G.main, ID_WM_LEGACY)`. Same crash, test path. Found by sweep. Fixed. | 1.0.0-dev |
+| Any startup — all 1.0.0-dev builds (build 103) | `BKE_brush_add` and 8 other deregistered-type allocators called `BKE_id_new_name_validate` after the Scar 10 `BKE_libblock_alloc` fix — same namemap crash chain: index = -1, `maps[-1]` = `0xFFFFFFFFFFFFFFF8` → AV. Root cause: the Scar 10 template in CLAUDE.md showed `BKE_id_new_name_validate` as the correct fix, which is itself a crash for deregistered types. All 11 allocators (9 new + palette + screen) fixed with `BLI_strncpy_utf8` + `BLI_uniquename_cb` (lib-scoped lambda) + `id_sort_by_name`. Two Codex catches on PR #235: missing `id_sort_by_name` (commit `5cad0bac`), missing library scope (commit `f52b74bf`). | PR #235, commits `bd00e157` / `5cad0bac` / `f52b74bf` |
 
 **Audit gate:** Every Category A entry verified as silent at runtime (no console errors, no crashes). Categories B and C verified as behaving per documentation. All new findings either fixed or explicitly accepted into Category A/D.
 
