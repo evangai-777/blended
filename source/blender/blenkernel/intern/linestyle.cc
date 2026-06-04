@@ -719,8 +719,14 @@ FreestyleLineStyle *BKE_linestyle_new(Main *bmain, const char *name)
     ListBaseT<ID> *lb = which_libbase(bmain, ID_LS);
     BKE_main_lock(bmain);
     BLI_addtail(lb, linestyle);
-    BKE_id_new_name_validate(
-        *bmain, *lb, linestyle->id, name, IDNewNameMode::RenameExistingNever, true);
+    /* ID_LS is deregistered — BKE_id_new_name_validate indexes namemap at -1 → crash. */
+    BLI_strncpy_utf8(linestyle->id.name + 2, name, sizeof(linestyle->id.name) - 2);
+    BLI_uniquename(reinterpret_cast<const ListBase *>(lb),
+                   linestyle,
+                   name,
+                   '.',
+                   offsetof(ID, name) + 2,
+                   sizeof(linestyle->id.name) - 2);
     bmain->is_memfile_undo_written = false;
     BKE_main_unlock(bmain);
   }

@@ -967,8 +967,14 @@ static Mask *mask_alloc(Main *bmain, const char *name)
     ListBaseT<ID> *lb = which_libbase(bmain, ID_MSK);
     BKE_main_lock(bmain);
     BLI_addtail(lb, mask);
-    BKE_id_new_name_validate(
-        *bmain, *lb, mask->id, name, IDNewNameMode::RenameExistingNever, true);
+    /* ID_MSK is deregistered — BKE_id_new_name_validate indexes namemap at -1 → crash. */
+    BLI_strncpy_utf8(mask->id.name + 2, name, sizeof(mask->id.name) - 2);
+    BLI_uniquename(reinterpret_cast<const ListBase *>(lb),
+                   mask,
+                   name,
+                   '.',
+                   offsetof(ID, name) + 2,
+                   sizeof(mask->id.name) - 2);
     bmain->is_memfile_undo_written = false;
     BKE_main_unlock(bmain);
   }
