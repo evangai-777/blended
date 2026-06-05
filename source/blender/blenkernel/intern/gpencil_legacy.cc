@@ -632,7 +632,8 @@ bGPdata *BKE_gpencil_data_addnew(Main *bmain, const char name[])
     BLI_strncpy_utf8(gpd->id.name + 2, name, sizeof(gpd->id.name) - 2);
     BLI_uniquename_cb(
         [&](const StringRef check_name) {
-          LISTBASE_FOREACH (const ID *, id_iter, reinterpret_cast<const ListBase *>(lb)) {
+          for (const ID *id_iter = static_cast<const ID *>(lb->first); id_iter;
+               id_iter = static_cast<const ID *>(id_iter->next)) {
             if (id_iter != &gpd->id && id_iter->lib == gpd->id.lib &&
                 check_name == (id_iter->name + 2)) {
               return true;
