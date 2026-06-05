@@ -64,6 +64,13 @@ Fix: replace `BKE_id_new_name_validate` with `BLI_strncpy_utf8` + `BLI_uniquenam
 
 **Claude AI contributor (2026-06-04 — 1.0.0-dev Phase 1 second findings):** Build 103 startup crash triage, sweep, and fix. Identified second-generation Scar 10 namemap crash in `BKE_brush_add`; swept all deregistered-type allocators with the same bug (11 total); fixed all 11 with `BLI_strncpy_utf8` + `BLI_uniquename_cb` + `id_sort_by_name`; two Codex catches on PR #235 (missing `id_sort_by_name`, missing library scope) resolved in follow-up commits. Scar 10 template in CLAUDE.md updated with the correct pattern and a second mandatory post-chisel grep for `BKE_id_new_name_validate`. Category D table updated in CLAUDE.md and BLENDED.md.
 
+**Phase 1 runtime audit — third findings (2026-06-05):**
+
+*Build 104 MSVC compile failure — `LISTBASE_FOREACH` unavailable in blenkernel headers:*
+The PR #235 Scar 10 lambda fix used `LISTBASE_FOREACH` inside the `BLI_uniquename_cb` lambda across all 11 deregistered-type allocators. `LISTBASE_FOREACH` is defined only as a file-local macro in `listbase.cc` — it is not declared in any header and cannot be used outside that file. The blenkernel files (brush.cc, curve.cc, etc.) compiled from cached objects in build 103, masking the error. `screen_edit.cc` compiled fresh in build 104 and failed with MSVC C2760 syntax errors. Fix (PR #237, commit `ce5bb0c9`): replace `LISTBASE_FOREACH` with an explicit for loop in all 11 allocators — `for (const ID *id_iter = static_cast<const ID *>(lb->first); id_iter; id_iter = static_cast<const ID *>(id_iter->next))`. Semantically identical, no macro dependency, compiles clean under MSVC `/Zc:preprocessor`. Scar 10 template in CLAUDE.md updated to use the explicit loop. Scar 24 updated with a second-generation failure note (LISTBASE_FOREACH_MUTABLE → LISTBASE_FOREACH → explicit loop: two wrong iterations before the correct pattern).
+
+**Claude AI contributor (2026-06-05 — 1.0.0-dev Phase 1 third findings):** Build 104 MSVC compile failure triage and fix. Identified `LISTBASE_FOREACH` as file-local in `listbase.cc` (not available in any header); replaced with explicit for loop in all 11 Scar 10 allocators (PR #237). Updated Scar 10 template in CLAUDE.md and Scar 24 second-generation note. Category D table updated in CHANGELOG.md and BLENDED.md. CLAUDE.md, CHANGELOG.md, BLENDED.md, .github/README.md all updated.
+
 ---
 
 ## 0.9.0 — 2026-06-01 — CI-complete (build 101, commit `c8e87078`)

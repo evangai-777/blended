@@ -75,7 +75,7 @@ Contributors
 
 Blended is developed and published by **CHJ 3 Productions LLC** (Indiana).
 
-Developed with [Claude](https://anthropic.com) (Anthropic) as primary implementation partner across the full rebuild — version identity, CI pipeline, rig compatibility, update checker, datablock audit (0.2.x–0.5.x), evaluation model seam closure (0.6.x), launcher and full product identity (0.7.x), file format (0.8.x), `.blend` import (0.9.x), and 1.0.x runtime audit (crash triage, Scar 10 sweep, binary naming fix, build 103 allocator namemap fix PR #235). [Codex](https://openai.com) (OpenAI) contributes automated code review on pull requests, catching regressions and missed sites throughout 0.4.x–0.9.x. Per-release detail in [`CHANGELOG.md`](../CHANGELOG.md).
+Developed with [Claude](https://anthropic.com) (Anthropic) as primary implementation partner across the full rebuild — version identity, CI pipeline, rig compatibility, update checker, datablock audit (0.2.x–0.5.x), evaluation model seam closure (0.6.x), launcher and full product identity (0.7.x), file format (0.8.x), `.blend` import (0.9.x), and 1.0.x runtime audit (crash triage, Scar 10 sweep, binary naming fix, build 103 allocator namemap fix PR #235, build 104 LISTBASE_FOREACH compile fix PR #237). [Codex](https://openai.com) (OpenAI) contributes automated code review on pull requests, catching regressions and missed sites throughout 0.4.x–0.9.x. Per-release detail in [`CHANGELOG.md`](../CHANGELOG.md).
 
 Upstream Blender Resources
 --------------------------
