@@ -1246,7 +1246,8 @@ Palette *BKE_palette_add(Main *bmain, const char *name)
     BLI_strncpy_utf8(palette->id.name + 2, name, sizeof(palette->id.name) - 2);
     BLI_uniquename_cb(
         [&](const StringRef check_name) {
-          LISTBASE_FOREACH (const ID *, id_iter, reinterpret_cast<const ListBase *>(lb)) {
+          for (const ID *id_iter = static_cast<const ID *>(lb->first); id_iter;
+               id_iter = static_cast<const ID *>(id_iter->next)) {
             if (id_iter != &palette->id && id_iter->lib == palette->id.lib &&
                 check_name == (id_iter->name + 2)) {
               return true;
