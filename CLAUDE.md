@@ -424,7 +424,8 @@ obj->id.us = 1;
   BLI_strncpy_utf8(obj->id.name + 2, name, sizeof(obj->id.name) - 2);
   BLI_uniquename_cb(
       [&](const StringRef check_name) {
-        LISTBASE_FOREACH (const ID *, id_iter, reinterpret_cast<const ListBase *>(lb)) {
+        for (const ID *id_iter = static_cast<const ID *>(lb->first); id_iter;
+             id_iter = static_cast<const ID *>(id_iter->next)) {
           if (id_iter != &obj->id && id_iter->lib == obj->id.lib &&
               check_name == (id_iter->name + 2)) {
             return true;
@@ -695,6 +696,8 @@ Grep for the format's enum constant (`FILE_TYPE_BLENDER`) is the classification-
 **The rule:** When you find something wrong in the documentation, fix it in the same commit where you document the deviation. Not in a separate commit after the developer asks about it. The fix is one Edit call. It takes less time than writing the annotation. Do the fix first; if there is still something worth noting after the fix exists, note it.
 
 **The corollary for this codebase specifically:** Any macro or function name that appears in CLAUDE.md as a code template must exist in the actual codebase. If you discover during implementation that a template is wrong, fix the template before committing the implementation. The template is load-bearing — the next session reads it and uses it. A wrong template with a warning note is still a wrong template.
+
+**Second-generation failure (build 104):** The fix to `LISTBASE_FOREACH_MUTABLE` replaced it with `LISTBASE_FOREACH` — which exists in the codebase, but is defined only as a file-local macro inside `listbase.cc`. It is not available in any header and cannot be used in blenkernel files. The blenkernel allocators compiled from cache in build 103 (hiding the error); `screen_edit.cc` was compiled fresh in build 104 and failed with MSVC C2760 syntax errors. The correct replacement is an explicit for loop: `for (const ID *id_iter = static_cast<const ID *>(lb->first); id_iter; id_iter = static_cast<const ID *>(id_iter->next))`. The template in Scar 10 has been corrected to use this loop. Two generations of the same class of error — wrong macro → different wrong macro → explicit loop that actually compiles everywhere.
 
 ---
 
